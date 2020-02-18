@@ -36,7 +36,7 @@ import sets
 import tables
 
 #Consensus object.
-type Consensus* = ref object
+type Consensus* = object
     #Global Functions.
     functions*: GlobalFunctionBox
     #DB.
@@ -129,8 +129,8 @@ proc newConsensusObj*(
 
                 try:
                     result.statuses[packet.hash] = result.db.load(packet.hash)
-                except DBReadError:
-                    panic("Transaction archived on the Blockchain doesn't have a status.")
+                except DBReadError as e:
+                    panic("Transaction archived on the Blockchain doesn't have a status: " & e.msg)
 
                 #If this Transaction is close to being confirmed, add it to close.
                 try:
@@ -148,23 +148,37 @@ proc newConsensusObj*(
     except IndexError as e:
         panic("Couldn't get a Block on the Blockchain: " & e.msg)
 
+    #Load unmentioned statuses.
+    for hash in result.unmentioned:
+        try:
+            result.statuses[hash] = result.db.load(hash)
+        except DBReadError as e:
+            panic("Transaction not yet mentioned on the Blockchain doesn't have a status: " & e.msg)
+
 #Set a Transaction as unmentioned.
 proc setUnmentioned*(
-    consensus: Consensus,
+    consensus: var Consensus,
     hash: Hash[256]
 ) {.forceCheck: [].} =
     consensus.unmentioned.incl(hash)
 
 #Set a Transaction's status.
 proc setStatus*(
-    consensus: Consensus,
+    consensus: var Consensus,
     hash: Hash[256],
     status: TransactionStatus
 ) {.forceCheck: [].} =
     consensus.statuses[hash] = status
     consensus.db.save(hash, status)
 
-#Get a Transaction's statuses.
+#Get every Transaction with a status in the cache.
+iterator cachedTransactions*(
+    consensus: Consensus
+): Hash[256] {.forceCheck: [].} =
+    for hash in consensus.statuses.keys:
+        yield hash
+
+#Get a Transaction's status.
 proc getStatus*(
     consensus: Consensus,
     hash: Hash[256]
@@ -182,13 +196,9 @@ proc getStatus*(
     except DBReadError:
         raise newLoggedException(IndexError, "Transaction doesn't have a status.")
 
-    #Add the Transaction to the cache if it's not yet out of Epochs.
-    if result.merit == -1:
-        consensus.statuses[hash] = result
-
 #Increment a Status's Epoch.
 proc incEpoch*(
-    consensus: Consensus,
+    consensus: var Consensus,
     hash: Hash[256]
 ) {.forceCheck: [].} =
     var status: TransactionStatus
@@ -202,14 +212,14 @@ proc incEpoch*(
     consensus.db.save(hash, status)
 
 #Calculate a Transaction's Merit.
-proc calculateMeritSingle(
-    consensus: Consensus,
+proc calculateMeritSingle*(
+    consensus: var Consensus,
     state: State,
     tx: Transaction,
     status: TransactionStatus
 ) {.forceCheck: [].} =
-    #If the Transaction is already verified, or it needs to default, return.
-    if status.verified or status.competing:
+    #If the Transaction is already verified, or it needs to default, or it's impossible to verify, return.
+    if status.verified or status.competing or status.beaten:
         return
 
     #Calculate Merit.
@@ -246,7 +256,7 @@ proc calculateMeritSingle(
 
 #Calculate a Transaction's Merit. If it's verified, also check every descendant
 proc calculateMerit*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     hash: Hash[256],
     statusArg: TransactionStatus
@@ -285,7 +295,7 @@ proc calculateMerit*(
 
 #Unverify a Transaction.
 proc unverify*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     hash: Hash[256],
     status: TransactionStatus
@@ -325,7 +335,7 @@ proc unverify*(
 
 #Finalize a TransactionStatus.
 proc finalize*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     hash: Hash[256]
 ) {.forceCheck: [].} =
@@ -413,6 +423,16 @@ proc finalize*(
     consensus.db.save(hash, status)
     consensus.statuses.del(hash)
 
+#Delete a Transaction.
+proc delete*(
+    consensus: var Consensus,
+    hash: Hash[256]
+) {.forceCheck: [].} =
+    consensus.statuses.del(hash)
+    consensus.close.excl(hash)
+    consensus.unmentioned.excl(hash)
+    consensus.db.delete(hash)
+
 #Get all pending Verification Packets/Elements, as well as the aggregate signature.
 proc getPending*(
     consensus: Consensus
@@ -482,7 +502,7 @@ proc getPending*(
 
     result.aggregate = signatures.aggregate()
 
-#Provide debug access to the statuses table
+#Provide debug access to the statuses table.
 when defined(merosTests):
     func statuses*(
         consensus: Consensus

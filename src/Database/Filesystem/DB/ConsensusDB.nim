@@ -13,12 +13,8 @@ import ../../../Wallet/MinerWallet
 #Transaction object.
 import ../../Transactions/objects/TransactionObj
 
-#Element objects.
-import ../../Consensus/Elements/objects/VerificationObj
-import ../../Consensus/Elements/objects/VerificationPacketObj
-import ../../Consensus/Elements/objects/SendDifficultyObj
-import ../../Consensus/Elements/objects/DataDifficultyObj
-import ../../Consensus/Elements/MeritRemoval
+#Elements lib.
+import ../../Consensus/Elements/Elements
 
 #TransactionStatus object.
 import ../../Consensus/objects/TransactionStatusObj
@@ -227,6 +223,13 @@ proc save*(
         BLOCK_ELEMENT(sendDiff.holder, sendDiff.nonce),
         char(SEND_DIFFICULTY_PREFIX) & sendDiff.difficulty.toString()
     )
+
+proc override*(
+    db: DB,
+    holder: uint16,
+    nonce: int
+) {.forceCheck: [].} =
+    db.put(HOLDER_NONCE(holder), nonce.toBinary())
 
 proc override*(
     db: DB,
@@ -500,13 +503,29 @@ proc loadMeritRemovalNonces*(
     for n in countup(0, nonces.len - 1, INT_LEN):
         result.incl(nonces[n ..< n + INT_LEN].fromBinary())
 
+#Delete a Transaction Status.
+proc delete*(
+    db: DB,
+    hash: Hash[256]
+) {.forceCheck: [].} =
+    db.del(STATUS(hash))
+    db.consensus.unmentioned.excl(hash)
+
+#Delete a Block Element.
+proc delete*(
+    db: DB,
+    holder: uint16,
+    nonce: int
+) {.forceCheck: [].} =
+    db.del(BLOCK_ELEMENT(holder, nonce))
+    db.del(SIGNATURE(holder, nonce))
+
 #Delete a now-aggregated signature.
 proc deleteSignature*(
     db: DB,
     holder: uint16,
     nonce: int
 ) {.inline, forceCheck: [].} =
-    db.del(SIGNATURE(holder, nonce))
     db.del(SIGNATURE(holder, nonce))
 
 #Delete a holder's current Send Difficulty.
@@ -557,6 +576,42 @@ proc deleteMaliciousProof*(
     #If we haven't found the proof already, it is the last proof.
     #If we did find it, we moved the last proof to its place.
     db.del(HOLDER_MALICIOUS_PROOF(mr.holder, proofs))
+
+#Deletes a MeritRemoval.
+proc deleteMeritRemoval*(
+    db: DB,
+    mr: MeritRemoval
+) {.forceCheck: [].} =
+    #Delete the MeritRemoval.
+    db.del(MERIT_REMOVAL(mr))
+
+    #Delete its nonce.
+    var nonce: int = -1
+    case mr.element1:
+        of Verification as _:
+            discard
+        of VerificationPacket as _:
+            discard
+        of SendDifficulty as sd:
+            nonce = sd.nonce
+        of DataDifficulty as dd:
+            nonce = dd.nonce
+        else:
+            panic("Unknown Element included in the MeritRemoval being deleted.")
+
+    if nonce != -1:
+        var existing: string
+        try:
+            existing = db.get(MERIT_REMOVAL_NONCES(mr.holder))
+        except DBReadError as e:
+            panic("Couldn't get the nonces of a holder who has a MeritRemoval being deleted: " & e.msg)
+
+        for n in countup(0, existing.len - 1, INT_LEN):
+            if existing[n ..< n + INT_LEN].fromBinary() == nonce:
+                existing = existing[0 ..< n] & existing[n + INT_LEN ..< existing.len]
+                break
+
+        db.put(MERIT_REMOVAL_NONCES(mr.holder), existing)
 
 #Check if a MeritRemoval exists.
 proc hasMeritRemoval*(
