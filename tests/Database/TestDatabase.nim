@@ -79,10 +79,20 @@ proc newTestGlobalFunctionBox*(
 
     result.transactions.verify = proc (
         hash: Hash[256]
-    ) =
-        discard
+    ) {.inline.} =
+        transactions[].verify(hash)
 
     result.transactions.unverify = proc (
         hash: Hash[256]
-    ) =
-        discard
+    ) {.inline.} =
+        transactions[].unverify(hash)
+
+    result.transactions.discoverTree = proc (
+        hash: Hash[256]
+    ): seq[Hash[256]] {.inline.} =
+        transactions[].discoverTree(hash)
+
+    result.transactions.prune = proc (
+        hash: Hash[256]
+    ) {.inline.} =
+        transactions[].prune(hash)

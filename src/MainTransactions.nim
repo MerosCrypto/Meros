@@ -176,13 +176,13 @@ proc mainTransactions() {.forceCheck: [].} =
         #Mark a Transaction as verified.
         functions.transactions.verify = proc (
             hash: Hash[256]
-        ) {.forceCheck: [].} =
+        ) {.inline, forceCheck: [].} =
             transactions.verify(hash)
 
         #Mark a Transaction as unverified.
         functions.transactions.unverify = proc (
             hash: Hash[256]
-        ) {.forceCheck: [].} =
+        ) {.inline, forceCheck: [].} =
             transactions.unverify(hash)
 
         #Discover a Transaction tree.

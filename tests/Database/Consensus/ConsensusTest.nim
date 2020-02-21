@@ -118,17 +118,14 @@ suite "Consensus":
                         continue
                     inc(mr)
 
-            #Reload Consensus.
-            var reloaded: Consensus = newConsensus(
+            #Reload and compare the Consensus DAGs.
+            compare(consensus, newConsensus(
                 functions,
                 db,
                 merit.state,
                 Hash[256](),
                 Hash[256]()
-            )
-
-            #Compare the Consensus DAGs.
-            compare(consensus, reloaded)
+            ))
 
     test "Reloaded Consensus.":
         var
@@ -258,17 +255,13 @@ suite "Consensus":
 
         #Compare the Consensus against the reloaded Consensus.
         proc compare() =
-            #Reload the Consensus.
-            var reloaded: Consensus = newConsensus(
+            compare(consensus, newConsensus(
                 functions,
                 db,
                 merit.state,
                 Hash[256](),
                 Hash[256]()
-            )
-
-            #Compare the Consensus DAGs.
-            compare(consensus, reloaded)
+            ))
 
         #Iterate over 1250 'rounds'.
         for r in 1 .. 1250:

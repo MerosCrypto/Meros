@@ -89,11 +89,11 @@ type
 
         verify*: proc (
             hash: Hash[256]
-        ) {.raises: [].}
+        ) {.inline, raises: [].}
 
         unverify*: proc (
             hash: Hash[256]
-        ) {.raises: [].}
+        ) {.inline, raises: [].}
 
         discoverTree*: proc (
             hash: Hash[256]
