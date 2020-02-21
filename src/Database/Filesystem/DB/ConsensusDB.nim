@@ -346,6 +346,7 @@ proc loadUnmentioned*(
             result.incl(unmentioned[h ..< h + 32].toHash(256))
         except ValueError as e:
             panic("Couldn't parse an unmentioned hash: " & e.msg)
+    db.consensus.unmentioned = result
 
 proc load*(
     db: DB,
@@ -631,3 +632,4 @@ proc prune*(
 ) {.forceCheck: [].} =
     db.del(TRANSACTION(hash))
     db.del(STATUS(hash))
+    db.consensus.unmentioned.excl(hash)

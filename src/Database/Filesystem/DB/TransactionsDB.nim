@@ -191,19 +191,20 @@ proc saveDataSender*(
 #Load functions.
 proc loadUnmentioned*(
     db: DB
-): seq[Hash[256]] {.forceCheck: [].} =
+): HashSet[Hash[256]] {.forceCheck: [].} =
     var unmentioned: string
     try:
         unmentioned = db.get(UNMENTIONED_TRANSACTIONS())
     except DBReadError:
         return
 
-    result = newSeq[Hash[256]](unmentioned.len div 32)
-    for h in 0 ..< result.len:
+    result = initHashSet[Hash[256]]()
+    for h in 0 ..< unmentioned.len div 32:
         try:
-            result[h] = unmentioned[h * 32 ..< (h + 1) * 32].toHash(256)
+            result.incl(unmentioned[h * 32 ..< (h + 1) * 32].toHash(256))
         except ValueError as e:
             panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+    db.transactions.unmentioned = result
 
 proc load*(
     db: DB,

@@ -785,6 +785,7 @@ proc archive*(
     #Delete every mentioned hash in the Block from unmentioned.
     for packet in shifted:
         consensus.unmentioned.excl(packet.hash)
+        consensus.db.mention(packet.hash)
 
     #Update the Epoch for every unmentioned Transaction.
     for hash in consensus.unmentioned:
@@ -978,7 +979,7 @@ proc revert*(
             consensus.db.override(holder, revertedToNonces[holder] - 1)
 
             #Also delete cached signatures since we wiped out Elements in the middle of their chain.
-            consensus.signatures.del(holder)
+            consensus.signatures[holder] = @[]
 
             #Also update the SendDifficulty and DataDifficulty, if required.
             var
@@ -1025,8 +1026,15 @@ proc revert*(
             panic("Couldn't get the reverted to nonce/archived nonce of a holder with one: " & e.msg)
 
     #Rebuild the filters.
-    consensus.filters.send = newSpamFilterObj(consensus.filters.send.startDifficulty)
-    consensus.filters.data = newSpamFilterObj(consensus.filters.data.startDifficulty)
+    #We shouldn't need those copies. I, Kayaba, originally tried to inline this.
+    #That said, newSpamFilterObj printed it was handed the hash yet didn't set it.
+    #My theory, which I can't think of why this would happen, is that it overwrote the SpamFilter during construction, and then grabbed its unset value.
+    #I truly don't know. This works. Don't try to inline it.
+    var
+        sendDiff: Hash[256] = consensus.filters.send.startDifficulty
+        dataDiff: Hash[256] = consensus.filters.data.startDifficulty
+    consensus.filters.send = newSpamFilterObj(sendDiff)
+    consensus.filters.data = newSpamFilterObj(dataDiff)
     for h in 0 ..< state.holders.len:
         try:
             consensus.filters.send.update(uint16(h), state[uint16(h)], consensus.db.loadSendDifficulty(uint16(h)))
@@ -1137,7 +1145,7 @@ proc postRevert*(
         #If this raised a KeyError, they were never mentioned.
         except KeyError:
             status.holders = initHashSet[uint16]()
-            consensus.unmentioned.incl(hash)
+            consensus.setUnmentioned(hash)
             status.epoch = blockchain.height + 6
 
         #Add back the pending holders.
@@ -1156,9 +1164,7 @@ proc postRevert*(
             panic("Failed to get a Transaction which has a status: " & e.msg)
 
         #Save back the status.
-        #If it was verified, calculateMeritSingle will save it.
-        if not status.verified:
-            try:
-                consensus.setStatus(hash, revertedStatuses[hash])
-            except KeyError as e:
-                panic("Key retrieved via .keys() thre a KeyError: " & e.msg)
+        try:
+            consensus.setStatus(hash, revertedStatuses[hash])
+        except KeyError as e:
+            panic("Key retrieved via .keys() thre a KeyError: " & e.msg)

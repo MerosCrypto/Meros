@@ -161,6 +161,7 @@ proc setUnmentioned*(
     hash: Hash[256]
 ) {.forceCheck: [].} =
     consensus.unmentioned.incl(hash)
+    consensus.db.addUnmentioned(hash)
 
 #Set a Transaction's status.
 proc setStatus*(
@@ -410,6 +411,7 @@ proc finalize*(
             #Remove the Transaction from RAM.
             consensus.statuses.del(tree[h])
             consensus.unmentioned.excl(tree[h])
+            consensus.db.mention(tree[h])
             consensus.close.excl(tree[h])
 
             #Remove the Transaction from the Database.
