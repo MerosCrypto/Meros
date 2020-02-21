@@ -2,6 +2,11 @@
 end_of_line = lf
 insert_final_newline = true
 
-[*.{nim,nims,nimble}]
+[*.{nim, nims, nimble}]
+indent_style = space
+indent_size = 4
+
+
+[*.{yaml, yml}]
 indent_style = space
 indent_size = 4
