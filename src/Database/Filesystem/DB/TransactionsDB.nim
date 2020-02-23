@@ -160,11 +160,12 @@ proc save*(
     db.put(TRANSACTION(tx.hash), tx.serialize())
     db.transactions.unmentioned.incl(tx.hash)
 
-    for input in tx.inputs:
-        try:
-            db.put(OUTPUT_SPENDERS(input), db.get(OUTPUT_SPENDERS(input)) & tx.hash.toString())
-        except DBReadError:
-            db.put(OUTPUT_SPENDERS(input), tx.hash.toString())
+    if not ((tx of Data) and (tx.inputs[0].hash == Hash[256]())):
+        for input in tx.inputs:
+            try:
+                db.put(OUTPUT_SPENDERS(input), db.get(OUTPUT_SPENDERS(input)) & tx.hash.toString())
+            except DBReadError:
+                db.put(OUTPUT_SPENDERS(input), tx.hash.toString())
 
     for o in 0 ..< tx.outputs.len:
         db.put(OUTPUT(tx.hash, o), tx.outputs[o].serialize())
