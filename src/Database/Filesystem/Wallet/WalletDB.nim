@@ -198,12 +198,16 @@ proc newWalletDB*(
     #Load the MinerWallet.
     try:
         result.miner = newMinerWallet(result.get(MINER_KEY()))
-        result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
     except BLSError as e:
         panic("Failed to load the MinerWallet from the Database: " & e.msg)
     except DBReadError:
         result.put(MINER_KEY(), result.miner.privateKey.serialize())
-        result.miner.initiated = false
+
+    try:
+        result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
+        result.miner.initiated = true
+    except DBReadError:
+        discard
 
     #Load the input nonces.
     try:
