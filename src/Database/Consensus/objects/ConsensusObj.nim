@@ -365,6 +365,7 @@ proc finalize*(
     #If it wasn't verified, check if it actually was.
     elif (not status.verified) and (status.merit >= state.protocolThresholdAt(state.processedBlocks)):
         #Make sure all parents are verified.
+        var unverifiedParents: bool = false
         try:
             for input in tx.inputs:
                 if (tx of Data) and (cast[Data](tx).isFirstData):
@@ -375,13 +376,14 @@ proc finalize*(
                     (not consensus.getStatus(input.hash).verified)
                 ):
                     consensus.statuses.del(hash)
-                    return
+                    unverifiedParents = true
         except IndexError as e:
             panic("Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
 
         #Mark the Transaction as verified.
-        status.verified = true
-        consensus.functions.transactions.verify(tx.hash)
+        if not unverifiedParents:
+            status.verified = true
+            consensus.functions.transactions.verify(tx.hash)
 
     #Check if the Transaction was beaten, if it's not already marked as beaten.
     if (not status.beaten) and (not status.verified):

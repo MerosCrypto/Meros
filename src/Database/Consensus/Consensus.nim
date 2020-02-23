@@ -765,7 +765,6 @@ proc getUnfinalizedParents(
             (cast[Data](tx).isFirstData)
         )
     ):
-        #Make sure every input was already finalized.
         for input in tx.inputs:
             try:
                 if consensus.getStatus(input.hash).merit == -1:
@@ -833,16 +832,12 @@ proc archive*(
     var outOfOrder: HashSet[Hash[256]] = initHashSet[Hash[256]]()
     #Mark every hash in this Epoch as out of Epochs.
     for hash in popped.keys():
-        #Skip Transaction we verified out of order.
-        if outOfOrder.contains(hash):
-            continue
-
         var parents: seq[Hash[256]] = @[hash]
         while parents.len != 0:
             #Grab the last parent.
             var parent: Hash[256] = parents.pop()
 
-            #Skip this Transaction if we already verified it.
+            #Skip this Transaction if we already finalized it.
             if outOfOrder.contains(parent):
                 continue
 
@@ -1127,8 +1122,10 @@ proc postRevert*(
     consensus.unmentioned = initHashSet[Hash[256]]()
     consensus.close = initHashSet[Hash[256]]()
 
-    #Update merit, holders, epoch, unmentioned, close, and verified.
-    var status: TransactionStatus
+    #Update merit, holders, epoch, and unmentioned, while generating a queue.
+    var
+        queue: seq[Hash[256]] = @[]
+        status: TransactionStatus
     for hash in revertedStatuses.keys():
         #Grab the status.
         try:
@@ -1158,6 +1155,44 @@ proc postRevert*(
             status.verified = false
             consensus.functions.transactions.unverify(hash)
 
+        #Add the Transaction to the queue.
+        queue.add(hash)
+
+    #Reiterate over every status, recalculating their Merit and whether or not they're verified.
+    var
+        hash: Hash[256]
+        tx: Transaction
+        unfinalized: seq[Hash[256]] = @[]
+    while queue.len != 0:
+        #Pop the next hash.
+        hash = queue.pop()
+
+        #If we already completed this hash, move to the next one.
+        if not revertedStatuses.hasKey(hash):
+            continue
+
+        #Grab the Transaction and see if we have yet to finalize its parents.
+        try:
+            tx = consensus.functions.transactions.getTransaction(hash)
+        except IndexError as e:
+            panic("Couldn't grab a Transaction whose status is being reverted: " & e.msg)
+
+        unfinalized = @[]
+        for input in tx.inputs:
+            if revertedStatuses.hasKey(input.hash):
+                unfinalized.add(input.hash)
+        if unfinalized.len != 0:
+            queue.add(hash)
+            queue &= unfinalized
+            continue
+
+        #Grab the status and delete it from the table.
+        try:
+            status = revertedStatuses[hash]
+        except KeyError as e:
+            panic("Couldn't get a status we know we have: " & e.msg)
+        revertedStatuses.del(hash)
+
         #Calculate its Merit.
         try:
             consensus.calculateMeritSingle(state, transactions[hash], status)
@@ -1166,6 +1201,6 @@ proc postRevert*(
 
         #Save back the status.
         try:
-            consensus.setStatus(hash, revertedStatuses[hash])
+            consensus.setStatus(hash, status)
         except KeyError as e:
             panic("Key retrieved via .keys() thre a KeyError: " & e.msg)

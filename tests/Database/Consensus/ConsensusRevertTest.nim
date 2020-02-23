@@ -91,6 +91,10 @@ suite "ConsensusRevert":
 
             #Merit Holders.
             holders: seq[MinerWallet] = @[
+                newMinerWallet(),
+                newMinerWallet(),
+                newMinerWallet(),
+                newMinerWallet(),
                 newMinerWallet()
             ]
 
@@ -111,6 +115,8 @@ suite "ConsensusRevert":
 
             #Epochs.
             epochs: Table[Hash[256], int] = initTable[Hash[256], int]()
+            #Blocks a Transaction became verified at.
+            verified: Table[Hash[256], int] = initTable[Hash[256], int]()
             #Finalized statuses.
             finalizedStatuses: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
 
@@ -184,25 +190,43 @@ suite "ConsensusRevert":
             epochs[tx.hash] = consensus.getStatus(tx.hash).epoch
 
             #Create a VerificationPacket for the Transaction.
-            packets.add(newVerificationPacketObj(tx.hash))
-            packets[^1].holders.add(uint16(0))
+            packets.add(newSignedVerificationPacketObj(tx.hash))
+            for holder in holders:
+                if rand(1) == 0:
+                    continue
+                if holder.initiated:
+                    var verif: SignedVerification = newSignedVerificationObj(tx.hash)
+                    holder.sign(verif)
+                    cast[SignedVerificationPacket](packets[^1]).add(verif)
+
+                    #Randomly add certain Verifications outside of the Blockchain.
+                    if rand(1) == 0:
+                        consensus.add(merit.state, verif)
+
+            if packets[^1].holders.len == 0:
+                var verif: SignedVerification = newSignedVerificationObj(tx.hash)
+                holders[0].sign(verif)
+                cast[SignedVerificationPacket](packets[^1]).add(verif)
 
         #Add a Block.
         proc addBlock(
             last: bool = false
         ) =
             #Create a Block.
-            if merit.blockchain.height == 1:
+            if merit.blockchain.height < 6:
                 newBlock = newBlankBlock(
                     last = merit.blockchain.tail.header.hash,
-                    miner = holders[rand(holders.len - 1)],
+                    miner = holders[merit.blockchain.height - 1],
                     packets = packets
                 )
+                holders[merit.blockchain.height - 1].nick = uint16(merit.blockchain.height - 1)
+                holders[merit.blockchain.height - 1].initiated = true
             else:
+                var holder: int = rand(high(holders))
                 newBlock = newBlankBlock(
                     last = merit.blockchain.tail.header.hash,
-                    miner = holders[rand(holders.len - 1)],
-                    nick = uint16(0),
+                    miner = holders[holder],
+                    nick = uint16(holder),
                     packets = packets
                 )
             blocks.add(newBlock)
@@ -277,6 +301,13 @@ suite "ConsensusRevert":
                 for claim in claims:
                     add(claim, true)
 
+            #Iterate over every status in the cache. If any just became verified, mark it.
+            for tx in consensus.statuses.keys():
+                if verified.hasKey(tx):
+                    continue
+                if consensus.statuses[tx].verified:
+                    verified[tx] = merit.blockchain.height
+
         #Verify the reversion worked.
         proc verify() =
             #Iterate over the last 5 Blocks to see who has archived Verifications for what.
@@ -301,9 +332,13 @@ suite "ConsensusRevert":
                         check(consensus.statuses[tx].epoch == min(epochs[tx], merit.blockchain.height + 7))
 
                         #Don't check competing since this test doesn't generate competing values.
-                        discard """
-                        status.verified
-                        """
+
+                        #Verify verified.
+                        if verified.hasKey(tx):
+                            check(consensus.statuses[tx].verified == (merit.blockchain.height >= verified[tx]))
+                        else:
+                            check(not consensus.statuses[tx].verified)
+
                         #Don't test beaten for the same reason as competing.
 
                         #Make sure there's a set for the verifiers.
@@ -441,6 +476,9 @@ suite "ConsensusRevert":
                         panic("Replaying an unknown Transaction type.")
 
     test "Reverted Consensus.":
+        #Add a Block so there's a Merit Holder with Merit.
+        addBlock()
+
         for b in 1 .. 20:
             #Create a random amount of Wallets.
             for _ in 0 ..< rand(2) + 2:

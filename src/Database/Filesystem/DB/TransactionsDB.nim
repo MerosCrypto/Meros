@@ -339,7 +339,7 @@ proc removeFromSpendable(
     try:
         spendable = db.get(SPENDABLE(key))
     except DBReadError:
-        panic("Trying to spend from someone without anything spendable.")
+        return
 
     #Remove the specified output.
     for o in countup(0, spendable.len - 1, 33):
