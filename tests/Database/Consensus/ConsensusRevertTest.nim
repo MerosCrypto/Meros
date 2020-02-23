@@ -96,8 +96,6 @@ suite "ConsensusRevert":
 
             #Wallets.
             wallets: seq[Wallet] = @[]
-            #Reverse lookup Table.
-            walletsLookup: Table[EdPublicKey, int] = initTable[EdPublicKey, int]()
 
             #Planned Sends.
             plans: Table[int, seq[seq[SendOutput]]] = initTable[int, seq[seq[SendOutput]]]()
@@ -106,8 +104,6 @@ suite "ConsensusRevert":
 
             #Copy of Transactions.
             txs: Table[Hash[256], Transaction] = initTable[Hash[256], Transaction]()
-            #Height the Transaction appeared at.
-            appeared: Table[Hash[256], int] = initTable[Hash[256], int]()
             #UTXOs.
             utxos: Table[EdPublicKey, seq[FundedInput]] = initTable[EdPublicKey, seq[FundedInput]]()
             #Data Tips.
@@ -184,13 +180,102 @@ suite "ConsensusRevert":
                     panic("Adding an unknown Transaction type.")
             consensus.register(merit.state, tx, merit.blockchain.height)
 
-            #Set the height it appeared at, as well as the Epoch assigned.
-            appeared[tx.hash] = merit.blockchain.height
+            #Set the Epoch assigned.
             epochs[tx.hash] = consensus.getStatus(tx.hash).epoch
 
             #Create a VerificationPacket for the Transaction.
             packets.add(newVerificationPacketObj(tx.hash))
             packets[^1].holders.add(uint16(0))
+
+        #Add a Block.
+        proc addBlock(
+            last: bool = false
+        ) =
+            #Create a Block.
+            if merit.blockchain.height == 1:
+                newBlock = newBlankBlock(
+                    last = merit.blockchain.tail.header.hash,
+                    miner = holders[rand(holders.len - 1)],
+                    packets = packets
+                )
+            else:
+                newBlock = newBlankBlock(
+                    last = merit.blockchain.tail.header.hash,
+                    miner = holders[rand(holders.len - 1)],
+                    nick = uint16(0),
+                    packets = packets
+                )
+            blocks.add(newBlock)
+
+            #Clear packets.
+            packets = @[]
+
+            #Add every packet.
+            for packet in newBlock.body.packets:
+                consensus.add(merit.state, packet)
+
+            #Check who has their Merit removed.
+            var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
+            for elem in newBlock.body.elements:
+                if elem of MeritRemoval:
+                    consensus.flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
+                    removed[elem.holder] = cast[MeritRemoval](elem)
+
+            #Add the Block to the Blockchain.
+            merit.processBlock(newBlock)
+
+            #Copy the State and Add the Block to the Epochs and State.
+            var
+                rewardsState: State = merit.state
+                epoch: Epoch
+                incd: uint16
+                decd: int
+            (epoch, incd, decd) = merit.postProcessBlock()
+
+            #Archive the Epochs.
+            consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
+            for tx in epoch.keys():
+                finalizedStatuses[tx] = consensus.getStatus(tx)
+
+            #Have the Consensus handle every person who suffered a MeritRemoval.
+            for removee in removed.keys():
+                consensus.remove(removed[removee], rewardsState[removee])
+
+            #Add the elements.
+            for elem in elements:
+                case elem:
+                    of SendDifficulty as sendDiff:
+                        consensus.add(merit.state, sendDiff)
+                    of DataDifficulty as dataDiff:
+                        consensus.add(merit.state, dataDiff)
+            elements = @[]
+
+            #Archive the hashes handled by the popped Epoch.
+            transactions.archive(newBlock, epoch)
+
+            #Create a Mint/Claim to fund all planned Sends.
+            var claims: seq[Claim] = @[]
+            if not last:
+                rewards[newBlock.header.hash] = @[]
+                for w in 0 ..< wallets.len:
+                    if needed[w] == 0:
+                        continue
+
+                    rewards[newBlock.header.hash].add(newReward(0, uint64(needed[w]) + uint64(rand(2000))))
+                    claims.add(newClaim(
+                        @[newFundedInput(newBlock.header.hash, rewards[newBlock.header.hash].len - 1)],
+                        wallets[w].publicKey
+                    ))
+                    holders[0].sign(claims[^1])
+                transactions.mint(newBlock.header.hash, rewards[newBlock.header.hash])
+
+            #Commit the DBs.
+            commit(merit.blockchain.height)
+
+            #Add the Claims.
+            if not last:
+                for claim in claims:
+                    add(claim, true)
 
         #Verify the reversion worked.
         proc verify() =
@@ -360,7 +445,6 @@ suite "ConsensusRevert":
             #Create a random amount of Wallets.
             for _ in 0 ..< rand(2) + 2:
                 wallets.add(newWallet(""))
-                walletsLookup[wallets[^1].publicKey] = wallets.len - 1
                 utxos[wallets[^1].publicKey] = @[]
 
             #For each Wallet, create a random amount of Transactions.
@@ -406,95 +490,12 @@ suite "ConsensusRevert":
                 #Calculate the actual amount of needed Meros.
                 needed[w] = max(needed[w], 0)
 
-            #Create a Block.
-            if merit.blockchain.height == 1:
-                newBlock = newBlankBlock(
-                    last = merit.blockchain.tail.header.hash,
-                    miner = holders[rand(holders.len - 1)],
-                    packets = packets
-                )
-            else:
-                newBlock = newBlankBlock(
-                    last = merit.blockchain.tail.header.hash,
-                    miner = holders[rand(holders.len - 1)],
-                    nick = uint16(0),
-                    packets = packets
-                )
-            blocks.add(newBlock)
-
-            #Clear packets.
-            packets = @[]
-
-            #Add every packet.
-            for packet in newBlock.body.packets:
-                consensus.add(merit.state, packet)
-
-            #Check who has their Merit removed.
-            var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
-            for elem in newBlock.body.elements:
-                if elem of MeritRemoval:
-                    consensus.flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
-                    removed[elem.holder] = cast[MeritRemoval](elem)
-
-            #Add the Block to the Blockchain.
-            merit.processBlock(newBlock)
-
-            #Copy the State.
-            var rewardsState: State = merit.state
-
-            #Add the Block to the Epochs and State.
-            var
-                epoch: Epoch
-                incd: uint16
-                decd: int
-            (epoch, incd, decd) = merit.postProcessBlock()
-
-            #Archive the Epochs.
-            consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
-            for tx in epoch.keys():
-                finalizedStatuses[tx] = consensus.getStatus(tx)
-
-            #Have the Consensus handle every person who suffered a MeritRemoval.
-            for removee in removed.keys():
-                consensus.remove(removed[removee], rewardsState[removee])
-
-            #Add the elements.
-            for elem in elements:
-                case elem:
-                    of SendDifficulty as sendDiff:
-                        consensus.add(merit.state, sendDiff)
-                    of DataDifficulty as dataDiff:
-                        consensus.add(merit.state, dataDiff)
-            elements = @[]
-
-            #Archive the hashes handled by the popped Epoch.
-            transactions.archive(newBlock, epoch)
-
-            #Create a Mint/Claim to fund all planned Sends.
-            var claims: seq[Claim] = @[]
-            rewards[newBlock.header.hash] = @[]
-            for w in 0 ..< wallets.len:
-                if needed[w] == 0:
-                    continue
-
-                rewards[newBlock.header.hash].add(newReward(0, uint64(needed[w]) + uint64(rand(2000))))
-                claims.add(newClaim(
-                    @[newFundedInput(newBlock.header.hash, rewards[newBlock.header.hash].len - 1)],
-                    wallets[w].publicKey
-                ))
-                holders[0].sign(claims[^1])
-            transactions.mint(newBlock.header.hash, rewards[newBlock.header.hash])
-
-            #Commit the DBs.
-            commit(merit.blockchain.height)
+            #Add a Block.
+            addBlock()
 
             #Back up the filters.
             sendFilters.add(consensus.filters.send)
             dataFilters.add(consensus.filters.data)
-
-            #Add the Claims.
-            for claim in claims:
-                add(claim, true)
 
             #Create the planned Sends.
             for w in 0 ..< wallets.len:
@@ -525,29 +526,7 @@ suite "ConsensusRevert":
                     add(send)
 
         #Create one last Block for the latest Claims/Sends.
-        newBlock = newBlankBlock(
-            last = merit.blockchain.tail.header.hash,
-            miner = holders[rand(holders.len - 1)],
-            nick = uint16(0),
-            packets = packets,
-            time = merit.blockchain.tail.header.time + 1
-        )
-        blocks.add(newBlock)
-        packets = @[]
-        for packet in newBlock.body.packets:
-            consensus.add(merit.state, packet)
-        merit.processBlock(newBlock)
-        var
-            rewardsState: State = merit.state
-            epoch: Epoch
-            incd: uint16
-            decd: int
-        (epoch, incd, decd) = merit.postProcessBlock()
-        consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
-        for tx in epoch.keys():
-            finalizedStatuses[tx] = consensus.getStatus(tx)
-        transactions.archive(newBlock, epoch)
-        commit(merit.blockchain.height)
+        addBlock(true)
 
         #Create a copy of the malicious table.
         malicious = consensus.malicious
