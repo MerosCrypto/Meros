@@ -79,10 +79,10 @@ template SPENDABLE(
 ): string =
     key.toString() & "$p"
 
-template VERIFIED_TRANSACTION(
+template BEATEN_TRANSACTION(
     hash: Hash[256]
 ): string =
-    hash.toString() & "vt"
+    hash.toString() & "bt"
 
 #Put/Get/Del/Commit for the Transactions DB.
 proc put(
@@ -231,6 +231,17 @@ proc load*(
 
         claim.outputs[0].amount = amount
 
+#Get if a Transaction was beaten.
+proc isBeaten*(
+    db: DB,
+    hash: Hash[256]
+): bool {.forceCheck: [].} =
+    try:
+        discard db.get(BEATEN_TRANSACTION(hash))
+        result = true
+    except DBReadError:
+        result = false
+
 proc loadSpenders*(
     db: DB,
     input: Input
@@ -341,9 +352,6 @@ proc verify*(
     db: DB,
     tx: Transaction
 ) {.forceCheck: [].} =
-    #Mark the Transaction as verified.
-    db.put(VERIFIED_TRANSACTION(tx.hash), "")
-
     #Add spendable outputs.
     if (tx of Claim) or (tx of Send):
         for o in 0 ..< tx.outputs.len:
@@ -373,9 +381,6 @@ proc unverify*(
     db: DB,
     tx: Transaction
 ) {.forceCheck: [].} =
-    #Remove the mark that the Transaction was verified.
-    db.del(VERIFIED_TRANSACTION(tx.hash))
-
     if (tx of Claim) or (tx of Send):
         #Remove outputs.
         for o in 0 ..< tx.outputs.len:
@@ -400,16 +405,12 @@ proc unverify*(
                     cast[FundedInput](input).nonce
                 )
 
-#Get if a Transaction was verified.
-proc isVerified*(
+#Mark a Transaction as beaten.
+proc beat*(
     db: DB,
     hash: Hash[256]
-): bool {.forceCheck: [].} =
-    try:
-        discard db.get(VERIFIED_TRANSACTION(hash))
-        result = true
-    except DBReadError:
-        result = false
+) {.forceCheck: [].} =
+    db.put(BEATEN_TRANSACTION(hash), "")
 
 #Prune a Transaction.
 proc prune*(
@@ -426,8 +427,8 @@ proc prune*(
     #Delete the Transaction.
     db.del(TRANSACTION(hash))
 
-    #Delete if its verified.
-    db.del(VERIFIED_TRANSACTION(hash))
+    #Delete if it was beaten.
+    db.del(BEATEN_TRANSACTION(hash))
 
     #Delete if its unmentioned.
     db.transactions.unmentioned.excl(hash)

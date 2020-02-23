@@ -328,6 +328,7 @@ proc register*(
                 (not ((tx of Data) and cast[Data](tx).isFirstData)) and
                 (consensus.getStatus(input.hash).beaten)
             ):
+                consensus.functions.transactions.beat(tx.hash)
                 status.beaten = true
         except IndexError:
             panic("Parent Transaction doesn't have a status.")

@@ -63,7 +63,7 @@ proc add*(
         #Verify every input doesn't have a spender out of Epochs.
         if not ((tx of Data) and (tx.inputs[0].hash == Hash[256]())):
             for input in tx.inputs:
-                if not (transactions.db.isVerified(input.hash) or transactions.transactions.hasKey(input.hash)):
+                if transactions.db.isBeaten(input.hash):
                     raise newLoggedException(ValueError, "Transaction spends a finalized Transaction which was beaten.")
 
                 var spenders: seq[Hash[256]] = transactions.db.loadSpenders(input)
@@ -195,6 +195,13 @@ proc unverify*(
         panic("Tried to mark a non-existent Transaction as verified: " & e.msg)
 
     transactions.db.unverify(tx)
+
+#Mark a Transaction as beaten.
+proc beat*(
+    transactions: Transactions,
+    hash: Hash[256]
+) {.inline, forceCheck: [].} =
+    transactions.db.beat(hash)
 
 #Mark Transactions as unmentioned.
 proc unmention*(

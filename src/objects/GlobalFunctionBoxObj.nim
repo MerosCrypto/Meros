@@ -95,6 +95,10 @@ type
             hash: Hash[256]
         ) {.inline, raises: [].}
 
+        beat*: proc (
+            hash: Hash[256]
+        ) {.inline, raises: [].}
+
         discoverTree*: proc (
             hash: Hash[256]
         ): seq[Hash[256]] {.inline, raises: [].}

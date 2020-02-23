@@ -185,6 +185,12 @@ proc mainTransactions() {.forceCheck: [].} =
         ) {.inline, forceCheck: [].} =
             transactions.unverify(hash)
 
+        #Mark a Transaction as beaten.
+        functions.transactions.beat = proc (
+            hash: Hash[256]
+        ) {.inline, forceCheck: [].} =
+            transactions.beat(hash)
+
         #Discover a Transaction tree.
         functions.transactions.discoverTree = proc (
             hash: Hash[256]

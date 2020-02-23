@@ -23,7 +23,7 @@ export Transaction
 #Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export toString, getUTXOs, loadSpenders, verify, unverify, prune
+export toString, getUTXOs, loadSpenders, verify, unverify, beat, prune
 when defined(merosTests):
     export getSender
 

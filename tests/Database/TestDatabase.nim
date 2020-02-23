@@ -87,6 +87,11 @@ proc newTestGlobalFunctionBox*(
     ) {.inline.} =
         transactions[].unverify(hash)
 
+    result.transactions.beat = proc (
+        hash: Hash[256]
+    ) {.inline.} =
+        transactions[].beat(hash)
+
     result.transactions.discoverTree = proc (
         hash: Hash[256]
     ): seq[Hash[256]] {.inline.} =

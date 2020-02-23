@@ -390,6 +390,7 @@ proc finalize*(
             for spender in spenders:
                 try:
                     if consensus.getStatus(spender).verified:
+                        consensus.functions.transactions.beat(hash)
                         status.beaten = true
                 except IndexError as e:
                     panic("Couldn't get the Status of a competing Transaction: " & e.msg)
