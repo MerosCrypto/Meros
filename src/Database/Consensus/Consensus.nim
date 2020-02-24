@@ -948,8 +948,7 @@ proc revert*(
 
         try:
             discard transactions[revertedBlock.header.hash]
-            for hash in transactions.discoverTree(revertedBlock.header.hash):
-                aboutToBePruned.incl(hash)
+            aboutToBePruned = transactions.discoverUnorderedTree(revertedBlock.header.hash, aboutToBePruned)
         except IndexError:
             discard
 
@@ -1123,9 +1122,7 @@ proc postRevert*(
     consensus.close = initHashSet[Hash[256]]()
 
     #Update merit, holders, epoch, and unmentioned, while generating a queue.
-    var
-        queue: seq[Hash[256]] = @[]
-        status: TransactionStatus
+    var status: TransactionStatus
     for hash in revertedStatuses.keys():
         #Grab the status.
         try:
@@ -1155,52 +1152,8 @@ proc postRevert*(
             status.verified = false
             consensus.functions.transactions.unverify(hash)
 
-        #Add the Transaction to the queue.
-        queue.add(hash)
-
-    #Reiterate over every status, recalculating their Merit and whether or not they're verified.
-    var
-        hash: Hash[256]
-        tx: Transaction
-        unfinalized: seq[Hash[256]] = @[]
-    while queue.len != 0:
-        #Pop the next hash.
-        hash = queue.pop()
-
-        #If we already completed this hash, move to the next one.
-        if not revertedStatuses.hasKey(hash):
-            continue
-
-        #Grab the Transaction and see if we have yet to finalize its parents.
-        try:
-            tx = consensus.functions.transactions.getTransaction(hash)
-        except IndexError as e:
-            panic("Couldn't grab a Transaction whose status is being reverted: " & e.msg)
-
-        unfinalized = @[]
-        for input in tx.inputs:
-            if revertedStatuses.hasKey(input.hash):
-                unfinalized.add(input.hash)
-        if unfinalized.len != 0:
-            queue.add(hash)
-            queue &= unfinalized
-            continue
-
-        #Grab the status and delete it from the table.
-        try:
-            status = revertedStatuses[hash]
-        except KeyError as e:
-            panic("Couldn't get a status we know we have: " & e.msg)
-        revertedStatuses.del(hash)
-
-        #Calculate its Merit.
-        try:
-            consensus.calculateMeritSingle(state, transactions[hash], status)
-        except IndexError as e:
-            panic("Failed to get a Transaction which has a status: " & e.msg)
+        #Calculate the Transaction's Merit.
+        consensus.calculateMerit(state, hash, status)
 
         #Save back the status.
-        try:
-            consensus.setStatus(hash, status)
-        except KeyError as e:
-            panic("Key retrieved via .keys() thre a KeyError: " & e.msg)
+        consensus.setStatus(hash, status)

@@ -276,11 +276,6 @@ proc discoverTree*(
     transactions: Transactions,
     hash: Hash[256]
 ): seq[Hash[256]] {.forceCheck: [].} =
-    try:
-        discard transactions[hash]
-    except IndexError:
-        return @[]
-
     result = @[hash]
     var
         queue: seq[Hash[256]] = @[hash]
@@ -296,6 +291,30 @@ proc discoverTree*(
                 var spenders: seq[Hash[256]] = transactions.loadSpenders(newFundedInput(current, o))
                 result &= spenders
                 queue &= spenders
+        except IndexError as e:
+            panic("Couldn't discover a Transaction in a tree: " & e.msg)
+
+proc discoverUnorderedTree*(
+    transactions: Transactions,
+    hash: Hash[256],
+    discovered: HashSet[Hash[256]]
+): HashSet[Hash[256]] {.forceCheck: [].} =
+    result = discovered
+    var
+        queue: seq[Hash[256]] = @[hash]
+        current: Hash[256]
+    while queue.len != 0:
+        #Grab the latest descendant.
+        current = queue.pop()
+
+        try:
+            #Iterate over the Transaction's outputs.
+            for o in 0 ..< transactions[current].outputs.len:
+                #Add every spender of each output to the queue.
+                for spender in transactions.loadSpenders(newFundedInput(current, o)):
+                    if not result.contains(spender):
+                        result.incl(spender)
+                        queue.add(spender)
         except IndexError as e:
             panic("Couldn't discover a Transaction in a tree: " & e.msg)
 

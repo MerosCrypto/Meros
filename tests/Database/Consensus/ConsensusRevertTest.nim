@@ -523,7 +523,7 @@ suite "ConsensusRevert":
                 for utxo in utxos[wallets[w].publicKey]:
                     needed[w] -= int64(cast[SendOutput](transactions[utxo.hash].outputs[utxo.nonce]).amount)
 
-                for t in 0 ..< rand(1) + 1:
+                for t in 0 ..< rand(2) + 1:
                     #Plan a Send.
                     #The reason we only plan the Send is because we may need funds from the upcowming Mint for it.
                     if rand(1) == 0:

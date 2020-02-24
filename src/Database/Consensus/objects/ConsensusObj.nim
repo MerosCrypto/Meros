@@ -258,7 +258,7 @@ proc calculateMeritSingle*(
     elif merit >= state.nodeThresholdAt(status.epoch) - 5:
         consensus.close.incl(tx.hash)
 
-#Calculate a Transaction's Merit. If it's verified, also check every descendant
+#Calculate a Transaction's Merit. If it's verified, also check every descendant.
 proc calculateMerit*(
     consensus: var Consensus,
     state: State,
