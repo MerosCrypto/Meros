@@ -88,6 +88,10 @@ suite "ConsensusRevert":
                 initialSendDifficulty,
                 initialDataDifficulty
             )
+            #Full Consensus DAG.
+            full: Consensus
+            #Reverted Consensus DAG.
+            reverted: Consensus
 
             #Merit Holders.
             holders: seq[MinerWallet] = @[
@@ -121,8 +125,8 @@ suite "ConsensusRevert":
             finalizedStatuses: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
 
             #Copy of the SpamFilters at every step.
-            sendFilters: seq[SpamFilter] = @[]
-            dataFilters: seq[SpamFilter] = @[]
+            sendFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
+            dataFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
 
             #Packets.
             packets: seq[VerificationPacket] = @[]
@@ -135,9 +139,6 @@ suite "ConsensusRevert":
 
             #Rewards.
             rewards: Table[Hash[256], seq[Reward]] = initTable[Hash[256], seq[Reward]]()
-
-            #Existing Merit Removals.
-            malicious: Table[uint16, seq[SignedMeritRemoval]] = initTable[uint16, seq[SignedMeritRemoval]]()
 
         #Add a Transaction.
         proc add(
@@ -381,16 +382,14 @@ suite "ConsensusRevert":
                         discard
 
             #Verify the malicious table is untouched.
-            for holder in malicious.keys():
-                check(malicious[holder].len == consensus.malicious[holder].len)
-                for mr in 0 ..< malicious[holder].len:
-                    compare(malicious[holder][mr], consensus.malicious[holder][mr])
+            for holder in full.malicious.keys():
+                check(full.malicious[holder].len == consensus.malicious[holder].len)
+                for mr in 0 ..< full.malicious[holder].len:
+                    compare(full.malicious[holder][mr], consensus.malicious[holder][mr])
 
             #Verify the SpamFilters were reverted.
-            compare(consensus.filters.send, sendFilters[^1])
-            compare(consensus.filters.data, dataFilters[^1])
-            sendFilters.del(high(sendFilters))
-            dataFilters.del(high(dataFilters))
+            compare(consensus.filters.send, sendFilters[merit.blockchain.tail.header.hash])
+            compare(consensus.filters.data, dataFilters[merit.blockchain.tail.header.hash])
 
             #Commit the database so reloading the Consensus works.
             db.commit(merit.blockchain.height)
@@ -404,6 +403,18 @@ suite "ConsensusRevert":
                 initialDataDifficulty
             ))
 
+        proc copy(): Consensus =
+            result = consensus
+            for tx in consensus.statuses.keys():
+                result.statuses[tx] = newTransactionStatusObj(consensus.statuses[tx].packet.hash, consensus.statuses[tx].epoch)
+                result.statuses[tx].competing = consensus.statuses[tx].competing
+                result.statuses[tx].verified = consensus.statuses[tx].verified
+                result.statuses[tx].beaten = consensus.statuses[tx].beaten
+                result.statuses[tx].holders = consensus.statuses[tx].holders
+                result.statuses[tx].pending = consensus.statuses[tx].pending
+                result.statuses[tx].packet = consensus.statuses[tx].packet
+                result.statuses[tx].merit = consensus.statuses[tx].merit
+
         #Replay from Block 10.
         proc replay() =
             #Reload Transactions to fix its cache.
@@ -412,7 +423,7 @@ suite "ConsensusRevert":
 
             #Add back each Block and its Transactions.
             for b in 9 ..< blocks.len:
-                #Add back the Transactions.
+                #Add back the Transactions and VerificationPackets.
                 for packet in blocks[b].body.packets:
                     try:
                         discard transactions[packet.hash]
@@ -436,50 +447,62 @@ suite "ConsensusRevert":
                             transactions.add(data)
                         else:
                             panic("Replaying an unknown Transaction type.")
+                    consensus.register(merit.state, tx, merit.blockchain.height)
+
+                #Add every packet.
+                for packet in blocks[b].body.packets:
+                    consensus.add(merit.state, packet)
+
+                #Check who has their Merit removed.
+                var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
+                for elem in blocks[b].body.elements:
+                    if elem of MeritRemoval:
+                        consensus.flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
+                        removed[elem.holder] = cast[MeritRemoval](elem)
 
                 #Add back the Block.
                 merit.processBlock(blocks[b])
 
-                #Archive the Epoch.
-                transactions.archive(newBlock, merit.postProcessBlock()[0])
+                #Copy the State and Add the Block to the Epochs and State.
+                var
+                    rewardsState: State = merit.state
+                    epoch: Epoch
+                    incd: uint16
+                    decd: int
+                (epoch, incd, decd) = merit.postProcessBlock()
 
-                #Mint Meros.
-                if b != blocks.len - 1:
+                #Archive the Epochs.
+                consensus.archive(merit.state, blocks[b].body.packets, blocks[b].body.elements, epoch, incd, decd)
+
+                #Have the Consensus handle every person who suffered a MeritRemoval.
+                for removee in removed.keys():
+                    consensus.remove(removed[removee], rewardsState[removee])
+
+                #Add the elements.
+                for elem in blocks[b].body.elements:
+                    case elem:
+                        of SendDifficulty as sendDiff:
+                            consensus.add(merit.state, sendDiff)
+                        of DataDifficulty as dataDiff:
+                            consensus.add(merit.state, dataDiff)
+
+                #Archive the hashes handled by the popped Epoch.
+                transactions.archive(blocks[b], epoch)
+
+                if rewards.hasKey(blocks[b].header.hash):
                     transactions.mint(blocks[b].header.hash, rewards[blocks[b].header.hash])
 
-                #Commit the DB.
+                #Commit the DBs.
                 commit(merit.blockchain.height)
 
-            #Add back the last Transactions.
-            for packet in blocks[^1].body.packets:
-                try:
-                    discard transactions[packet.hash]
-                    continue
-                except IndexError:
-                    discard
-
-                var tx: Transaction = txs[packet.hash]
-                case tx:
-                    of Claim as claim:
-                        transactions.add(
-                            claim,
-                            proc (
-                                h: uint16
-                            ): BLSPublicKey =
-                                holders[h].publicKey
-                        )
-                    of Send as send:
-                        transactions.add(send)
-                    of Data as data:
-                        transactions.add(data)
-                    else:
-                        panic("Replaying an unknown Transaction type.")
+            #Compare the replayed Consensus DAG with the full DAG.
+            compare(consensus, full)
 
     test "Reverted Consensus.":
         #Add a Block so there's a Merit Holder with Merit.
         addBlock()
 
-        for b in 1 .. 20:
+        for b in 1 .. 250:
             #Create a random amount of Wallets.
             for _ in 0 ..< rand(2) + 2:
                 wallets.add(newWallet(""))
@@ -532,8 +555,8 @@ suite "ConsensusRevert":
             addBlock()
 
             #Back up the filters.
-            sendFilters.add(consensus.filters.send)
-            dataFilters.add(consensus.filters.data)
+            sendFilters[merit.blockchain.tail.header.hash] = consensus.filters.send
+            dataFilters[merit.blockchain.tail.header.hash] = consensus.filters.data
 
             #Create the planned Sends.
             for w in 0 ..< wallets.len:
@@ -566,8 +589,8 @@ suite "ConsensusRevert":
         #Create one last Block for the latest Claims/Sends.
         addBlock(true)
 
-        #Create a copy of the malicious table.
-        malicious = consensus.malicious
+        #Back up the full Consensus DAG.
+        full = copy()
 
         #Revert, block by block.
         while merit.blockchain.height != 10:
@@ -577,10 +600,11 @@ suite "ConsensusRevert":
             db.commit(merit.blockchain.height)
             transactions = newTransactions(db, merit.blockchain)
             consensus.postRevert(merit.blockchain, merit.state, transactions)
-
             verify()
 
-        discard """
+        #Back up the reverted Consensus DAG.
+        reverted = copy()
+
         #Replay every Block/Transaction.
         replay()
 
@@ -591,9 +615,8 @@ suite "ConsensusRevert":
         db.commit(merit.blockchain.height)
         transactions = newTransactions(db, merit.blockchain)
         consensus.postRevert(merit.blockchain, merit.state, transactions)
-
         verify()
+        compare(consensus, reverted)
 
         #Replay every Block/Transaction again.
         replay()
-        """

@@ -48,7 +48,10 @@ type Consensus* = object
     malicious*: Table[uint16, seq[SignedMeritRemoval]]
 
     #Statuses of Transactions not yet out of Epochs.
-    statuses: Table[Hash[256], TransactionStatus]
+    when defined(merosTests):
+        statuses*: Table[Hash[256], TransactionStatus]
+    else:
+        statuses: Table[Hash[256], TransactionStatus]
     #Statuses which are close to becoming verified.
     #Every Transaction in this Table is checked when new Blocks are added to see if they crossed the threshold.
     close*: HashSet[Hash[256]]
@@ -506,10 +509,3 @@ proc getPending*(
         inc(p)
 
     result.aggregate = signatures.aggregate()
-
-#Provide debug access to the statuses table.
-when defined(merosTests):
-    func statuses*(
-        consensus: Consensus
-    ): Table[Hash[256], TransactionStatus] {.inline, forceCheck: [].} =
-        consensus.statuses
