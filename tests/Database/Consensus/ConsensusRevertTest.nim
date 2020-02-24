@@ -98,7 +98,6 @@ suite "ConsensusRevert":
                 newMinerWallet(),
                 newMinerWallet(),
                 newMinerWallet(),
-                newMinerWallet(),
                 newMinerWallet()
             ]
 
@@ -117,6 +116,8 @@ suite "ConsensusRevert":
             #Data Tips.
             dataTips: Table[EdPublicKey, Hash[256]] = initTable[EdPublicKey, Hash[256]]()
 
+            #Verifications.
+            verifications: Table[Hash[256], Table[Hash[256], HashSet[uint16]]] = initTable[Hash[256], Table[Hash[256], HashSet[uint16]]]()
             #Epochs.
             epochs: Table[Hash[256], int] = initTable[Hash[256], int]()
             #Blocks a Transaction became verified at.
@@ -214,7 +215,7 @@ suite "ConsensusRevert":
             last: bool = false
         ) =
             #Create a Block.
-            if merit.blockchain.height < 6:
+            if merit.blockchain.height < holders.len + 1:
                 newBlock = newBlankBlock(
                     last = merit.blockchain.tail.header.hash,
                     miner = holders[merit.blockchain.height - 1],
@@ -223,7 +224,7 @@ suite "ConsensusRevert":
                 holders[merit.blockchain.height - 1].nick = uint16(merit.blockchain.height - 1)
                 holders[merit.blockchain.height - 1].initiated = true
             else:
-                var holder: int = rand(high(holders))
+                var holder: int = rand(high(holders) - 1)
                 newBlock = newBlankBlock(
                     last = merit.blockchain.tail.header.hash,
                     miner = holders[holder],
@@ -236,7 +237,9 @@ suite "ConsensusRevert":
             packets = @[]
 
             #Add every packet.
+            verifications[newBlock.header.hash] = initTable[Hash[256], HashSet[uint16]]()
             for packet in newBlock.body.packets:
+                verifications[newBlock.header.hash][packet.hash] = packet.holders.toHashSet()
                 consensus.add(merit.state, packet)
 
             #Check who has their Merit removed.
@@ -311,15 +314,12 @@ suite "ConsensusRevert":
 
         #Verify the reversion worked.
         proc verify() =
-            #Iterate over the last 5 Blocks to see who has archived Verifications for what.
-            #This is incredibly slow and should be optimized out.
             var verifiers: Table[Hash[256], HashSet[uint16]] = initTable[Hash[256], HashSet[uint16]]()
             for b in merit.blockchain.height - 5 ..< merit.blockchain.height:
-                for packet in merit.blockchain[b].body.packets:
-                    if not verifiers.hasKey(packet.hash):
-                        verifiers[packet.hash] = initHashSet[uint16]()
-                    for holder in packet.holders:
-                        verifiers[packet.hash].incl(holder)
+                for hash in verifications[merit.blockchain[b].header.hash].keys():
+                    if not verifiers.hasKey(hash):
+                        verifiers[hash] = initHashSet[uint16]()
+                    verifiers[hash] = verifiers[hash] + verifications[merit.blockchain[b].header.hash][hash]
 
             #Verify every Transaction has a valid status.
             for tx in txs.keys():
@@ -415,14 +415,14 @@ suite "ConsensusRevert":
                 result.statuses[tx].packet = consensus.statuses[tx].packet
                 result.statuses[tx].merit = consensus.statuses[tx].merit
 
-        #Replay from Block 10.
+        #Replay from Block 50.
         proc replay() =
             #Reload Transactions to fix its cache.
             commit(merit.blockchain.height)
             transactions = newTransactions(db, merit.blockchain)
 
             #Add back each Block and its Transactions.
-            for b in 9 ..< blocks.len:
+            for b in 49 ..< blocks.len:
                 #Add back the Transactions and VerificationPackets.
                 for packet in blocks[b].body.packets:
                     try:
@@ -502,23 +502,28 @@ suite "ConsensusRevert":
         #Add a Block so there's a Merit Holder with Merit.
         addBlock()
 
-        for b in 1 .. 250:
+        for b in 1 .. 155:
+            echo "Block ", b
             #Create a random amount of Wallets.
             for _ in 0 ..< rand(2) + 2:
                 wallets.add(newWallet(""))
                 utxos[wallets[^1].publicKey] = @[]
 
-            #For each Wallet, create a random amount of Transactions.
+            #For each selected Wallet, create a random amount of Transactions.
             for w in 0 ..< wallets.len:
                 #Reset the planned Sends/needed Meros.
                 plans[w] = @[]
                 needed[w] = 0
 
+                #Skip random Wallets.
+                if rand(1) == 0:
+                    continue
+
                 #Calculate how much Meros is currently available.
                 for utxo in utxos[wallets[w].publicKey]:
                     needed[w] -= int64(cast[SendOutput](transactions[utxo.hash].outputs[utxo.nonce]).amount)
 
-                for t in 0 ..< rand(5):
+                for t in 0 ..< rand(1) + 1:
                     #Plan a Send.
                     #The reason we only plan the Send is because we may need funds from the upcowming Mint for it.
                     if rand(1) == 0:
@@ -593,7 +598,7 @@ suite "ConsensusRevert":
         full = copy()
 
         #Revert, block by block.
-        while merit.blockchain.height != 10:
+        while merit.blockchain.height != 50:
             consensus.revert(merit.blockchain, merit.state, transactions, merit.blockchain.height - 1)
             transactions.revert(merit.blockchain, merit.blockchain.height - 1)
             merit.revert(merit.blockchain.height - 1)
@@ -608,10 +613,10 @@ suite "ConsensusRevert":
         #Replay every Block/Transaction.
         replay()
 
-        #Revert everything to Block 10 all at once.
-        consensus.revert(merit.blockchain, merit.state, transactions, 10)
-        transactions.revert(merit.blockchain, 10)
-        merit.revert(10)
+        #Revert everything to Block 50 all at once.
+        consensus.revert(merit.blockchain, merit.state, transactions, 50)
+        transactions.revert(merit.blockchain, 50)
+        merit.revert(50)
         db.commit(merit.blockchain.height)
         transactions = newTransactions(db, merit.blockchain)
         consensus.postRevert(merit.blockchain, merit.state, transactions)
