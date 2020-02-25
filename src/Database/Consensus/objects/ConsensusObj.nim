@@ -216,27 +216,28 @@ proc incEpoch*(
     consensus.db.save(hash, status)
 
 #Calculate a Transaction's Merit.
-proc calculateMeritSingle*(
+proc calculateMeritSingle(
     consensus: var Consensus,
     state: State,
     tx: Transaction,
-    status: TransactionStatus
+    status: TransactionStatus,
+    threshold: int
 ) {.forceCheck: [].} =
     #If the Transaction is already verified, or it needs to default, or it's impossible to verify, return.
-    if status.verified or status.competing or status.beaten:
+    if status.verified or status.beaten or (status.competing and status.merit == -1):
         return
 
-    #Calculate Merit.
-    var merit: int = 0
-    for holder in status.holders:
-        #Skip malicious MeritHolders from Merit calculations.
-        if not consensus.malicious.hasKey(holder):
-            merit += state[holder]
+    #Calculate Merit, if needed.
+    var merit: int = status.merit
+    if merit == -1:
+        merit = 0
+        for holder in status.holders:
+            #Skip malicious MeritHolders from Merit calculations.
+            if not consensus.malicious.hasKey(holder):
+                merit += state[holder]
 
     #Check if the Transaction crossed its threshold.
-    if merit >= state.nodeThresholdAt(status.epoch):
-        if state.nodeThresholdAt(status.epoch) < 0:
-            panic($tx.hash & " " & $status.epoch & " " & $state.processedBlocks)
+    if merit >= threshold:
         #Make sure all parents are verified.
         try:
             for input in tx.inputs:
@@ -271,6 +272,7 @@ proc calculateMerit*(
         tx: Transaction
         status: TransactionStatus = statusArg
         wasVerified: bool
+        threshold: int
 
     while children.len != 0:
         child = children.pop()
@@ -282,27 +284,32 @@ proc calculateMerit*(
             panic("Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
         wasVerified = status.verified
 
+        #Grab the node threshold.
+        threshold = state.nodeThresholdAt(status.epoch)
+        #If we're finalizing the Transaction, use the protocol threshold.
+        if status.merit != -1:
+            threshold = state.protocolThresholdAt(state.processedBlocks)
+
         consensus.calculateMeritSingle(
             state,
             tx,
-            status
+            status,
+            threshold
         )
 
         if (not wasVerified) and (status.verified):
             try:
                 for o in 0 ..< tx.outputs.len:
-                    var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
-                    for spender in spenders:
-                        children.add(spender)
+                    children &= consensus.functions.transactions.getSpenders(newFundedInput(child, o))
             except IndexError as e:
                 panic("Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
 #Unverify a Transaction.
 proc unverify*(
     consensus: var Consensus,
-    state: State,
     hash: Hash[256],
-    status: TransactionStatus
+    status: TransactionStatus,
+    statusesOverride: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
 ) {.forceCheck: [].} =
     var
         children: seq[Hash[256]] = @[hash]
@@ -315,7 +322,12 @@ proc unverify*(
         try:
             tx = consensus.functions.transactions.getTransaction(child)
             if child != hash:
-                childStatus = consensus.getStatus(child)
+                if statusesOverride.len == 0:
+                    childStatus = consensus.getStatus(child)
+                else:
+                    childStatus = statusesOverride[child]
+        except KeyError:
+            panic("Couldn't get the TransactionStatus for a Transaction we're reverting from the overriden cache.")
         except IndexError:
             panic("Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
 
@@ -364,29 +376,10 @@ proc finalize*(
     #Make sure verified Transaction's Merit is above the node protocol threshold.
     if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):
         #If it's now unverified, unverify the tree.
-        consensus.unverify(state, hash, status)
+        consensus.unverify(hash, status)
     #If it wasn't verified, check if it actually was.
-    elif (not status.verified) and (status.merit >= state.protocolThresholdAt(state.processedBlocks)):
-        #Make sure all parents are verified.
-        var unverifiedParents: bool = false
-        try:
-            for input in tx.inputs:
-                if (tx of Data) and (cast[Data](tx).isFirstData):
-                    break
-
-                if (
-                    (not (consensus.functions.transactions.getTransaction(input.hash) of Mint)) and
-                    (not consensus.getStatus(input.hash).verified)
-                ):
-                    consensus.statuses.del(hash)
-                    unverifiedParents = true
-        except IndexError as e:
-            panic("Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
-
-        #Mark the Transaction as verified.
-        if not unverifiedParents:
-            status.verified = true
-            consensus.functions.transactions.verify(tx.hash)
+    elif not status.verified:
+        consensus.calculateMerit(state, hash, status)
 
     #Check if the Transaction was beaten, if it's not already marked as beaten.
     if (not status.beaten) and (not status.verified):

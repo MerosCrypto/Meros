@@ -278,7 +278,7 @@ proc flag*(
                         merit += state[holder]
 
                 if merit < state.protocolThresholdAt(status.epoch):
-                    consensus.unverify(state, packet.hash, status)
+                    consensus.unverify(packet.hash, status)
 
     #Recalculate the affected Transactions not yet in Epochs.
     for hash in consensus.unmentioned:
@@ -294,7 +294,7 @@ proc flag*(
                     merit += state[holder]
 
             if merit < state.protocolThresholdAt(status.epoch):
-                consensus.unverify(state, hash, status)
+                consensus.unverify(hash, status)
 
 #Get a holder's nonce.
 #Used to verify Blocks in NetworkSync.
@@ -752,26 +752,6 @@ proc remove*(
     updateIfTail(consensus, mr.element1)
     updateIfTail(consensus, mr.element2)
 
-#Get a Transaction's unfinalized parents.
-proc getUnfinalizedParents(
-    consensus: Consensus,
-    tx: Transaction
-): seq[Hash[256]] {.forceCheck: [].} =
-    #If this Transaction doesn't have inputs with statuses, don't do anything.
-    if not (
-        (tx of Claim) or
-        (
-            (tx of Data) and
-            (cast[Data](tx).isFirstData)
-        )
-    ):
-        for input in tx.inputs:
-            try:
-                if consensus.getStatus(input.hash).merit == -1:
-                    result.add(input.hash)
-            except IndexError as e:
-                panic("Couldn't get the Status of a Transaction used as an input in the specified Transaction: " & e.msg)
-
 #Mark all mentioned packets as mentioned, reset pending, finalize finalized Transactions, and check close Transactions.
 proc archive*(
     consensus: var Consensus,
@@ -828,40 +808,9 @@ proc archive*(
     except KeyError:
         panic("Tried to archive an Element for a non-existent holder.")
 
-    #Transactions finalized out of order.
-    var outOfOrder: HashSet[Hash[256]] = initHashSet[Hash[256]]()
-    #Mark every hash in this Epoch as out of Epochs.
+    #Finalize every popped Transaction.
     for hash in popped.keys():
-        var parents: seq[Hash[256]] = @[hash]
-        while parents.len != 0:
-            #Grab the last parent.
-            var parent: Hash[256] = parents.pop()
-
-            #Skip this Transaction if we already finalized it.
-            if outOfOrder.contains(parent):
-                continue
-
-            #Grab the Transaction.
-            var tx: Transaction
-            try:
-                tx = consensus.functions.transactions.getTransaction(parent)
-            except IndexError as e:
-                panic("Couldn't get a Transaction that's out of Epochs: " & e.msg)
-
-            #Grab this Transaction's unfinalized parents.
-            var newParents: seq[Hash[256]] = consensus.getUnfinalizedParents(tx)
-
-            #If all the parents are finalized, finalize this Transaction.
-            if newParents.len == 0:
-                try:
-                    consensus.finalize(state, parent)
-                except KeyError as e:
-                    panic("Couldn't get a value from a Table using a key from .keys(): " & e.msg)
-                outOfOrder.incl(parent)
-            else:
-                #Else, add back this Transaction, and then add the new parents.
-                parents.add(parent)
-                parents &= newParents
+        consensus.finalize(state, hash)
 
     #Reclaulcate every close Status.
     var toDelete: seq[Hash[256]] = @[]
@@ -1149,8 +1098,7 @@ proc postRevert*(
 
         #Mark it as unverified until proven otherwise.
         if status.verified:
-            status.verified = false
-            consensus.functions.transactions.unverify(hash)
+            consensus.unverify(hash, status, revertedStatuses)
 
         #Calculate the Transaction's Merit.
         consensus.calculateMerit(state, hash, status)

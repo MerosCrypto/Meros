@@ -269,7 +269,7 @@ suite "ConsensusRevert":
             for removee in removed.keys():
                 consensus.remove(removed[removee], rewardsState[removee])
 
-            #Add the elements.
+            #Add the Elements.
             for elem in elements:
                 case elem:
                     of SendDifficulty as sendDiff:
@@ -282,7 +282,7 @@ suite "ConsensusRevert":
             transactions.archive(newBlock, epoch)
 
             #Create a Mint/Claim to fund all planned Sends.
-            var claims: seq[Claim] = @[]
+            var claims: Table[Hash[256], Claim] = initTable[Hash[256], Claim]()
             if not last:
                 rewards[newBlock.header.hash] = @[]
                 for w in 0 ..< wallets.len:
@@ -290,11 +290,12 @@ suite "ConsensusRevert":
                         continue
 
                     rewards[newBlock.header.hash].add(newReward(0, uint64(needed[w]) + uint64(rand(2000))))
-                    claims.add(newClaim(
+                    var claim: Claim = newClaim(
                         @[newFundedInput(newBlock.header.hash, rewards[newBlock.header.hash].len - 1)],
                         wallets[w].publicKey
-                    ))
-                    holders[0].sign(claims[^1])
+                    )
+                    holders[0].sign(claim)
+                    claims[claim.hash] = claim
                 transactions.mint(newBlock.header.hash, rewards[newBlock.header.hash])
 
             #Commit the DBs.
@@ -302,12 +303,12 @@ suite "ConsensusRevert":
 
             #Add the Claims.
             if not last:
-                for claim in claims:
-                    add(claim, true)
+                for claim in claims.keys():
+                    add(claims[claim], true)
 
             #Iterate over every status in the cache. If any just became verified, mark it.
             for tx in consensus.statuses.keys():
-                if verified.hasKey(tx):
+                if claims.hasKey(tx) or verified.hasKey(tx):
                     continue
                 if consensus.statuses[tx].verified:
                     verified[tx] = merit.blockchain.height
