@@ -27,9 +27,6 @@ import random
 
 suite "SerializeVerification":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #SignedVerification Element.
             verif: SignedVerification = newRandomVerification()

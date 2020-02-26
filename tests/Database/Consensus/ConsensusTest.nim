@@ -40,10 +40,6 @@ import random
 import tables
 
 suite "Consensus":
-    setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
     midFuzzTest "Reloaded malicious table.":
         var
             #Database.
@@ -130,7 +126,7 @@ suite "Consensus":
             #Compare the Consensus DAGs.
             compare(consensus, reloaded)
 
-    test "Reloaded Consensus.":
+    noFuzzTest "Reloaded Consensus.":
         var
             #Database.
             db: DB = newTestDatabase()

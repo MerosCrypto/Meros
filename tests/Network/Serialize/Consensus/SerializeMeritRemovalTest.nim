@@ -27,9 +27,6 @@ import random
 
 suite "SerializeMeritRemoval":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #SignedMeritRemoval Element.
             mr: SignedMeritRemoval = newRandomMeritRemoval()

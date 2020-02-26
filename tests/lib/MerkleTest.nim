@@ -19,18 +19,14 @@ import ../../src/lib/Merkle
 import random
 
 suite "Merkle":
-    setup:
-        #Seed Random.
-        randomize(int64(getTime()))
-
-    test "`nil` Merkle trees.":
+    noFuzzTest "`nil` Merkle trees.":
         check(newMerkle().isLeaf)
         check(newMerkle().hash == "".pad(32).toHash(256))
 
-    test "Leaves.":
+    noFuzzTest "Leaves.":
         check(newMerkle("1".pad(32).toHash(256)).hash == "1".pad(32).toHash(256))
 
-    test "A blank Merkle tree with an added leaf is the same as a tree created with said leaf.":
+    noFuzzTest "A blank Merkle tree with an added leaf is the same as a tree created with said leaf.":
         var
             created: Merkle = newMerkle("".pad(32).toHash(256))
             added: Merkle = newMerkle()

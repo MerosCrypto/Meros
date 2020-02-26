@@ -43,9 +43,6 @@ var newMiner: bool = true
 
 suite "SerializeBlock":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Last hash.
             last: RandomXHash

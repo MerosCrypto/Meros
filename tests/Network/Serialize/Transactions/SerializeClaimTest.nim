@@ -31,9 +31,6 @@ import random
 
 suite "SerializeClaim":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Inputs.
             inputs: seq[FundedInput]

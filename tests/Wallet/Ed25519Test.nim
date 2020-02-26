@@ -3,6 +3,9 @@
 #Test lib.
 import unittest
 
+#Fuzzing lib.
+import ../Fuzzed
+
 import ../../src/Wallet/Ed25519
 
 suite "Ed25519":
@@ -14,8 +17,8 @@ suite "Ed25519":
             newEdPublicKey("CCE542F0E500C85088E9A253946D7EF5DD0867B7655B79EA3919B46CE6346128")
         ]
 
-    test "Aggregate.":
+    noFuzzTest "Aggregate.":
         check(keys.aggregate() == newEdPublicKey("58E6AF7B9C4FC89380CC84B4D478725A39A05EC9B3F2BE2E149EDD5C857B7371"))
 
-    test "Verify.":
+    noFuzzTest "Verify.":
         check(keys.aggregate().verify("test", newEdSignature("F529B567F152BD037A8EFD0BE58F0D1864E642E2FDA9FD1074A8F2D22B2387404E144C02DE18CCF984D354339928AF63DFDED2518FEF32FC2C0F376A607A250D")))

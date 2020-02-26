@@ -31,7 +31,7 @@ suite "Mnemonic":
             #Test vectors.
             vectors: JSONNode = parseJSON(vectorsFile)
 
-    test "Each vector.":
+    noFuzzTest "Each vector.":
         for vector in vectors["english"]:
             mnemonic = newMnemonic(vector[1].getStr())
             check(mnemonic.entropy.toHex().toLower() == vector[0].getStr())

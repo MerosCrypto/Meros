@@ -22,15 +22,11 @@ const
     MAXU32: int = int(not uint32(0))
 
 suite "Util":
-    setup:
-        #Seed random.
-        randomize(int64(5))
-
-    test "Make sure leading 0 bytes are ignored.":
+    noFuzzTest "Make sure leading 0 bytes are ignored.":
         check(0.toBinary() == "")
         check("\0\0\0\0".fromBinary() == 0)
 
-    test "char fromBinary behaves the same as string fromBinary.":
+    noFuzzTest "char fromBinary behaves the same as string fromBinary.":
         var r: int = rand(255)
         check(char(r).fromBinary() == ($char(r)).fromBinary())
 
@@ -58,10 +54,10 @@ suite "Util":
         var u32: uint32 = uint32(rand(MAXU32))
         check(u32 == uint32(u32.toBinary().fromBinary()))
 
-    test "An extremely high number (21 million Meros).":
+    noFuzzTest "An extremely high number (21 million Meros).":
         var u64: uint64 = uint64(210000000000000000)
         check(u64 == uint64(u64.toBinary().fromBinary()))
 
-    test "The same number yet with the Nim standard lib.":
+    noFuzzTest "The same number yet with the Nim standard lib.":
         var u64: uint64 = uint64(210000000000000000)
         check(u64 == uint64(parseUInt($u64)))

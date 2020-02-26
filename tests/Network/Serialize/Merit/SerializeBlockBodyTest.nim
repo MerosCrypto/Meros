@@ -39,9 +39,6 @@ import random
 
 suite "SerializeBlockBody":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Sketch salt.
             sketchSalt: string

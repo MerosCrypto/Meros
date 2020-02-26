@@ -23,10 +23,6 @@ import ../../../../Transactions/CompareTransactions
 import random
 
 suite "SerializeMintOutput":
-    setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
     lowFuzzTest "Serialize and parse.":
         var
             output: MintOutput

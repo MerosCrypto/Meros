@@ -30,9 +30,6 @@ import random
 
 suite "SerializeData":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Input.
             input: Hash[256]

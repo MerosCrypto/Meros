@@ -27,9 +27,6 @@ import random
 
 suite "SerializeDataDifficulty":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #SignedDataDifficulty Element.
             dataDiff: SignedDataDifficulty = newRandomDataDifficulty()

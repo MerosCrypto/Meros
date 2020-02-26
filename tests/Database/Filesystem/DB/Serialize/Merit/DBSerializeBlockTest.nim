@@ -38,9 +38,6 @@ var newMiner: bool = true
 
 suite "DBSerializeBlock":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #Last hash.
             last: RandomXHash

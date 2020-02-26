@@ -3,6 +3,9 @@
 #Test lib.
 import unittest
 
+#Fuzzing lib.
+import ../../Fuzzed
+
 #Errors lib.
 import ../../../src/lib/Errors
 
@@ -43,11 +46,7 @@ import tables
 const START_DIFFICULTY: Hash[256] = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toHash(256)
 
 suite "Blockchain":
-    setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
-    test "Reloaded and reverted Blockchain.":
+    noFuzzTest "Reloaded and reverted Blockchain.":
         var
             #Database.
             db: DB = newTestDatabase()

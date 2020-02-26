@@ -24,9 +24,6 @@ import random
 
 suite "SerializeVerificationPacket":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #SignedVerificationPacket Element.
             packet: SignedVerificationPacket = newRandomVerificationPacket()

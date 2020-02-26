@@ -26,10 +26,6 @@ import ../../../../Merit/CompareMerit
 import random
 
 suite "SerializeDifficulty":
-    setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
     lowFuzzTest "Serialize and parse.":
         var
             #Difficulty value.

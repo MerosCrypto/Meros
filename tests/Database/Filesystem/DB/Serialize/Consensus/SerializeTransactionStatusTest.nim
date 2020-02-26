@@ -37,9 +37,6 @@ import tables
 
 suite "SerializeTransactionStatus":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         #Create a TransactionStatus.
         var
             hash: Hash[256]
@@ -68,7 +65,7 @@ suite "SerializeTransactionStatus":
                 pendingSigs.add(status.signatures[holder])
                 status.packet.signature = pendingSigs.aggregate()
 
-    test "Serialize and parse an empty TransactionStatus.":
+    noFuzzTest "Serialize and parse an empty TransactionStatus.":
         status.competing = false
         status.verified = false
         status.beaten = false

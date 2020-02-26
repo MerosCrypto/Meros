@@ -37,10 +37,6 @@ import tables
 import random
 
 suite "Spendable":
-    setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
     midFuzzTest "Saving UTXOs, checking which UTXOs an account can spend, and deleting UTXOs.":
         var
             #DB.

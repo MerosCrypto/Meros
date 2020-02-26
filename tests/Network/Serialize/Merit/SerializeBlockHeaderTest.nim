@@ -32,10 +32,6 @@ import random
 var newMiner: bool = true
 
 suite "SerializeBlockHeader":
-    setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
     midFuzzTest "Serialize and parse.":
         var
             #Last Block's Hash.

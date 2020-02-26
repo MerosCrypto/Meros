@@ -43,9 +43,6 @@ type VotedDifficultyTest = object
 
 suite "SpamFilter":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #Holder -> Merit.
             merit: Table[uint16, int]
@@ -54,14 +51,14 @@ suite "SpamFilter":
             #SpamFilter.
             filter: SpamFilter = newSpamFilterObj(START_DIFFICULTY)
 
-    test "Verify the starting difficulty is correct.":
+    noFuzzTest "Verify the starting difficulty is correct.":
         check(filter.difficulty == START_DIFFICULTY)
 
-    test "Verify adding 0 votes doesn't change the starting difficulty.":
+    noFuzzTest "Verify adding 0 votes doesn't change the starting difficulty.":
         filter.update(0, 49, OTHER_DIFFICULTY)
         check(filter.difficulty == START_DIFFICULTY)
 
-    test "Add 1 vote and remove it via a decrement.":
+    noFuzzTest "Add 1 vote and remove it via a decrement.":
         filter.update(0, 50, OTHER_DIFFICULTY)
         check(filter.difficulty == OTHER_DIFFICULTY)
         filter.handleBlock(1, 1, 0, 49)
@@ -70,7 +67,7 @@ suite "SpamFilter":
         check(filter.right == 0)
         check(filter.medianPos == -1)
 
-    test "Add 1 vote and remove it via a MeritRemoval.":
+    noFuzzTest "Add 1 vote and remove it via a MeritRemoval.":
         filter.update(0, 50, OTHER_DIFFICULTY)
         check(filter.difficulty == OTHER_DIFFICULTY)
         filter.remove(0, 50)
