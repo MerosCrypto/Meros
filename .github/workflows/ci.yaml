@@ -1,4 +1,4 @@
-name: build
+name: ci
 
 on:
     push:
@@ -9,18 +9,53 @@ on:
             - master
 
 jobs:
-    meros:
+    test:
         runs-on: ubuntu-latest
         steps:
             -   uses: actions/checkout@v2
-            -   name: Docker Build
-                run: docker build -f .github/workflows/Dockerfile -t meroscrypto/meros:latest .
-            -   name: Docker Login
-                if: github.ref == 'refs/heads/master'
-                uses: azure/docker-login@v1
+            -   name: Install dependencies
+                run: sudo apt-get update && sudo apt-get install -y gcc g++ make cmake autoconf automake libtool curl
+            -   name: Cache choosenim
+                id: cache-choosenim
+                uses: actions/cache@v1
                 with:
-                    username: merosmaintainers
-                    password: ${{ secrets.DOCKER_PASSWORD }}
-            -   name: Docker Publish
-                if: github.ref == 'refs/heads/master'
-                run: docker push meroscrypto/meros:latest
+                    path: ~/.choosenim
+                    key: ${{ runner.os }}-choosenim-stable
+            -   name: Cache nimble
+                id: cache-nimble
+                uses: actions/cache@v1
+                with:
+                    path: ~/.nimble
+                    key: ${{ runner.os }}-nimble-stable
+            -   uses: jiro4989/setup-nim-action@v1.0.2
+                with:
+                    nim-version: '1.0.4'
+            -   name: Run unit tests
+                run: nimble ci
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v2
+            -   name: Install dependencies
+                run: sudo apt-get update && sudo apt-get install -y gcc g++ make cmake autoconf automake libtool curl
+            -   name: Cache choosenim
+                id: cache-choosenim
+                uses: actions/cache@v1
+                with:
+                    path: ~/.choosenim
+                    key: ${{ runner.os }}-choosenim-stable
+            -   name: Cache nimble
+                id: cache-nimble
+                uses: actions/cache@v1
+                with:
+                    path: ~/.nimble
+                    key: ${{ runner.os }}-nimble-stable
+            -   uses: jiro4989/setup-nim-action@v1.0.2
+                with:
+                    nim-version: '1.0.4'
+            -   name: Run unit tests
+                run: nimble build -Y
+            -   uses: actions/upload-artifact@v1
+                with:
+                    name: meros-linux
+                    path: build/Meros

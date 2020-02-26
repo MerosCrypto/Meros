@@ -1,0 +1,23 @@
+name: docker-image
+
+on:
+    push:
+        branches:
+            - master
+
+jobs:
+    meros:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v2
+            -   name: Docker Build
+                run: docker build -f .github/workflows/Dockerfile -t meroscrypto/meros:latest .
+            -   name: Docker Login
+                if: github.ref == 'refs/heads/master'
+                uses: azure/docker-login@v1
+                with:
+                    username: merosmaintainers
+                    password: ${{ secrets.DOCKER_PASSWORD }}
+            -   name: Docker Publish
+                if: github.ref == 'refs/heads/master'
+                run: docker push meroscrypto/meros:latest
