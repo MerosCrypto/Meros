@@ -299,7 +299,7 @@ proc calculateMerit*(
 
         if (not wasVerified) and (status.verified):
             try:
-                for o in 0 ..< tx.outputs.len:
+                for o in 0 ..< max(tx.outputs.len, 1):
                     children &= consensus.functions.transactions.getSpenders(newFundedInput(child, o))
             except IndexError as e:
                 panic("Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
@@ -339,7 +339,7 @@ proc unverify*(
             consensus.db.save(child, childStatus)
 
             try:
-                for o in 0 ..< tx.outputs.len:
+                for o in 0 ..< max(tx.outputs.len, 1):
                     var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
                     for spender in spenders:
                         children.add(spender)

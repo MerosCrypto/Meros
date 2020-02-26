@@ -286,7 +286,7 @@ proc discoverTree*(
 
         try:
             #Iterate over the Transaction's outputs.
-            for o in 0 ..< transactions[current].outputs.len:
+            for o in 0 ..< max(transactions[current].outputs.len, 1):
                 #Add every spender of each output to the queue.
                 var spenders: seq[Hash[256]] = transactions.loadSpenders(newFundedInput(current, o))
                 result &= spenders
@@ -309,7 +309,7 @@ proc discoverUnorderedTree*(
 
         try:
             #Iterate over the Transaction's outputs.
-            for o in 0 ..< transactions[current].outputs.len:
+            for o in 0 ..< max(transactions[current].outputs.len, 1):
                 #Add every spender of each output to the queue.
                 for spender in transactions.loadSpenders(newFundedInput(current, o)):
                     if not result.contains(spender):
