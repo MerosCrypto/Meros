@@ -375,19 +375,23 @@ suite "ConsensusRevert":
                                 var
                                     meritSum: int = 0
                                     parentsVerified: bool = true
-                                for holder in pendingStatuses[tx].holders:
+                                for holder in consensus.statuses[tx].holders:
                                     meritSum += merit.state[holder]
                                 for input in txs[tx].inputs:
                                     if (input.hash == Hash[256]()) or (transactions[input.hash] of Mint):
-                                        continue
+                                        break
 
                                     if not consensus.getStatus(input.hash).verified:
                                         parentsVerified = false
                                         break
-                                discard """
-                                if parentsVerified and (meritSum > merit.state.nodeThresholdAt(consensus.statuses[tx].epoch)):
-                                    check(consensus.statuses[tx].verified)]
-                                """
+
+                                #We don't use the current Epoch here because we don't recalculate when the Epoch is lowered (or raised).
+                                check(
+                                    (
+                                        parentsVerified and
+                                        (meritSum > merit.state.nodeThresholdAt(epochs[tx]))
+                                    ) == consensus.statuses[tx].verified
+                                )
                             else:
                                 check(not consensus.statuses[tx].verified)
                         #It was verified at this point in time.

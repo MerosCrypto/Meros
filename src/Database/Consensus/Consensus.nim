@@ -335,7 +335,7 @@ proc register*(
 
         #Check for competing Transactions.
         var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
-        if spenders.len != 1:
+        if (spenders.len != 1) and (input.hash != Hash[256]()):
             status.competing = true
 
             #If there's a competing Transaction, mark competitors as needing to default.
@@ -1093,8 +1093,7 @@ proc postRevert*(
             status.epoch = blockchain.height + 7
 
         #Add back the pending holders.
-        for holder in status.pending:
-            status.holders.incl(holder)
+        status.holders = status.holders + status.pending
 
         #Mark it as unverified until proven otherwise.
         if status.verified:
