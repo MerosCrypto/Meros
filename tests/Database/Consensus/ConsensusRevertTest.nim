@@ -385,11 +385,10 @@ suite "ConsensusRevert":
                                         parentsVerified = false
                                         break
 
-                                #We don't use the current Epoch here because we don't recalculate when the Epoch is lowered (or raised).
                                 check(
                                     (
                                         parentsVerified and
-                                        (meritSum > merit.state.nodeThresholdAt(epochs[tx]))
+                                        (meritSum > merit.state.nodeThresholdAt(consensus.statuses[tx].epoch))
                                     ) == consensus.statuses[tx].verified
                                 )
                             else:

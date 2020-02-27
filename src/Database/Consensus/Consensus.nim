@@ -770,6 +770,27 @@ proc archive*(
     #Update the Epoch for every unmentioned Transaction.
     for hash in consensus.unmentioned:
         consensus.incEpoch(hash)
+
+        #Get the status.
+        var
+            status: TransactionStatus
+            merit: int = 0
+        try:
+            status = consensus.getStatus(hash)
+        except IndexError as e:
+            panic("Couldn't get the TransactionStatus for an unmentioned Transaction: " & e.msg)
+
+        #If the Transaction was verified, calculate its Merit and see if it's still verified with the new threshold.
+        for holder in status.holders:
+            if consensus.malicious.hasKey(holder):
+                continue
+            merit += state[holder]
+
+        #If it's not, unverify it.
+        if merit < state.nodeThresholdAt(status.epoch):
+            consensus.unverify(hash, status)
+
+        #Make sure the hash is included in unmentioned.
         consensus.db.addUnmentioned(hash)
 
     #Update the signature/nonces of every holder.
