@@ -124,6 +124,8 @@ suite "ConsensusRevert":
             verified: Table[Hash[256], int] = initTable[Hash[256], int]()
             #Finalized statuses.
             finalizedStatuses: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
+            #Pending statuses.
+            pendingStatuses: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
 
             #Copy of the SpamFilters at every step.
             sendFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
@@ -362,10 +364,35 @@ suite "ConsensusRevert":
                         #Don't check competing since this test doesn't generate competing values.
 
                         #Verify verified.
-                        if verified.hasKey(tx):
-                            check(consensus.statuses[tx].verified == (merit.blockchain.height >= verified[tx]))
+                        if (
+                            #If this was never verified...
+                            (not verified.hasKey(tx)) or
+                            #Or it was yet wasn't verified at this point in time...
+                            (verified.hasKey(tx) and (merit.blockchain.height < verified[tx]))
+                        ):
+                            #If this has pending Verifications, it actually could be verified anyways.
+                            if pendingStatuses.hasKey(tx) and (pendingStatuses[tx].pending.len != 0):
+                                var
+                                    meritSum: int = 0
+                                    parentsVerified: bool = true
+                                for holder in pendingStatuses[tx].holders:
+                                    meritSum += merit.state[holder]
+                                for input in txs[tx].inputs:
+                                    if (input.hash == Hash[256]()) or (transactions[input.hash] of Mint):
+                                        continue
+
+                                    if not consensus.getStatus(input.hash).verified:
+                                        parentsVerified = false
+                                        break
+                                discard """
+                                if parentsVerified and (meritSum > merit.state.nodeThresholdAt(consensus.statuses[tx].epoch)):
+                                    check(consensus.statuses[tx].verified)]
+                                """
+                            else:
+                                check(not consensus.statuses[tx].verified)
+                        #It was verified at this point in time.
                         else:
-                            check(not consensus.statuses[tx].verified)
+                            check(consensus.statuses[tx].verified)
 
                         #Don't test beaten for the same reason as competing.
 
@@ -382,11 +409,11 @@ suite "ConsensusRevert":
                             check(consensus.statuses[tx].signatures.len == 0)
                         #Else, pending/packet/signatures should be untouched.
                         else:
-                            discard """
-                            pending
-                            packet
-                            signatures
-                            """
+                            check(pendingStatuses[tx].pending == consensus.statuses[tx].pending)
+                            compare(pendingStatuses[tx].packet, consensus.statuses[tx].packet)
+                            check(pendingStatuses[tx].signatures.len == consensus.statuses[tx].signatures.len)
+                            for holder in pendingStatuses[tx].signatures.keys():
+                                check(pendingStatuses[tx].signatures[holder] == consensus.statuses[tx].signatures[holder])
 
                             verifiers[tx] = verifiers[tx] + consensus.statuses[tx].pending
 
@@ -430,17 +457,23 @@ suite "ConsensusRevert":
                 initialDataDifficulty
             ))
 
+        proc copy(
+            status: TransactionStatus
+        ): TransactionStatus =
+            result = newTransactionStatusObj(status.packet.hash, status.epoch)
+            result.competing = status.competing
+            result.verified = status.verified
+            result.beaten = status.beaten
+            result.holders = status.holders
+            result.pending = status.pending
+            result.packet = status.packet
+            result.signatures = status.signatures
+            result.merit = status.merit
+
         proc copy(): Consensus =
             result = consensus
             for tx in consensus.statuses.keys():
-                result.statuses[tx] = newTransactionStatusObj(consensus.statuses[tx].packet.hash, consensus.statuses[tx].epoch)
-                result.statuses[tx].competing = consensus.statuses[tx].competing
-                result.statuses[tx].verified = consensus.statuses[tx].verified
-                result.statuses[tx].beaten = consensus.statuses[tx].beaten
-                result.statuses[tx].holders = consensus.statuses[tx].holders
-                result.statuses[tx].pending = consensus.statuses[tx].pending
-                result.statuses[tx].packet = consensus.statuses[tx].packet
-                result.statuses[tx].merit = consensus.statuses[tx].merit
+                result.statuses[tx] = copy(consensus.statuses[tx])
 
         #Replay from Block 50.
         proc replay() =
@@ -521,6 +554,17 @@ suite "ConsensusRevert":
 
                 #Commit the DBs.
                 commit(merit.blockchain.height)
+
+            #Add back the pending statuses.
+            for tx in pendingStatuses.keys():
+                if txs[tx] of Data:
+                    continue
+
+                for holder in pendingStatuses[tx].signatures.keys():
+                    var verif: SignedVerification = newSignedVerificationObj(tx)
+                    verif.holder = holder
+                    verif.signature = pendingStatuses[tx].signatures[holder]
+                    consensus.add(merit.state, verif)
 
             #Compare the replayed Consensus DAG with the full DAG.
             compare(consensus, full)
@@ -619,6 +663,18 @@ suite "ConsensusRevert":
 
         #Create one last Block for the latest Claims/Sends.
         addBlock(true)
+
+        #Add pending Signed Verifications to make sure they're reverted properly.
+        for tx in consensus.statuses.keys():
+            for h in 0 ..< holders.len:
+                if (not consensus.statuses[tx].holders.contains(uint16(h))) and (rand(1) == 0):
+                    var verif: SignedVerification = newSignedVerificationObj(tx)
+                    holders[h].sign(verif)
+                    consensus.add(merit.state, verif)
+
+        #Backup the pending statuses.
+        for tx in consensus.statuses.keys():
+            pendingStatuses[tx] = copy(consensus.statuses[tx])
 
         #Back up the full Consensus DAG.
         full = copy()

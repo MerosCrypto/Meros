@@ -393,8 +393,8 @@ proc finalize*(
                 except IndexError as e:
                     panic("Couldn't get the Status of a competing Transaction: " & e.msg)
 
-    #If the status was beaten and has no holders, prune it and its descendants.
-    if status.beaten and (status.holders.len == 0):
+    #If the status was beaten and has no archived holders, prune it and its descendants.
+    if status.beaten and (status.holders.len - status.pending.len == 0):
         var
             #Discover the tree.
             tree: seq[Hash[256]] = consensus.functions.transactions.discoverTree(hash)
@@ -424,7 +424,7 @@ proc finalize*(
     consensus.db.save(hash, status)
     consensus.statuses.del(hash)
 
-#Delete a Transaction.
+#Delete a TransactionStatus.
 proc delete*(
     consensus: var Consensus,
     hash: Hash[256]
