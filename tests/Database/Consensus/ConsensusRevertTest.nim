@@ -214,6 +214,32 @@ suite "ConsensusRevert":
         proc addBlock(
             last: bool = false
         ) =
+            #Grab old Transactions in Epochs to verify.
+            for epoch in merit.epochs:
+                for tx in epoch.keys():
+                    if rand(6) != 0:
+                        continue
+
+                    #Create the packet.
+                    packets.add(newSignedVerificationPacketObj(tx))
+
+                    #Run against each Merit Holder.
+                    for h in 0 ..< holders.len:
+                        if (not holders[h].initiated) or epoch[tx].contains(uint16(h)) or (rand(3) != 0):
+                            continue
+
+                        #Add the holder.
+                        packets[^1].holders.add(uint16(h))
+
+                        #Create the SignedVerification.
+                        var verif: SignedVerification = newSignedVerificationObj(tx)
+                        holders[h].sign(verif)
+                        cast[SignedVerificationPacket](packets[^1]).add(verif)
+
+                    #If no holder was added, delete the packet.
+                    if packets[^1].holders.len == 0:
+                        packets.del(high(packets))
+
             #Create a Block.
             if merit.blockchain.height < holders.len + 1:
                 newBlock = newBlankBlock(
@@ -504,7 +530,6 @@ suite "ConsensusRevert":
         addBlock()
 
         for b in 1 .. 155:
-            echo "Block ", b
             #Create a random amount of Wallets.
             for _ in 0 ..< rand(2) + 2:
                 wallets.add(newWallet(""))
