@@ -126,6 +126,8 @@ suite "ConsensusRevert":
             finalizedStatuses: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
             #Pending statuses.
             pendingStatuses: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
+            #Transactions with pending Verifications or parents with pending Verifications.
+            transactionsWithPending: HashSet[Hash[256]] = initHashSet[Hash[256]]()
 
             #Copy of the SpamFilters at every step.
             sendFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
@@ -370,29 +372,34 @@ suite "ConsensusRevert":
                             #Or it was yet wasn't verified at this point in time...
                             (verified.hasKey(tx) and (merit.blockchain.height < verified[tx]))
                         ):
-                            #If this has pending Verifications, it actually could be verified anyways.
-                            if pendingStatuses.hasKey(tx) and (pendingStatuses[tx].pending.len != 0):
-                                var
-                                    meritSum: int = 0
-                                    parentsVerified: bool = true
-                                for holder in consensus.statuses[tx].holders:
-                                    meritSum += merit.state[holder]
-                                for input in txs[tx].inputs:
-                                    if (input.hash == Hash[256]()) or (transactions[input.hash] of Mint):
-                                        break
+                            var
+                                meritSum: int = 0
+                                parentsVerified: bool = true
+                                parentOrChildPending: bool = transactionsWithPending.contains(tx)
 
+                            #Calculate the Merit sum.
+                            for holder in consensus.statuses[tx].holders:
+                                meritSum += merit.state[holder]
+
+                            #Handle the fact initial Datas and Claims always have verified inputs.
+                            if not (
+                                ((txs[tx] of Data) and (cast[Data](txs[tx]).isFirstData)) or
+                                (txs[tx] of Claim)
+                            ):
+                                #Check if the parents are verified.
+                                for input in txs[tx].inputs:
                                     if not consensus.getStatus(input.hash).verified:
                                         parentsVerified = false
                                         break
 
-                                check(
-                                    (
-                                        parentsVerified and
-                                        (meritSum > merit.state.nodeThresholdAt(consensus.statuses[tx].epoch))
-                                    ) == consensus.statuses[tx].verified
-                                )
-                            else:
-                                check(not consensus.statuses[tx].verified)
+                            #If this had pending Verifications, or any parent did, it actually could be verified anyways.
+                            check(
+                                (
+                                    parentOrChildPending and
+                                    parentsVerified and
+                                    (meritSum >= merit.state.nodeThresholdAt(consensus.statuses[tx].epoch))
+                                ) == consensus.statuses[tx].verified
+                            )
                         #It was verified at this point in time.
                         else:
                             check(consensus.statuses[tx].verified)
@@ -674,6 +681,7 @@ suite "ConsensusRevert":
                     var verif: SignedVerification = newSignedVerificationObj(tx)
                     holders[h].sign(verif)
                     consensus.add(merit.state, verif)
+                    transactionsWithPending = transactions.discoverUnorderedTree(tx, transactionsWithPending)
 
         #Backup the pending statuses.
         for tx in consensus.statuses.keys():

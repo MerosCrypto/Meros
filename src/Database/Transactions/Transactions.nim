@@ -306,6 +306,7 @@ proc discoverUnorderedTree*(
     while queue.len != 0:
         #Grab the latest descendant.
         current = queue.pop()
+        result.incl(current)
 
         try:
             #Iterate over the Transaction's outputs.
@@ -313,7 +314,6 @@ proc discoverUnorderedTree*(
                 #Add every spender of each output to the queue.
                 for spender in transactions.loadSpenders(newFundedInput(current, o)):
                     if not result.contains(spender):
-                        result.incl(spender)
                         queue.add(spender)
         except IndexError as e:
             panic("Couldn't discover a Transaction in a tree: " & e.msg)
