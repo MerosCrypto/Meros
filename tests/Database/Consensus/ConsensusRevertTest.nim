@@ -567,7 +567,14 @@ suite "ConsensusRevert":
 
             #Add back the pending statuses.
             for tx in pendingStatuses.keys():
-                if txs[tx] of Data:
+                if (
+                    #Datas are never pruned.
+                    (txs[tx] of Data) or (
+                        #Sends may not be pruned if they are part of a very old Mint tree.
+                        (txs[tx] of Send) and
+                        (consensus.getStatus(tx).pending.len != 0)
+                    )
+                ):
                     continue
 
                 for holder in pendingStatuses[tx].signatures.keys():
