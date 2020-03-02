@@ -1123,5 +1123,9 @@ proc postRevert*(
         #Calculate the Transaction's Merit.
         consensus.calculateMerit(state, hash, status)
 
-        #Save back the status.
-        consensus.setStatus(hash, status)
+    #Save back the statuses.
+    for hash in revertedStatuses.keys():
+        try:
+            consensus.setStatus(hash, revertedStatuses[status])
+        except KeyError as e:
+            doAssert(false, "Couldn't get a status with a key from keys: " & e.msg)
