@@ -264,7 +264,8 @@ proc calculateMerit*(
     consensus: var Consensus,
     state: State,
     hash: Hash[256],
-    statusArg: TransactionStatus
+    statusArg: TransactionStatus,
+    statusesOverride: TableRef[Hash[256], TransactionStatus] = nil
 ) {.forceCheck: [].} =
     var
         children: seq[Hash[256]] = @[hash]
@@ -279,7 +280,12 @@ proc calculateMerit*(
         try:
             tx = consensus.functions.transactions.getTransaction(child)
             if child != hash:
-                status = consensus.getStatus(child)
+                if statusesOverride.isNil:
+                    status = consensus.getStatus(child)
+                else:
+                    status = statusesOverride[child]
+        except KeyError:
+            panic("Couldn't get the TransactionStatus for a Transaction we're reverting from the overriden cache.")
         except IndexError:
             panic("Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
         wasVerified = status.verified
@@ -309,7 +315,7 @@ proc unverify*(
     consensus: var Consensus,
     hash: Hash[256],
     status: TransactionStatus,
-    statusesOverride: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
+    statusesOverride: TableRef[Hash[256], TransactionStatus] = nil
 ) {.forceCheck: [].} =
     var
         children: seq[Hash[256]] = @[hash]
@@ -322,7 +328,7 @@ proc unverify*(
         try:
             tx = consensus.functions.transactions.getTransaction(child)
             if child != hash:
-                if statusesOverride.len == 0:
+                if statusesOverride.isNil:
                     childStatus = consensus.getStatus(child)
                 else:
                     childStatus = statusesOverride[child]
@@ -340,9 +346,7 @@ proc unverify*(
 
             try:
                 for o in 0 ..< max(tx.outputs.len, 1):
-                    var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
-                    for spender in spenders:
-                        children.add(spender)
+                    children &= consensus.functions.transactions.getSpenders(newFundedInput(child, o))
             except IndexError as e:
                 panic("Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 

@@ -1050,7 +1050,7 @@ proc postRevert*(
     We need to revert unmentioned. We can do this by rebuilding it, however inefficient it is.
     """
 
-    var revertedStatuses: Table[Hash[256], TransactionStatus]
+    var revertedStatuses: TableRef[Hash[256], TransactionStatus] = newTable[Hash[256], TransactionStatus]()
     for hash in consensus.cachedTransactions:
         try:
             revertedStatuses[hash] = consensus.getStatus(hash)
@@ -1121,11 +1121,11 @@ proc postRevert*(
             consensus.unverify(hash, status, revertedStatuses)
 
         #Calculate the Transaction's Merit.
-        consensus.calculateMerit(state, hash, status)
+        consensus.calculateMerit(state, hash, status, revertedStatuses)
 
     #Save back the statuses.
     for hash in revertedStatuses.keys():
         try:
-            consensus.setStatus(hash, revertedStatuses[status])
+            consensus.setStatus(hash, revertedStatuses[hash])
         except KeyError as e:
             doAssert(false, "Couldn't get a status with a key from keys: " & e.msg)
