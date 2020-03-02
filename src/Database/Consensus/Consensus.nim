@@ -317,7 +317,7 @@ proc register*(
     height: int
 ) {.forceCheck: [].} =
     #Create the status.
-    var status: TransactionStatus = newTransactionStatusObj(tx.hash, height + 7)
+    var status: TransactionStatus = newTransactionStatusObj(tx.hash, height + 6)
 
     for input in tx.inputs:
         #Check if this Transaction's parent was beaten.
@@ -1106,12 +1106,12 @@ proc postRevert*(
         #Set the holders and epoch.
         try:
             status.holders = holders[hash]
-            status.epoch = mentioned[hash] + 7
+            status.epoch = mentioned[hash] + 6
         #If this raised a KeyError, they were never mentioned.
         except KeyError:
             status.holders = initHashSet[uint16]()
             consensus.setUnmentioned(hash)
-            status.epoch = blockchain.height + 7
+            status.epoch = blockchain.height + 6
 
         #Add back the pending holders.
         status.holders = status.holders + status.pending

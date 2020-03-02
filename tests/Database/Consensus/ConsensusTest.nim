@@ -281,7 +281,7 @@ suite "Consensus":
                 var tx: Transaction = Transaction()
                 tx.hash = hash
                 transactions.transactions[tx.hash] = tx
-                consensus.register(merit.state, tx, r)
+                consensus.register(merit.state, tx, merit.blockchain.height)
 
                 #Create a packet for the Transaction.
                 packets.add(newVerificationPacketObj(hash))
