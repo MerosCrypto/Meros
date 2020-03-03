@@ -15,6 +15,7 @@ import PythonTests.Vectors.Generation.Transactions.PruneUnaddable
 #Consensus.
 import PythonTests.Vectors.Generation.Consensus.Verification.Parsable
 import PythonTests.Vectors.Generation.Consensus.Verification.Competing
+import PythonTests.Vectors.Generation.Consensus.Verification.HundredTwo
 import PythonTests.Vectors.Generation.Consensus.Verification.HundredFourtyTwo
 
 import PythonTests.Vectors.Generation.Consensus.Difficulties.SendDifficulty

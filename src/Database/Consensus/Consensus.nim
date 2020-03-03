@@ -275,7 +275,7 @@ proc flag*(
                 var merit: int = 0
                 for holder in status.holders:
                     if not consensus.malicious.hasKey(holder):
-                        merit += state[holder]
+                        merit += state[holder, status.epoch]
 
                 if merit < state.protocolThresholdAt(status.epoch):
                     consensus.unverify(packet.hash, status)
@@ -291,7 +291,7 @@ proc flag*(
             var merit: int = 0
             for holder in status.holders:
                 if not consensus.malicious.hasKey(holder):
-                    merit += state[holder]
+                    merit += state[holder, status.epoch]
 
             if merit < state.protocolThresholdAt(status.epoch):
                 consensus.unverify(hash, status)
@@ -469,7 +469,7 @@ proc add*(
     sendDiff: SendDifficulty
 ) {.forceCheck: [].} =
     consensus.db.save(sendDiff)
-    consensus.filters.send.update(sendDiff.holder, state[sendDiff.holder], sendDiff.difficulty)
+    consensus.filters.send.update(sendDiff.holder, state[sendDiff.holder, state.processedBlocks], sendDiff.difficulty)
 
 #Add a SignedSendDifficulty.
 proc add*(
@@ -551,7 +551,7 @@ proc add*(
     dataDiff: DataDifficulty
 ) {.forceCheck: [].} =
     consensus.db.save(dataDiff)
-    consensus.filters.data.update(dataDiff.holder, state[dataDiff.holder], dataDiff.difficulty)
+    consensus.filters.data.update(dataDiff.holder, state[dataDiff.holder, state.processedBlocks], dataDiff.difficulty)
 
 #Add a SignedDataDifficulty.
 proc add*(
@@ -784,7 +784,7 @@ proc archive*(
         for holder in status.holders:
             if consensus.malicious.hasKey(holder):
                 continue
-            merit += state[holder]
+            merit += state[holder, status.epoch]
 
         #If it's not, unverify it.
         if merit < state.nodeThresholdAt(status.epoch):
@@ -860,21 +860,21 @@ proc archive*(
 
     #Update the filters.
     if decd == -1:
-        consensus.filters.send.handleBlock(incd, state[incd])
-        consensus.filters.data.handleBlock(incd, state[incd])
+        consensus.filters.send.handleBlock(incd, state[incd, state.processedBlocks])
+        consensus.filters.data.handleBlock(incd, state[incd, state.processedBlocks])
     else:
-        consensus.filters.send.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
-        consensus.filters.data.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
+        consensus.filters.send.handleBlock(incd, state[incd, state.processedBlocks], uint16(decd), state[uint16(decd), state.processedBlocks])
+        consensus.filters.data.handleBlock(incd, state[incd, state.processedBlocks], uint16(decd), state[uint16(decd), state.processedBlocks])
 
     #If the holder just got their first vote, make sure their difficulty is counted.
-    if state[incd] == 50:
+    if state[incd, state.processedBlocks] == 50:
         try:
-            consensus.filters.send.update(incd, state[incd], consensus.db.loadSendDifficulty(incd))
+            consensus.filters.send.update(incd, state[incd, state.processedBlocks], consensus.db.loadSendDifficulty(incd))
         except DBReadError:
             discard
 
         try:
-            consensus.filters.data.update(incd, state[incd], consensus.db.loadDataDifficulty(incd))
+            consensus.filters.data.update(incd, state[incd, state.processedBlocks], consensus.db.loadDataDifficulty(incd))
         except DBReadError:
             discard
 
@@ -1002,12 +1002,12 @@ proc revert*(
     consensus.filters.data = newSpamFilterObj(dataDiff)
     for h in 0 ..< state.holders.len:
         try:
-            consensus.filters.send.update(uint16(h), state[uint16(h)], consensus.db.loadSendDifficulty(uint16(h)))
+            consensus.filters.send.update(uint16(h), state[uint16(h), state.processedBlocks], consensus.db.loadSendDifficulty(uint16(h)))
         except DBReadError:
             discard
 
         try:
-            consensus.filters.data.update(uint16(h), state[uint16(h)], consensus.db.loadDataDifficulty(uint16(h)))
+            consensus.filters.data.update(uint16(h), state[uint16(h), state.processedBlocks], consensus.db.loadDataDifficulty(uint16(h)))
         except DBReadError:
             discard
 

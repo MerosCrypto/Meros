@@ -4,21 +4,25 @@ include MainConsensus
 proc verify(
     transaction: Transaction
 ) {.forceCheck: [], async.} =
+    #Grab the Transaction's status.
+    var status: TransactionStatus
+    try:
+        status = consensus.getStatus(transaction.hash)
+    except IndexError as e:
+        panic("Asked to verify a Transaction without a Status: " & e.msg)
+
+    #Make sure this Transaction can be verified.
+    if status.beaten:
+        return
+
     #Make sure we're a Miner with Merit.
-    if wallet.miner.initiated and (merit.state[wallet.miner.nick] > 0):
+    if wallet.miner.initiated and (merit.state[wallet.miner.nick, status.epoch] > 0):
         #Inform the WalletDB were verifying a Transaction.
         try:
             wallet.verifyTransaction(transaction)
         #We already verified a competitor.
         except ValueError:
             return
-
-        #Make sure this Transaction can be verified.
-        try:
-            if consensus.getStatus(transaction.hash).beaten:
-                return
-        except IndexError as e:
-            panic("Asked to verify a Transaction without a Status: " & e.msg)
 
         #Verify the Transaction.
         var verif: SignedVerification = newSignedVerificationObj(transaction.hash)

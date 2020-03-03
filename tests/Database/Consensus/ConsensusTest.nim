@@ -233,7 +233,7 @@ suite "Consensus":
 
             #Have the Consensus handle every person who suffered a MeritRemoval.
             for removee in removed.keys():
-                consensus.remove(removed[removee], rewardsState[removee])
+                consensus.remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
 
             #Add the elements.
             for elem in elements:
@@ -373,7 +373,7 @@ suite "Consensus":
             if rand(125) == 0:
                 #Add a Merit Removal.
                 holder = rand(holders.len - 1)
-                while merit.state[uint16(holder)] == 0:
+                while merit.state[uint16(holder), merit.state.processedBlocks] == 0:
                     holder = rand(holders.len - 1)
                 for b in 0 ..< 32:
                     diff1.data[b] = uint8(rand(255))

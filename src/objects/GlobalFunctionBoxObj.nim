@@ -229,7 +229,8 @@ type
         getTotalMerit*: proc (): int {.inline, raises: [].}
         getUnlockedMerit*: proc (): int {.inline, raises: [].}
         getMerit*: proc (
-            nick: uint16
+            nick: uint16,
+            height: int
         ): int {.inline, raises: [].}
 
         isUnlocked*: proc (

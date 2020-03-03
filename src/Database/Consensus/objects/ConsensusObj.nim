@@ -92,12 +92,12 @@ proc newConsensusObj*(
     for h in 0 ..< state.holders.len:
         #Reload the filters.
         try:
-            result.filters.send.update(uint16(h), state[uint16(h)], result.db.loadSendDifficulty(uint16(h)))
+            result.filters.send.update(uint16(h), state[uint16(h), state.processedBlocks], result.db.loadSendDifficulty(uint16(h)))
         except DBReadError:
             discard
 
         try:
-            result.filters.data.update(uint16(h), state[uint16(h)], result.db.loadDataDifficulty(uint16(h)))
+            result.filters.data.update(uint16(h), state[uint16(h), state.processedBlocks], result.db.loadDataDifficulty(uint16(h)))
         except DBReadError:
             discard
 
@@ -140,7 +140,7 @@ proc newConsensusObj*(
                     var merit: int = 0
                     for holder in result.statuses[packet.hash].holders:
                         if not result.malicious.hasKey(holder):
-                            merit += state[holder]
+                            merit += state[holder, result.statuses[packet.hash].epoch]
                     if (
                         (not result.statuses[packet.hash].verified) and
                         (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 5)
@@ -234,7 +234,7 @@ proc calculateMeritSingle(
         for holder in status.holders:
             #Skip malicious MeritHolders from Merit calculations.
             if not consensus.malicious.hasKey(holder):
-                merit += state[holder]
+                merit += state[holder, status.epoch]
 
     #Check if the Transaction crossed its threshold.
     if merit >= threshold:
@@ -375,7 +375,7 @@ proc finalize*(
         if status.pending.contains(holder):
             status.holders.excl(holder)
             continue
-        status.merit += state[holder]
+        status.merit += state[holder, status.epoch]
 
     #Make sure verified Transaction's Merit is above the node protocol threshold.
     if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):

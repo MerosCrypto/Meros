@@ -55,7 +55,7 @@ proc newMerit*(
             startDifficulty
         )
     )
-    result.state = newState(db, deadBlocks, result.blockchain.height)
+    result.state = newState(db, deadBlocks, result.blockchain)
     result.epochs = newEpochs(result.blockchain)
 
 #Add a Block to the Blockchain.

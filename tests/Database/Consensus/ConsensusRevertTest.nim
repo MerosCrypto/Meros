@@ -68,7 +68,7 @@ suite "ConsensusRevert":
                 "CONSENSUS_REVERT_TEST",
                 30,
                 "".pad(32),
-                100
+                75
             )
 
             #Transactions.
@@ -282,7 +282,7 @@ suite "ConsensusRevert":
             #Add the Block to the Blockchain.
             merit.processBlock(newBlock)
 
-            #Copy the State and Add the Block to the Epochs and State.
+            #Copy the State and add the Block to the Epochs and State.
             var
                 rewardsState: State = merit.state
                 epoch: Epoch
@@ -297,7 +297,7 @@ suite "ConsensusRevert":
 
             #Have the Consensus handle every person who suffered a MeritRemoval.
             for removee in removed.keys():
-                consensus.remove(removed[removee], rewardsState[removee])
+                consensus.remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
 
             #Add the Elements.
             for elem in elements:
@@ -361,7 +361,7 @@ suite "ConsensusRevert":
                     #If the Transaction is in the cache, make sure Consensus has the status cached with proper values.
                     if transactions.transactions.hasKey(tx):
                         check(consensus.statuses.hasKey(tx))
-                        check(consensus.statuses[tx].epoch == min(epochs[tx], merit.blockchain.height + 7))
+                        check(consensus.statuses[tx].epoch == min(epochs[tx], merit.blockchain.height + 6))
 
                         #Don't check competing since this test doesn't generate competing values.
 
@@ -379,7 +379,7 @@ suite "ConsensusRevert":
 
                             #Calculate the Merit sum.
                             for holder in consensus.statuses[tx].holders:
-                                meritSum += merit.state[holder]
+                                meritSum += merit.state[holder, merit.state.processedBlocks]
 
                             #Handle the fact initial Datas and Claims always have verified inputs.
                             if not (
@@ -546,7 +546,7 @@ suite "ConsensusRevert":
 
                 #Have the Consensus handle every person who suffered a MeritRemoval.
                 for removee in removed.keys():
-                    consensus.remove(removed[removee], rewardsState[removee])
+                    consensus.remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
 
                 #Add the elements.
                 for elem in blocks[b].body.elements:

@@ -64,7 +64,7 @@ suite "Blockchain":
             state: State = newState(
                 db,
                 10,
-                1
+                blockchains[0]
             )
             #Database copies.
             databases: seq[Table[string, string]] = @[]
