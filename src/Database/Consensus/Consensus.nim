@@ -1120,8 +1120,12 @@ proc postRevert*(
         if status.verified:
             consensus.unverify(hash, status, revertedStatuses)
 
-        #Calculate the Transaction's Merit.
-        consensus.calculateMerit(state, hash, status, revertedStatuses)
+    #Calculate every Transaction's Merit.
+    for hash in revertedStatuses.keys():
+        try:
+            consensus.calculateMerit(state, hash, revertedStatuses[hash], revertedStatuses)
+        except KeyError as e:
+            panic("Couldn't grab a status that's in the formed cache: " & e.msg)
 
     #Save back the statuses.
     for hash in revertedStatuses.keys():
