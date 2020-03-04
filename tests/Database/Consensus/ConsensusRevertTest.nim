@@ -379,7 +379,7 @@ suite "ConsensusRevert":
 
                             #Calculate the Merit sum.
                             for holder in consensus.statuses[tx].holders:
-                                meritSum += merit.state[holder, merit.state.processedBlocks]
+                                meritSum += merit.state[holder, consensus.statuses[tx].epoch]
 
                             #Handle the fact initial Datas and Claims always have verified inputs.
                             if not (
