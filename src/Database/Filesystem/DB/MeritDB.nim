@@ -345,7 +345,7 @@ proc loadBlock*(
     DBReadError
 ].} =
     try:
-        result = db.get(BLOCK_HASH(hash)).parseBlock()
+        result = db.get(BLOCK_HASH(hash)).parseBlock(hash)
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
@@ -356,7 +356,8 @@ proc loadBlock*(
     DBReadError
 ].} =
     try:
-        result = db.get(db.get(BLOCK_NONCE(nonce))).parseBlock()
+        var hash: Hash[256] = db.get(BLOCK_NONCE(nonce)).toHash(256)
+        result = db.get(BLOCK_HASH(hash)).parseBlock(hash)
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
