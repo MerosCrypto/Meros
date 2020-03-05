@@ -28,6 +28,7 @@ from PythonTests.Tests.Transactions.HundredFourtySevenTest import HundredFourtyS
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
 from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
+from PythonTests.Tests.Consensus.Verification.HundredTwoTest import HundredTwoTest
 from PythonTests.Tests.Consensus.Verification.HundredFourtyTwoTest import HundredFourtyTwoTest
 
 from PythonTests.Tests.Consensus.Difficulties.SendDifficultyTest import SendDifficultyTest
@@ -95,6 +96,7 @@ tests: List[Callable[[RPC], None]] = [
     VParsableTest,
     VUnknownTest,
     VCompetingTest,
+    HundredTwoTest,
     HundredFourtyTwoTest,
 
     SendDifficultyTest,

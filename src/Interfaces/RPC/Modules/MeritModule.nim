@@ -247,7 +247,7 @@ proc module*(
                 res["result"] = %* {
                     "unlocked": functions.merit.isUnlocked(nick),
                     "malicious": functions.consensus.isMalicious(nick),
-                    "merit": functions.merit.getMerit(nick)
+                    "merit": functions.merit.getMerit(nick, functions.merit.getHeight())
                 }
 
             #Get a Block template.
@@ -289,7 +289,12 @@ proc module*(
                 while true:
                     try:
                         sketchers[id] = newSketcher(
-                            functions.merit.getMerit,
+                            (
+                                proc (
+                                    nick: uint16
+                                ): int {.raises: [].} =
+                                    functions.merit.getMerit(nick, functions.merit.getHeight())
+                            ),
                             functions.consensus.isMalicious,
                             pending.packets
                         )

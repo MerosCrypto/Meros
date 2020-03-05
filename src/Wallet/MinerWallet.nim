@@ -27,7 +27,7 @@ proc newMinerWallet*(
 ].} =
     try:
         result = MinerWallet(
-            initiated: true,
+            initiated: false,
             privateKey: newBLSPrivateKey(privKey)
         )
         result.publicKey = result.privateKey.toPublicKey()

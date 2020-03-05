@@ -72,14 +72,14 @@ proc module*(
                 for holder in status.holders:
                     verifiers.add(% holder)
                     if (status.merit == -1) and (not functions.consensus.isMalicious(holder)):
-                        merit += functions.merit.getMerit(holder)
+                        merit += functions.merit.getMerit(holder, status.epoch)
 
                 res["result"] = %* {
                     "verifiers":  verifiers,
                     "merit":      merit,
                     "threshold":  functions.consensus.getThreshold(status.epoch),
                     "verified":   status.verified,
-                    "competing": status.competing,
+                    "competing":  status.competing
                 }
     except Exception as e:
         panic("Couldn't create the Consensus Module: " & e.msg)

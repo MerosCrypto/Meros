@@ -153,7 +153,6 @@ proc revert*(
 ) {.forceCheck: [].} =
     #Revert the State.
     state.revert(blockchain, height)
-    state.oldData = false
 
     #Miners we changed the Merit of.
     var changedMerit: HashSet[uint16] = initHashSet[uint16]()
@@ -249,4 +248,4 @@ proc revert*(
 
     #Update the Merit of everyone who had their Merit changed.
     for holder in changedMerit:
-        blockchain.db.saveMerit(holder, state[holder])
+        blockchain.db.saveMerit(holder, state[holder, state.processedBlocks])

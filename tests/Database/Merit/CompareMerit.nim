@@ -116,7 +116,9 @@ proc compare*(
     for h in 0 ..< s1.holders.len:
         check(s1.holders[h] == s2.holders[h])
         check(uint16(h) == s1.reverseLookup(s1.holders[h]))
-        check(s1[uint16(h)] == s2[uint16(h)])
+        check(s1[uint16(h), s1.processedBlocks] == s2[uint16(h), s1.processedBlocks])
+
+    check(s1.pendingRemovals == s2.pendingRemovals)
 
 #Compare two Epochs to make sure they have the same values.
 proc compare*(

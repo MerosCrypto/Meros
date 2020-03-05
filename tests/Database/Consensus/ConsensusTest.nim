@@ -118,17 +118,14 @@ suite "Consensus":
                         continue
                     inc(mr)
 
-            #Reload Consensus.
-            var reloaded: Consensus = newConsensus(
+            #Reload and compare the Consensus DAGs.
+            compare(consensus, newConsensus(
                 functions,
                 db,
                 merit.state,
                 Hash[256](),
                 Hash[256]()
-            )
-
-            #Compare the Consensus DAGs.
-            compare(consensus, reloaded)
+            ))
 
     test "Reloaded Consensus.":
         var
@@ -236,7 +233,7 @@ suite "Consensus":
 
             #Have the Consensus handle every person who suffered a MeritRemoval.
             for removee in removed.keys():
-                consensus.remove(removed[removee], rewardsState[removee])
+                consensus.remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
 
             #Add the elements.
             for elem in elements:
@@ -258,17 +255,13 @@ suite "Consensus":
 
         #Compare the Consensus against the reloaded Consensus.
         proc compare() =
-            #Reload the Consensus.
-            var reloaded: Consensus = newConsensus(
+            compare(consensus, newConsensus(
                 functions,
                 db,
                 merit.state,
                 Hash[256](),
                 Hash[256]()
-            )
-
-            #Compare the Consensus DAGs.
-            compare(consensus, reloaded)
+            ))
 
         #Iterate over 1250 'rounds'.
         for r in 1 .. 1250:
@@ -288,7 +281,7 @@ suite "Consensus":
                 var tx: Transaction = Transaction()
                 tx.hash = hash
                 transactions.transactions[tx.hash] = tx
-                consensus.register(merit.state, tx, r)
+                consensus.register(merit.state, tx, merit.blockchain.height)
 
                 #Create a packet for the Transaction.
                 packets.add(newVerificationPacketObj(hash))
@@ -380,7 +373,7 @@ suite "Consensus":
             if rand(125) == 0:
                 #Add a Merit Removal.
                 holder = rand(holders.len - 1)
-                while merit.state[uint16(holder)] == 0:
+                while merit.state[uint16(holder), merit.state.processedBlocks] == 0:
                     holder = rand(holders.len - 1)
                 for b in 0 ..< 32:
                     diff1.data[b] = uint8(rand(255))

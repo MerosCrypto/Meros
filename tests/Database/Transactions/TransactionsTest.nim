@@ -340,11 +340,10 @@ suite "Transactions":
                     check(inputs[i].nonce == spendable[w][i].nonce)
 
 
-    test "Reloaded and reverted transactions.":
+    test "Reloaded and reverted Transactions.":
         for b in 1 .. 30:
             #Create a random amount of Wallets.
             for _ in 0 ..< rand(2) + 2:
-                var password: string = $char(wallets.len)
                 wallets.add(newWallet(""))
                 walletsLookup[wallets[^1].publicKey] = wallets.len - 1
 

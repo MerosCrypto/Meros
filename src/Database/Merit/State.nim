@@ -24,14 +24,6 @@ import objects/BlockchainObj
 import objects/StateObj
 export StateObj
 
-#Constructor.
-proc newState*(
-    db: DB,
-    deadBlocks: int,
-    blockchainHeight: int
-): State {.inline, forceCheck: [].} =
-    newStateObj(db, deadBlocks, blockchainHeight)
-
 #Get the nickname of the miner in a Block.
 proc getNickname(
     state: var State,
@@ -48,6 +40,49 @@ proc getNickname(
     else:
         result = blockArg.header.minerNick
 
+#Get the next removal which will happen.
+proc cacheNextRemoval(
+    state: var State,
+    blockchain: Blockchain,
+    height: int
+) {.forceCheck: [].} =
+    #Get the nonce of the Block which we'd be killing the Merit of.
+    var nonce: int = height + state.pendingRemovals.len - state.deadBlocks - 1
+    if state.pendingRemovals.len != 6:
+        inc(nonce)
+
+    #If the nonce is greater than 0, there's a Block to remove the Merit of.
+    if nonce > 0:
+        #Get the nickname for that Block.
+        var nick: uint16
+        try:
+            nick = state.getNickname(blockchain[nonce])
+        except IndexError as e:
+            panic("State tried to remove dead Merit yet couldn't get the old Block: " & e.msg)
+
+        #Do nothing if they had their Merit removed.
+        var removals: seq[int] = state.loadHolderRemovals(nick)
+        for removal in removals:
+            if (removal < height) and (removal >= nonce):
+                state.pendingRemovals.add(-1)
+                return
+
+        #Add the nickname.
+        state.pendingRemovals.add(int(nick))
+    #Else, mark that there isn't a removal.
+    else:
+        state.pendingRemovals.add(-1)
+
+#Constructor.
+proc newState*(
+    db: DB,
+    deadBlocks: int,
+    blockchain: Blockchain
+): State {.forceCheck: [].} =
+    result = newStateObj(db, deadBlocks, blockchain.height)
+    for _ in 0 ..< 6:
+        result.cacheNextRemoval(blockchain, blockchain.height)
+
 #Process a block.
 proc processBlock*(
     state: var State,
@@ -56,7 +91,11 @@ proc processBlock*(
     logDebug "State processing Block", hash = blockchain.tail.header.hash
 
     #Init the result.
-    result = (uint16(0), -1)
+    result = (uint16(0), int(state.pendingRemovals[0]))
+
+    #Get the next pending removal and delete the current one.
+    state.cacheNextRemoval(blockchain, blockchain.height)
+    state.pendingRemovals.delete(0)
 
     #Grab the new Block.
     var newBlock: Block = blockchain.tail
@@ -67,29 +106,11 @@ proc processBlock*(
     #Add the miner's Merit to the State.
     var nick: uint16 = state.getNickname(newBlock, true)
     result[0] = nick
-    state[nick] = state[nick] + 1
+    state[nick] = state[nick, state.processedBlocks] + 1
 
-    #If the Blockchain's height is over the dead blocks quantity, meaning there is a block to remove from the state...
-    if blockchain.height > state.deadBlocks + 1:
-        #Remove the miner's Merit from the State.
-        try:
-            nick = state.getNickname(blockchain[blockchain.height - 1 - state.deadBlocks])
-        except IndexError as e:
-            panic("State tried to remove dead Merit yet couldn't get the old Block: " & e.msg)
-
-        #Do nothing if they had their Merit removed.
-        var
-            removals: seq[int] = state.loadHolderRemovals(nick)
-            removed: bool = false
-        for removal in removals:
-            if removal >= blockchain.height - 1 - state.deadBlocks:
-                removed = true
-                break
-
-        #If they didn't have their Merit removed, remove their old Merit.
-        if not removed:
-            result[1] = int(nick)
-            state[nick] = state[nick] - 1
+    #If there was a removal, decrement their Merit.
+    if result[1] != -1:
+        state[uint16(result[1])] = state[uint16(result[1]), state.processedBlocks] - 1
 
     #Remove Merit from Merit Holders who had their Merit Removals archived in this Block.
     for elem in newBlock.body.elements:
@@ -106,9 +127,9 @@ proc processBlock*(
 #Calculate the Verification threshold for an Epoch that ends on the specified Block.
 proc protocolThresholdAt*(
     state: State,
-    blockNum: int
+    height: int
 ): int {.inline, forceCheck: [].} =
-    state.loadUnlocked(blockNum) div 2 + 1
+    state.loadUnlocked(height) div 2 + 1
 
 #Calculate the threshold for an Epoch that ends on the specified Block.
 #This is meant to return 80% of the amount of Merit at the time of finalization.
@@ -116,9 +137,9 @@ proc protocolThresholdAt*(
 #Anything below 5 would return 1, which is 25%, hence the max.
 proc nodeThresholdAt*(
     state: State,
-    blockNum: int
+    height: int
 ): int {.inline, forceCheck: [].} =
-    (max(state.loadUnlocked(blockNum), 5) div 5 * 4) + 1
+    (max(state.loadUnlocked(height), 5) div 5 * 4) + 1
 
 #Revert to a certain block height.
 proc revert*(
@@ -148,7 +169,7 @@ proc revert*(
         nick = state.getNickname(revertingPast)
 
         #Remove the Merit rewarded by the Block we just reverted past.
-        state[nick] = state[nick] - 1
+        state[nick] = state[nick, state.processedBlocks] - 1
 
         #If the miner was new to this Block, remove their nickname.
         if revertingPast.header.newMiner:
@@ -171,9 +192,14 @@ proc revert*(
 
             #Add back the Merit which died.
             if not removed:
-                state[nick] = state[nick] + 1
+                state[nick] = state[nick, state.processedBlocks] + 1
 
         #Increment the amount of processed Blocks.
         dec(state.processedBlocks)
 
     state.oldData = false
+
+    #Regenerate the pending removals cache.
+    state.pendingRemovals = @[]
+    for _ in 0 ..< 6:
+        state.cacheNextRemoval(blockchain, height)

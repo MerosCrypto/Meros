@@ -16,8 +16,8 @@ import ../Filesystem/DB/ConsensusDB
 #Input toString function.
 from ../Filesystem/DB/TransactionsDB import toString
 
-#Transaction lib.
-import ../Transactions/Transaction
+#Transactions lib.
+import ../Transactions/Transactions
 
 #Block, Blockchain and Epoch objects.
 import ../Merit/objects/BlockObj
@@ -36,8 +36,8 @@ import Elements/Elements
 export Elements
 
 #TransactionStatus lib.
-import TransactionStatus
-export TransactionStatus
+import TransactionStatus as TransactionStatusFile
+export TransactionStatusFile
 
 #Consensus object.
 import objects/ConsensusObj
@@ -222,7 +222,7 @@ proc verify*(
 
 #Flag a MeritHolder as malicious.
 proc flag*(
-    consensus: Consensus,
+    consensus: var Consensus,
     blockchain: Blockchain,
     state: State,
     removal: MeritRemoval
@@ -275,10 +275,10 @@ proc flag*(
                 var merit: int = 0
                 for holder in status.holders:
                     if not consensus.malicious.hasKey(holder):
-                        merit += state[holder]
+                        merit += state[holder, status.epoch]
 
                 if merit < state.protocolThresholdAt(status.epoch):
-                    consensus.unverify(state, packet.hash, status)
+                    consensus.unverify(packet.hash, status)
 
     #Recalculate the affected Transactions not yet in Epochs.
     for hash in consensus.unmentioned:
@@ -291,10 +291,10 @@ proc flag*(
             var merit: int = 0
             for holder in status.holders:
                 if not consensus.malicious.hasKey(holder):
-                    merit += state[holder]
+                    merit += state[holder, status.epoch]
 
             if merit < state.protocolThresholdAt(status.epoch):
-                consensus.unverify(state, hash, status)
+                consensus.unverify(hash, status)
 
 #Get a holder's nonce.
 #Used to verify Blocks in NetworkSync.
@@ -311,13 +311,13 @@ proc getArchivedNonce*(
 
 #Register a Transaction.
 proc register*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     tx: Transaction,
     height: int
 ) {.forceCheck: [].} =
     #Create the status.
-    var status: TransactionStatus = newTransactionStatusObj(tx.hash, height + 7)
+    var status: TransactionStatus = newTransactionStatusObj(tx.hash, height + 6)
 
     for input in tx.inputs:
         #Check if this Transaction's parent was beaten.
@@ -328,13 +328,14 @@ proc register*(
                 (not ((tx of Data) and cast[Data](tx).isFirstData)) and
                 (consensus.getStatus(input.hash).beaten)
             ):
+                consensus.functions.transactions.beat(tx.hash)
                 status.beaten = true
         except IndexError:
             panic("Parent Transaction doesn't have a status.")
 
         #Check for competing Transactions.
         var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
-        if spenders.len != 1:
+        if (spenders.len != 1) and (input.hash != Hash[256]()):
             status.competing = true
 
             #If there's a competing Transaction, mark competitors as needing to default.
@@ -357,7 +358,7 @@ proc register*(
 
 #Add a VerificationPacket.
 proc add*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     packet: VerificationPacket
 ) {.forceCheck: [].} =
@@ -378,7 +379,7 @@ proc add*(
 
 #Add a SignedVerification.
 proc add*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     verif: SignedVerification
 ) {.forceCheck: [
@@ -463,16 +464,16 @@ proc add*(
 
 #Add a SendDifficulty.
 proc add*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     sendDiff: SendDifficulty
 ) {.forceCheck: [].} =
     consensus.db.save(sendDiff)
-    consensus.filters.send.update(sendDiff.holder, state[sendDiff.holder], sendDiff.difficulty)
+    consensus.filters.send.update(sendDiff.holder, state[sendDiff.holder, state.processedBlocks], sendDiff.difficulty)
 
 #Add a SignedSendDifficulty.
 proc add*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     sendDiff: SignedSendDifficulty
 ) {.forceCheck: [
@@ -545,16 +546,16 @@ proc add*(
 
 #Add a DataDifficulty.
 proc add*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     dataDiff: DataDifficulty
 ) {.forceCheck: [].} =
     consensus.db.save(dataDiff)
-    consensus.filters.data.update(dataDiff.holder, state[dataDiff.holder], dataDiff.difficulty)
+    consensus.filters.data.update(dataDiff.holder, state[dataDiff.holder, state.processedBlocks], dataDiff.difficulty)
 
 #Add a SignedDataDifficulty.
 proc add*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     dataDiff: SignedDataDifficulty
 ) {.forceCheck: [
@@ -627,7 +628,7 @@ proc add*(
 
 #Add a SignedMeritRemoval.
 proc add*(
-    consensus: Consensus,
+    consensus: var Consensus,
     blockchain: Blockchain,
     state: State,
     mr: SignedMeritRemoval
@@ -652,7 +653,7 @@ proc add*(
 #As Consensus doesn't track Merit, this just clears their pending MeritRemovals.
 #This also removes any votes they may have in the SpamFilter.
 proc remove*(
-    consensus: Consensus,
+    consensus: var Consensus,
     mr: MeritRemoval,
     merit: int
 ) {.forceCheck: [].} =
@@ -687,6 +688,7 @@ proc remove*(
     #- Update the difficulties/gas price.
     var usedNonces: HashSet[int] = consensus.db.loadMeritRemovalNonces(mr.holder)
     proc updateIfTail(
+        consensus: var Consensus,
         elem: Element
     ) {.forceCheck: [].} =
         case elem:
@@ -697,9 +699,8 @@ proc remove*(
                 return
 
             of SendDifficulty as sd:
-                if not usedNonces.contains(sd.nonce):
-                    consensus.db.saveMeritRemovalNonce(mr.holder, sd.nonce)
-                    usedNonces.incl(sd.nonce)
+                consensus.db.saveMeritRemovalNonce(mr.holder, sd.nonce)
+                usedNonces.incl(sd.nonce)
 
                 if sd.nonce == consensus.db.loadSendDifficultyNonce(sd.holder):
                     var
@@ -722,9 +723,8 @@ proc remove*(
                         consensus.db.deleteSendDifficulty(sd.holder)
 
             of DataDifficulty as dd:
-                if not usedNonces.contains(dd.nonce):
-                    consensus.db.saveMeritRemovalNonce(mr.holder, dd.nonce)
-                    usedNonces.incl(dd.nonce)
+                consensus.db.saveMeritRemovalNonce(mr.holder, dd.nonce)
+                usedNonces.incl(dd.nonce)
 
                 if dd.nonce == consensus.db.loadDataDifficultyNonce(dd.holder):
                     var
@@ -749,33 +749,12 @@ proc remove*(
             else:
                 panic("Archiving a Merit Removal with an unknown Element.")
 
-    updateIfTail(mr.element1)
-    updateIfTail(mr.element2)
-
-#Get a Transaction's unfinalized parents.
-proc getUnfinalizedParents(
-    consensus: Consensus,
-    tx: Transaction
-): seq[Hash[256]] {.forceCheck: [].} =
-    #If this Transaction doesn't have inputs with statuses, don't do anything.
-    if not (
-        (tx of Claim) or
-        (
-            (tx of Data) and
-            (cast[Data](tx).isFirstData)
-        )
-    ):
-        #Make sure every input was already finalized.
-        for input in tx.inputs:
-            try:
-                if consensus.getStatus(input.hash).merit == -1:
-                    result.add(input.hash)
-            except IndexError as e:
-                panic("Couldn't get the Status of a Transaction used as an input in the specified Transaction: " & e.msg)
+    updateIfTail(consensus, mr.element1)
+    updateIfTail(consensus, mr.element2)
 
 #Mark all mentioned packets as mentioned, reset pending, finalize finalized Transactions, and check close Transactions.
 proc archive*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     shifted: seq[VerificationPacket],
     elements: seq[BlockElement],
@@ -786,14 +765,37 @@ proc archive*(
     #Delete every mentioned hash in the Block from unmentioned.
     for packet in shifted:
         consensus.unmentioned.excl(packet.hash)
+        consensus.db.mention(packet.hash)
 
     #Update the Epoch for every unmentioned Transaction.
     for hash in consensus.unmentioned:
         consensus.incEpoch(hash)
+
+        #Get the status.
+        var
+            status: TransactionStatus
+            merit: int = 0
+        try:
+            status = consensus.getStatus(hash)
+        except IndexError as e:
+            panic("Couldn't get the TransactionStatus for an unmentioned Transaction: " & e.msg)
+
+        #If the Transaction was verified, calculate its Merit and see if it's still verified with the new threshold.
+        for holder in status.holders:
+            if consensus.malicious.hasKey(holder):
+                continue
+            merit += state[holder, status.epoch]
+
+        #If it's not, unverify it.
+        if merit < state.nodeThresholdAt(status.epoch):
+            consensus.unverify(hash, status)
+
+        #Make sure the hash is included in unmentioned.
         consensus.db.addUnmentioned(hash)
 
     #Update the signature/nonces of every holder.
     proc updateSignatureAndNonce(
+        consensus: var Consensus,
         holder: uint16,
         nonce: int
     ) {.forceCheck: [].} =
@@ -817,9 +819,9 @@ proc archive*(
         for elem in elements:
             case elem:
                 of SendDifficulty as sd:
-                    updateSignatureAndNonce(sd.holder, sd.nonce)
+                    updateSignatureAndNonce(consensus, sd.holder, sd.nonce)
                 of DataDifficulty as dd:
-                    updateSignatureAndNonce(dd.holder, dd.nonce)
+                    updateSignatureAndNonce(consensus, dd.holder, dd.nonce)
                 of MeritRemoval as _:
                     discard
                 else:
@@ -827,44 +829,9 @@ proc archive*(
     except KeyError:
         panic("Tried to archive an Element for a non-existent holder.")
 
-    #Transactions finalized out of order.
-    var outOfOrder: HashSet[Hash[256]] = initHashSet[Hash[256]]()
-    #Mark every hash in this Epoch as out of Epochs.
+    #Finalize every popped Transaction.
     for hash in popped.keys():
-        #Skip Transaction we verified out of order.
-        if outOfOrder.contains(hash):
-            continue
-
-        var parents: seq[Hash[256]] = @[hash]
-        while parents.len != 0:
-            #Grab the last parent.
-            var parent: Hash[256] = parents.pop()
-
-            #Skip this Transaction if we already verified it.
-            if outOfOrder.contains(parent):
-                continue
-
-            #Grab the Transaction.
-            var tx: Transaction
-            try:
-                tx = consensus.functions.transactions.getTransaction(parent)
-            except IndexError as e:
-                panic("Couldn't get a Transaction that's out of Epochs: " & e.msg)
-
-            #Grab this Transaction's unfinalized parents.
-            var newParents: seq[Hash[256]] = consensus.getUnfinalizedParents(tx)
-
-            #If all the parents are finalized, finalize this Transaction.
-            if newParents.len == 0:
-                try:
-                    consensus.finalize(state, parent)
-                except KeyError as e:
-                    panic("Couldn't get a value from a Table using a key from .keys(): " & e.msg)
-                outOfOrder.incl(parent)
-            else:
-                #Else, add back this Transaction, and then add the new parents.
-                parents.add(parent)
-                parents &= newParents
+        consensus.finalize(state, hash)
 
     #Reclaulcate every close Status.
     var toDelete: seq[Hash[256]] = @[]
@@ -893,21 +860,21 @@ proc archive*(
 
     #Update the filters.
     if decd == -1:
-        consensus.filters.send.handleBlock(incd, state[incd])
-        consensus.filters.data.handleBlock(incd, state[incd])
+        consensus.filters.send.handleBlock(incd, state[incd, state.processedBlocks])
+        consensus.filters.data.handleBlock(incd, state[incd, state.processedBlocks])
     else:
-        consensus.filters.send.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
-        consensus.filters.data.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
+        consensus.filters.send.handleBlock(incd, state[incd, state.processedBlocks], uint16(decd), state[uint16(decd), state.processedBlocks])
+        consensus.filters.data.handleBlock(incd, state[incd, state.processedBlocks], uint16(decd), state[uint16(decd), state.processedBlocks])
 
     #If the holder just got their first vote, make sure their difficulty is counted.
-    if state[incd] == 50:
+    if state[incd, state.processedBlocks] == 50:
         try:
-            consensus.filters.send.update(incd, state[incd], consensus.db.loadSendDifficulty(incd))
+            consensus.filters.send.update(incd, state[incd, state.processedBlocks], consensus.db.loadSendDifficulty(incd))
         except DBReadError:
             discard
 
         try:
-            consensus.filters.data.update(incd, state[incd], consensus.db.loadDataDifficulty(incd))
+            consensus.filters.data.update(incd, state[incd, state.processedBlocks], consensus.db.loadDataDifficulty(incd))
         except DBReadError:
             discard
 
@@ -915,3 +882,257 @@ proc archive*(
     if state.holders.len > consensus.archived.len:
         consensus.signatures[uint16(consensus.archived.len)] = @[]
         consensus.archived[uint16(consensus.archived.len)] = -1
+
+proc revert*(
+    consensus: var Consensus,
+    blockchain: Blockchain,
+    state: State,
+    transactions: Transactions,
+    height: int
+) {.forceCheck: [].} =
+    discard """
+    We need to find the oldest Element nonce we're reverting past.
+    We need to delete all Elements from that nonce (inclusive) to the tip.
+    If we delete an Element at the tip which wasn't archived, we also need to delete its signature.
+    We need to update the archived nonces.
+    We need to make sure the SendDifficulty and DataDifficulty are updated accordingly.
+
+    We need to delete malicious proofs we no longer have the signature for.
+    We shouldn't need to touch the malicious cache.
+
+    We need to revert the SpamFilters. We can do this by rebuilding them, however inefficient it is.
+
+    We need to prune statuses of Transactions which are about to be pruned.
+    We need to make sure to preserve a copy of Transactions in VC MRs which are about to be pruned, if the MRs are still in the malicious cache.
+    """
+
+    var
+        aboutToBePruned: HashSet[Hash[256]]
+        revertedToNonces: Table[uint16, int] = initTable[uint16, int]()
+    for b in countdown(blockchain.height - 1, height):
+        var revertedBlock: Block
+        try:
+            revertedBlock = blockchain[b]
+        except IndexError as e:
+            panic("Couldn't get a Block when iterating from the height to another height: " & e.msg)
+
+        try:
+            discard transactions[revertedBlock.header.hash]
+            aboutToBePruned = transactions.discoverUnorderedTree(revertedBlock.header.hash, aboutToBePruned)
+        except IndexError:
+            discard
+
+        for elem in revertedBlock.body.elements:
+            case elem:
+                of SendDifficulty as sd:
+                    if sd.nonce < revertedToNonces.getOrDefault(sd.holder, high(int)):
+                        revertedToNonces[sd.holder] = sd.nonce
+                of DataDifficulty as dd:
+                    if dd.nonce < revertedToNonces.getOrDefault(dd.holder, high(int)):
+                        revertedToNonces[dd.holder] = dd.nonce
+                of MeritRemoval as mr:
+                    consensus.db.deleteMeritRemoval(mr)
+                else:
+                    panic("Unknown Element included in Block.")
+
+    #Delete Elements which we reverted past.
+    for holder in revertedToNonces.keys():
+        try:
+            for n in revertedToNonces[holder] .. consensus.db.load(holder):
+                consensus.db.delete(holder, n)
+                consensus.db.deleteSignature(holder, n)
+
+            #Update the holder's nonce.
+            consensus.archived[holder] = revertedToNonces[holder] - 1
+            consensus.db.override(holder, revertedToNonces[holder] - 1)
+
+            #Also delete cached signatures since we wiped out Elements in the middle of their chain.
+            consensus.signatures[holder] = @[]
+
+            #Also update the SendDifficulty and DataDifficulty, if required.
+            var
+                usedNonces: HashSet[int] = consensus.db.loadMeritRemovalNonces(holder)
+                found: bool = false
+                other: BlockElement
+            if consensus.db.loadSendDifficultyNonce(holder) >= revertedToNonces[holder]:
+                for n in countdown(consensus.archived[holder], 0):
+                    if usedNonces.contains(n):
+                        continue
+
+                    try:
+                        other = consensus.db.load(holder, n)
+                    except DBReadError as e:
+                        panic("Couldn't grab a BlockElement when iterating down from the last archived nonce: " & e.msg)
+
+                    if other of SendDifficulty:
+                        found = true
+                        consensus.db.override(cast[SendDifficulty](other))
+                        break
+
+                if not found:
+                    consensus.db.deleteSendDifficulty(holder)
+
+            found = false
+            if consensus.db.loadDataDifficultyNonce(holder) >= revertedToNonces[holder]:
+                for n in countdown(consensus.archived[holder], 0):
+                    if usedNonces.contains(n):
+                        continue
+
+                    try:
+                        other = consensus.db.load(holder, n)
+                    except DBReadError as e:
+                        panic("Couldn't grab a BlockElement when iterating down from the last archived nonce: " & e.msg)
+
+                    if other of DataDifficulty:
+                        found = true
+                        consensus.db.override(cast[DataDifficulty](other))
+                        break
+
+                if not found:
+                    consensus.db.deleteDataDifficulty(holder)
+        except KeyError as e:
+            panic("Couldn't get the reverted to nonce/archived nonce of a holder with one: " & e.msg)
+
+    #Rebuild the filters.
+    #We shouldn't need those copies. I, Kayaba, originally tried to inline this.
+    #That said, newSpamFilterObj printed it was handed the hash yet didn't set it.
+    #My theory, which I can't think of why this would happen, is that it overwrote the SpamFilter during construction, and then grabbed its unset value.
+    #I truly don't know. This works. Don't try to inline it.
+    var
+        sendDiff: Hash[256] = consensus.filters.send.startDifficulty
+        dataDiff: Hash[256] = consensus.filters.data.startDifficulty
+    consensus.filters.send = newSpamFilterObj(sendDiff)
+    consensus.filters.data = newSpamFilterObj(dataDiff)
+    for h in 0 ..< state.holders.len:
+        try:
+            consensus.filters.send.update(uint16(h), state[uint16(h), state.processedBlocks], consensus.db.loadSendDifficulty(uint16(h)))
+        except DBReadError:
+            discard
+
+        try:
+            consensus.filters.data.update(uint16(h), state[uint16(h), state.processedBlocks], consensus.db.loadDataDifficulty(uint16(h)))
+        except DBReadError:
+            discard
+
+    #Prune statuses of Transactions about to be pruned.
+    for hash in aboutToBePruned:
+        consensus.delete(hash)
+
+    #Iterate over every pending MeritRemoval.
+    #If it's a VC MeritRemoval, and the verified Transaction is about to be pruned, back it up.
+    for holder in consensus.malicious.keys():
+        try:
+            for mr in consensus.malicious[holder]:
+                case mr.element1:
+                    of Verification as verif:
+                        if aboutToBePruned.contains(verif.hash):
+                            consensus.addMeritRemovalTransaction(transactions[verif.hash])
+                    of MeritRemovalVerificationPacket as packet:
+                        if aboutToBePruned.contains(packet.hash):
+                            consensus.addMeritRemovalTransaction(transactions[packet.hash])
+                    else:
+                        discard
+        except KeyError as e:
+            panic("Couldn't get a malicious Merit Holder's Merit Removals: " & e.msg)
+        except IndexError:
+            panic("Couldn't get a Transaction that is about to be pruned.")
+
+proc postRevert*(
+    consensus: var Consensus,
+    blockchain: Blockchain,
+    state: State,
+    transactions: Transactions
+) {.forceCheck: [].} =
+    discard """
+    We need to add statuses of Transactions which are back in the Transactions cache to the Consensus cache.
+    This requires recalculating their Epoch.
+    We need to remove Verifications we no longer have the signatures for from every status in the cache.
+
+    We need to revert close. We can do this by rebuilding it, however inefficient it is.
+
+    We need to revert unmentioned. We can do this by rebuilding it, however inefficient it is.
+    """
+
+    var revertedStatuses: TableRef[Hash[256], TransactionStatus] = newTable[Hash[256], TransactionStatus]()
+    for hash in consensus.cachedTransactions:
+        try:
+            revertedStatuses[hash] = consensus.getStatus(hash)
+        except IndexError as e:
+            panic("Transaction with a status in the cache doesn't have a status: " & e.msg)
+
+    for hash in transactions.transactions.keys():
+        if not revertedStatuses.hasKey(hash):
+            try:
+                revertedStatuses[hash] = consensus.getStatus(hash)
+            except IndexError as e:
+                panic("Transaction in the cache doesn't have a status: " & e.msg)
+
+    #Iterate over the last 5 blocks and find out:
+    #- When Transactions were mentioned.
+    #- What holders have archived Verifications.
+    var
+        mentioned: Table[Hash[256], int] = initTable[Hash[256], int]()
+        holders: Table[Hash[256], HashSet[uint16]] = initTable[Hash[256], HashSet[uint16]]()
+    for i in max(blockchain.height - 5, 0) ..< blockchain.height:
+        try:
+            for packet in blockchain[i].body.packets:
+                #If we haven't seen this Transaction yet, register it and create a HashSet.
+                if not mentioned.hasKey(packet.hash):
+                    mentioned[packet.hash] = i
+                    holders[packet.hash] = initHashSet[uint16]()
+
+                #Add the holders to the set.
+                for holder in packet.holders:
+                    try:
+                        holders[packet.hash].incl(holder)
+                    except KeyError as e:
+                        panic("Packet within the last 5 blocks doesn't have a holders set initialized: " & e.msg)
+        except IndexError as e:
+            panic("Couldn't get a Block when iterating from 0 to the height: " & e.msg)
+
+    #Clear unmentioned and close.
+    consensus.unmentioned = initHashSet[Hash[256]]()
+    consensus.close = initHashSet[Hash[256]]()
+
+    #Update merit, holders, epoch, and unmentioned, while generating a queue.
+    var status: TransactionStatus
+    for hash in revertedStatuses.keys():
+        #Grab the status.
+        try:
+            status = revertedStatuses[hash]
+        except KeyError as e:
+            panic("Couldn't grab a status that's in the newly formed cache: " & e.msg)
+
+        #Set merit to -1 so this TransactionStatus is registered as pending.
+        status.merit = -1
+
+        #Set the holders and epoch.
+        try:
+            status.holders = holders[hash]
+            status.epoch = mentioned[hash] + 6
+        #If this raised a KeyError, they were never mentioned.
+        except KeyError:
+            status.holders = initHashSet[uint16]()
+            consensus.setUnmentioned(hash)
+            status.epoch = blockchain.height + 6
+
+        #Add back the pending holders.
+        status.holders = status.holders + status.pending
+
+        #Mark it as unverified until proven otherwise.
+        if status.verified:
+            consensus.unverify(hash, status, revertedStatuses)
+
+    #Calculate every Transaction's Merit.
+    for hash in revertedStatuses.keys():
+        try:
+            consensus.calculateMerit(state, hash, revertedStatuses[hash], revertedStatuses)
+        except KeyError as e:
+            panic("Couldn't grab a status that's in the formed cache: " & e.msg)
+
+    #Save back the statuses.
+    for hash in revertedStatuses.keys():
+        try:
+            consensus.setStatus(hash, revertedStatuses[hash])
+        except KeyError as e:
+            doAssert(false, "Couldn't get a status with a key from keys: " & e.msg)

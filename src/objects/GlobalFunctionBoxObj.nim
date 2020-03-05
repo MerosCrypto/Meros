@@ -89,11 +89,15 @@ type
 
         verify*: proc (
             hash: Hash[256]
-        ) {.raises: [].}
+        ) {.inline, raises: [].}
 
         unverify*: proc (
             hash: Hash[256]
-        ) {.raises: [].}
+        ) {.inline, raises: [].}
+
+        beat*: proc (
+            hash: Hash[256]
+        ) {.inline, raises: [].}
 
         discoverTree*: proc (
             hash: Hash[256]
@@ -225,7 +229,8 @@ type
         getTotalMerit*: proc (): int {.inline, raises: [].}
         getUnlockedMerit*: proc (): int {.inline, raises: [].}
         getMerit*: proc (
-            nick: uint16
+            nick: uint16,
+            height: int
         ): int {.inline, raises: [].}
 
         isUnlocked*: proc (

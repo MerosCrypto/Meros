@@ -86,9 +86,10 @@ proc mainMerit() {.forceCheck: [].} =
         functions.merit.getUnlockedMerit = proc (): int {.inline, forceCheck: [].} =
             merit.state.unlocked
         functions.merit.getMerit = proc (
-            nick: uint16
+            nick: uint16,
+            height: int
         ): int {.inline, forceCheck: [].} =
-            merit.state[nick]
+            merit.state[nick, height]
 
         functions.merit.isUnlocked = proc (
             nick: uint16
@@ -128,7 +129,12 @@ proc mainMerit() {.forceCheck: [].} =
             var sketcher: Sketcher = sketcherArg
             if sketcher.len == 0:
                 sketcher = newSketcher(
-                    functions.merit.getMerit,
+                    (
+                        proc (
+                            nick: uint16
+                        ): int {.raises: [].} =
+                            functions.merit.getMerit(nick, functions.merit.getHeight())
+                    ),
                     functions.consensus.isMalicious,
                     cast[seq[VerificationPacket]](consensus.getPending().packets)
                 )
@@ -192,7 +198,7 @@ proc mainMerit() {.forceCheck: [].} =
             #Have the Consensus handle every person who suffered a MeritRemoval.
             try:
                 for removee in removed.keys():
-                    consensus.remove(removed[removee], rewardsState[removee])
+                    consensus.remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
             except KeyError as e:
                 panic("Couldn't get the Merit Removal of a holder who just had one archived: " & e.msg)
 

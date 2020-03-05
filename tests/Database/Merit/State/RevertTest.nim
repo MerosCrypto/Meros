@@ -70,8 +70,8 @@ suite "Revert":
         states.add(
             newState(
                 db,
-                5,
-                blockchain.height
+                7,
+                blockchain
             )
         )
 
@@ -140,7 +140,7 @@ suite "Revert":
             copy.revert(blockchain, states[revertTo].processedBlocks)
             compare(copy, states[revertTo])
 
-            reloaded = newState(db, 5, blockchain.height)
+            reloaded = newState(db, 7, blockchain)
             compare(states[^1], reloaded)
 
     lowFuzzTest "Chained reversions.":
@@ -158,5 +158,5 @@ suite "Revert":
         revertedAtOnce.revert(blockchain, copy.processedBlocks)
         compare(copy, revertedAtOnce)
 
-        reloaded = newState(db, 5, blockchain.height)
+        reloaded = newState(db, 7, blockchain)
         compare(states[^1], reloaded)

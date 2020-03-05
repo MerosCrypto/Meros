@@ -114,7 +114,7 @@ proc calculate*(
             for holder in epoch[tx]:
                 if not removed.hasKey(holder):
                     #Add their Merit to the Transaction's weight.
-                    weight += state[holder]
+                    weight += state[holder, state.processedBlocks]
         except KeyError as e:
             panic("Couldn't grab the verifiers for a hash in the Epoch grabbed from epoch.keys(): " & e.msg)
 
@@ -141,7 +141,7 @@ proc calculate*(
 
     try:
         for holder in scores.keys():
-            scores[holder] = scores[holder] * uint64(state[holder])
+            scores[holder] = scores[holder] * uint64(state[holder, state.processedBlocks])
             #Add the update score to the total.
             total += scores[holder]
     except KeyError as e:
