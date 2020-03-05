@@ -32,11 +32,8 @@ Interfaces:
 
 Network:
 
-- Prevent the same client from connecting multiple times.
-- Peer finding.
 - Node karma.
 
-- Multi-client syncing.
 - Sync gaps (if we get data after X, but don't have X, sync X; applies to the Transactions DAG).
 
 - Don't rebroadcast data to who sent it.
@@ -64,11 +61,6 @@ lib:
 Wallet:
 
 - Expand the Ed25519 Test.
-
-Database/Filesystem/DB/Serialize:
-
-- Consensus/SerializeTransactionStatus Test.
-- Transactions/SerializeTransaction Test.
 
 Datbase/Filesystem/DB:
 
@@ -107,14 +99,7 @@ Network:
 - Test that if our Sketcher has a collision, yet the Block's sketch doesn't, Meros still adds the Block.
 - Test Blocks with a Difficulty nonce 2 and then Difficulty nonce 1 add correctly.
 
-### Features:
-
-- Utilize Logger.
-- Have `Logger.urgent` open a dialog box.
-- Make `Logger.extraneous` enabled via a runtime option.
-
 ### Documentation:
 
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
-- Use Nim Documentation Comments.
 - Meros Whitepaper.
