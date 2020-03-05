@@ -195,7 +195,9 @@ suite "Transactions":
                 return 1
 
         #Verify the Transactions DB pruned the right trees.
-        proc verify() =
+        proc verify(
+            justReverted: Hash[256] = Hash[256]()
+        ) =
             #Reload Transactions to fix its cache.
             commit(merit.blockchain.height)
             transactions = newTransactions(db, merit.blockchain)
@@ -222,6 +224,14 @@ suite "Transactions":
                 for i in 0 ..< inputs.len:
                     check(inputs[i].hash == revertedSpendable[w][i].hash)
                     check(inputs[i].nonce == revertedSpendable[w][i].nonce)
+
+            #Verify the Mint was pruned.
+            if justReverted != Hash[256]():
+                try:
+                    discard transactions[justReverted]
+                    check(false)
+                except IndexError:
+                    discard
 
         #Replay the Blockchain and Transactions from Block 10.
         proc replay() =
@@ -494,10 +504,11 @@ suite "Transactions":
 
         #Revert each Block, verifying the various Transactions are deleted while leaving the others.
         while merit.blockchain.height != 10:
+            var justReverted: Hash[256] = merit.blockchain.tail.header.hash
             reverted.incl(merit.blockchain.tail.header.hash)
             transactions.revert(merit.blockchain, merit.blockchain.height - 1)
             revertSpendable()
-            verify()
+            verify(justReverted)
             merit.revert(merit.blockchain.height - 1)
 
         #Replay every Block/Transaction.
