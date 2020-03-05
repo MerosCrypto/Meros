@@ -21,10 +21,10 @@ from PythonTests.Meros.Liver import Liver
 import json
 
 #pylint: disable=too-many-statements
-def HundredFourtyTwoTest(
+def HundredFortyTwoTest(
     rpc: RPC
 ) -> None:
-    file: IO[Any] = open("PythonTests/Vectors/Consensus/Verification/HundredFourtyTwo.json", "r")
+    file: IO[Any] = open("PythonTests/Vectors/Consensus/Verification/HundredFortyTwo.json", "r")
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 

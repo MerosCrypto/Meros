@@ -23,13 +23,13 @@ from PythonTests.Tests.Transactions.SameInputTest import SameInputTest
 from PythonTests.Tests.Transactions.CompetingFinalizedTest import CompetingFinalizedTest
 from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
 from PythonTests.Tests.Transactions.PruneUnaddableTest import PruneUnaddableTest
-from PythonTests.Tests.Transactions.HundredFourtySevenTest import HundredFourtySevenTest
+from PythonTests.Tests.Transactions.HundredFortySevenTest import HundredFortySevenTest
 
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
 from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
 from PythonTests.Tests.Consensus.Verification.HundredTwoTest import HundredTwoTest
-from PythonTests.Tests.Consensus.Verification.HundredFourtyTwoTest import HundredFourtyTwoTest
+from PythonTests.Tests.Consensus.Verification.HundredFortyTwoTest import HundredFortyTwoTest
 
 from PythonTests.Tests.Consensus.Difficulties.SendDifficultyTest import SendDifficultyTest
 from PythonTests.Tests.Consensus.Difficulties.DataDifficultyTest import DataDifficultyTest
@@ -91,13 +91,13 @@ tests: List[Callable[[RPC], None]] = [
     CompetingFinalizedTest,
     FiftyTest,
     PruneUnaddableTest,
-    HundredFourtySevenTest,
+    HundredFortySevenTest,
 
     VParsableTest,
     VUnknownTest,
     VCompetingTest,
     HundredTwoTest,
-    HundredFourtyTwoTest,
+    HundredFortyTwoTest,
 
     SendDifficultyTest,
     DataDifficultyTest,

@@ -27,7 +27,7 @@ import ed25519
 #JSON standard lib.
 import json
 
-def HundredFourtySevenTest(
+def HundredFortySevenTest(
     rpc: RPC
 ) -> None:
     file: IO[Any] = open("PythonTests/Vectors/Transactions/ClaimedMint.json", "r")

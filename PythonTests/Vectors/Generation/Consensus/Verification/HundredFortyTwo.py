@@ -72,7 +72,7 @@ block.mine(blsPrivKeys[0], blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
-print("Generated Hundred Fourty Two Block " + str(len(blockchain.blocks)) + ".")
+print("Generated Hundred Forty Two Block " + str(len(blockchain.blocks)) + ".")
 
 #Give the second key Merit.
 block: Block = Block(
@@ -90,7 +90,7 @@ block: Block = Block(
 )
 block.mine(blsPrivKeys[1], blockchain.difficulty())
 blockchain.add(block)
-print("Generated Hundred Fourty Two Block " + str(len(blockchain.blocks)) + ".")
+print("Generated Hundred Forty Two Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a Data and verify it by both parties.
 data: Data = Data(bytes(32), edPubKey.to_bytes())
@@ -122,7 +122,7 @@ block = Block(
 for _ in range(6):
     block.mine(blsPrivKeys[1], blockchain.difficulty())
     blockchain.add(block)
-    print("Generated Hundred Fourty Two Block " + str(len(blockchain.blocks)) + ".")
+    print("Generated Hundred Forty Two Block " + str(len(blockchain.blocks)) + ".")
 
     #Create the next Block.
     block = Block(
@@ -146,6 +146,6 @@ result: Dict[str, Any] = {
     "verification": verifs[1].toSignedJSON(),
     "transaction": data.hash.hex().upper()
 }
-vectors: IO[Any] = open("PythonTests/Vectors/Consensus/Verification/HundredFourtyTwo.json", "w")
+vectors: IO[Any] = open("PythonTests/Vectors/Consensus/Verification/HundredFortyTwo.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()
