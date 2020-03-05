@@ -100,6 +100,13 @@ suite "ConsensusRevert":
                 newMinerWallet(),
                 newMinerWallet()
             ]
+            #Nonces of each holder.
+            nonces: seq[int] = @[
+                -1,
+                -1,
+                -1,
+                -1
+            ]
 
             #Wallets.
             wallets: seq[Wallet] = @[]
@@ -129,6 +136,12 @@ suite "ConsensusRevert":
             #Transactions with pending Verifications or parents with pending Verifications.
             transactionsWithPending: HashSet[Hash[256]] = initHashSet[Hash[256]]()
 
+            #Copy of the archived nonces at every step.
+            archivedNonces: Table[Hash[256], Table[uint16, int]] = initTable[Hash[256], Table[uint16, int]]()
+            #Copy of the pending signatures for the one holder with pending signatures.
+            pendingElementsDisappearAt: Hash[256]
+            pendingElementsRemoved: bool = true
+            pendingElements: seq[Element] = @[]
             #Copy of the SpamFilters at every step.
             sendFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
             dataFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
@@ -244,12 +257,73 @@ suite "ConsensusRevert":
                     if packets[^1].holders.len == 0:
                         packets.del(high(packets))
 
+            #Create Send/Data difficulties.
+            for h in 0 ..< holders.len:
+                if not holders[h].initiated:
+                    continue
+
+                if rand(2) == 0:
+                    var
+                        diff: Hash[256]
+                        sendDiff: SignedSendDifficulty
+                    for b in 0 ..< 32:
+                        diff.data[b] = uint8(rand(255))
+
+                    inc(nonces[h])
+                    sendDiff = newSignedSendDifficultyObj(nonces[h], diff)
+                    holders[h].sign(sendDiff)
+                    consensus.add(merit.state, sendDiff)
+
+                    if (h != high(holders)) or (merit.blockchain.height < 80):
+                        elements.add(sendDiff)
+                    else:
+                        pendingElements.add(sendDiff)
+
+                        #Used as a temporary flag here.
+                        if pendingElementsRemoved:
+                            #These pendingElements are only pruned when a Block containing an archived Element is removed.
+                            #We need to iterate over the Blockchain to find the Block before the last Block archiving an Element from this holder.
+                            block findLastElement:
+                                for b in countdown(merit.blockchain.height - 1, 0):
+                                    for elem in merit.blockchain[b].body.elements:
+                                        if elem.holder == uint16(high(holders)):
+                                            pendingElementsDisappearAt = merit.blockchain[b - 1].header.hash
+                                            break findLastElement
+                            pendingElementsRemoved = false
+
+                if rand(2) == 0:
+                    var
+                        diff: Hash[256]
+                        dataDiff: SignedDataDifficulty
+                    for b in 0 ..< 32:
+                        diff.data[b] = uint8(rand(255))
+
+                    inc(nonces[h])
+                    dataDiff = newSignedDataDifficultyObj(nonces[h], diff)
+                    holders[h].sign(dataDiff)
+                    consensus.add(merit.state, dataDiff)
+
+                    if (h != holders.len - 1) or (merit.blockchain.height < 80):
+                        elements.add(dataDiff)
+                    else:
+                        pendingElements.add(dataDiff)
+
+                        if pendingElementsRemoved:
+                            block findLastElement:
+                                for b in countdown(merit.blockchain.height - 1, 0):
+                                    for elem in merit.blockchain[b].body.elements:
+                                        if elem.holder == uint16(high(holders)):
+                                            pendingElementsDisappearAt = merit.blockchain[b - 1].header.hash
+                                            break findLastElement
+                            pendingElementsRemoved = false
+
             #Create a Block.
             if merit.blockchain.height < holders.len + 1:
                 newBlock = newBlankBlock(
                     last = merit.blockchain.tail.header.hash,
                     miner = holders[merit.blockchain.height - 1],
-                    packets = packets
+                    packets = packets,
+                    elements = elements
                 )
                 holders[merit.blockchain.height - 1].nick = uint16(merit.blockchain.height - 1)
                 holders[merit.blockchain.height - 1].initiated = true
@@ -259,7 +333,8 @@ suite "ConsensusRevert":
                     last = merit.blockchain.tail.header.hash,
                     miner = holders[holder],
                     nick = uint16(holder),
-                    packets = packets
+                    packets = packets,
+                    elements = elements
                 )
             blocks.add(newBlock)
 
@@ -330,6 +405,9 @@ suite "ConsensusRevert":
 
             #Commit the DBs.
             commit(merit.blockchain.height)
+
+            #Backup the archived nonces.
+            archivedNonces[merit.blockchain.tail.header.hash] = consensus.archived
 
             #Add the Claims.
             if not last:
@@ -454,6 +532,27 @@ suite "ConsensusRevert":
             #Verify the SpamFilters were reverted.
             compare(consensus.filters.send, sendFilters[merit.blockchain.tail.header.hash])
             compare(consensus.filters.data, dataFilters[merit.blockchain.tail.header.hash])
+
+            #Verify the archived nonces were reverted.
+            check(archivedNonces[merit.blockchain.tail.header.hash].len == consensus.archived.len)
+            for holder in archivedNonces[merit.blockchain.tail.header.hash].keys():
+                check(archivedNonces[merit.blockchain.tail.header.hash][holder] == consensus.archived[holder])
+
+            #Verify the pending signatures are corrrect.
+            if merit.blockchain.tail.header.hash == pendingElementsDisappearAt:
+                pendingElementsRemoved = true
+            if pendingElementsRemoved:
+                check(consensus.signatures[uint16(high(holders))].len == 0)
+            else:
+                check(consensus.signatures[uint16(high(holders))].len == pendingElements.len)
+                for s in 0 ..< pendingElements.len:
+                    var sig: BLSSignature
+                    case pendingElements[s]:
+                        of SignedSendDifficulty as sd:
+                            sig = sd.signature
+                        of SignedDataDifficulty as dd:
+                            sig = dd.signature
+                    check(consensus.signatures[uint16(high(holders))][s].serialize() == sig.serialize())
 
             #Commit the database so reloading the Consensus works.
             db.commit(merit.blockchain.height)
@@ -582,6 +681,14 @@ suite "ConsensusRevert":
                     verif.holder = holder
                     verif.signature = pendingStatuses[tx].signatures[holder]
                     consensus.add(merit.state, verif)
+
+            #Add back the pending Elements.
+            for elem in pendingElements:
+                case elem:
+                    of SignedSendDifficulty as sd:
+                        consensus.add(merit.state, sd)
+                    of SignedDataDifficulty as dd:
+                        consensus.add(merit.state, dd)
 
             #Compare the replayed Consensus DAG with the full DAG.
             compare(consensus, full)

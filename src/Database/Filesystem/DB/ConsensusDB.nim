@@ -230,6 +230,7 @@ proc override*(
     nonce: int
 ) {.forceCheck: [].} =
     db.put(HOLDER_NONCE(holder), nonce.toBinary())
+    db.put(HOLDER_ARCHIVED_NONCE(holder), nonce.toBinary())
 
 proc override*(
     db: DB,

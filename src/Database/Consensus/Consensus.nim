@@ -925,9 +925,11 @@ proc revert*(
         for elem in revertedBlock.body.elements:
             case elem:
                 of SendDifficulty as sd:
-                    revertedToNonces[sd.holder] = sd.nonce
+                    if sd.nonce < revertedToNonces.getOrDefault(sd.holder, high(int)):
+                        revertedToNonces[sd.holder] = sd.nonce
                 of DataDifficulty as dd:
-                    revertedToNonces[dd.holder] = dd.nonce
+                    if dd.nonce < revertedToNonces.getOrDefault(dd.holder, high(int)):
+                        revertedToNonces[dd.holder] = dd.nonce
                 of MeritRemoval as mr:
                     consensus.db.deleteMeritRemoval(mr)
                 else:
@@ -938,6 +940,7 @@ proc revert*(
         try:
             for n in revertedToNonces[holder] .. consensus.db.load(holder):
                 consensus.db.delete(holder, n)
+                consensus.db.deleteSignature(holder, n)
 
             #Update the holder's nonce.
             consensus.archived[holder] = revertedToNonces[holder] - 1
