@@ -954,7 +954,7 @@ proc revert*(
                 usedNonces: HashSet[int] = consensus.db.loadMeritRemovalNonces(holder)
                 found: bool = false
                 other: BlockElement
-            if consensus.db.loadSendDifficultyNonce(holder) > consensus.db.load(holder):
+            if consensus.db.loadSendDifficultyNonce(holder) >= revertedToNonces[holder]:
                 for n in countdown(consensus.archived[holder], 0):
                     if usedNonces.contains(n):
                         continue
@@ -973,7 +973,7 @@ proc revert*(
                     consensus.db.deleteSendDifficulty(holder)
 
             found = false
-            if consensus.db.loadDataDifficultyNonce(holder) > consensus.db.load(holder):
+            if consensus.db.loadDataDifficultyNonce(holder) >= revertedToNonces[holder]:
                 for n in countdown(consensus.archived[holder], 0):
                     if usedNonces.contains(n):
                         continue

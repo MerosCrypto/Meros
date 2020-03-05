@@ -16,8 +16,8 @@ import ../../../src/lib/Hash
 import ../../../src/Wallet/Wallet
 import ../../../src/Wallet/MinerWallet
 
-#VerificationPacket lib.
-import ../../../src/Database/Consensus/Elements/VerificationPacket
+#Consensus DB lib.
+import ../../../src/Database/Filesystem/DB/ConsensusDB
 
 #Merit lib.
 import ../../../src/Database/Merit/Merit
@@ -142,6 +142,9 @@ suite "ConsensusRevert":
             pendingElementsDisappearAt: Hash[256]
             pendingElementsRemoved: bool = true
             pendingElements: seq[Element] = @[]
+            #Copy of each holder's Send/Data difficulties at each step.
+            sendDifficulties: Table[Hash[256], Table[uint16, Hash[256]]] = initTable[Hash[256], Table[uint16, Hash[256]]]()
+            dataDifficulties: Table[Hash[256], Table[uint16, Hash[256]]] = initTable[Hash[256], Table[uint16, Hash[256]]]()
             #Copy of the SpamFilters at every step.
             sendFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
             dataFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
@@ -409,6 +412,19 @@ suite "ConsensusRevert":
             #Backup the archived nonces.
             archivedNonces[merit.blockchain.tail.header.hash] = consensus.archived
 
+            #Backup the difficulties.
+            sendDifficulties[merit.blockchain.tail.header.hash] = initTable[uint16, Hash[256]]()
+            dataDifficulties[merit.blockchain.tail.header.hash] = initTable[uint16, Hash[256]]()
+            for h in 0 ..< holders.len:
+                try:
+                    sendDifficulties[merit.blockchain.tail.header.hash][uint16(h)] = consensus.db.loadSendDifficulty(uint16(h))
+                except DBReadError:
+                    discard
+                try:
+                    dataDifficulties[merit.blockchain.tail.header.hash][uint16(h)] = consensus.db.loadDataDifficulty(uint16(h))
+                except DBReadError:
+                    discard
+
             #Add the Claims.
             if not last:
                 for claim in claims.keys():
@@ -538,9 +554,11 @@ suite "ConsensusRevert":
             for holder in archivedNonces[merit.blockchain.tail.header.hash].keys():
                 check(archivedNonces[merit.blockchain.tail.header.hash][holder] == consensus.archived[holder])
 
-            #Verify the pending signatures are corrrect.
+            #Check if the pending Elements have disappeared yet.
             if merit.blockchain.tail.header.hash == pendingElementsDisappearAt:
                 pendingElementsRemoved = true
+
+            #Verify the pending signatures are correct.
             if pendingElementsRemoved:
                 check(consensus.signatures[uint16(high(holders))].len == 0)
             else:
@@ -553,6 +571,37 @@ suite "ConsensusRevert":
                         of SignedDataDifficulty as dd:
                             sig = dd.signature
                     check(consensus.signatures[uint16(high(holders))][s].serialize() == sig.serialize())
+
+            #Verify the difficulties are correct.
+            for h in 0 ..< high(holders):
+                try:
+                    check(sendDifficulties[merit.blockchain.tail.header.hash][uint16(h)] == consensus.db.loadSendDifficulty(uint16(h)))
+                except KeyError:
+                    discard
+                try:
+                    check(dataDifficulties[merit.blockchain.tail.header.hash][uint16(h)] == consensus.db.loadDataDifficulty(uint16(h)))
+                except KeyError:
+                    discard
+
+            #Check for the holder who has pending Elements.
+            if pendingElementsRemoved:
+                try:
+                    check(sendDifficulties[merit.blockchain.tail.header.hash][uint16(high(holders))] == consensus.db.loadSendDifficulty(uint16(high(holders))))
+                except KeyError:
+                    discard
+                try:
+                    check(dataDifficulties[merit.blockchain.tail.header.hash][uint16(high(holders))] == consensus.db.loadDataDifficulty(uint16(high(holders))))
+                except KeyError:
+                    discard
+            else:
+                try:
+                    check(sendDifficulties[blocks[^1].header.hash][uint16(high(holders))] == consensus.db.loadSendDifficulty(uint16(high(holders))))
+                except KeyError:
+                    discard
+                try:
+                    check(dataDifficulties[blocks[^1].header.hash][uint16(high(holders))] == consensus.db.loadDataDifficulty(uint16(high(holders))))
+                except KeyError:
+                    discard
 
             #Commit the database so reloading the Consensus works.
             db.commit(merit.blockchain.height)
