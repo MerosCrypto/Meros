@@ -589,11 +589,7 @@ proc handle*(
                                 ValueError
                             ].} =
                                 try:
-                                    result = serialization.parseBlockHeader(
-                                        cast[BlockHeaderSyncRequest](
-                                            manager.requests[peer.requests[0]]
-                                        ).check
-                                    )
+                                    result = serialization.parseBlockHeader()
                                 except ValueError as e:
                                     raise e
 
