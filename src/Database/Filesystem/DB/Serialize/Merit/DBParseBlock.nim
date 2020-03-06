@@ -28,6 +28,7 @@ import ../../../../../Network/Serialize/Consensus/ParseBlockElement
 #Parse a Block.
 proc parseBlock*(
     blockStr: string,
+    interimHash: string,
     hash: Hash[256]
 ): Block {.forceCheck: [
     ValueError
@@ -39,7 +40,7 @@ proc parseBlock*(
 
     #Parse the header.
     try:
-        header = blockStr.parseBlockHeader(hash)
+        header = blockStr.parseBlockHeader(interimHash, hash)
     except ValueError as e:
         raise e
 

@@ -96,8 +96,8 @@ suite "SerializeBlockHeader":
         #Test the serialized versions.
         check(header.serialize() == reloaded.serialize())
 
-        #Serialize it and parse it back with the hash.
-        reloaded = header.serialize().parseBlockHeader(header.hash)
+        #Serialize it and parse it back with the hashes.
+        reloaded = header.serialize().parseBlockHeader(header.interimHash, header.hash)
 
         #Test it.
         compare(header, reloaded)

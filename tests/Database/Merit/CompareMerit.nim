@@ -42,6 +42,7 @@ proc compare*(
     check(bh1.proof == bh2.proof)
     check(bh1.signature == bh2.signature)
 
+    check(bh1.interimHash == bh2.interimHash)
     check(bh1.hash == bh2.hash)
 
 #Compare two BlockBodies to make sure they have the same value.

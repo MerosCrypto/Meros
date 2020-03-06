@@ -38,6 +38,8 @@ type BlockHeader* = ref object
     #Signature.
     signature*: BLSSignature
 
+    #Interim Block hash.
+    interimHash*: string
     #Block hash.
     hash*: RandomXHash
 
@@ -106,15 +108,14 @@ proc hash*(
     proof: uint32
 ) {.forceCheck: [].} =
     header.proof = proof
-    header.hash = RandomX(serialized)
-    header.signature = miner.sign(header.hash.toString())
-    header.hash = RandomX(header.hash.toString() & header.signature.serialize())
+    header.interimHash = RandomX(serialized).toString()
+    header.signature = miner.sign(header.interimHash)
+    header.hash = RandomX(header.interimHash & header.signature.serialize())
 
 #Hash the header via a passed in serialization.
 proc hash*(
     header: var BlockHeader,
     serialized: string
 ) {.forceCheck: [].} =
-    header.hash = RandomX(
-        RandomX(serialized).toString() & header.signature.serialize()
-    )
+    header.interimHash = RandomX(serialized).toString()
+    header.hash = RandomX(header.interimHash & header.signature.serialize())

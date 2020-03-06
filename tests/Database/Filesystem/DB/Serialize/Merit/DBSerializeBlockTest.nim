@@ -95,7 +95,7 @@ suite "DBSerializeBlock":
             )
 
         #Serialize it and parse it back.
-        reloaded = newBlock.serialize().parseBlock(newBlock.header.hash)
+        reloaded = newBlock.serialize().parseBlock(newBlock.header.interimHash, newBlock.header.hash)
 
         #Compare the Blocks.
         compare(newBlock, reloaded)

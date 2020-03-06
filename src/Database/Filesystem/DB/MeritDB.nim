@@ -59,6 +59,11 @@ template TOTAL_UNLOCKED_MERIT(
 ): string =
     blockNum.toBinary(INT_LEN) & "m"
 
+template INTERIM_HASH(
+    hash: Hash[256]
+): string =
+    hash.toString() & "i"
+
 template BLOCK_HASH(
     hash: Hash[256]
 ): string =
@@ -226,6 +231,7 @@ proc save*(
     nonce: int,
     blockArg: Block
 ) {.forceCheck: [].} =
+    db.put(INTERIM_HASH(blockArg.header.hash), blockArg.header.interimHash)
     db.put(BLOCK_HASH(blockArg.header.hash), blockArg.serialize())
     db.put(BLOCK_NONCE(nonce), blockArg.header.hash.toString())
 
@@ -334,7 +340,7 @@ proc loadBlockHeader*(
     DBReadError
 ].} =
     try:
-        result = db.get(BLOCK_HASH(hash)).parseBlockHeader(hash)
+        result = db.get(BLOCK_HASH(hash)).parseBlockHeader(db.get(INTERIM_HASH(hash)), hash)
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
@@ -345,7 +351,7 @@ proc loadBlock*(
     DBReadError
 ].} =
     try:
-        result = db.get(BLOCK_HASH(hash)).parseBlock(hash)
+        result = db.get(BLOCK_HASH(hash)).parseBlock(db.get(INTERIM_HASH(hash)), hash)
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
@@ -356,8 +362,7 @@ proc loadBlock*(
     DBReadError
 ].} =
     try:
-        var hash: Hash[256] = db.get(BLOCK_NONCE(nonce)).toHash(256)
-        result = db.get(BLOCK_HASH(hash)).parseBlock(hash)
+        result = db.loadBlock(db.get(BLOCK_NONCE(nonce)).toHash(256))
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
@@ -458,6 +463,7 @@ proc deleteBlock*(
         panic("Tried to delete a Block which doesn't exist: " & e.msg)
 
     db.del(BLOCK_NONCE(nonce))
+    db.del(INTERIM_HASH(hash))
     db.del(BLOCK_HASH(hash))
     db.del(DIFFICULTY(nonce + 1))
     db.del(TOTAL_UNLOCKED_MERIT(nonce))

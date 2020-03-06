@@ -14,8 +14,7 @@ import ../../Wallet/MinerWallet
 import ../Consensus/Elements/objects/VerificationPacketObj
 import ../Consensus/Elements/objects/MeritRemovalObj
 
-#Serialization libs.
-import ../../Network/Serialize/Merit/SerializeBlockHeader
+#Element Serialization lib.
 import ../../Network/Serialize/Consensus/SerializeElement
 
 #Merit DB lib.
@@ -103,7 +102,7 @@ proc testBlockHeader*(
 
     #Check the signature.
     try:
-        if not header.signature.verify(newBLSAggregationInfo(key, RandomX(header.serializeHash()).toString())):
+        if not header.signature.verify(newBLSAggregationInfo(key, header.interimHash)):
             raise newLoggedException(ValueError, "Block has an invalid signature.")
     except BLSError as e:
         panic("Failed to verify a BlockHeader's signature: " & e.msg)
