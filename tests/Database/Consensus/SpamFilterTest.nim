@@ -165,7 +165,7 @@ suite "SpamFilter":
                 var
                     incd: uint16 = uint16(rand(merit.len - 1))
                     decd: uint16 = uint16(rand(merit.len - 1))
-                while (decd == incd) or (merit[decd] == 0):
+                while merit[decd] == 0:
                     decd = uint16(rand(merit.len - 1))
                 merit[incd] += 1
                 merit[decd] -= 1
