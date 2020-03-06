@@ -1,6 +1,6 @@
 # Difficulty
 
-Meros's difficulty is heavily inspired from Cryptonote. Difficulty is represented as an unsigned 64-bit integer where `difficulty / 2 + 1` is the average amount of hashes needed to beat it.
+Meros's difficulty is heavily inspired from Cryptonote. Difficulty is represented as an unsigned 64-bit integer where `difficulty / 2 + 1` is the average amount of hashes needed to beat it. In the case of Sends, Datas, and Unlocks, difficulty is represented as an unsigned 32-bit integer.
 
 # Spam Function
 
