@@ -87,7 +87,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 - miner is a valid, non-infinite, BLS Public Key if the miner is new or a valid nickname if the miner isn't new.
 - time must be greater than the latest Block’s time.
 - signature must be valid.
-- hash must not be less than the current difficulty.
+- hash must not overflow a 256-bit number when multiplied by the difficulty.
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
