@@ -59,17 +59,7 @@ Send hashes are defined as `Blake2b-256("\2" + inputs.length + inputs[0] + ... +
 
 The signature must be the signature produced by the sender signing the hash.
 
-The proof must satisfy the following check, where sendDifficulty is the Sends' spam filter's difficulty (described in the Consensus documentation):
-
-```
-Argon2d(
-    iterations = 1,
-    memory = 8,
-    parallelism = 1,
-    data = hash,
-    salt = proof left padded to be 8 bytes long
-) > sendDifficulty
-```
+The proof should cause the Send to beat the difficulty, as described in the Consensus and Difficulty documentation.
 
 `Send` has a variable message length; the 1-byte amount of inputs, the inputs (each 33 bytes), 1-byte amount of outputs, the outputs (each 40 bytes), the 64-byte Ed25519 signature, and the 4-byte proof.
 
@@ -89,17 +79,7 @@ The signature must be the signature produced by the sender signing the hash.
 
 The data must be less than 256 bytes long (enforced by only providing a single byte to store the data length).
 
-The proof must satisfy the following check, where dataDifficulty is the Datas' spam filter's difficulty (described in the Consensus documentation):
-
-```
-Argon2d(
-    iterations = 1,
-    memory = 8,
-    parallelism = 1,
-    data = hash,
-    salt = proof left padded to be 8 bytes long
-) > dataDifficulty
-```
+The proof should cause the Data to beat the difficulty, as described in the Consensus and Difficulty documentation.
 
 `Data` has a variable message length; the 32-byte input, the 1-byte data length (where the length is the byte's value plus one), the variable-length data, the 64-byte Ed25519 signature, and the 4-byte proof.
 
