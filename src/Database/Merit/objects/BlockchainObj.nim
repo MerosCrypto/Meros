@@ -155,7 +155,7 @@ proc newBlockchainObj*(
 
     #Load the Difficulty.
     try:
-        result.difficulty = result.db.loadDifficulty(last.header.hash)
+        result.difficulty = result.db.loadDifficulty(result.blocks[^1].header.hash)
     except DBReadError as e:
         panic("Couldn't load the Difficulty from the Database: " & e.msg)
 
