@@ -39,7 +39,7 @@ proc getLength*(
             if actual == MERIT_REMOVAL_PREFIX:
                 result -= NICKNAME_LEN
 
-        of GAS_PRICE_PREFIX:
+        of GAS_DIFFICULTY_PREFIX:
             result = NICKNAME_LEN + INT_LEN
             if actual == MERIT_REMOVAL_PREFIX:
                 result -= NICKNAME_LEN

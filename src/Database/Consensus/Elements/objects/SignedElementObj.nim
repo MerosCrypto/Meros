@@ -3,7 +3,6 @@ import VerificationObj
 import VerificationPacketObj
 import SendDifficultyObj
 import DataDifficultyObj
-import GasPriceObj
 import MeritRemovalObj
 
 #SignedElement typeclass.
@@ -12,5 +11,4 @@ type SignedElement* =
     SignedVerificationPacket or
     SignedSendDifficulty or
     SignedDataDifficulty or
-    SignedGasPrice or
     SignedMeritRemoval

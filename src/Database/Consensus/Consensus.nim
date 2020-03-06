@@ -683,9 +683,9 @@ proc remove*(
     consensus.filters.send.remove(mr.holder, merit)
     consensus.filters.data.remove(mr.holder, merit)
 
-    #If the removed MeritRemoval involved a SendDifficulty, DataDifficulty, or GasPrice, we need to:
+    #If the removed MeritRemoval involved a SendDifficulty, DataDifficulty, or GasDifficulty, we need to:
     #- Save that the nonce was used.
-    #- Update the difficulties/gas price.
+    #- Update the difficulties.
     var usedNonces: HashSet[int] = consensus.db.loadMeritRemovalNonces(mr.holder)
     proc updateIfTail(
         consensus: var Consensus,

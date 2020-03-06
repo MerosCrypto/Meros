@@ -481,16 +481,16 @@ proc sync*(
                     e1Nonce = sendDiff.nonce
                 of DataDifficulty as dataDiff:
                     e1Nonce = dataDiff.nonce
-                #of GasPrice as gasPrice:
-                #    e1Nonce = gasPrice.nonce
+                #of GasDifficulty as gasDiff:
+                #    e1Nonce = gasDiff.nonce
 
             case e2:
                 of SendDifficulty as sendDiff:
                     e2Nonce = sendDiff.nonce
                 of DataDifficulty as dataDiff:
                     e2Nonce = dataDiff.nonce
-                #of GasPrice as gasPrice:
-                #    e2Nonce = gasPrice.nonce
+                #of GasDifficulty as gasDiff:
+                #    e2Nonce = gasDiff.nonce
 
             if e1Nonce < e2Nonce: -1 else: 1
     )
@@ -532,7 +532,7 @@ proc sync*(
                 except KeyError:
                     panic("Table doesn't have a value for a key we made sure we had.")
 
-            #of GasPrice as gasPrice:
+            #of GasDifficulty as gasDiff:
             #    discard
 
             of MeritRemoval as mr:
