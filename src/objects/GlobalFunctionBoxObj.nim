@@ -275,8 +275,7 @@ type
         testBlockHeader*: proc (
             header: BlockHeader
         ) {.raises: [
-            ValueError,
-            NotConnected
+            ValueError
         ].}
 
     PersonalFunctionBox* = ref object

@@ -54,24 +54,21 @@ proc newBlockchain*(
 
 #Test a BlockHeader.
 proc testBlockHeader*(
-    blockchain: Blockchain,
+    miners: Table[BLSPublicKey, uint16],
     lookup: seq[BLSPublicKey],
+    previous: BlockHeader,
+    difficulty: Difficulty,
     header: BlockHeader
 ) {.forceCheck: [
-    ValueError,
-    NotConnected
+    ValueError
 ].} =
     #Check the difficulty.
-    if header.hash < blockchain.difficulty.difficulty:
+    if header.hash < difficulty.difficulty:
         raise newLoggedException(ValueError, "Block doesn't beat the difficulty.")
 
     #Check the version.
     if header.version != 0:
         raise newLoggedException(ValueError, "BlockHeader has an invalid version.")
-
-    #Check the last hash.
-    if header.last != blockchain.tail.header.hash:
-        raise newLoggedException(NotConnected, "Last hash isn't our tip.")
 
     #Check significant.
     if (header.significant == 0) or (header.significant > uint16(26280)):
@@ -80,7 +77,7 @@ proc testBlockHeader*(
     var key: BLSPublicKey
     if header.newMiner:
         #Check a miner with a nickname isn't being marked as new.
-        if blockchain.miners.hasKey(header.minerKey):
+        if miners.hasKey(header.minerKey):
             raise newLoggedException(ValueError, "Header marks a miner with a nickname as new.")
 
         #Make sure the key isn't infinite.
@@ -97,7 +94,7 @@ proc testBlockHeader*(
         key = lookup[header.minerNick]
 
     #Check the time.
-    if (header.time < blockchain.tail.header.time) or (header.time > getTime() + 30):
+    if (header.time <= previous.time) or (header.time > getTime() + 30):
         raise newLoggedException(ValueError, "Block has an invalid time.")
 
     #Check the signature.

@@ -4,6 +4,7 @@ The Main files are an "include chain". They include each other sequentially, in 
     MainChainParams
     MainGlobals
     MainDatabase
+    MainReorganization
     MainMerit
     MainConsensus
     MainTransactions

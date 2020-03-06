@@ -396,7 +396,7 @@ proc module*(
                 #Test the Block Header.
                 try:
                     functions.merit.testBlockHeader(sketchyBlock.data.header)
-                except ValueError, NotConnected:
+                except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
 
                 try:

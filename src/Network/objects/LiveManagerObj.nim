@@ -236,7 +236,7 @@ proc handle*(
                     except ValueError, DataMissing:
                         peer.close()
                         return
-                    except DataExists, NotConnected:
+                    except DataExists:
                         continue
                     except Exception as e:
                         panic("Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -247,5 +247,5 @@ proc handle*(
         except ValueError, DataMissing:
             peer.close()
             return
-        except Spam, DataExists, NotConnected:
+        except Spam, DataExists:
             continue
