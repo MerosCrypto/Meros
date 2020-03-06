@@ -138,7 +138,7 @@ proc newBlockchainObj*(
         result.db.saveHeight(result.height)
         result.db.saveTip(tip)
         result.db.save(0, genesisBlock)
-        result.db.save(result.height, result.difficulty)
+        result.db.save(genesisBlock.header.hash, result.difficulty)
 
     #Load the last 10 Blocks.
     var last: Block
@@ -155,7 +155,7 @@ proc newBlockchainObj*(
 
     #Load the Difficulty.
     try:
-        result.difficulty = result.db.loadDifficulty(result.height)
+        result.difficulty = result.db.loadDifficulty(last.header.hash)
     except DBReadError as e:
         panic("Couldn't load the Difficulty from the Database: " & e.msg)
 

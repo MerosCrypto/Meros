@@ -142,7 +142,7 @@ proc processBlock*(
             blocksPerPeriod = 144
 
         blockchain.difficulty = blockchain.calculateNextDifficulty(blocksPerPeriod)
-    blockchain.db.save(blockchain.height, blockchain.difficulty)
+    blockchain.db.save(newBlock.header.hash, blockchain.difficulty)
 
 #Revert the Blockchain to a certain height.
 proc revert*(
@@ -213,7 +213,7 @@ proc revert*(
 
     #Load the reverted to difficulty.
     try:
-        blockchain.difficulty = blockchain.db.loadDifficulty(blockchain.height)
+        blockchain.difficulty = blockchain.db.loadDifficulty(blockchain.tail.header.hash)
     except DBReadError as e:
         panic("Couldn't load the difficulty of the Block we reverted to: " & e.msg)
 

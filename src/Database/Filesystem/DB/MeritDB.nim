@@ -75,9 +75,9 @@ template BLOCK_NONCE(
     nonce.toBinary(INT_LEN)
 
 template DIFFICULTY(
-    nonce: int
+    hash: Hash[256]
 ): string =
-    nonce.toBinary(INT_LEN) & "d"
+    hash.toString() & "d"
 
 template HOLDER_NICK(
     nick: uint16
@@ -214,10 +214,10 @@ proc saveTip*(
 
 proc save*(
     db: DB,
-    height: int,
+    hash: Hash[256],
     difficulty: Difficulty
 ) {.forceCheck: [].} =
-    db.put(DIFFICULTY(height), difficulty.serialize())
+    db.put(DIFFICULTY(hash), difficulty.serialize())
 
 proc saveUnlocked*(
     db: DB,
@@ -313,12 +313,12 @@ proc loadTip*(
 
 proc loadDifficulty*(
     db: DB,
-    height: int
+    hash: Hash[256]
 ): Difficulty {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(DIFFICULTY(height)).parseDifficulty()
+        result = db.get(DIFFICULTY(hash)).parseDifficulty()
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
@@ -465,7 +465,7 @@ proc deleteBlock*(
     db.del(BLOCK_NONCE(nonce))
     db.del(INTERIM_HASH(hash))
     db.del(BLOCK_HASH(hash))
-    db.del(DIFFICULTY(nonce + 1))
+    db.del(DIFFICULTY(hash))
     db.del(TOTAL_UNLOCKED_MERIT(nonce))
     db.del(BLOCK_REMOVALS(nonce))
 
