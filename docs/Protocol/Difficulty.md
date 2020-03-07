@@ -62,10 +62,10 @@ The Blockchain difficulty is initially set to 10,000,000. When the third Block a
 A window of Blocks is selected, including the newest Block. The window has a variable size depending on how long the Blockchain is.
 
 - If the Blockchain height is less than 1008 (first week), the amount of Blocks used in the window is 3.
-- If the Blockchain height is less than 4320 (first month), the amount of Blocks used in the window is 18.
-- If the Blockchain height is less than 12960 (first three months), the amount of Blocks used in the window is 36.
-- If the Blockchain height is less than 25920 (first six months), the amount of Blocks used in the window is 72.
-- If the Blockchain height is less than 52560 (first year), the amount of Blocks used in the window is 144.
+- If the Blockchain height is less than 4320 (first month), the amount of Blocks used in the window is 9.
+- If the Blockchain height is less than 12960 (first three months), the amount of Blocks used in the window is 18.
+- If the Blockchain height is less than 25920 (first six months), the amount of Blocks used in the window is 36.
+- If the Blockchain height is less than 52560 (first year), the amount of Blocks used in the window is 72.
 
 The `window.length / 10` Blocks with the most outlying difficulties from the median are removed from the window.
 
