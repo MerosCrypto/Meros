@@ -108,8 +108,8 @@ type
         ) {.inline, raises: [].}
 
     ConsensusFunctionBox* = ref object
-        getSendDifficulty*: proc (): Hash[256] {.inline, raises: [].}
-        getDataDifficulty*: proc (): Hash[256] {.inline, raises: [].}
+        getSendDifficulty*: proc (): uint32 {.inline, raises: [].}
+        getDataDifficulty*: proc (): uint32 {.inline, raises: [].}
 
         isMalicious*: proc (
             nick: uint16,

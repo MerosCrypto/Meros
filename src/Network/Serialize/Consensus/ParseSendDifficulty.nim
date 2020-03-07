@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Hash lib.
-import ../../../lib/Hash
-
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
@@ -21,14 +18,14 @@ proc parseSendDifficulty*(
     var sendDiffSeq: seq[string] = sendDiffStr.deserialize(
         NICKNAME_LEN,
         INT_LEN,
-        HASH_LEN
+        INT_LEN
     )
 
     #Create the SendDifficulty.
     try:
         result = newSendDifficultyObj(
             sendDiffSeq[1].fromBinary(),
-            sendDiffSeq[2].toHash(256)
+            uint32(sendDiffSeq[2].fromBinary())
         )
         result.holder = uint16(sendDiffSeq[0].fromBinary())
     except ValueError as e:
@@ -44,7 +41,7 @@ proc parseSignedSendDifficulty*(
     var sendDiffSeq: seq[string] = sendDiffStr.deserialize(
         NICKNAME_LEN,
         INT_LEN,
-        HASH_LEN,
+        INT_LEN,
         BLS_SIGNATURE_LEN
     )
 
@@ -52,7 +49,7 @@ proc parseSignedSendDifficulty*(
     try:
         result = newSignedSendDifficultyObj(
             sendDiffSeq[1].fromBinary(),
-            sendDiffSeq[2].toHash(256)
+            uint32(sendDiffSeq[2].fromBinary())
         )
         result.holder = uint16(sendDiffSeq[0].fromBinary())
         result.signature = newBLSSignature(sendDiffSeq[3])

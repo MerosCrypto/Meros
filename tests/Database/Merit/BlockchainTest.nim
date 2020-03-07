@@ -116,19 +116,19 @@ suite "Blockchain":
 
                     case rand(2):
                         of 0:
-                            var sd: SignedSendDifficulty = newSignedSendDifficultyObj(elementNonce, randomHash())
+                            var sd: SignedSendDifficulty = newSignedSendDifficultyObj(elementNonce, uint32(rand(high(int32))))
                             miners[holder].sign(sd)
                             elements.add(sd)
                         of 1:
-                            var dd: SignedDataDifficulty = newSignedDataDifficultyObj(elementNonce, randomHash())
+                            var dd: SignedDataDifficulty = newSignedDataDifficultyObj(elementNonce, uint32(rand(high(int32))))
                             miners[holder].sign(dd)
                             elements.add(dd)
                         of 2:
                             var
                                 e1: SignedDataDifficulty
                                 e2: SignedDataDifficulty
-                            e1 = newSignedDataDifficultyObj(elementNonce, randomHash())
-                            e2 = newSignedDataDifficultyObj(elementNonce, randomHash())
+                            e1 = newSignedDataDifficultyObj(elementNonce, uint32(rand(high(int32))))
+                            e2 = newSignedDataDifficultyObj(elementNonce, uint32(rand(high(int32))))
                             miners[holder].sign(e1)
                             miners[holder].sign(e2)
 

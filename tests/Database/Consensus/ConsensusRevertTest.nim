@@ -52,11 +52,8 @@ suite "ConsensusRevert":
         randomize(int64(getTime()))
 
         var
-            initialSendDifficulty: Hash[256]
-            initialDataDifficulty: Hash[256]
-        for b in 0 ..< 32:
-            initialSendDifficulty.data[b] = uint8(rand(255))
-            initialDataDifficulty.data[b] = uint8(rand(255))
+            initialSendDifficulty: uint32 = uint32(rand(high(int32)))
+            initialDataDifficulty: uint32 = uint32(rand(high(int32)))
 
         var
             #Database.
@@ -143,8 +140,8 @@ suite "ConsensusRevert":
             pendingElementsRemoved: bool = true
             pendingElements: seq[Element] = @[]
             #Copy of each holder's Send/Data difficulties at each step.
-            sendDifficulties: Table[Hash[256], Table[uint16, Hash[256]]] = initTable[Hash[256], Table[uint16, Hash[256]]]()
-            dataDifficulties: Table[Hash[256], Table[uint16, Hash[256]]] = initTable[Hash[256], Table[uint16, Hash[256]]]()
+            sendDifficulties: Table[Hash[256], Table[uint16, uint32]] = initTable[Hash[256], Table[uint16, uint32]]()
+            dataDifficulties: Table[Hash[256], Table[uint16, uint32]] = initTable[Hash[256], Table[uint16, uint32]]()
             #Copy of the SpamFilters at every step.
             sendFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
             dataFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
@@ -267,10 +264,8 @@ suite "ConsensusRevert":
 
                 if rand(2) == 0:
                     var
-                        diff: Hash[256]
+                        diff: uint32 = uint32(rand(high(int32)))
                         sendDiff: SignedSendDifficulty
-                    for b in 0 ..< 32:
-                        diff.data[b] = uint8(rand(255))
 
                     inc(nonces[h])
                     sendDiff = newSignedSendDifficultyObj(nonces[h], diff)
@@ -296,10 +291,8 @@ suite "ConsensusRevert":
 
                 if rand(2) == 0:
                     var
-                        diff: Hash[256]
+                        diff: uint32 = uint32(rand(high(int32)))
                         dataDiff: SignedDataDifficulty
-                    for b in 0 ..< 32:
-                        diff.data[b] = uint8(rand(255))
 
                     inc(nonces[h])
                     dataDiff = newSignedDataDifficultyObj(nonces[h], diff)
@@ -413,8 +406,8 @@ suite "ConsensusRevert":
             archivedNonces[merit.blockchain.tail.header.hash] = consensus.archived
 
             #Backup the difficulties.
-            sendDifficulties[merit.blockchain.tail.header.hash] = initTable[uint16, Hash[256]]()
-            dataDifficulties[merit.blockchain.tail.header.hash] = initTable[uint16, Hash[256]]()
+            sendDifficulties[merit.blockchain.tail.header.hash] = initTable[uint16, uint32]()
+            dataDifficulties[merit.blockchain.tail.header.hash] = initTable[uint16, uint32]()
             for h in 0 ..< holders.len:
                 try:
                     sendDifficulties[merit.blockchain.tail.header.hash][uint16(h)] = consensus.db.loadSendDifficulty(uint16(h))
@@ -788,12 +781,12 @@ suite "ConsensusRevert":
                         except KeyError:
                             data = newData(Hash[256](), wallets[w].publicKey.toString())
                             wallets[w].sign(data)
-                            data.mine(Hash[256]())
+                            data.mine(uint32(0))
                             add(data)
 
                         data = newData(dataTips[wallets[w].publicKey], dataStr)
                         wallets[w].sign(data)
-                        data.mine(Hash[256]())
+                        data.mine(uint32(0))
                         add(data)
 
                 #Calculate the actual amount of needed Meros.
@@ -831,7 +824,7 @@ suite "ConsensusRevert":
                     #Create and add the Send.
                     var send: Send = newSend(inputs, outputs)
                     wallets[w].sign(send)
-                    send.mine(Hash[256]())
+                    send.mine(uint32(0))
                     add(send)
 
         #Create one last Block for the latest Claims/Sends.

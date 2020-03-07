@@ -389,12 +389,12 @@ suite "Transactions":
                         except KeyError:
                             data = newData(Hash[256](), wallets[w].publicKey.toString())
                             wallets[w].sign(data)
-                            data.mine(Hash[256]())
+                            data.mine(uint32(0))
                             add(data, initHashSet[Hash[256]]())
 
                         data = newData(dataTips[wallets[w].publicKey], dataStr)
                         wallets[w].sign(data)
-                        data.mine(Hash[256]())
+                        data.mine(uint32(0))
                         add(data, initHashSet[Hash[256]]())
 
                 #Calculate the actual amount of needed Meros.
@@ -481,7 +481,7 @@ suite "Transactions":
                     #Create and add the Send.
                     var send: Send = newSend(inputs, outputs)
                     wallets[w].sign(send)
-                    send.mine(Hash[256]())
+                    send.mine(uint32(0))
                     add(send, mints)
 
         #Create one last Block for the latest Claims/Sends.

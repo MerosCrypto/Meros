@@ -74,7 +74,7 @@ proc compare*(
         check(sf1.votes[holder].difficulty == sf2.votes[holder].difficulty)
 
     #Verify the starting difficulty and current difficulty.
-    check(sf1.startDifficulty == sf2.startDifficulty)
+    check(sf1.initialDifficulty == sf2.initialDifficulty)
     check(sf1.difficulty == sf2.difficulty)
 
 #Compare two Consensuses to make sure they have the same values.

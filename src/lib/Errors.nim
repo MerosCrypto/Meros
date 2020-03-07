@@ -106,11 +106,13 @@ proc newMaliciousMeritHolder*(
 proc newSpam*(
     msg: string,
     hash: Hash[256],
-    argon: Hash[256]
+    argon: Hash[256],
+    difficulty: uint32
 ): ref Spam {.forceCheck: [].} =
     result = newLoggedException(Spam, msg)
     result.hash = hash
     result.argon = argon
+    result.difficulty = difficulty
 
 proc newJSONRPCError*(
     code: int,

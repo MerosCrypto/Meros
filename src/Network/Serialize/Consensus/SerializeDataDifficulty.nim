@@ -23,7 +23,7 @@ method serialize*(
 ): string {.inline, forceCheck: [].} =
     dataDiff.holder.toBinary(NICKNAME_LEN) &
     dataDiff.nonce.toBinary(INT_LEN) &
-    dataDiff.difficulty.toString()
+    dataDiff.difficulty.toBinary(INT_LEN)
 
 #Serialize a DataDifficulty for signing or a MeritRemoval.
 method serializeWithoutHolder*(
@@ -31,7 +31,7 @@ method serializeWithoutHolder*(
 ): string {.inline, forceCheck: [].} =
     char(DATA_DIFFICULTY_PREFIX) &
     dataDiff.nonce.toBinary(INT_LEN) &
-    dataDiff.difficulty.toString()
+    dataDiff.difficulty.toBinary(INT_LEN)
 
 #Serialize a DataDifficulty for inclusion in a BlockHeader's contents Merkle.
 method serializeContents*(

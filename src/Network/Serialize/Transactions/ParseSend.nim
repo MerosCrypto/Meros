@@ -16,7 +16,7 @@ import ../SerializeCommon
 #Parse function.
 proc parseSend*(
     sendStr: string,
-    diff: Hash[256]
+    diff: uint32
 ): Send {.forceCheck: [
     ValueError,
     Spam
@@ -37,12 +37,6 @@ proc parseSend*(
         ED_SIGNATURE_LEN,
         INT_LEN
     )
-
-    var
-        hash: Hash[256] = Blake256("\2" & sendStr[0 ..< sendStr.len - (ED_SIGNATURE_LEN + INT_LEN)])
-        argon: ArgonHash = Argon(hash.toString(), sendSeq[5].pad(8))
-    if argon < diff:
-        raise newSpam("Send didn't beat the difficulty.", hash, argon)
 
     #Convert the inputs.
     var inputs: seq[FundedInput] = newSeq[FundedInput](sendSeq[0].fromBinary())
@@ -69,6 +63,14 @@ proc parseSend*(
         inputs,
         outputs
     )
+
+    #Verify the Send isn't spam.
+    var
+        hash: Hash[256] = Blake256("\2" & sendStr[0 ..< sendStr.len - (ED_SIGNATURE_LEN + INT_LEN)])
+        argon: ArgonHash = Argon(hash.toString(), sendSeq[5].pad(8))
+        factor: uint32 = result.getDifficultyFactor()
+    if argon.overflows(factor * diff):
+        raise newSpam("Send didn't beat the difficulty.", hash, argon, factor * diff)
 
     #Hash it and set its signature/proof/argon.
     result.hash = hash

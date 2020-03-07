@@ -65,10 +65,10 @@ suite "SerializeData":
         wallet.next(last = uint32(rand(200) * 1000)).sign(data)
 
         #mine the Data.
-        data.mine("".pad(64, "cc").toHash(256))
+        data.mine(uint32(5))
 
         #Serialize it and parse it back.
-        reloaded = data.serialize().parseData(Hash[256]())
+        reloaded = data.serialize().parseData(uint32(0))
 
         #Compare the Datas.
         compare(data, reloaded)

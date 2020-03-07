@@ -30,12 +30,12 @@ proc getLength*(
                 result += (BLS_PUBLIC_KEY_LEN * holders) + HASH_LEN
 
         of SEND_DIFFICULTY_PREFIX:
-            result = NICKNAME_LEN + INT_LEN + HASH_LEN
+            result = NICKNAME_LEN + INT_LEN + INT_LEN
             if actual == MERIT_REMOVAL_PREFIX:
                 result -= NICKNAME_LEN
 
         of DATA_DIFFICULTY_PREFIX:
-            result = NICKNAME_LEN + INT_LEN + HASH_LEN
+            result = NICKNAME_LEN + INT_LEN + INT_LEN
             if actual == MERIT_REMOVAL_PREFIX:
                 result -= NICKNAME_LEN
 

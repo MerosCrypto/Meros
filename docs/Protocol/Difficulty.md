@@ -73,9 +73,9 @@ The new difficulty is defined as `sum(windowDifficulties) * 600 / (window[window
 
 ### Violations in Meros
 
-- Meros uses a 256-bit difficulty, not a 64-bit difficulty.
-- Meros has different initial difficulties.
+- Meros uses a 256-bit difficulty for the Blockchain.
+- Meros has a different initial Blockchain difficulty.
 - Meros uses a different amount of Blocks in the window depending on how long the Blockchain is.
-- Meros doesn't remove outlying difficulties.
-- Meros uses a different formula to calculate the next difficulty.
-- Meros uses a different formula to verify the difficulty.
+- Meros doesn't remove outlying difficulties from the Blockchain's window.
+- Meros uses a different formula to calculate the Blockchain's next difficulty.
+- Meros uses a different formula to verify the Blockchain's difficulty.

@@ -42,13 +42,14 @@ proc sign*(
 #Mine the Send.
 proc mine*(
     send: Send,
-    networkDifficulty: Hash[256]
+    baseDifficulty: uint32
 ) {.forceCheck: [].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
+        difficulty: uint32 = send.getDifficultyFactor() * baseDifficulty
         proof: uint32 = 0
         hash: ArgonHash = Argon(send.hash.toString(), proof.toBinary(SALT_LEN))
-    while hash <= networkDifficulty:
+    while hash.overflows(difficulty):
         inc(proof)
         hash = Argon(send.hash.toString(), proof.toBinary(SALT_LEN))
 
