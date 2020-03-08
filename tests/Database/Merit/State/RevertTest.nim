@@ -9,9 +9,6 @@ import ../../../Fuzzed
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash lib.
-import ../../../../src/lib/Hash
-
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
@@ -49,7 +46,7 @@ suite "Revert":
                 db,
                 "STATE_TEST",
                 1,
-                "".pad(32).toHash(256)
+                uint64(1)
             )
             #State.
             states: seq[State] = @[]
@@ -112,10 +109,6 @@ suite "Revert":
                     miner = miners[miner],
                     elements = elements
                 )
-
-            #Mine it.
-            while blockchain.difficulty.difficulty > mining.header.hash:
-                miners[miner].hash(mining.header, mining.header.proof + 1)
 
             #Add it to the Blockchain and latest State.
             blockchain.processBlock(mining)

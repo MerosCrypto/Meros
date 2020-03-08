@@ -39,8 +39,8 @@ proc mainMerit() {.forceCheck: [].} =
         ].} =
             discard
 
-        functions.merit.getDifficulty = proc (): Difficulty {.inline, forceCheck: [].} =
-            merit.blockchain.difficulty
+        functions.merit.getDifficulty = proc (): uint64 {.inline, forceCheck: [].} =
+            merit.blockchain.difficulties[^1]
 
         functions.merit.getBlockByNonce = proc (
             nonce: int

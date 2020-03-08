@@ -54,7 +54,7 @@ suite "Consensus":
                 db,
                 "CONSENSUS_DB_TEST",
                 1,
-                $Hash[256](),
+                uint64(1),
                 25
             )
 
@@ -130,7 +130,7 @@ suite "Consensus":
                 db,
                 "CONSENSUS_DB_TEST",
                 1,
-                $Hash[256](),
+                uint64(1),
                 625
             )
             #Transactions.

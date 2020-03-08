@@ -22,8 +22,7 @@ import ../Wallet/Wallet
 import ../Database/Consensus/objects/TransactionStatusObj
 import ../Database/Consensus/Elements/Elements
 
-#Difficulty, BlockHeader, and Block objects.
-import ../Database/Merit/objects/DifficultyObj
+#BlockHeader and Block objects.
 import ../Database/Merit/objects/BlockHeaderObj
 import ../Database/Merit/objects/BlockObj
 
@@ -200,7 +199,7 @@ type
             IndexError
         ].}
 
-        getDifficulty*: proc (): Difficulty {.inline, raises: [].}
+        getDifficulty*: proc (): uint64 {.inline, raises: [].}
 
         getBlockByNonce*: proc (
             nonce: int

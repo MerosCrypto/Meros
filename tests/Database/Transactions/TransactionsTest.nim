@@ -63,7 +63,7 @@ suite "Transactions":
                 db,
                 "TRANSACTIONS_TEST",
                 30,
-                "".pad(32),
+                uint64(0),
                 100
             )
             #Transactions.
@@ -489,8 +489,7 @@ suite "Transactions":
             last = merit.blockchain.tail.header.hash,
             miner = holder,
             nick = uint16(0),
-            packets = packets,
-            time = merit.blockchain.tail.header.time + 1
+            packets = packets
         )
         merit.processBlock(newBlock)
         blocks.add(newBlock)

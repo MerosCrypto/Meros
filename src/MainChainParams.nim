@@ -19,7 +19,7 @@ type ChainParams = object
     DEAD_MERIT: int
 
     #Initial Blockchain Difficulty.
-    BLOCK_DIFFICULTY: string
+    BLOCK_DIFFICULTY: uint64
     #Initial Send Difficulty.
     SEND_DIFFICULTY: uint32
     #Initial Data Difficulty.

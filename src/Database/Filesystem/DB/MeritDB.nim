@@ -13,18 +13,15 @@ import ../../../Wallet/MinerWallet
 #Elements lib.
 import ../../Consensus/Elements/Elements
 
-#Difficulty, BlockHeader, and Block objects.
-import ../../Merit/objects/DifficultyObj
+#BlockHeader and Block objects.
 import ../../Merit/objects/BlockHeaderObj
 import ../../Merit/objects/BlockObj
 
 #Serialization libs.
 import ../../../Network/Serialize/SerializeCommon
 
-import Serialize/Merit/SerializeDifficulty
 import Serialize/Merit/DBSerializeBlock
 
-import Serialize/Merit/ParseDifficulty
 import Serialize/Merit/DBParseBlockHeader
 import Serialize/Merit/DBParseBlock
 
@@ -215,9 +212,9 @@ proc saveTip*(
 proc save*(
     db: DB,
     hash: Hash[256],
-    difficulty: Difficulty
+    difficulty: uint64
 ) {.forceCheck: [].} =
-    db.put(DIFFICULTY(hash), difficulty.serialize())
+    db.put(DIFFICULTY(hash), difficulty.toBinary())
 
 proc saveUnlocked*(
     db: DB,
@@ -314,11 +311,11 @@ proc loadTip*(
 proc loadDifficulty*(
     db: DB,
     hash: Hash[256]
-): Difficulty {.forceCheck: [
+): uint64 {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(DIFFICULTY(hash)).parseDifficulty()
+        result = uint64(db.get(DIFFICULTY(hash)).fromBinary())
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 

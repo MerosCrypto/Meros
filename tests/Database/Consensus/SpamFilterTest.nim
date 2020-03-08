@@ -18,9 +18,6 @@ import random
 #Seq utils standard lib.
 import sequtils
 
-#String utils standard lib.
-import strutils
-
 #Algorithm standard lib.
 import algorithm
 

@@ -71,11 +71,12 @@ proc overflows*(
         if product[b] != 0:
             return true
 
-#This is stupid.
-#This isn't debugging code.
-#This isn't old code.
-#This is a statement needed for Meros to compile.
-#Without this line, the above function refuses to compile, complaining about an error in StInt.
+#These are stupid.
+#These aren't debugging code.
+#These aren't old code.
+#These are statements needed for Meros to compile.
+#Without these lines, the above function refuses to compile, complaining about an error in StInt.
 #Don't touch it.
 #-- Kayaba
 discard HashCommon.Hash[256]().overflows(uint32(0))
+discard HashCommon.Hash[256]().overflows(uint64(0))

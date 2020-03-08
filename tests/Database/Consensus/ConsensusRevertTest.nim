@@ -64,7 +64,7 @@ suite "ConsensusRevert":
                 db,
                 "CONSENSUS_REVERT_TEST",
                 30,
-                "".pad(32),
+                uint64(1),
                 75
             )
 
