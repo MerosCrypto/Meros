@@ -23,7 +23,7 @@ proc calculateNextDifficulty*(
         windowLength: int
         #Difficulties.
         difficulties: seq[uint64]
-        #Median difficlty.
+        #Median difficulty.
         median: uint64
         #Elapsed time.
         time: uint64
@@ -45,9 +45,8 @@ proc calculateNextDifficulty*(
         windowLength = 72
 
     #Grab the difficulties.
-    difficulties = blockchain.difficulties[blockchain.difficulties.len - windowLength ..< blockchain.difficulties.len]
-    #Remove the first difficulty which had the relevant PoW processed before the indicated time.
-    difficulties.del(0)
+    #We exclude the first difficulty as its PoW was created before the indicated time.
+    difficulties = blockchain.difficulties[blockchain.difficulties.len - (windowLength - 1) ..< blockchain.difficulties.len]
 
     #Sort the difficulties.
     difficulties.sort()

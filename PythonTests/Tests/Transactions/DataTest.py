@@ -28,7 +28,7 @@ def DataTest(
     genesis: bytes = Blockchain().blocks[0].header.hash
 
     #Create the Spam Filter.
-    spamFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
+    spamFilter: SpamFilter = SpamFilter(5)
 
     #Create the Data.
     data: Data = Data(bytes(32), pubKey.to_bytes())

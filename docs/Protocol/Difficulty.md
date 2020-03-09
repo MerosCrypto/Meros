@@ -4,7 +4,7 @@ Meros's difficulty is heavily inspired from Cryptonote. Difficulty is represente
 
 # Spam Function
 
-The spam function is takes in a Transaction's hash and proof, as well as the difficulty to check against. It returns a boolean of whether or not the Transaction is spam.
+The spam function takes in a Transaction's hash and proof, as well as the difficulty to check against. It returns a boolean of whether or not the Transaction is spam.
 
 ```
 max = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF

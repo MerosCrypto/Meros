@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Any
 
 #RandomX lib.
 from PythonTests.Libs.RandomX import setRandomXKey
@@ -25,8 +25,7 @@ class Blockchain:
 
         self.blockTime: int = 60
 
-        self.startDifficulty: int = int("FA" + ("AA" * 31), 16)
-        self.difficulties: List[Tuple[int, int]] = [(self.startDifficulty, 1)]
+        self.difficulties: List[int] = [100]
 
         self.blocks: List[Block] = [
             Block(
@@ -46,7 +45,7 @@ class Blockchain:
 
         self.keys: Dict[bytes, int] = {}
 
-    #Add block.
+    #Add a Block.
     def add(
         self,
         block: Block
@@ -58,80 +57,35 @@ class Blockchain:
         elif len(self.blocks) % 2048 == 64:
             setRandomXKey(self.upcomingKey)
 
-        if len(self.blocks) - 1 == self.difficulties[-1][1]:
-            #Blocks per months.
-            blocksPerMonth: int = 2592000 // self.blockTime
-            #Blocks per difficulty period.
-            blocksPerPeriod: int = 0
-            #If we're in the first month, the period length is one block.
-            if len(self.blocks) < blocksPerMonth:
-                blocksPerPeriod = 1
-            #If we're in the first three months, the period length is one hour.
-            elif len(self.blocks) < blocksPerMonth * 3:
-                blocksPerPeriod = 6
-            #If we're in the first six months, the period length is six hours.
-            elif len(self.blocks) < blocksPerMonth * 6:
-                blocksPerPeriod = 36
-            #If we're in the first year, the period length is twelve hours.
-            elif len(self.blocks) < blocksPerMonth * 12:
-                blocksPerPeriod = 72
-            #Else, if it's over an year, the period length is a day.
-            else:
-                blocksPerPeriod = 144
+        if len(self.blocks) < 6:
+            self.difficulties.append(self.difficulties[0])
+        else:
+            windowLength: int = 72
+            if len(self.blocks) < 4320:
+                windowLength = 5
+            elif len(self.blocks) < 12960:
+                windowLength = 9
+            elif len(self.blocks) < 25920:
+                windowLength = 18
+            elif len(self.blocks) < 52560:
+                windowLength = 36
 
-            #Last difficulty.
-            last: int = self.difficulties[-1][0]
-            #Target time.
-            targetTime: int = self.blockTime * blocksPerPeriod
-            #Period time.
-            periodTime: int = block.header.time - self.blocks[len(self.blocks) - 1 - blocksPerPeriod].header.time
+            window: List[Block] = self.blocks[len(self.blocks) - windowLength : len(self.blocks)]
+            windowDifficulties: List[int] = self.difficulties[len(self.difficulties) - (windowLength - 1) : len(self.difficulties)]
+            windowDifficulties.sort()
 
-            #Possible values.
-            possible: int = ((2 ** 256) - 1) - self.difficulties[-1][0]
-            #Change.
-            change: int = 0
-            #New difficulty.
-            difficulty: int = last
+            median: int = windowDifficulties[len(windowDifficulties) // 2]
+            for _ in range(len(windowDifficulties) // 10):
+                if (median - windowDifficulties[0]) > (windowDifficulties[-1] - median):
+                    del windowDifficulties[0]
+                elif (median - windowDifficulties[0]) == (windowDifficulties[-1] - median):
+                    del windowDifficulties[0]
+                elif (median - windowDifficulties[0]) < (windowDifficulties[-1] - median):
+                    del windowDifficulties[-1]
 
-            #If we went faster...
-            if periodTime < targetTime:
-                #Set the change to be:
-                    #The possible values multipled by
-                        #The targetTime (bigger) minus the periodTime (smaller)
-                        #Over the targetTime
-                #Since we need the difficulty to increase.
-                change = (possible * (targetTime - periodTime)) // targetTime
-
-                #If we're increasing the difficulty by more than 10%...
-                if possible // 10 < change:
-                    #Set the change to be 10%.
-                    change = possible // 10
-
-                #Set the difficulty.
-                difficulty += change
-            #If we went slower...
-            elif periodTime > targetTime:
-                #Set the change to be:
-                    #The invalid values
-                    #Multipled by the targetTime (smaller)
-                    #Divided by the difficulty (bigger)
-                #Since we need the difficulties to decrease.
-                change = last * (targetTime // periodTime)
-
-                #If we're decreasing the difficulty by more than 10% of the possible values...
-                if possible // 10 < change:
-                    #Set the change to be 10% of the possible values.
-                    change = possible // 10
-
-                #Set the difficulty.
-                difficulty -= change
-
-            #If the difficulty is lower than the starting difficulty, use that.
-            if difficulty < self.startDifficulty:
-                difficulty = self.startDifficulty
-
-            #Add the new difficulty.
-            self.difficulties.append((difficulty, self.difficulties[-1][1] + blocksPerPeriod))
+            self.difficulties.append(
+                sum(windowDifficulties) * 60 // (window[-1].header.time - window[0].header.time)
+            )
 
         if block.header.newMiner:
             self.keys[block.header.minerKey] = len(self.keys)
@@ -146,7 +100,7 @@ class Blockchain:
     def difficulty(
         self
     ) -> int:
-        return self.difficulties[-1][0]
+        return self.difficulties[-1]
 
     #Blockchain -> JSON.
     def toJSON(

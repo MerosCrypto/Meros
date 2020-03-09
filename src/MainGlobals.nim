@@ -75,7 +75,7 @@ case config.network:
             BLOCK_TIME: 60,
             DEAD_MERIT: 100,
 
-            BLOCK_DIFFICULTY: 10000000,
+            BLOCK_DIFFICULTY: 100,
             SEND_DIFFICULTY:  3,
             DATA_DIFFICULTY:  5,
 

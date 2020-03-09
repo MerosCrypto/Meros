@@ -42,7 +42,7 @@ blocks: List[Dict[str, Any]] = []
 transactions: Transactions = Transactions()
 
 #Spam Filter.
-dataFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
+dataFilter: SpamFilter = SpamFilter(5)
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)

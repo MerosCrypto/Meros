@@ -75,7 +75,7 @@ dataDiff.sign(0, blsPrivKey)
 #Create a Data.
 data: Data = Data(bytes(32), edPubKey.to_bytes())
 data.sign(edPrivKey)
-data.beat(SpamFilter(bytes.fromhex("CC" * 32)))
+data.beat(SpamFilter(5))
 
 #Create a Verification.
 verif: SignedVerification = SignedVerification(data.hash)

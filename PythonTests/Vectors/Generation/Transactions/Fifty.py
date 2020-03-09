@@ -40,7 +40,7 @@ blockchain: Blockchain = Blockchain.fromJSON(cmVectors["blockchain"])
 cmFile.close()
 
 #SpamFilter.
-sendFilter: SpamFilter = SpamFilter(bytes.fromhex("AA" * 32))
+sendFilter: SpamFilter = SpamFilter(3)
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)

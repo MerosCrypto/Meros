@@ -7,9 +7,9 @@ import argon2
 class SpamFilter:
     def __init__(
         self,
-        difficulty: bytes
+        difficulty: int
     ) -> None:
-        self.difficulty: bytes = difficulty
+        self.difficulty: int = difficulty
 
     @staticmethod
     def run(
@@ -31,9 +31,9 @@ class SpamFilter:
         self,
         txHash: bytes
     ) -> Tuple[bytes, int]:
-        result: int = -1
-        argon: bytes = b""
-        while int.from_bytes(argon, "big") < int.from_bytes(self.difficulty, "big"):
+        result: int = 0
+        argon: bytes = self.run(txHash, result)
+        while int.from_bytes(argon, "big") * self.difficulty > int.from_bytes(bytes.fromhex("FF" * 32), "big"):
             result += 1
             argon = self.run(txHash, result)
         return (argon, result)

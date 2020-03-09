@@ -6,7 +6,7 @@
 
 ### `getDifficulty`
 
-`getDifficulty` replies with the current difficulty. It takes in zero arguments and the result of a string of the difficulty.
+`getDifficulty` replies with the current difficulty. It takes in zero arguments and the result is a string of the difficulty.
 
 ### `getBlock`
 

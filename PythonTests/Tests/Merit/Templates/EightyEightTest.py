@@ -62,7 +62,7 @@ def EightyEightTest(
     #Merit.
     merit: Merit = Merit()
     #Spam Filter.
-    dataFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
+    dataFilter: SpamFilter = SpamFilter(5)
 
     #Handshake with the node.
     rpc.meros.liveConnect(merit.blockchain.blocks[0].header.hash)
