@@ -52,15 +52,15 @@ proc mainConsensus() {.forceCheck: [].} =
                 functions,
                 database,
                 merit.state,
-                params.SEND_DIFFICULTY.toHash(256),
-                params.DATA_DIFFICULTY.toHash(256)
+                params.SEND_DIFFICULTY,
+                params.DATA_DIFFICULTY
             )
         except ValueError:
             panic("Invalid initial Send/Data difficulty.")
 
-        functions.consensus.getSendDifficulty = proc (): Hash[256] {.inline, forceCheck: [].} =
+        functions.consensus.getSendDifficulty = proc (): uint32 {.inline, forceCheck: [].} =
             consensus.filters.send.difficulty
-        functions.consensus.getDataDifficulty = proc (): Hash[256] {.inline, forceCheck: [].} =
+        functions.consensus.getDataDifficulty = proc (): uint32 {.inline, forceCheck: [].} =
             consensus.filters.data.difficulty
 
         #Provide access to if a holder is malicious.

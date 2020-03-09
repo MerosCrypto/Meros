@@ -179,7 +179,7 @@ proc module*(
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [].} =
-                res["result"] = % $ functions.merit.getDifficulty().difficulty
+                res["result"] = % $ functions.merit.getDifficulty()
 
             #Get Block by nonce or hash.
             "getBlock" = proc (

@@ -424,7 +424,7 @@ proc mainMerit() {.forceCheck: [].} =
                         merit.blockchain.miners,
                         merit.state.holders,
                         merit.blockchain.tail.header,
-                        merit.blockchain.difficulty,
+                        merit.blockchain.difficulties[^1],
                         header
                     )
                 except ValueError as e:
@@ -527,7 +527,7 @@ proc mainMerit() {.forceCheck: [].} =
                     merit.blockchain.miners,
                     merit.state.holders,
                     merit.blockchain.tail.header,
-                    merit.blockchain.difficulty,
+                    merit.blockchain.difficulties[^1],
                     header
                 )
             except ValueError as e:
