@@ -39,4 +39,4 @@ proc getDifficultyFactor*(
         uint32(70) +
         (uint32(33) * uint32(send.inputs.len)) +
         (uint32(40) * uint32(send.outputs.len))
-    ) div uint32(70)
+    ) div uint32(143)
