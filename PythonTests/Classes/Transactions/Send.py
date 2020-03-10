@@ -61,7 +61,7 @@ class Send(
         self,
         spamFilter: SpamFilter
     ) -> None:
-        result: Tuple[bytes, int] = spamFilter.beat(self.hash)
+        result: Tuple[bytes, int] = spamFilter.beat(self.hash, (70 + (33 * len(self.inputs)) + (40 * len(self.outputs))) // 143)
         self.argon = result[0]
         self.proof = result[1]
 
