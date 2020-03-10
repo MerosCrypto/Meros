@@ -30,7 +30,7 @@ The Send difficulty is initially set to 3 and is decided as described in the Con
 In order for a Send's proof to beat the difficulty, the following check must pass:
 
 ```
-factor = (70 + (33 * amount of inputs) + (40 * amount of outputs)) / 70
+factor = (70 + (33 * amount of inputs) + (40 * amount of outputs)) / 143
 spam(hash, proof, sendDifficulty * factor)
 ```
 
@@ -41,7 +41,7 @@ The Data difficulty is initially set to 5 and is decided as described in the Con
 In order for a Data's proof to beat the difficulty, the following check must pass:
 
 ```
-factor = (101 + data.length) / 101
+factor = (101 + data.length) / 102
 spam(hash, proof, dataDifficulty * factor)
 ```
 
