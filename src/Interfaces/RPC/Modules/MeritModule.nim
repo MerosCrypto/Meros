@@ -61,14 +61,14 @@ proc `%**`(
 
             result["holder"] = % sendDiff.holder
             result["nonce"] = % sendDiff.nonce
-            result["difficulty"] = % $sendDiff.difficulty
+            result["difficulty"] = % sendDiff.difficulty
 
         of DataDifficulty as dataDiff:
             result["descendant"] = % "DataDifficulty"
 
             result["holder"] = % dataDiff.holder
             result["nonce"] = % dataDiff.nonce
-            result["difficulty"] = % $dataDiff.difficulty
+            result["difficulty"] = % dataDiff.difficulty
 
         of MeritRemovalVerificationPacket as packet:
             result["descendant"] = % "VerificationPacket"

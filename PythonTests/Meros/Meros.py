@@ -159,9 +159,9 @@ def recv(
                     result += socketRecv(connection, 2)
                     length = (int.from_bytes(result[-2:], byteorder="big") * 96) + 32
                 elif result[-1] == 2:
-                    length = 36
+                    length = 8
                 elif result[-1] == 3:
-                    length = 36
+                    length = 8
                 else:
                     raise Exception("Meros sent an Element we don't recognize.")
 
