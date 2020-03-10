@@ -71,14 +71,9 @@ proc newBlankBlock*(
     packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
     aggregate: BLSSignature = newBLSSignature(),
-    time: uint32 = 0,
+    time: uint32 = getTime(),
     proof: uint32 = 0
 ): Block =
-    var actualTime: uint32 = time
-    if actualTime == 0:
-        actualTime = max(getTime(), lastTime + 1)
-        lastTime = actualTime
-
     var contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(packets, elements)
     result = newBlockObj(
         version,
@@ -92,7 +87,7 @@ proc newBlankBlock*(
         packets,
         elements,
         aggregate,
-        actualTime
+        time
     )
     miner.hash(result.header, proof)
 
@@ -107,14 +102,9 @@ proc newBlankBlock*(
     packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
     aggregate: BLSSignature = newBLSSignature(),
-    time: uint32 = 0,
+    time: uint32 = getTime(),
     proof: uint32 = 0
 ): Block =
-    var actualTime: uint32 = time
-    if actualTime == 0:
-        actualTime = max(getTime(), lastTime + 1)
-        lastTime = actualTime
-
     var contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(packets, elements)
     result = newBlockObj(
         version,
@@ -128,6 +118,6 @@ proc newBlankBlock*(
         packets,
         elements,
         aggregate,
-        actualTime
+        time
     )
     miner.hash(result.header, proof)

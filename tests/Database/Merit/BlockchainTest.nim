@@ -158,7 +158,8 @@ suite "Blockchain":
                     char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                     miners[miner],
                     packets,
-                    elements
+                    elements,
+                    time = max(getTime(), blockchains[^1].tail.header.time + 1)
                 )
             else:
                 #Grab a random miner.
@@ -173,7 +174,8 @@ suite "Blockchain":
                     uint16(miner),
                     miners[miner],
                     packets,
-                    elements
+                    elements,
+                    time = max(getTime(), blockchains[^1].tail.header.time + 1)
                 )
 
             #Perform the intial hash.
@@ -185,7 +187,7 @@ suite "Blockchain":
                 miners[miner].hash(mining.header, mining.header.proof + 1)
                 inc(iter)
                 if iter mod 50 == 0:
-                    mining.header.time = getTime()
+                    mining.header.time = max(getTime(), mining.header.time + 1)
 
             #Add it to the Blockchain and State.
             blockchains.add(blockchains[^1])
