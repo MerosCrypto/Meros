@@ -88,8 +88,8 @@ live_lengths: Dict[MessageType, List[int]] = {
     MessageType.Data:                 [32, 1, -1, 69],
 
     MessageType.SignedVerification:   [82],
-    MessageType.SignedSendDifficulty: [86],
-    MessageType.SignedDataDifficulty: [86],
+    MessageType.SignedSendDifficulty: [58],
+    MessageType.SignedDataDifficulty: [58],
     MessageType.SignedMeritRemoval:   [4, 0, 1, 0, 48],
 
     MessageType.BlockHeader:          [107, 0, 56]
@@ -176,9 +176,9 @@ def recv(
                 for _ in range(elementsLen):
                     result += socketRecv(connection, 1)
                     if result[-1] == 2:
-                        result += socketRecv(connection, 38)
+                        result += socketRecv(connection, 10)
                     elif result[-1] == 3:
-                        result += socketRecv(connection, 38)
+                        result += socketRecv(connection, 10)
                     elif result[-1] == 4:
                         result += socketRecv(connection, 10)
                     elif result[-1] == 5:
@@ -190,9 +190,9 @@ def recv(
                                 result += socketRecv(connection, 2)
                                 result += socketRecv(connection, (int.from_bytes(result[-2:], byteorder="big") * 96) + 32)
                             elif result[-1] == 2:
-                                result += socketRecv(connection, 36)
+                                result += socketRecv(connection, 8)
                             elif result[-1] == 3:
-                                result += socketRecv(connection, 36)
+                                result += socketRecv(connection, 8)
                             elif result[-1] == 4:
                                 result += socketRecv(connection, 8)
                             if e == 0:

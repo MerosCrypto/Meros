@@ -32,8 +32,8 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Create a DataDifficulty.
 dataDiffs: List[SignedDataDifficulty] = [
-    SignedDataDifficulty(bytes.fromhex("AA" * 32), 0),
-    SignedDataDifficulty(bytes.fromhex("88" * 32), 1)
+    SignedDataDifficulty(3, 0),
+    SignedDataDifficulty(1, 1)
 ]
 for dataDiff in dataDiffs:
     dataDiff.sign(0, blsPrivKey)
@@ -98,7 +98,7 @@ print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
 #Create MeritRemovals by reusing nonces.
 for n in range(2):
-    competing: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("00" * 32), n)
+    competing: SignedDataDifficulty = SignedDataDifficulty(0, n)
     competing.sign(0, blsPrivKey)
     mr: PartialMeritRemoval = PartialMeritRemoval(dataDiffs[n], competing)
     block = Block(

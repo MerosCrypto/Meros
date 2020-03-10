@@ -80,7 +80,7 @@ print("Generated Hundred Six Block Elements VerificationPacket Block.")
 
 #Generate the SendDifficulty Block.
 elements: List[Element] = []
-elements.append(SendDifficulty(bytes.fromhex("00" * 32), 0, 1))
+elements.append(SendDifficulty(0, 0, 1))
 block = Block(
     BlockHeader(
         0,
@@ -103,7 +103,7 @@ print("Generated Hundred Six Block Elements SendDifficulty Block.")
 
 #Generate the DataDifficulty Block.
 elements = []
-elements.append(DataDifficulty(bytes.fromhex("00" * 32), 0, 1))
+elements.append(DataDifficulty(0, 0, 1))
 block = Block(
     BlockHeader(
         0,

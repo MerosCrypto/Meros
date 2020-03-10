@@ -31,7 +31,7 @@ blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Create a SendDifficulty.
-sendDiff: SignedSendDifficulty = SignedSendDifficulty(bytes.fromhex("CC" * 32), 0)
+sendDiff: SignedSendDifficulty = SignedSendDifficulty(5, 0)
 sendDiff.sign(0, blsPrivKey)
 
 #Generate a Block containing the SendDifficulty.
@@ -78,7 +78,7 @@ for _ in range(24):
     print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
 #Now that we have aa vote, update our vote.
-sendDiff = SignedSendDifficulty(bytes.fromhex("88" * 32), 1)
+sendDiff = SignedSendDifficulty(1, 1)
 sendDiff.sign(0, blsPrivKey)
 
 #Generate a Block containing the new SendDifficulty.
@@ -103,7 +103,7 @@ blockchain.add(block)
 print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a MeritRemoval by reusing a nonce.
-competing: SignedSendDifficulty = SignedSendDifficulty(bytes.fromhex("00" * 32), 1)
+competing: SignedSendDifficulty = SignedSendDifficulty(0, 1)
 competing.sign(0, blsPrivKey)
 mr: PartialMeritRemoval = PartialMeritRemoval(sendDiff, competing)
 

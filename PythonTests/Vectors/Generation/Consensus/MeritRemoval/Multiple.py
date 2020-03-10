@@ -49,11 +49,11 @@ blockchain.add(block)
 print("Generated Multiple Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a DataDifficulty.
-dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("AA" * 32), 0)
+dataDiff: SignedDataDifficulty = SignedDataDifficulty(3, 0)
 dataDiff.sign(0, blsPrivKey)
 
 #Create a conflicting DataDifficulty with the same nonce.
-dataDiffConflicting: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("88" * 32), 0)
+dataDiffConflicting: SignedDataDifficulty = SignedDataDifficulty(1, 0)
 dataDiffConflicting.sign(0, blsPrivKey)
 
 #Create a MeritRemoval out of the two of them.
@@ -81,9 +81,9 @@ blockchain.add(block)
 print("Generated Multiple Block " + str(len(blockchain.blocks)) + ".")
 
 #Create two more DataDifficulties with a different nonce.
-dataDiff = SignedDataDifficulty(bytes.fromhex("AA" * 32), 1)
+dataDiff = SignedDataDifficulty(3, 1)
 dataDiff.sign(0, blsPrivKey)
-dataDiffConflicting = SignedDataDifficulty(bytes.fromhex("88" * 32), 1)
+dataDiffConflicting = SignedDataDifficulty(1, 1)
 dataDiffConflicting.sign(0, blsPrivKey)
 
 #Create another MeritRemoval out of these two.

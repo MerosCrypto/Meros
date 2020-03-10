@@ -7,17 +7,17 @@ from PythonTests.Tests.Errors import TestError
 #Verify the Send Difficulty.
 def verifySendDifficulty(
     rpc: RPC,
-    sendDiff: bytes
+    sendDiff: int
 ) -> None:
-    if rpc.call("consensus", "getSendDifficulty") != sendDiff.hex().upper():
+    if rpc.call("consensus", "getSendDifficulty") != sendDiff:
         raise TestError("Send Difficulty doesn't match.")
 
 #Verify the Data Difficulty.
 def verifyDataDifficulty(
     rpc: RPC,
-    dataDiff: bytes
+    dataDiff: int
 ) -> None:
-    if rpc.call("consensus", "getDataDifficulty") != dataDiff.hex().upper():
+    if rpc.call("consensus", "getDataDifficulty") != dataDiff:
         raise TestError("Data Difficulty doesn't match.")
 
 #Verify a MeritRemoval.
