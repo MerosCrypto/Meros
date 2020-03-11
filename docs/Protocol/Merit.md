@@ -23,9 +23,9 @@ BlockHeaders have the following fields:
 - proof: Arbitrary data used to beat the difficulty.
 - signature: Miner's signature of the Block.
 
-"contents" is an unbalanced Merkle tree which has leaves for both the Verification Packets (sorted from highest hash to lowest hash) and the Elements included in a Block. Every leaf is defined as `Blake2b(prefix + element.serialize())`, where the prefix is the same one used to create the Element's signature. The Verification Packets form the left side while the other Elements form the right side. If both sides are empty, the hash is zeroed out. If only one side is empty, it uses a zeroed out hash when forming the final hash.
+"contents" is an unbalanced Merkle tree which has leaves for both the Verification Packets (sorted from lowest hash to highest hash) and the Elements included in a Block. Every leaf is defined as `Blake2b(prefix + element.serialize())`, where the prefix is the same one used to create the Element's signature. The Verification Packets form the left side while the other Elements form the right side. If both sides are empty, the hash is zeroed out. If only one side is empty, it uses a zeroed out hash when forming the final hash.
 
-"sketchCheck" is a Merkle tree which has leaves for the Sketch Hashes (sorted from highest to lowest and then hashed via `Blake2b-256`.
+"sketchCheck" is a Merkle tree which has leaves for the Sketch Hashes (sorted from lowest to highest and then hashed via `Blake2b-256`.
 
 Meros has an on-chain nickname system for Merit Holders, where each nickname is an incremental number assigned forever. The first miner is 0, the second is 1... Referring to a miner who has already earned Merit by their key is not allowed.
 
@@ -157,7 +157,7 @@ After Mints are decided, the Block's miner gets 1 Merit. If this the miner's ini
 
 Every Block where the remainder of the BlockHeader's nonce divided by 5 is 0 has a corresponding Checkpoint. The Checkpoint's signers must represent a majority of the Unlocked Merit and Pending Merit, and the signature is the aggregate signature of every signer's signature of the Block hash. Without a Checkpoint at the proper location, a Blockchain cannot advance.
 
-Even with Checkpoints, Blockchain reorganizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the Blockchain whose tail Block has the higher hash is the proper Blockchain.
+Even with Checkpoints, Blockchain reorganizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the Blockchain whose tail Block has the lower hash is the proper Blockchain.
 
 Checkpoints are important, not just to make 51% attacks harder, but also to stop people without Merit from being able to replace a Transaction via chain reorganization and defaulting manipulation. A Transaction can be replaced by having it verified via normal operation, then wiping out all the Blocks that archive its Verifications, and then adding in Blocks which have a competing Transaction default. Once the Transaction defaults, it is finalized, even if the original Verifications are eventually archived on the Blockchain. Since every Transaction has a Checkpoint during the time it takes to default, attackers cannot use a momentary hash power surge to force a Transaction to be verified.
 
@@ -167,6 +167,8 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 - Meros doesn't check that if VerificationPackets in a Block cause MeritRemovals, the matching MeritRemoval is included in the Block.
 - Meros allows Transactions which are descendants of Transactions which competed with finalized Transactions and lost.
+
+- Meros creates contents/sketchCheck hashes highest to lowest, not lowest to highest.
 
 - Meros doesn't support dead Merit.
 
