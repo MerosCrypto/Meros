@@ -17,13 +17,13 @@ class SendDifficulty(
     #Constructor.
     def __init__(
         self,
-        difficulty: bytes,
+        difficulty: int,
         nonce: int,
         holder: int
     ) -> None:
         self.prefix: bytes = SEND_DIFFICULTY_PREFIX
 
-        self.difficulty: bytes = difficulty
+        self.difficulty: int = difficulty
         self.nonce: int = nonce
         self.holder: int = holder
 
@@ -31,13 +31,13 @@ class SendDifficulty(
     def signatureSerialize(
         self
     ) -> bytes:
-        return SEND_DIFFICULTY_PREFIX + self.nonce.to_bytes(4, "big") + self.difficulty
+        return SEND_DIFFICULTY_PREFIX + self.nonce.to_bytes(4, "big") + self.difficulty.to_bytes(4, "big")
 
     #Serialize.
     def serialize(
         self
     ) -> bytes:
-        return self.holder.to_bytes(2, "big") + self.nonce.to_bytes(4, "big") + self.difficulty
+        return self.holder.to_bytes(2, "big") + self.nonce.to_bytes(4, "big") + self.difficulty.to_bytes(4, "big")
 
     #SendDifficulty -> JSON.
     def toJSON(
@@ -46,7 +46,7 @@ class SendDifficulty(
         return {
             "descendant": "SendDifficulty",
 
-            "difficulty": self.difficulty.hex().upper(),
+            "difficulty": self.difficulty,
             "nonce": self.nonce,
             "holder": self.holder
         }
@@ -56,7 +56,7 @@ class SendDifficulty(
     def fromJSON(
         json: Dict[str, Any]
     ) -> Any:
-        return SendDifficulty(bytes.fromhex(json["difficulty"]), json["nonce"], json["holder"])
+        return SendDifficulty(json["difficulty"], json["nonce"], json["holder"])
 
 class SignedSendDifficulty(
     SignedElement,
@@ -65,7 +65,7 @@ class SignedSendDifficulty(
     #Constructor.
     def __init__(
         self,
-        difficulty: bytes,
+        difficulty: int,
         nonce: int = 0,
         holder: int = 0,
         signature: Signature = Signature()
@@ -98,7 +98,7 @@ class SignedSendDifficulty(
 
             "holder": self.holder,
             "nonce": self.nonce,
-            "difficulty": self.difficulty.hex().upper(),
+            "difficulty": self.difficulty,
 
             "signed": True,
             "signature": self.signature.serialize().hex().upper()
@@ -110,7 +110,7 @@ class SignedSendDifficulty(
         json: Dict[str, Any]
     ) -> Any:
         return SignedSendDifficulty(
-            bytes.fromhex(json["difficulty"]),
+            json["difficulty"],
             json["nonce"],
             json["holder"],
             Signature(bytes.fromhex(json["signature"]))

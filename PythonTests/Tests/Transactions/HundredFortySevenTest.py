@@ -55,7 +55,7 @@ def HundredFortySevenTest(
         ]
     )
     send.sign(privKey)
-    send.beat(SpamFilter(bytes.fromhex("AA" * 32)))
+    send.beat(SpamFilter(3))
 
     #Custom function to send the last Block and verify it errors at the right place.
     def checkFail() -> None:

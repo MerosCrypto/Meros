@@ -43,13 +43,13 @@ proc newBlockchain*(
     db: DB,
     genesis: string,
     blockTime: int,
-    startDifficulty: Hash[256]
-): Blockchain {.forceCheck: [].} =
+    initialDifficulty: uint64
+): Blockchain {.inline, forceCheck: [].} =
     newBlockchainObj(
         db,
         genesis,
         blockTime,
-        startDifficulty
+        initialDifficulty
     )
 
 #Test a BlockHeader.
@@ -57,13 +57,13 @@ proc testBlockHeader*(
     miners: Table[BLSPublicKey, uint16],
     lookup: seq[BLSPublicKey],
     previous: BlockHeader,
-    difficulty: Difficulty,
+    difficulty: uint64,
     header: BlockHeader
 ) {.forceCheck: [
     ValueError
 ].} =
     #Check the difficulty.
-    if header.hash < difficulty.difficulty:
+    if header.hash.overflows(difficulty):
         raise newLoggedException(ValueError, "Block doesn't beat the difficulty.")
 
     #Check the version.
@@ -114,32 +114,12 @@ proc processBlock*(
     #Add the Block.
     blockchain.add(newBlock)
 
-    #If the difficulty needs to be updated...
-    if blockchain.height == blockchain.difficulty.endHeight:
-        var
-            #Blocks Per Month.
-            blocksPerMonth: int = 2592000 div blockchain.blockTime
-            #Period Length.
-            blocksPerPeriod: int
-        #Set the period length.
-        #If we're in the first month, the period length is one block.
-        if blockchain.height < blocksPerMonth:
-            blocksPerPeriod = 1
-        #If we're in the first three months, the period length is one hour.
-        elif blockchain.height < blocksPerMonth * 3:
-            blocksPerPeriod = 6
-        #If we're in the first six months, the period length is six hours.
-        elif blockchain.height < blocksPerMonth * 6:
-            blocksPerPeriod = 36
-        #If we're in the first year, the period length is twelve hours.
-        elif blockchain.height < blocksPerMonth * 12:
-            blocksPerPeriod = 72
-        #Else, if it's over an year, the period length is a day.
-        else:
-            blocksPerPeriod = 144
+    #Calculate the next difficulty.
+    blockchain.difficulties.add(blockchain.calculateNextDifficulty())
+    blockchain.db.save(newBlock.header.hash, blockchain.difficulties[^1])
 
-        blockchain.difficulty = blockchain.calculateNextDifficulty(blocksPerPeriod)
-    blockchain.db.save(newBlock.header.hash, blockchain.difficulty)
+    if blockchain.difficulties.len > 72:
+        blockchain.difficulties.delete(0)
 
 #Revert the Blockchain to a certain height.
 proc revert*(
@@ -208,11 +188,22 @@ proc revert*(
     #Save the reverted to height.
     blockchain.db.saveHeight(blockchain.height)
 
-    #Load the reverted to difficulty.
-    try:
-        blockchain.difficulty = blockchain.db.loadDifficulty(blockchain.tail.header.hash)
-    except DBReadError as e:
-        panic("Couldn't load the difficulty of the Block we reverted to: " & e.msg)
+    #Load the reverted to difficulties.
+    blockchain.difficulties = @[]
+    var last: BlockHeader = blockchain.tail.header
+    while blockchain.difficulties.len != 72:
+        try:
+            blockchain.difficulties = blockchain.db.loadDifficulty(last.hash) & blockchain.difficulties
+        except DBReadError as e:
+            panic("Couldn't load the difficulty of the Block we reverted to (or a Block before it): " & e.msg)
+
+        if last.last == blockchain.genesis:
+            break
+        else:
+            try:
+                last = blockchain.db.loadBlockHeader(last.last)
+            except DBReadError as e:
+                panic("Couldn't load a BlockHeader for a Block we reverted to (or a Block before it): " & e.msg)
 
     #Update the RandomX keys.
     var

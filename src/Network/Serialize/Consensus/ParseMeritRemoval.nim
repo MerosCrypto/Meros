@@ -56,8 +56,8 @@ proc parseMeritRemovalElement(
                 result.element = parseSendDifficulty(holder & data[i + 1 ..< i + result.len])
             of DATA_DIFFICULTY_PREFIX:
                 result.element = parseDataDifficulty(holder & data[i + 1 ..< i + result.len])
-            of GAS_PRICE_PREFIX:
-                panic("GasPrices are not supported.")
+            of GAS_DIFFICULTY_PREFIX:
+                panic("GasDifficulties are not supported.")
             else:
                 panic("Possible Element wasn't supported.")
     except ValueError as e:

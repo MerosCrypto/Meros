@@ -72,14 +72,10 @@ proc newRandomSendDifficulty*(
     var
         #Nonce.
         nonce: int = rand(high(int32))
-        #Hash.
-        difficulty: Hash[256]
+        #Difficulty.
+        difficulty: uint32 = uint32(rand(high(int32))) #+ uint32(rand(high(int32)))
         #Miner.
         miner: MinerWallet = newMinerWallet()
-
-    #Randomize the difficulty.
-    for b in 0 ..< 32:
-        difficulty.data[b] = uint8(rand(255))
 
     #Randomize the miner's nick name.
     miner.nick = holder
@@ -95,14 +91,12 @@ proc newRandomDataDifficulty*(
     var
         #Nonce.
         nonce: int = rand(high(int32))
-        #Hash.
-        difficulty: Hash[256]
+        #Difficulty.
+        difficulty: uint32 = uint32(rand(high(int32))) #+ uint32(rand(high(int32)))
         #Miner.
         miner: MinerWallet = newMinerWallet()
 
-    #Randomize the difficulty.
-    for b in 0 ..< 32:
-        difficulty.data[b] = uint8(rand(255))
+    #Randomize the difficulty
 
     #Randomize the miner's nick name.
     miner.nick = holder

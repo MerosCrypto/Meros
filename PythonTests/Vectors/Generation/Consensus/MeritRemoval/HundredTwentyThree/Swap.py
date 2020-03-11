@@ -50,8 +50,8 @@ print("Generated Hundred Twenty Three Swap Block " + str(len(blockchain.blocks))
 
 #Create conflicting Data Difficulties.
 dataDiffs: List[SignedDataDifficulty] = [
-    SignedDataDifficulty(bytes.fromhex("AA" * 32), 0),
-    SignedDataDifficulty(bytes.fromhex("BB" * 32), 0)
+    SignedDataDifficulty(3, 0),
+    SignedDataDifficulty(4, 0)
 ]
 dataDiffs[0].sign(0, blsPrivKey)
 dataDiffs[1].sign(0, blsPrivKey)

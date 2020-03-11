@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Hash lib.
-import ../../../lib/Hash
-
 #Tables standard lib.
 import tables
 
@@ -11,10 +8,10 @@ type
     #VotedDifficulty object.
     VotedDifficulty* = ref object
         when defined(merosTests):
-            difficulty*: Hash[256]
+            difficulty*: uint32
             votes*: int
         else:
-            difficulty: Hash[256]
+            difficulty: uint32
             votes: int
 
     #SpamFilter object.
@@ -37,14 +34,14 @@ type
             difficulties: seq[VotedDifficulty]
             votes: Table[uint16, VotedDifficulty]
 
-        #Starting difficulty.
-        startDifficulty*: Hash[256]
+        #Initial difficulty.
+        initialDifficulty*: uint32
         #Current median difficulty.
-        difficulty*: Hash[256]
+        difficulty*: uint32
 
 #Constructors.
 func newVotedDifficulty(
-    difficulty: Hash[256],
+    difficulty: uint32,
     votes: int
 ): VotedDifficulty {.inline, forceCheck: [].} =
     VotedDifficulty(
@@ -53,7 +50,7 @@ func newVotedDifficulty(
     )
 
 func newSpamFilterObj*(
-    difficulty: Hash[256]
+    difficulty: uint32
 ): SpamFilter {.inline, forceCheck: [].} =
     SpamFilter(
         medianPos: -1,
@@ -63,7 +60,7 @@ func newSpamFilterObj*(
 
         votes: initTable[uint16, VotedDifficulty](),
 
-        startDifficulty: difficulty,
+        initialDifficulty: difficulty,
         difficulty: difficulty
     )
 
@@ -103,7 +100,7 @@ func remove(
     elif filter.medianPos == d:
         if filter.difficulties.len == 0:
             filter.medianPos = -1
-            filter.difficulty = filter.startDifficulty
+            filter.difficulty = filter.initialDifficulty
             filter.left = 0
             filter.right = 0
         elif d == filter.difficulties.len:
@@ -236,7 +233,7 @@ proc update*(
     filter: var SpamFilter,
     holder: uint16,
     merit: int,
-    difficulty: Hash[256]
+    difficulty: uint32
 ) {.forceCheck: [].} =
     #Calculate the holder's votes.
     var votes: int = merit div 50

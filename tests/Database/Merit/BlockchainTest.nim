@@ -39,8 +39,8 @@ import sets
 #Tables standard lib.
 import tables
 
-#Starting Difficultty.
-const START_DIFFICULTY: Hash[256] = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toHash(256)
+#Initial Difficultty.
+const INITIAL_DIFFICULTY: uint64 = uint64(1)
 
 suite "Blockchain":
     setup:
@@ -58,7 +58,7 @@ suite "Blockchain":
                 db,
                 "BLOCKCHAIN_DB_TEST",
                 30,
-                START_DIFFICULTY
+                INITIAL_DIFFICULTY
             )]
             #State. This is needed for the Blockchain's nickname table.
             state: State = newState(
@@ -116,19 +116,19 @@ suite "Blockchain":
 
                     case rand(2):
                         of 0:
-                            var sd: SignedSendDifficulty = newSignedSendDifficultyObj(elementNonce, randomHash())
+                            var sd: SignedSendDifficulty = newSignedSendDifficultyObj(elementNonce, uint32(rand(high(int32))))
                             miners[holder].sign(sd)
                             elements.add(sd)
                         of 1:
-                            var dd: SignedDataDifficulty = newSignedDataDifficultyObj(elementNonce, randomHash())
+                            var dd: SignedDataDifficulty = newSignedDataDifficultyObj(elementNonce, uint32(rand(high(int32))))
                             miners[holder].sign(dd)
                             elements.add(dd)
                         of 2:
                             var
                                 e1: SignedDataDifficulty
                                 e2: SignedDataDifficulty
-                            e1 = newSignedDataDifficultyObj(elementNonce, randomHash())
-                            e2 = newSignedDataDifficultyObj(elementNonce, randomHash())
+                            e1 = newSignedDataDifficultyObj(elementNonce, uint32(rand(high(int32))))
+                            e2 = newSignedDataDifficultyObj(elementNonce, uint32(rand(high(int32))))
                             miners[holder].sign(e1)
                             miners[holder].sign(e2)
 
@@ -154,11 +154,12 @@ suite "Blockchain":
                 mining = newBlankBlock(
                     uint32(0),
                     blockchains[^1].tail.header.hash,
-                    uint16(rand(50000)),
+                    uint16(rand(26279) + 1),
                     char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                     miners[miner],
                     packets,
-                    elements
+                    elements,
+                    time = max(getTime(), blockchains[^1].tail.header.time + 1)
                 )
             else:
                 #Grab a random miner.
@@ -168,21 +169,36 @@ suite "Blockchain":
                 mining = newBlankBlock(
                     uint32(0),
                     blockchains[^1].tail.header.hash,
-                    uint16(rand(50000)),
+                    uint16(rand(26279) + 1),
                     char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                     uint16(miner),
                     miners[miner],
                     packets,
-                    elements
+                    elements,
+                    time = max(getTime(), blockchains[^1].tail.header.time + 1)
                 )
 
+            #Perform the intial hash.
+            miners[miner].hash(mining.header, 0)
+
             #Mine it.
-            while blockchains[^1].difficulty.difficulty > mining.header.hash:
+            var iter: int = 1
+            while mining.header.hash.overflows(blockchains[^1].difficulties[^1]):
                 miners[miner].hash(mining.header, mining.header.proof + 1)
+                inc(iter)
+                if iter mod 50 == 0:
+                    mining.header.time = max(getTime(), mining.header.time + 1)
 
             #Add it to the Blockchain and State.
             blockchains.add(blockchains[^1])
             blocks.add(mining)
+            testBlockHeader(
+                blockchains[^1].miners,
+                state.holders,
+                blockchains[^1].tail.header,
+                blockchains[^1].difficulties[^1],
+                mining.header
+            )
             blockchains[^1].processBlock(mining)
             discard state.processBlock(blockchains[^1])
 
@@ -197,7 +213,7 @@ suite "Blockchain":
                 db,
                 "BLOCKCHAIN_DB_TEST",
                 30,
-                START_DIFFICULTY
+                INITIAL_DIFFICULTY
             ))
 
         #Revert every chain and compare the Databases are identical at each step.

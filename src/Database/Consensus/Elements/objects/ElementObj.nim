@@ -4,7 +4,7 @@ type
     #- VerificationPacket
     #- SendDifficulty
     #- DataDifficulty
-    #- GasPrice
+    #- GasDifficulty
     #- MeritRemoval
     #These are all descendants of Element as Merit Removals can have any of these as a cause.
     Element* = ref object of RootObj
@@ -13,7 +13,7 @@ type
     #These are Elements which included in Blocks.
     #- SendDifficulty
     #- DataDifficulty
-    #- GasPrice
+    #- GasDifficulty
     #- MeritRemoval
     #The holder field is defined here, not in Element, as VerificationPackets have multiple holders.
     BlockElement* = ref object of Element

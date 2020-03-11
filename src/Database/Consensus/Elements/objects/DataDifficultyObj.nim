@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../../lib/Errors
 
-#Hash lib/
-import ../../../../lib/Hash
-
 #MinerWallet lib.
 import ../../../../Wallet/MinerWallet
 
@@ -15,7 +12,7 @@ export ElementObj
 type
     DataDifficulty* = ref object of BlockElement
         nonce*: int
-        difficulty*: Hash[256]
+        difficulty*: uint32
 
     SignedDataDifficulty* = ref object of DataDifficulty
         signature*: BLSSignature
@@ -23,7 +20,7 @@ type
 #Constructors.
 func newDataDifficultyObj*(
     nonce: int,
-    difficulty: Hash[256]
+    difficulty: uint32
 ): DataDifficulty {.inline, forceCheck: [].} =
     DataDifficulty(
         nonce: nonce,
@@ -32,7 +29,7 @@ func newDataDifficultyObj*(
 
 func newSignedDataDifficultyObj*(
     nonce: int,
-    difficulty: Hash[256]
+    difficulty: uint32
 ): SignedDataDifficulty {.inline, forceCheck: [].} =
     SignedDataDifficulty(
         nonce: nonce,

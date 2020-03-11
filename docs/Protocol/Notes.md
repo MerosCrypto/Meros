@@ -10,7 +10,6 @@
 - `Locks`/`Unlocks` are not specified as the MerosScript specification is still under development.
 
 - The spam function will be changed before mainnet.
-- The Difficulty algorithm is not specified as it will be changed before mainnet.
 - The negative sigmoid used for reward calculation is not specified as it is not finalized.
 
 - All violations between the Meros codebase and the Meros protocol will be resolved before mainnet.

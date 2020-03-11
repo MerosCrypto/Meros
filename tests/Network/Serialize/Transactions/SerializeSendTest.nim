@@ -75,10 +75,10 @@ suite "SerializeSend":
         wallet.next(last = uint32(rand(200) * 1000)).sign(send)
 
         #mine the Send.
-        send.mine("".pad(64, "aa").toHash(256))
+        send.mine(uint32(3))
 
         #Serialize it and parse it back.
-        reloaded = send.serialize().parseSend(Hash[256]())
+        reloaded = send.serialize().parseSend(uint32(0))
 
         #Compare the Sends.
         compare(send, reloaded)

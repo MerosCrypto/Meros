@@ -6,9 +6,6 @@ import unittest
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash lib.
-import ../../../../src/lib/Hash
-
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
@@ -46,7 +43,7 @@ suite "StateDB":
                 db,
                 "STATE_DB_TEST",
                 30,
-                "".pad(32).toHash(256)
+                uint64(1)
             )
             #State.
             state: State = newState(db, 30, blockchain)

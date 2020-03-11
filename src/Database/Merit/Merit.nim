@@ -4,9 +4,6 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Hash lib.
-import ../../lib/Hash
-
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
@@ -36,23 +33,15 @@ proc newMerit*(
     db: DB,
     genesis: string,
     blockTime: int,
-    startDifficultyArg: string,
+    initialDifficulty: uint64,
     deadBlocks: int
 ): Merit {.forceCheck: [].} =
-    #Extract the Difficulty.
-    var startDifficulty: Hash[256]
-    try:
-        startDifficulty = startDifficultyArg.toHash(256)
-    except ValueError as e:
-        panic("Invalid chain specs (start difficulty) passed to newMerit: " & e.msg)
-
-    #Create the Merit object.
     result = Merit(
         blockchain: newBlockchain(
             db,
             genesis,
             blockTime,
-            startDifficulty
+            initialDifficulty
         )
     )
     result.state = newState(db, deadBlocks, result.blockchain)

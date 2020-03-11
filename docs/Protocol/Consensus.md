@@ -1,10 +1,10 @@
 # Consensus
 
-This document defines and describes Consensus Elements, which come in the forms of Verifications, Difficulty Updates, Gas Price sets, and Merit Removals. Every Element has a holder, which is the 2-byte nickname of the Merit Holder who created it. When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, or `SignedMeritRemoval` message, node behavior should be to immediately perform the protocol dictated action, as long as the Element is valid. Gas Price Elements can only have their actions applied once archived in a Block. `SignedGasPrice` exists solely to give miners other than the sender the ability to archive the Element as well.
+This document defines and describes Consensus Elements, which come in the forms of Verifications, Difficulty Updates, Gas Price sets, and Merit Removals. Every Element has a holder, which is the 2-byte nickname of the Merit Holder who created it. When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, or `SignedMeritRemoval` message, node behavior should be to immediately perform the protocol dictated action, as long as the Element is valid. Gas Price Elements can only have their actions applied once archived in a Block. `SignedGasDifficulty` exists solely to give miners other than the sender the ability to archive the Element as well.
 
 Elements do not have hashes, so their signatures are produced by signing their serialization, without the holder, and with a prefix unique to each type of Element.
 
-It should be noted `Verification`, `VerificationPacket`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, and `MeritRemoval` aren't actual message types. `Verification` only exists to define the `SignedVerification` message type. The rest only exist to define their signed variants, as well define how they're included as part of a `BlockBody` message.
+It should be noted `Verification`, `VerificationPacket`, `SendDifficulty`, `DataDifficulty`, `GasDifficulty`, and `MeritRemoval` aren't actual message types. `Verification` only exists to define the `SignedVerification` message type. The rest only exist to define their signed variants, as well define how they're included as part of a `BlockBody` message.
 
 ### Verification
 
@@ -32,40 +32,38 @@ A SendDifficulty is a Merit Holder voting to update the difficulty of the spam f
 
 When the difficulty is lowered, there's a chance Transactions based on the new difficulty may be rejected by nodes still using the old difficulty. When the difficulty is raised, there's a chance Transactions based on the old difficulty may still be accepted by nodes who have yet to update. The first scenario adds a delay to the system, and adding a Block will catch all the nodes up. The second scenario risks rewinding Transactions. Therefore, if a Transaction doesn't beat the spam filter, but does still get the needed Verifications to become verified, it's still valid. This makes the difficulty a coordinated guideline, not a rule.
 
-In the case no SendDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 32 "AA" bytes.
+In the case no SendDifficulties have been added to the spam filter yet, the spam filter defaults to using the initial difficulty, as described in the Difficulty documentation.
 
 They have the following fields:
 
 - nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
-- difficulty: 256-bit number that should be the difficulty for the Sends' spam filter.
+- difficulty: An unsigned 64-bit number representing the difficulty for the Send Transactions' spam filter.
 
-`SendDifficulty` has a message length of 38 bytes; the 2-byte holder, 4-byte nonce, and the 32-byte difficulty. The signature is produced with a prefix of "\2". That said, `SendDifficulty` is not a standalone message type.
+`SendDifficulty` has a message length of 10 bytes; the 2-byte holder, 4-byte nonce, and the 4-byte difficulty. The signature is produced with a prefix of "\2". That said, `SendDifficulty` is not a standalone message type.
 
 ### DataDifficulty
 
-A DataDifficulty is a Merit Holder voting to update the difficulty of the spam filter applied to Data Transactions. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined. That said, the difficulty has a lower bound of `000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000`, where any vote for something lower is counted as a vote for this lower bound. Data Transactions with a hash below this lower bound are invalid.
+A DataDifficulty is a Merit Holder voting to update the difficulty of the spam filter applied to Data Transactions. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined.
 
-In the case no DataDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 32 "CC" bytes.
-
-They have the following fields:
-
-- nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
-- difficulty: 256-bit number that should be the difficulty for the Data Transactions' spam filter.
-
-`DataDifficulty` has a message length of 38 bytes; the 2-byte holder, 4-byte nonce, and the 32-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type.
-
-### GasPrice
-
-Unlock Transactions execute MerosScript. Each MerosScript operation has a different amount of "gas" required to be executed. In order to reward Merit Holders for executing MerosScipt, the sender of the Unlock must pay `gasPrice * gas` in Meros.
-
-A GasPrice is a Merit Holder voting to update the gasPrice variable. The way the gasPrice is determined is the exact same as the way the spam filters determine their difficulty except that gas price updates only take effect once archived in a Block.
+In the case no DataDifficulties have been added to the spam filter yet, the spam filter defaults to using the initial difficulty, as described in the Difficulty documentation.
 
 They have the following fields:
 
 - nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
-- price: Price in Meri a unit of gas should cost.
+- difficulty: An unsigned 64-bit number representing the difficulty for the Data Transactions' spam filter.
 
-`GasPrice` has a message length of 6 bytes; the 2-byte holder and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "\4". That said, `GasPrice` is not a standalone message type.
+`DataDifficulty` has a message length of 10 bytes; the 2-byte holder, 4-byte nonce, and the 4-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type.
+
+### GasDifficulty
+
+A GasDifficulty is a Merit Holder voting to update the difficulty of the spam filter applied to Unlock Transactions. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined except that gas difficulty updates only take effect once archived in a Block and must be beaten, unlike Send and Data difficulties which are guidelines.
+
+They have the following fields:
+
+- nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
+- difficulty: An unsigned 64-bit number representing the difficulty for the Unlock Transactions' spam filter.
+
+`GasDifficulty` has a message length of 10 bytes; the 2-byte holder, 4-byte nonce, and the 4-byte difficulty. The signature is produced with a prefix of "\4". That said, `GasDifficulty` is not a standalone message type.
 
 ### MeritRemoval
 
@@ -83,7 +81,7 @@ MeritRemovals have the following fields:
 
 If a same-nonce MeritRemoval occurs, and the Merit Holder regains enough Merit to vote on Send/Data Difficulties, as well as the Gas Price, the regained vote must not use a nonce which has an archived MeritRemoval.
 
-### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
+### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasDifficulty, and SignedMeritRemoval
 
 Every "Signed" object is the same as their non-"Signed" counterpart, except they don't rely on a Block's aggregate signature and have the extra field of:
 
@@ -95,4 +93,4 @@ Their message lengths are their non-"Signed" message length plus 48 bytes; the 4
 
 - Meros doesn't support defaulting.
 
-- Meros doesn't support GasPrices or `SignedGasPrice`.
+- Meros doesn't support GasDifficultys or `SignedGasDifficulty`.

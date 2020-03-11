@@ -61,10 +61,11 @@ proc newValidVerificationPacket*(
         result.holders.add(uint16(h))
 
 #Create a Block, with every setting optional.
+var lastTime {.threadvar.}: uint32
 proc newBlankBlock*(
     version: uint32 = 0,
     last: RandomXHash = RandomXHash(),
-    significant: uint16 = 0,
+    significant: uint16 = 1,
     sketchSalt: string = newString(4),
     miner: MinerWallet = newMinerWallet(),
     packets: seq[VerificationPacket] = @[],
@@ -94,7 +95,7 @@ proc newBlankBlock*(
 proc newBlankBlock*(
     version: uint32 = 0,
     last: RandomXHash = RandomXHash(),
-    significant: uint16 = 0,
+    significant: uint16 = 1,
     sketchSalt: string = newString(4),
     nick: uint16,
     miner: MinerWallet = newMinerWallet(),

@@ -79,7 +79,7 @@ def TElementTest(
         raise TestError("Meros didn't broadcast the Block Header it just added.")
 
     #Create and transmit a DataDifficulty.
-    dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("00" * 32), 0, 0)
+    dataDiff: SignedDataDifficulty = SignedDataDifficulty(0, 0, 0)
     dataDiff.sign(0, blsPrivKey)
     rpc.meros.signedElement(dataDiff)
     sleep(0.5)
@@ -128,7 +128,7 @@ def TElementTest(
     )
 
     #Create and transmit a new DataDifficulty.
-    dataDiff = SignedDataDifficulty(bytes.fromhex("AA" * 32), 1, 0)
+    dataDiff = SignedDataDifficulty(3, 1, 0)
     dataDiff.sign(0, blsPrivKey)
     rpc.meros.signedElement(dataDiff)
     sleep(0.5)
@@ -141,7 +141,7 @@ def TElementTest(
 
     #Create and transmit a new DataDifficulty reusing an existing nonce.
     signatures: List[Signature] = [dataDiff.signature]
-    dataDiff = SignedDataDifficulty(bytes.fromhex("BB" * 32), 1, 0)
+    dataDiff = SignedDataDifficulty(4, 1, 0)
     dataDiff.sign(0, blsPrivKey)
     signatures.append(dataDiff.signature)
     rpc.meros.signedElement(dataDiff)
@@ -149,8 +149,8 @@ def TElementTest(
 
     #Verify the block template has a MeritRemoval.
     mr: MeritRemoval = MeritRemoval(
-        SignedDataDifficulty(bytes.fromhex("AA" * 32), 1, 0),
-        SignedDataDifficulty(bytes.fromhex("BB" * 32), 1, 0),
+        SignedDataDifficulty(3, 1, 0),
+        SignedDataDifficulty(4, 1, 0),
         False
     )
     template = rpc.call("merit", "getBlockTemplate", [blsPubKey])

@@ -6,7 +6,7 @@
 
 ### `getDifficulty`
 
-`getDifficulty` replies with the current difficulty. It takes in zero arguments and the result of a string of the difficulty.
+`getDifficulty` replies with the current difficulty. It takes in zero arguments and the result is a string of the difficulty.
 
 ### `getBlock`
 
@@ -37,11 +37,11 @@ The result is an object, as follows:
 
         When `descendant` == "SendDifficulty":
         - `nonce`      (int)
-        - `difficulty` (string)
+        - `difficulty` (int)
 
         When `descendant` == "DataDifficulty":
         - `nonce`      (int)
-        - `difficulty` (string)
+        - `difficulty` (int)
 
         When `descendant` == "MeritRemoval":
         - `partial`  (bool):             Whether or not the first Element is already archived on the Blockchain.

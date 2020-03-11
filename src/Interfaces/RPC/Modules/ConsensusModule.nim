@@ -27,14 +27,14 @@ proc module*(
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [].} =
-                res["result"] = % $functions.consensus.getSendDifficulty()
+                res["result"] = % functions.consensus.getSendDifficulty()
 
             #Get a Data Difficulty.
             "getDataDifficulty" = proc (
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [].} =
-                res["result"] = % $functions.consensus.getDataDifficulty()
+                res["result"] = % functions.consensus.getDataDifficulty()
 
             #Get a Transaction's Status.
             "getStatus" = proc (

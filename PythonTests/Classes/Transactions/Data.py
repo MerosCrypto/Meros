@@ -54,7 +54,7 @@ class Data(
         self,
         spamFilter: SpamFilter
     ) -> None:
-        result: Tuple[bytes, int] = spamFilter.beat(self.hash)
+        result: Tuple[bytes, int] = spamFilter.beat(self.hash, (101 + len(self.data)) // 102)
         self.argon = result[0]
         self.proof = result[1]
 

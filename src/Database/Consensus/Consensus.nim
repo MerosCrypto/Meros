@@ -60,8 +60,8 @@ proc newConsensus*(
     functions: GlobalFunctionBox,
     db: DB,
     state: State,
-    sendDiff: Hash[256],
-    dataDiff: Hash[256]
+    sendDiff: uint32,
+    dataDiff: uint32
 ): Consensus {.inline, forceCheck: [].} =
     newConsensusObj(functions, db, state, sendDiff, dataDiff)
 
@@ -683,9 +683,9 @@ proc remove*(
     consensus.filters.send.remove(mr.holder, merit)
     consensus.filters.data.remove(mr.holder, merit)
 
-    #If the removed MeritRemoval involved a SendDifficulty, DataDifficulty, or GasPrice, we need to:
+    #If the removed MeritRemoval involved a SendDifficulty, DataDifficulty, or GasDifficulty, we need to:
     #- Save that the nonce was used.
-    #- Update the difficulties/gas price.
+    #- Update the difficulties.
     var usedNonces: HashSet[int] = consensus.db.loadMeritRemovalNonces(mr.holder)
     proc updateIfTail(
         consensus: var Consensus,
@@ -995,12 +995,12 @@ proc revert*(
 
     #Rebuild the filters.
     #We shouldn't need those copies. I, Kayaba, originally tried to inline this.
-    #That said, newSpamFilterObj printed it was handed the hash yet didn't set it.
+    #That said, newSpamFilterObj printed it was handed the initial value yet didn't set it.
     #My theory, which I can't think of why this would happen, is that it overwrote the SpamFilter during construction, and then grabbed its unset value.
     #I truly don't know. This works. Don't try to inline it.
     var
-        sendDiff: Hash[256] = consensus.filters.send.startDifficulty
-        dataDiff: Hash[256] = consensus.filters.data.startDifficulty
+        sendDiff: uint32 = consensus.filters.send.initialDifficulty
+        dataDiff: uint32 = consensus.filters.data.initialDifficulty
     consensus.filters.send = newSpamFilterObj(sendDiff)
     consensus.filters.data = newSpamFilterObj(dataDiff)
     for h in 0 ..< state.holders.len:

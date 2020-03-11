@@ -5,21 +5,21 @@
 `getSendDifficulty` replies with a Send Difficulty. It takes in one argument:
 - Merit Holder (int): Optional; defaults to -1.
 
-The result is a string of the current difficulty if the Merit Holder is -1, or if it isn't, what the specified Merit Holder voted. If the Merit Holder does have any votes, an empty string will be returned.
+The result is an int of the current difficulty if the Merit Holder is -1, or if it isn't, what the specified Merit Holder voted.
 
 ### `getDataDifficulty`
 
 `getDataDifficulty` replies with a Data Difficulty. It takes in one argument:
 - Merit Holder (int): Optional; defaults to -1.
 
-The result is a string of the current difficulty if the Merit Holder is -1, or if it isn't, what the specified Merit Holder voted. If the Merit Holder does have any votes, an empty string will be returned.
+The result is an int of the current difficulty if the Merit Holder is -1, or if it isn't, what the specified Merit Holder voted.
 
-### `getGasPrice`
+### `getGasDifficulty`
 
-`getGasPrice` replies with the current Gas Price. It takes in one argument:
-- Merit Holder (string): Optional; defaults to null.
+`getGasDifficulty` replies with the current Gas Difficulty. It takes in one argument:
+- Merit Holder (int): Optional; defaults to -1.
 
-The result is int of the gas price if the Merit Holder is null, or if it isn't, what the specified Merit Holder voted.
+The result is an int of the current difficulty if the Merit Holder is -1, or if it isn't, what the specified Merit Holder voted.
 
 ### `getStatus`
 

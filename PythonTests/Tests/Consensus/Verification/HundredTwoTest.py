@@ -30,7 +30,6 @@ def HundredTwoTest(
     def verify() -> None:
         for tx in transactions.txs:
             status: Dict[str, Any] = rpc.call("consensus", "getStatus", [tx.hex()])
-            print(status)
             if set(status["verifiers"]) != set([0, 1]):
                 raise TestError("Meros doesn't have the right list of verifiers for this Transaction.")
 

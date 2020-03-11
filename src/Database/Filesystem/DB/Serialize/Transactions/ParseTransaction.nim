@@ -5,7 +5,7 @@ import ../../../../../lib/Errors
 import ../../../../../lib/Hash
 
 #Transaction objects.
-import ../../../..//Transactions/Transaction
+import ../../../../Transactions/Transaction
 
 #Serialization libs.
 import ParseMint
@@ -32,7 +32,7 @@ proc parseTransaction*(
 
         of '\2':
             try:
-                result = tx.substr(1).parseSend(Hash[256]())
+                result = tx.substr(1).parseSend(uint32(0))
             except ValueError as e:
                 raise e
             except Spam:
@@ -40,7 +40,7 @@ proc parseTransaction*(
 
         of '\3':
             try:
-                result = tx.substr(1).parseData(Hash[256]())
+                result = tx.substr(1).parseData(uint32(0))
             except ValueError as e:
                 raise e
             except Spam:

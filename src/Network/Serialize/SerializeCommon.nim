@@ -29,7 +29,7 @@ const
     VERIFICATION_PACKET_PREFIX*: int = 1
     SEND_DIFFICULTY_PREFIX*:     int = 2
     DATA_DIFFICULTY_PREFIX*:     int = 3
-    GAS_PRICE_PREFIX*:           int = 4
+    GAS_DIFFICULTY_PREFIX*:      int = 4
     MERIT_REMOVAL_PREFIX*:       int = 5
 
     #Elements that can be in a MeritRemoval.
@@ -38,14 +38,14 @@ const
         uint8(VERIFICATION_PACKET_PREFIX),
         uint8(SEND_DIFFICULTY_PREFIX),
         uint8(DATA_DIFFICULTY_PREFIX),
-        uint8(GAS_PRICE_PREFIX)
+        uint8(GAS_DIFFICULTY_PREFIX)
     }
 
     #Elements that can be in a Block.
     BLOCK_ELEMENT_SET*: set[uint8] = {
         uint8(SEND_DIFFICULTY_PREFIX),
         uint8(DATA_DIFFICULTY_PREFIX),
-        uint8(GAS_PRICE_PREFIX),
+        uint8(GAS_DIFFICULTY_PREFIX),
         uint8(MERIT_REMOVAL_PREFIX)
     }
 

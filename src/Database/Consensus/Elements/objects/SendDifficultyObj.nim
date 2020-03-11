@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../../lib/Errors
 
-#Hash lib/
-import ../../../../lib/Hash
-
 #MinerWallet lib.
 import ../../../../Wallet/MinerWallet
 
@@ -15,7 +12,7 @@ export ElementObj
 type
     SendDifficulty* = ref object of BlockElement
         nonce*: int
-        difficulty*: Hash[256]
+        difficulty*: uint32
 
     SignedSendDifficulty* = ref object of SendDifficulty
         signature*: BLSSignature
@@ -23,7 +20,7 @@ type
 #Constructors.
 func newSendDifficultyObj*(
     nonce: int,
-    difficulty: Hash[256]
+    difficulty: uint32
 ): SendDifficulty {.inline, forceCheck: [].} =
     SendDifficulty(
         nonce: nonce,
@@ -32,7 +29,7 @@ func newSendDifficultyObj*(
 
 func newSignedSendDifficultyObj*(
     nonce: int,
-    difficulty: Hash[256]
+    difficulty: uint32
 ): SignedSendDifficulty {.inline, forceCheck: [].} =
     SignedSendDifficulty(
         nonce: nonce,

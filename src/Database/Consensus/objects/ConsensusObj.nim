@@ -68,8 +68,8 @@ proc newConsensusObj*(
     functions: GlobalFunctionBox,
     db: DB,
     state: State,
-    sendDiff: Hash[256],
-    dataDiff: Hash[256]
+    sendDiff: uint32,
+    dataDiff: uint32
 ): Consensus {.forceCheck: [].} =
     #Create the Consensus object.
     result = Consensus(
