@@ -84,7 +84,7 @@ class Blockchain:
                     del windowDifficulties[-1]
 
             self.difficulties.append(
-                sum(windowDifficulties) * 60 // (window[-1].header.time - window[0].header.time)
+                max(sum(windowDifficulties) * 60 // (window[-1].header.time - window[0].header.time), 1)
             )
 
         if block.header.newMiner:

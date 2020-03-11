@@ -66,4 +66,4 @@ proc calculateNextDifficulty*(
         panic("Couldn't get Block " & $(blockchain.height - windowLength) & " when the height is " & $blockchain.height & ".")
 
     #Calculate the new difficulty.
-    result = sum(difficulties) * uint64(blockchain.blockTime) div time
+    result = max(sum(difficulties) * uint64(blockchain.blockTime) div time, 1)
