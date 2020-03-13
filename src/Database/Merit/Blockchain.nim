@@ -118,7 +118,20 @@ proc processBlock*(
     blockchain.add(newBlock)
 
     #Calculate the next difficulty.
-    blockchain.difficulties.add(blockchain.calculateNextDifficulty())
+    var
+        windowLength: int = calculateWindowLength(blockchain.height)
+        time: uint32
+    if windowLength != 0:
+        try:
+            time = blockchain.tail.header.time - blockchain[blockchain.height - windowLength].header.time
+        except IndexError as e:
+            panic("Couldn't get Block " & $(blockchain.height - windowLength) & " when the height is " & $blockchain.height & ": " & e.msg)
+    blockchain.difficulties.add(calculateNextDifficulty(
+        blockchain.blockTime,
+        windowLength,
+        blockchain.difficulties,
+        time
+    ))
     blockchain.db.save(newBlock.header.hash, blockchain.difficulties[^1])
     if blockchain.difficulties.len > 72:
         blockchain.difficulties.delete(0)

@@ -30,7 +30,7 @@ type Blockchain* = object
     #Genesis hash (derives from the chain params).
     genesis*: Hash[256]
     #Block time (part of the chain params).
-    blockTime*: int
+    blockTime*: StUint[128]
 
     #Height.
     height*: int
@@ -61,7 +61,7 @@ proc newBlockchainObj*(
             db: db,
 
             genesis: genesis.toRandomXHash(),
-            blockTime: blockTime,
+            blockTime: stuint(blockTime, 128),
 
             height: 0,
             blocks: @[],
