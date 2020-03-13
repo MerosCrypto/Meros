@@ -87,6 +87,7 @@ proc compare*(
     check(bc1.tail.header.hash == last)
     check(bc2.tail.header.hash == last)
     check(bc1.difficulties == bc2.difficulties)
+    check(bc1.chainWork == bc2.chainWork)
 
     check(bc1.cacheKey == bc2.cacheKey)
 

@@ -63,7 +63,7 @@ proc overflows*(
     hash: HashCommon.Hash[256],
     factor: uint32 or uint64
 ): bool {.raises: [].} =
-    var original: StUint[512]
+    var original: StUInt[512]
     original.initFromBytesBE(hash.data)
 
     var product: array[64, byte] = (original * stuint(factor, 512)).toByteArrayBE()

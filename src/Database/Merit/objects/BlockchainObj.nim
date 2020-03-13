@@ -16,6 +16,9 @@ import ../../Filesystem/DB/MeritDB
 #Block object.
 import BlockObj
 
+#StInt external lib.
+import stint
+
 #Tables standard lib.
 import tables
 
@@ -33,8 +36,10 @@ type Blockchain* = object
     height*: int
     #Cache of the last 10 Blocks.
     blocks: seq[Block]
-    #List of difficulties for this chain.
+    #Cache of difficulties for this chain.
     difficulties*: seq[uint64]
+    #Chain work.
+    chainWork*: StUInt[128]
 
     #RandomX Cache Key.
     cacheKey*: string
@@ -119,11 +124,12 @@ proc newBlockchainObj*(
         #Grab the tip.
         tip = genesisBlock.header.hash
 
-        #Save the height, tip, the Genesis Block, and the starting Difficulty.
+        #Save the height, tip, the Genesis Block, the starting Difficulty, and the initial chain work.
         result.db.saveHeight(result.height)
         result.db.saveTip(tip)
         result.db.save(0, genesisBlock)
         result.db.save(genesisBlock.header.hash, initialDifficulty)
+        result.db.save(genesisBlock.header.hash, stuint(initialDifficulty, 128))
 
     #Load the last 10 Blocks.
     var last: Block
@@ -153,6 +159,9 @@ proc newBlockchainObj*(
                 lastHeader = result.db.loadBlockHeader(lastHeader.last)
             except DBReadError as e:
                 panic("Couldn't load a BlockHeader for a Block on the chain: " & e.msg)
+
+    #Load the chain work.
+    result.chainWork = result.db.loadChainWork(result.blocks[^1].header.hash)
 
     #Load the existing miners.
     var miners: seq[BLSPublicKey] = result.db.loadHolders()

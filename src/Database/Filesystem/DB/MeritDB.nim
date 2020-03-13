@@ -29,6 +29,9 @@ import Serialize/Merit/DBParseBlock
 import objects/DBObj
 export DBObj
 
+#StInt external lib.
+import stint
+
 #Tables standard lib.
 import tables
 
@@ -75,6 +78,11 @@ template DIFFICULTY(
     hash: Hash[256]
 ): string =
     hash.toString() & "d"
+
+template CHAIN_WORK(
+    hash: Hash[256]
+): string =
+    hash.toString() & "w"
 
 template HOLDER_NICK(
     nick: uint16
@@ -232,6 +240,16 @@ proc save*(
     db.put(BLOCK_HASH(blockArg.header.hash), blockArg.serialize())
     db.put(BLOCK_NONCE(nonce), blockArg.header.hash.toString())
 
+proc save*(
+    db: DB,
+    hash: Hash[256],
+    work: StUInt[128]
+) {.forceCheck: [].} =
+    var workStr: string
+    for b in work.toByteArrayBE():
+        workStr &= char(b)
+    db.put(CHAIN_WORK(hash), workStr)
+
 proc saveHolder*(
     db: DB,
     key: BLSPublicKey
@@ -318,6 +336,15 @@ proc loadDifficulty*(
         result = uint64(db.get(DIFFICULTY(hash)).fromBinary())
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
+
+proc loadChainWork*(
+    db: DB,
+    hash: Hash[256]
+): StUInt[128] {.forceCheck: [].} =
+    try:
+        result = StUInt[128].fromBytesBE(cast[seq[byte]](db.get(CHAIN_WORK(hash))))
+    except Exception as e:
+        panic("Failed to get the chain work of a Block: " & e.msg)
 
 proc loadUnlocked*(
     db: DB,
@@ -463,6 +490,7 @@ proc deleteBlock*(
     db.del(INTERIM_HASH(hash))
     db.del(BLOCK_HASH(hash))
     db.del(DIFFICULTY(hash))
+    db.del(CHAIN_WORK(hash))
     db.del(TOTAL_UNLOCKED_MERIT(nonce))
     db.del(BLOCK_REMOVALS(nonce))
 

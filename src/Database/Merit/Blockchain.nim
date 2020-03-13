@@ -32,6 +32,9 @@ import State
 import objects/BlockchainObj
 export BlockchainObj
 
+#StInt external lib.
+import stint
+
 #Sets standard lib.
 import sets
 
@@ -117,9 +120,12 @@ proc processBlock*(
     #Calculate the next difficulty.
     blockchain.difficulties.add(blockchain.calculateNextDifficulty())
     blockchain.db.save(newBlock.header.hash, blockchain.difficulties[^1])
-
     if blockchain.difficulties.len > 72:
         blockchain.difficulties.delete(0)
+
+    #Update the chain work.
+    blockchain.chainWork += stuint(blockchain.difficulties[^1], 128)
+    blockchain.db.save(newBlock.header.hash, blockchain.chainWork)
 
 #Revert the Blockchain to a certain height.
 proc revert*(
@@ -204,6 +210,9 @@ proc revert*(
                 last = blockchain.db.loadBlockHeader(last.last)
             except DBReadError as e:
                 panic("Couldn't load a BlockHeader for a Block we reverted to (or a Block before it): " & e.msg)
+
+    #Load the chain work.
+    blockchain.chainWork = blockchain.db.loadChainWork(blockchain.tail.header.hash)
 
     #Update the RandomX keys.
     var
