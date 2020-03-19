@@ -389,7 +389,7 @@ proc mainMerit() {.forceCheck: [].} =
                     #If the last Block on both chains isn't our tail, this is a potentially longer chain.
                     if lastCommonBlock != merit.blockchain.tail.header.hash:
                         try:
-                            await reorganize(lastCommonBlock, header)
+                            await reorganize(lastCommonBlock, queue, header)
                         except ValueError as e:
                             raise e
                         except DataMissing as e:

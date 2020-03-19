@@ -261,8 +261,22 @@ proc `[]`*(
     except DBReadError:
         raise newLoggedException(IndexError, "Block not found.")
 
-#Gets the last Block.
+#Get the last Block.
 func tail*(
     blockchain: Blockchain
 ): Block {.inline, forceCheck: [].} =
     blockchain.blocks[^1]
+
+#Get the height of a Block by its hash.
+proc getHeightOf*(
+    blockchain: Blockchain,
+    hash: Hash[256]
+): int {.inline, forceCheck: [].} =
+    blockchain.db.loadHeight(hash)
+
+#Get the chain work at a specific Block.
+proc getChainWork*(
+    blockchain: Blockchain,
+    hash: Hash[256]
+): StUInt[128] {.inline, forceCheck: [].} =
+    blockchain.db.loadChainWork(hash)
