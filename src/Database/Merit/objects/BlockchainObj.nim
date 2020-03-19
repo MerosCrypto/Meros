@@ -47,6 +47,26 @@ type Blockchain* = object
     #Miners from past blocks. Serves as a reverse lookup.
     miners*: Table[BLSPublicKey, uint16]
 
+#Calculate a proper difficulty
+proc calculateDifficulties*(
+    db: DB,
+    genesis: Hash[256],
+    lastHeaderArg: BlockHeader
+): seq[uint64] {.forceCheck: [].} =
+    var lastHeader: BlockHeader = lastHeaderArg
+    while result.len != 72:
+        try:
+            result = db.loadDifficulty(lastHeader.hash) & result
+        except DBReadError as e:
+            panic("Couldn't load a difficulty for a Block on the chain: " & e.msg)
+
+        if lastHeader.last == genesis:
+            break
+        try:
+            lastHeader = db.loadBlockHeader(lastHeader.last)
+        except DBReadError as e:
+            panic("Couldn't load a BlockHeader for a Block on the chain: " & e.msg)
+
 #Create a Blockchain object.
 proc newBlockchainObj*(
     db: DB,
@@ -144,21 +164,8 @@ proc newBlockchainObj*(
             break
         tip = last.header.last
 
-    #Load the last 72 Difficulties
-    var lastHeader: BlockHeader = result.blocks[^1].header
-    while result.difficulties.len != 72:
-        try:
-            result.difficulties = result.db.loadDifficulty(lastHeader.hash) & result.difficulties
-        except DBReadError as e:
-            panic("Couldn't load a difficulty for a Block on the chain: " & e.msg)
-
-        if lastHeader.last == result.genesis:
-            break
-        else:
-            try:
-                lastHeader = result.db.loadBlockHeader(lastHeader.last)
-            except DBReadError as e:
-                panic("Couldn't load a BlockHeader for a Block on the chain: " & e.msg)
+    #Load the last 72 difficulties.
+    result.difficulties = db.calculateDifficulties(result.genesis, result.blocks[^1].header)
 
     #Load the chain work.
     result.chainWork = result.db.loadChainWork(result.blocks[^1].header.hash)

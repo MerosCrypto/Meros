@@ -208,22 +208,7 @@ proc revert*(
     blockchain.db.saveHeight(blockchain.height)
 
     #Load the reverted to difficulties.
-    blockchain.difficulties = @[]
-    var last: BlockHeader = blockchain.tail.header
-    while blockchain.difficulties.len != 72:
-        try:
-            blockchain.difficulties = blockchain.db.loadDifficulty(last.hash) & blockchain.difficulties
-        except DBReadError as e:
-            panic("Couldn't load the difficulty of the Block we reverted to (or a Block before it): " & e.msg)
-
-        if last.last == blockchain.genesis:
-            break
-        else:
-            try:
-                last = blockchain.db.loadBlockHeader(last.last)
-            except DBReadError as e:
-                panic("Couldn't load a BlockHeader for a Block we reverted to (or a Block before it): " & e.msg)
-
+    blockchain.difficulties = blockchain.db.calculateDifficulties(blockchain.genesis, blockchain.tail.header)
     #Load the chain work.
     blockchain.chainWork = blockchain.db.loadChainWork(blockchain.tail.header.hash)
 
