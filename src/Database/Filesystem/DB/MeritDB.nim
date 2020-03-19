@@ -74,6 +74,11 @@ template BLOCK_NONCE(
 ): string =
     nonce.toBinary(INT_LEN)
 
+template BLOCK_HEIGHT(
+    hash: Hash[256]
+): string =
+    hash.toString() & "h"
+
 template DIFFICULTY(
     hash: Hash[256]
 ): string =
@@ -239,6 +244,7 @@ proc save*(
     db.put(INTERIM_HASH(blockArg.header.hash), blockArg.header.interimHash)
     db.put(BLOCK_HASH(blockArg.header.hash), blockArg.serialize())
     db.put(BLOCK_NONCE(nonce), blockArg.header.hash.toString())
+    db.put(BLOCK_HEIGHT(blockArg.header.hash), (nonce + 1).toBinary())
 
 proc save*(
     db: DB,
@@ -389,6 +395,15 @@ proc loadBlock*(
         result = db.loadBlock(db.get(BLOCK_NONCE(nonce)).toHash(256))
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
+
+proc loadHeight*(
+    db: DB,
+    hash: Hash[256]
+): int {.forceCheck: [].} =
+    try:
+        result = db.get(BLOCK_HEIGHT(hash)).fromBinary()
+    except Exception as e:
+        panic("Couldn't load the height of a Block: " & e.msg)
 
 proc loadHolders*(
     db: DB
