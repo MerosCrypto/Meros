@@ -358,7 +358,7 @@ proc revert*(
             unmentioned.excl(tree[h])
 
     #Remove Transactions from unmentioned that were actually mentioned.
-    for b in min(height - 6, 1) ..< height:
+    for b in max(height - 6, 1) ..< height:
         try:
             for packet in blockchain[b].body.packets:
                 unmentioned.excl(packet.hash)

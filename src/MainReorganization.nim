@@ -8,6 +8,8 @@ proc reorganize(
     ValueError,
     DataMissing
 ], async.} =
+    logInfo "Considering a reorganization", current = merit.blockchain.tail.header.hash, alternate = tail.hash, lastCommon = lastCommonBlock
+
     var
         #The old work is defined as the work of every Block from the chain tip to, but not including, the last common Block.
         oldWork: StUInt[128] = merit.blockchain.getChainWork(merit.blockchain.tail.header.hash) - merit.blockchain.getChainWork(lastCommonBlock)
@@ -16,8 +18,8 @@ proc reorganize(
         #The last header we've processed.
         lastHeader: BlockHeader
         #Alternate miners/holders. Needed to verify the alternate headers.
-        alternateMiners: Table[BLSPublicKey, uint16]
-        alternateHolders: seq[BLSPublicKey]
+        alternateMiners: Table[BLSPublicKey, uint16] = merit.blockchain.miners
+        alternateHolders: seq[BLSPublicKey] = merit.state.holders
         #In order to calculate it, we need to calculate the relevant difficulties.
         #This requires an accurate set of the difficulties leading up to it.
         difficulties: seq[uint64]
@@ -35,7 +37,7 @@ proc reorganize(
 
     #The new work is defined as the work of every Block in the queue.
     #The queue has every Block, including the new one being added, up to, but not including, the last common Block.
-    for h in countdown(high(queue), 1):
+    for h in countdown(high(queue), 0):
         #Update the last header, if this isn't the first iteration (which means there's no headers).
         if h != high(queue):
             lastHeader = headers[^1]
@@ -110,13 +112,27 @@ proc reorganize(
         #Increment the alternate chain's height.
         inc(altHeight)
 
+    #Convert the work to hex strings for logging purposes.
+    var
+        oldWorkArr: array[16, byte] = oldWork.toByteArrayBE()
+        oldWorkStr: string
+        newWorkArr: array[16, byte] = newWork.toByteArrayBE()
+        newWorkStr: string
+    for b in 0 ..< 16:
+        if (oldWorkArr[b] == 0) and (newWorkArr[b] == 0):
+            continue
+        oldWorkStr &= oldWorkArr[b].toHex()
+        newWorkStr &= newWorkArr[b].toHex()
+
     #If the new chain has more work, reorganize to it.
     if (
         (newWork > oldWork) or
-        ((newWork == newWork) and (tail.hash < merit.blockchain.tail.header.hash))
+        ((newWork == oldWork) and (tail.hash < merit.blockchain.tail.header.hash))
     ):
         #The first step is to revert everything to a point it can be advanced again.
         var revertHeight: int = merit.blockchain.getHeightOf(lastCommonBlock)
+        logInfo "Reorganizing", depth = merit.blockchain.height - revertHeight, oldWork = oldWorkStr, newWork = newWorkStr
+
         consensus.revert(merit.blockchain, merit.state, transactions, revertHeight)
         transactions.revert(merit.blockchain, revertHeight)
         merit.revert(revertHeight)
@@ -126,3 +142,7 @@ proc reorganize(
 
         #The second step is to actually add all the new Blocks.
         #!
+
+        logInfo "Reorganized"
+    else:
+        logInfo "Not reorganizing", oldWork = oldWorkStr, newWork = newWorkStr

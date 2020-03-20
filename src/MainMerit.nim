@@ -353,38 +353,40 @@ proc mainMerit() {.forceCheck: [].} =
                         queue: seq[Hash[256]] = @[header.hash]
                         #Malformed size used for the first loop iteration.
                         size: int = queue.len - increment
-                    while not merit.blockchain.hasBlock(queue[^1]):
-                        #If we ran out of Blocks, raise.
-                        #The only three cases we run out of Blocks are:
-                        #A) We synced forwards. We didn't.
-                        #B) Their genesis doesn't match our genesis.
-                        #C) Our peer is an idiot.
-                        if queue.len != size + increment:
-                            raise newLoggedException(ValueError, "Blockchain has a different genesis.")
+                        lastCommonBlock: Hash[256] = header.last
+                    if not merit.blockchain.hasBlock(header.last):
+                        while not merit.blockchain.hasBlock(queue[^1]):
+                            #If we ran out of Blocks, raise.
+                            #The only three cases we run out of Blocks are:
+                            #A) We synced forwards. We didn't.
+                            #B) Their genesis doesn't match our genesis.
+                            #C) Our peer is an idiot.
+                            if queue.len != size + increment:
+                                raise newLoggedException(ValueError, "Blockchain has a different genesis.")
 
-                        #Update the size.
-                        size = queue.len
+                            #Update the size.
+                            size = queue.len
 
-                        #Get the list of Blocks before this Block.
-                        try:
-                            queue &= await syncAwait network.syncManager.syncBlockList(false, increment, queue[^1])
-                        except DataMissing as e:
-                            #This should only be raised if:
-                            #A) The requested Block is unknown.
-                            #B) We requested ONLY the Blocks before the genesis.
-                            #The second is impossible as we break once we find a Block we know.
-                            raise e
-                        except Exception as e:
-                            panic("requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
+                            #Get the list of Blocks before this Block.
+                            try:
+                                queue &= await syncAwait network.syncManager.syncBlockList(false, increment, queue[^1])
+                            except DataMissing as e:
+                                #This should only be raised if:
+                                #A) The requested Block is unknown.
+                                #B) We requested ONLY the Blocks before the genesis.
+                                #The second is impossible as we break once we find a Block we know.
+                                raise e
+                            except Exception as e:
+                                panic("requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
 
-                    #Remove every Block we have from the queue's tail.
-                    var lastCommonBlock: Hash[256] = merit.blockchain.tail.header.hash
-                    for i in countdown(queue.len - 1, 1):
-                        if merit.blockchain.hasBlock(queue[i]):
-                            lastCommonBlock = queue[i]
-                            queue.del(i)
-                        else:
-                            break
+                        #Remove every Block we have from the queue's tail.
+                        lastCommonBlock = merit.blockchain.tail.header.hash
+                        for i in countdown(queue.len - 1, 1):
+                            if merit.blockchain.hasBlock(queue[i]):
+                                lastCommonBlock = queue[i]
+                                queue.del(i)
+                            else:
+                                break
 
                     #If the last Block on both chains isn't our tail, this is a potentially longer chain.
                     if lastCommonBlock != merit.blockchain.tail.header.hash:
