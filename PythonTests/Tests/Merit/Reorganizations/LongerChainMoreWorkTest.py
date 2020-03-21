@@ -35,7 +35,7 @@ def LongerChainMoreWorkTest(
         req: bytes = rpc.meros.sync.recv()
         if MessageType(req[0]) != MessageType.BlockListRequest:
             raise TestError("Meros didn't request the list of previous BlockHeaders.")
-        if req[3 : 51] != alt.blocks[-1].header.hash:
+        if req[3 : 35] != alt.blocks[-1].header.hash:
             raise TestError("Meros didn't request the list of previous BlockHeaders for THIS header.")
 
         blockList: List[bytes] = []
