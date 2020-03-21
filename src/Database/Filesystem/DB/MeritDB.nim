@@ -502,6 +502,7 @@ proc deleteBlock*(
         panic("Tried to delete a Block which doesn't exist: " & e.msg)
 
     db.del(BLOCK_NONCE(nonce))
+    db.del(BLOCK_HEIGHT(hash))
     db.del(INTERIM_HASH(hash))
     db.del(BLOCK_HASH(hash))
     db.del(DIFFICULTY(hash))
