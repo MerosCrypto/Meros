@@ -80,7 +80,7 @@ proc revertMinersAndHolders*(
 ] {.forceCheck: [].} =
     result.miners = merit.blockchain.miners
     result.holders = merit.state.holders
-    for h in countdown(merit.blockchain.height - 1, height + 1):
+    for h in countdown(merit.blockchain.height - 1, height):
         try:
             var header: BlockHeader = merit.blockchain[h].header
             if header.newMiner:

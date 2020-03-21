@@ -2,8 +2,11 @@
 
 #Merit.
 import PythonTests.Vectors.Generation.Merit.BlankBlocks
-import PythonTests.Vectors.Generation.Merit.ReorgDepthOne
 import PythonTests.Vectors.Generation.Merit.StateBlocks
+import PythonTests.Vectors.Generation.Merit.Reorganizations.DepthOne
+import PythonTests.Vectors.Generation.Merit.Reorganizations.LongerChainMoreWork
+import PythonTests.Vectors.Generation.Merit.Reorganizations.ShorterChainMoreWork
+import PythonTests.Vectors.Generation.Merit.Reorganizations.DelayedMeritHolder
 
 #Transactions.
 import PythonTests.Vectors.Generation.Transactions.ClaimedMint

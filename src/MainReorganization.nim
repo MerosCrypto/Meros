@@ -4,7 +4,7 @@ proc reorganize(
     lastCommonBlock: Hash[256],
     queue: seq[Hash[256]],
     tail: BlockHeader
-): Future[void] {.forceCheck: [
+): Future[seq[BlockHeader]] {.forceCheck: [
     ValueError,
     DataMissing
 ], async.} =
@@ -34,8 +34,6 @@ proc reorganize(
         difficulties: seq[uint64]
         #Current alternate height.
         altHeight: int = lastCommonHeight + 1
-        #BlockHeaders, since we already synced them all.
-        headers: seq[BlockHeader] = @[]
     try:
         lastHeader = merit.blockchain[lastCommonBlock].header
     except IndexError as e:
@@ -47,18 +45,18 @@ proc reorganize(
     for h in countdown(high(queue), 0):
         #Update the last header, if this isn't the first iteration (which means there's no headers).
         if h != high(queue):
-            lastHeader = headers[^1]
+            lastHeader = result[^1]
 
         #Sync the missing header in the queue, if it's not the tip.
         if h != 0:
             try:
-                headers.add(await syncAwait network.syncManager.syncBlockHeader(queue[h]))
+                result.add(await syncAwait network.syncManager.syncBlockHeader(queue[h]))
             except DataMissing as e:
                 raise e
             except Exception as e:
                 panic("Couldn't sync a BlockHeader despite catching all Exceptions: " & e.msg)
         else:
-            headers.add(tail)
+            result.add(tail)
 
         #Verify the new header.
         #If this is the first header, the last header has already been initially set.
@@ -69,20 +67,20 @@ proc reorganize(
                 alternate.holders,
                 lastHeader,
                 difficulties[^1],
-                headers[^1]
+                result[^1]
             )
         except ValueError as e:
             raise e
 
         #Update the alternate miners/holders accordingly.
-        if headers[^1].newMiner:
-            alternate.miners[headers[^1].minerKey] = uint16(alternate.miners.len)
-            alternate.holders.add(headers[^1].minerKey)
+        if result[^1].newMiner:
+            alternate.miners[result[^1].minerKey] = uint16(alternate.miners.len)
+            alternate.holders.add(result[^1].minerKey)
 
         #Calculate what would be the next difficulty.
         var
             windowLength: int = calculateWindowLength(altHeight)
-            time: uint32 = headers[^1].time
+            time: uint32 = result[^1].time
             newDifficulty: uint64
         #Don't finish calculating the time if the windowLength is 0.
         #The calculation will error out with an invalid index.
@@ -102,7 +100,7 @@ proc reorganize(
                 except IndexError as e:
                     panic("Couldn't grab a Block with nonce " & $nonceToGrab & " despite the last common Block having a height of: " & $lastCommonHeight & ": " & e.msg)
             else:
-                time -= headers[nonceToGrab - lastCommonHeight].time
+                time -= result[nonceToGrab - lastCommonHeight].time
 
         newDifficulty = calculateNextDifficulty(
             merit.blockchain.blockTime,
@@ -148,10 +146,11 @@ proc reorganize(
         database.commit(merit.blockchain.height)
         transactions = newTransactions(database, merit.blockchain)
         consensus.postRevert(merit.blockchain, merit.state, transactions)
+        logInfo "Reverted"
 
-        #The second step is to actually add all the new Blocks.
-        #!
-
-        logInfo "Reorganized"
+        #We now return the headers so MainMerit adds the alternate Blocks.
+        #This is done implicitly via result.
+        #That said, the tail can't be returned as that's added via the function that called this.
+        result.delete(high(result))
     else:
         logInfo "Not reorganizing", oldWork = oldWorkStr, newWork = newWorkStr

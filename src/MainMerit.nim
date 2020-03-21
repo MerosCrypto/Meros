@@ -390,14 +390,31 @@ proc mainMerit() {.forceCheck: [].} =
 
                     #If the last Block on both chains isn't our tail, this is a potentially longer chain.
                     if lastCommonBlock != merit.blockchain.tail.header.hash:
+                        var altHeaders: seq[BlockHeader]
                         try:
-                            await reorganize(lastCommonBlock, queue, header)
+                            altHeaders = await reorganize(lastCommonBlock, queue, header)
                         except ValueError as e:
                             raise e
                         except DataMissing as e:
                             raise e
                         except Exception as e:
                             panic("Reorganizing the chain raised an Exception despite catching all Exceptions: " & e.msg)
+
+                        lockedBlock = Hash[256]()
+                        for header in altHeaders:
+                            try:
+                                await functions.merit.addBlockByHeaderInternal(header, true, innerBlockLock)
+                            except ValueError as e:
+                                logInfo "Reorganization failed", error = e.msg
+                                raise e
+                            except DataMissing as e:
+                                logInfo "Reorganization failed", error = e.msg
+                                raise e
+                            except DataExists as e:
+                                panic("Adding a missing Block before this alternate tail raised DataExists: " & e.msg)
+                            except Exception as e:
+                                panic("addBlockByHashInternal threw an Exception despite catching all Exceptions: " & e.msg)
+                        logInfo "Reorganized"
                     else:
                         #Clear the locked Block.
                         lockedBlock = Hash[256]()
@@ -411,16 +428,18 @@ proc mainMerit() {.forceCheck: [].} =
                             except DataMissing as e:
                                 raise e
                             except DataExists as e:
-                                raise e
+                                panic("Adding a missing Block before this tail raised DataExists: " & e.msg)
                             except Exception as e:
-                                panic("addBlockByHash threw an Exception despite catching all Exceptions: " & e.msg)
+                                panic("addBlockByHashInternal threw an Exception despite catching all Exceptions: " & e.msg)
 
-                        #Set back the locked Block.
-                        lockedBlock = header.hash
+                    #Set back the locked Block.
+                    lockedBlock = header.hash
 
                 if header.last != merit.blockchain.tail.header.hash:
                     raise newException(ValueError, "Trying to add a Block which isn't after our current tail, despite calling reorganize and adding previous blocks.")
 
+                #This executes twice in the case of reorgs.
+                #That said, the only significant performance loss is in the double miner signature verify.
                 try:
                     testBlockHeader(
                         merit.blockchain.miners,

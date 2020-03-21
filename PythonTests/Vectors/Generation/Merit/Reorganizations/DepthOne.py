@@ -43,7 +43,7 @@ block: Block = Block(
 block.mine(privKeys[0], main.difficulty())
 main.add(block)
 alt.add(block)
-print("Generated Reorg Depth 1 Block 1.")
+print("Generated Reorganizations Depth One Block 1.")
 
 #Create the Block to the second miner.
 block = Block(
@@ -62,7 +62,7 @@ block = Block(
 block.mine(privKeys[1], alt.difficulty())
 main.add(block)
 alt.add(block)
-print("Generated Reorg Depth 1 Block 2.")
+print("Generated Reorganizations Depth One Block 2.")
 
 #Create the competing Block to the first miner.
 block = Block(
@@ -80,7 +80,7 @@ block = Block(
 )
 block.mine(privKeys[0], main.difficulty())
 main.add(block)
-print("Generated Reorg Depth 1 Block 3.")
+print("Generated Reorganizations Depth One Block 3.")
 
 #Create the competing Block to the second miner.
 #Since the difficulty is fixed at the start, they're guaranteed to have the same amount of work.
@@ -115,9 +115,9 @@ while True:
     if not continueOuter:
         break
 alt.add(block)
-print("Generated Reorg Depth 1 Block 4.")
+print("Generated Reorganizations Depth One Block 4.")
 
-vectors: IO[Any] = open("PythonTests/Vectors/Merit/ReorgDepthOne.json", "w")
+vectors: IO[Any] = open("PythonTests/Vectors/Merit/Reorganizations/DepthOne.json", "w")
 vectors.write(json.dumps({
     "main": main.toJSON(),
     "alt": alt.toJSON()

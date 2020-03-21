@@ -12,8 +12,11 @@ from PythonTests.Meros.RPC import RPC
 from PythonTests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
 from PythonTests.Tests.Merit.DifficultyTest import DifficultyTest
 from PythonTests.Tests.Merit.StateTest import StateTest
-from PythonTests.Tests.Merit.ReorgDepthOneTest import ReorgDepthOneTest
 from PythonTests.Tests.Merit.HundredTwentyFourTest import HundredTwentyFourTest
+from PythonTests.Tests.Merit.Reorganizations.DepthOneTest import DepthOneTest
+from PythonTests.Tests.Merit.Reorganizations.LongerChainMoreWorkTest import LongerChainMoreWorkTest
+from PythonTests.Tests.Merit.Reorganizations.ShorterChainMoreWorkTest import ShorterChainMoreWorkTest
+from PythonTests.Tests.Merit.Reorganizations.DelayedMeritHolderTest import DelayedMeritHolderTest
 
 from PythonTests.Tests.Merit.Templates.EightyEightTest import EightyEightTest
 from PythonTests.Tests.Merit.Templates.TElementTest import TElementTest
@@ -81,8 +84,11 @@ tests: List[Callable[[RPC], None]] = [
     ChainAdvancementTest,
     DifficultyTest,
     StateTest,
-    ReorgDepthOneTest,
     HundredTwentyFourTest,
+    DepthOneTest,
+    LongerChainMoreWorkTest,
+    ShorterChainMoreWorkTest,
+    DelayedMeritHolderTest,
 
     EightyEightTest,
     TElementTest,

@@ -18,10 +18,10 @@ from PythonTests.Tests.Merit.Verify import verifyBlockchain
 #JSON standard lib.
 import json
 
-def ReorgDepthOneTest(
+def DepthOneTest(
     rpc: RPC
 ) -> None:
-    file: IO[Any] = open("PythonTests/Vectors/Merit/ReorgDepthOne.json", "r")
+    file: IO[Any] = open("PythonTests/Vectors/Merit/Reorganizations/DepthOne.json", "r")
     chains: Dict[str, List[Dict[str, Any]]] = json.loads(file.read())
     file.close()
 
