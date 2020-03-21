@@ -194,7 +194,7 @@ proc add*(
     inc(blockchain.height)
     blockchain.db.saveHeight(blockchain.height)
 
-    #Update miners, if necessary
+    #Update miners, if necessary.
     if newBlock.header.newMiner:
         blockchain.miners[newBlock.header.minerKey] = uint16(blockchain.miners.len)
 

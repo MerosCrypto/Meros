@@ -4,6 +4,9 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
+
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
@@ -21,6 +24,9 @@ export Block
 export Blockchain
 export State
 export Epochs
+
+#Tables standard lib.
+import tables
 
 #Blockchain, State, and Epochs wrapper.
 type Merit* = ref object
@@ -63,6 +69,25 @@ proc postProcessBlock*(
 
     #Have the state process the block.
     (result[1], result[2]) = merit.state.processBlock(merit.blockchain)
+
+#Get the reverted miners/holders.
+proc revertMinersAndHolders*(
+    merit: Merit,
+    height: int
+): tuple[
+    miners: Table[BLSPublicKey, uint16],
+    holders: seq[BLSPublicKey]
+] {.forceCheck: [].} =
+    result.miners = merit.blockchain.miners
+    result.holders = merit.state.holders
+    for h in countdown(merit.blockchain.height - 1, height + 1):
+        try:
+            var header: BlockHeader = merit.blockchain[h].header
+            if header.newMiner:
+                result.miners.del(header.minerKey)
+                result.holders.delete(high(result.holders))
+        except IndexError as e:
+            panic("Couldn't get a Block needed to revert the miners and holders: " & e.msg)
 
 #Revert the Blockchain/State/Epochs.
 proc revert*(

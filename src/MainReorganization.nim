@@ -11,20 +11,27 @@ proc reorganize(
     logInfo "Considering a reorganization", current = merit.blockchain.tail.header.hash, alternate = tail.hash, lastCommon = lastCommonBlock
 
     var
+        #Height of the last common Block.
+        lastCommonHeight: int = merit.blockchain.getHeightOf(lastCommonBlock)
         #The old work is defined as the work of every Block from the chain tip to, but not including, the last common Block.
         oldWork: StUInt[128] = merit.blockchain.getChainWork(merit.blockchain.tail.header.hash) - merit.blockchain.getChainWork(lastCommonBlock)
         #The new work must be calculated.
         newWork: StUInt[128]
         #The last header we've processed.
         lastHeader: BlockHeader
+        #Reverted miners/holders.
+        reverted: tuple[
+            miners: Table[BLSPublicKey, uint16],
+            holders: seq[BLSPublicKey]
+        ] = merit.revertMinersAndHolders(lastCommonHeight)
         #Alternate miners/holders. Needed to verify the alternate headers.
-        alternateMiners: Table[BLSPublicKey, uint16] = merit.blockchain.miners
-        alternateHolders: seq[BLSPublicKey] = merit.state.holders
+        alternate: tuple[
+            miners: Table[BLSPublicKey, uint16],
+            holders: seq[BLSPublicKey]
+        ] = reverted
         #In order to calculate it, we need to calculate the relevant difficulties.
         #This requires an accurate set of the difficulties leading up to it.
         difficulties: seq[uint64]
-        #Height of the last common Block.
-        lastCommonHeight: int = merit.blockchain.getHeightOf(lastCommonBlock)
         #Current alternate height.
         altHeight: int = lastCommonHeight + 1
         #BlockHeaders, since we already synced them all.
@@ -58,8 +65,8 @@ proc reorganize(
         #Else, the header is the header before the end of the seq.
         try:
             testBlockHeader(
-                alternateMiners,
-                alternateHolders,
+                alternate.miners,
+                alternate.holders,
                 lastHeader,
                 difficulties[^1],
                 headers[^1]
@@ -68,6 +75,9 @@ proc reorganize(
             raise e
 
         #Update the alternate miners/holders accordingly.
+        if headers[^1].newMiner:
+            alternate.miners[headers[^1].minerKey] = uint16(alternate.miners.len)
+            alternate.holders.add(headers[^1].minerKey)
 
         #Calculate what would be the next difficulty.
         var
@@ -130,12 +140,11 @@ proc reorganize(
         ((newWork == oldWork) and (tail.hash < merit.blockchain.tail.header.hash))
     ):
         #The first step is to revert everything to a point it can be advanced again.
-        var revertHeight: int = merit.blockchain.getHeightOf(lastCommonBlock)
-        logInfo "Reorganizing", depth = merit.blockchain.height - revertHeight, oldWork = oldWorkStr, newWork = newWorkStr
+        logInfo "Reorganizing", depth = merit.blockchain.height - lastCommonHeight, oldWork = oldWorkStr, newWork = newWorkStr
 
-        consensus.revert(merit.blockchain, merit.state, transactions, revertHeight)
-        transactions.revert(merit.blockchain, revertHeight)
-        merit.revert(revertHeight)
+        consensus.revert(merit.blockchain, merit.state, transactions, lastCommonHeight)
+        transactions.revert(merit.blockchain, lastCommonHeight)
+        merit.revert(lastCommonHeight)
         database.commit(merit.blockchain.height)
         transactions = newTransactions(database, merit.blockchain)
         consensus.postRevert(merit.blockchain, merit.state, transactions)
