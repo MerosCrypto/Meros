@@ -26,6 +26,8 @@ import asyncdispatch, asyncnet
 #Tables lib.
 import tables
 
+const MESSAGE_LENGTH_LIMIT {.intdefine.} = 8388608
+
 #Send a message via the Live socket.
 proc sendLive*(
     peer: Peer,
@@ -129,7 +131,21 @@ proc recv(
         #If the last section was 4, this multiplies it by the int encoded at that position.
         #If...
         if len < 0:
-            len = msg.substr(msg.len - lens[l - 1]).fromBinary() * abs(len)
+            #Convert the multiplier to a positive value.
+            len = abs(len)
+
+            #Extract the factor.
+            var factor: int = msg.substr(msg.len - lens[l - 1]).fromBinary()
+
+            #Make sure this multiplication won't cause an overflow.
+            #WSince we can't use multiplication, we divide the message length limit by one of the factors and check against the other factor.
+            #We use <= so X.Y (truncated to X) preserves the Y.
+            #We use size - 1 so when the multiplier must be <= X.Y, and it's == X, it doesn't trigger against the not-relevent Y.
+            if ((MESSAGE_LENGTH_LIMIT - (size - 1)) div len) <= factor:
+                raise newLoggedException(PeerError, "Message exceeds the max message length and risks an integer overflow.")
+
+            #Calculate the actual length.
+            len *= factor
         #The length has multiple choices depending on the path.
         #Handle this with custom code.
         elif len == 0:
@@ -223,6 +239,9 @@ proc recv(
 
                 else:
                     panic("Length of 0 was found for a message other than the ones we support.")
+
+        if (MESSAGE_LENGTH_LIMIT - size) < len:
+            raise newLoggedException(PeerError, "Message exceeds the max message length.")
 
         #Recv the data.
         try:

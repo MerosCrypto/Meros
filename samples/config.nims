@@ -1,10 +1,5 @@
 #Necessary flags.
 switch("threads", "on")
-switch("experimental", "caseStmtMacros")
-switch("define", "SIGN_PREFIX=MEROS")
-switch("define", "ADDRESS_HRP=mr")
-switch("define", "COIN_TYPE=5132")
-switch("define", "DEFAULT_PORT=5132")
 
 #Optimize for size (which is faster than `opt=speed` for Meros (at least on x86_64)).
 switch("opt", "size")
