@@ -127,7 +127,7 @@ proc mainConsensus() {.forceCheck: [].} =
             DataExists
         ].} =
             #Print that we're adding the SignedVerification.
-            logInfo "New Verification", holder = verif.holder
+            logInfo "New Verification", holder = verif.holder, hash = verif.hash
 
             #Add the SignedVerification to the Consensus DAG.
             var mr: bool
@@ -158,7 +158,7 @@ proc mainConsensus() {.forceCheck: [].} =
                     panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
                 return
 
-            logInfo "Added Verification", holder = verif.holder
+            logInfo "Added Verification", holder = verif.holder, hash = verif.hash
 
             #Broadcast the SignedVerification.
             functions.network.broadcast(

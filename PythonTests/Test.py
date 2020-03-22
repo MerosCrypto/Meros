@@ -34,6 +34,7 @@ from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
 from PythonTests.Tests.Consensus.Verification.HundredTwoTest import HundredTwoTest
 from PythonTests.Tests.Consensus.Verification.HundredFortyTwoTest import HundredFortyTwoTest
+from PythonTests.Tests.Consensus.Verification.HundredFiftyFiveTest import HundredFiftyFiveTest
 
 from PythonTests.Tests.Consensus.Difficulties.SendDifficultyTest import SendDifficultyTest
 from PythonTests.Tests.Consensus.Difficulties.DataDifficultyTest import DataDifficultyTest
@@ -106,6 +107,7 @@ tests: List[Callable[[RPC], None]] = [
     VCompetingTest,
     HundredTwoTest,
     HundredFortyTwoTest,
+    HundredFiftyFiveTest,
 
     SendDifficultyTest,
     DataDifficultyTest,

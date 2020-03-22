@@ -168,7 +168,7 @@ def TElementTest(
             template["header"][-43 : -39],
             BlockHeader.createSketchCheck(template["header"][-43 : -39], []),
             0,
-            int.from_bytes(template["header"][-4:], byteorder="big"),
+            int.from_bytes(template["header"][-4:], byteorder="big")
         ),
         BlockBody([], [mr], Signature.aggregate(signatures))
     )

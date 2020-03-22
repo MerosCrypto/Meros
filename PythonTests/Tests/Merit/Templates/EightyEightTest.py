@@ -148,7 +148,7 @@ def EightyEightTest(
             template["header"][-43 : -39],
             BlockHeader.createSketchCheck(template["header"][-43 : -39], packets),
             0,
-            int.from_bytes(template["header"][-4:], byteorder="big"),
+            int.from_bytes(template["header"][-4:], byteorder="big")
         ),
         BlockBody(
             packets,
