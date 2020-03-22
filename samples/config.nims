@@ -4,7 +4,7 @@ switch("threads", "on")
 #Optimize for size (which is faster than `opt=speed` for Meros (at least on x86_64)).
 switch("opt", "size")
 
-#Define release for usable StInt performance.
+#Define release for better performance.
 switch("define", "release")
 
 #Enable stackTrace and lineTrace so users can submit workable crash reports.
