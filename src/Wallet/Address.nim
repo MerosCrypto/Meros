@@ -37,6 +37,16 @@ const BCH_VALUES: array[5, uint32] = [
     uint32(0X2A1462B3)
 ]
 
+#AddressType enum.
+type AddressType* = enum
+    PublicKey
+
+#Address object. Specifically stores a decoded address.
+type Address* = object
+    #Type is unfortunately a key word.
+    addyType*: AddressType
+    data*: seq[byte]
+
 #BCH Polymod function.
 func polymod(
     values: seq[byte]
@@ -106,11 +116,12 @@ func convert(
 
 #Create a new address.
 func newAddress*(
+    addyType: AddressType,
     dataArg: string
 ): string {.forceCheck: [].} =
     result = ADDRESS_HRP & "1"
     var
-        data: seq[byte] = convert(cast[seq[byte]](dataArg), 8, 5, true)
+        data: seq[byte] = convert(cast[seq[byte]](char(addyType) & dataArg), 8, 5, true)
         encoded: seq[byte] = data.concat(generateBCH(data))
     for c in encoded:
         result &= CHARACTERS[c]
@@ -148,13 +159,23 @@ func isValidAddress*(
 #Get the data encoded in an address.
 proc getEncodedData*(
     address: string
-): seq[byte] {.forceCheck: [
+): Address {.forceCheck: [
     ValueError
 ].} =
     if not address.isValidAddress():
         raise newLoggedException(ValueError, "Invalid address.")
 
-    var data: string = address.substr(ADDRESS_HRP.len + 1, address.len).toLower()
+    var
+        data: string = address.substr(ADDRESS_HRP.len + 1, address.len).toLower()
+        converted: seq[byte]
     for c in 0 ..< data.len - 6:
-        result.add(byte(CHARACTERS.find(data[c])))
-    result = convert(result, 5, 8, false)
+        converted.add(byte(CHARACTERS.find(data[c])))
+    converted = convert(converted, 5, 8, false)
+
+    try:
+        result = Address(
+            addyType: AddressType(converted[0]),
+            data: converted[1 ..< converted.len]
+        )
+    except RangeError:
+        raise newLoggedException(ValueError, "Unknown address version.")

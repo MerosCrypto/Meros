@@ -82,3 +82,14 @@ func newSendOutput*(
         key: key,
         amount: amount
     )
+
+func newSendOutput*(
+    addy: Address,
+    amount: uint64
+): SendOutput {.forceCheck: [].} =
+    case addy.addyType:
+        of AddressType.PublicKey:
+            result = newSendOutput(
+                cast[EdPublicKey](cstring(cast[string]((addy.data)))),
+                amount
+            )

@@ -171,7 +171,7 @@ proc module*(
                     raise newLoggedException(ParamError, "")
 
                 try:
-                    res["result"] = % newAddress(params[0].getStr())
+                    res["result"] = % newAddress(AddressType.PublicKey, params[0].getStr())
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Public Key")
     except Exception as e:

@@ -29,4 +29,5 @@ suite "Address":
         check(wallet.address.isValidAddress())
 
         #Verify it decodes properly.
-        check(wallet.publicKey.toString() == cast[string](wallet.address.getEncodedData()))
+        check(wallet.address.getEncodedData().addyType == AddressType.PublicKey)
+        check(wallet.publicKey.toString() == cast[string](wallet.address.getEncodedData().data))
