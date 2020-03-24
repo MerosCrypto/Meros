@@ -155,7 +155,7 @@ proc connect*(
         panic("Handling a new connection raised an Exception despite not throwing any Exceptions: " & e.msg)
 
 #Handle a new connection.
-proc handle*(
+proc handle(
     network: Network,
     socket: AsyncSocket
 ) {.forceCheck: [], async.} =

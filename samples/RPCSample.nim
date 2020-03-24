@@ -34,7 +34,7 @@ const ARGUMENTS: Table[string, seq[char]] = {
     "transactions_getBalance":     @['s'],
 
     "network_connect":             @['s', 'i'],
-    "network_peers":               @[],
+    "network_getPeers":            @[],
 
     "personal_getMiner":           @[],
     "personal_setMnemonic":        @['b', 'b'],
