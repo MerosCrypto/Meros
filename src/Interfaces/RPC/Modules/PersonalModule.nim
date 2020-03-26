@@ -154,25 +154,5 @@ proc module*(
                     raise newJSONRPCError(-3, "Invalid data length or missing datas")
                 except DataExists:
                     raise newJSONRPCError(0, "Data exists")
-
-            #Convert a Public Key to an address.
-            "toAddress" = proc (
-                res: JSONNode,
-                params: JSONNode
-            ) {.forceCheck: [
-                ParamError,
-                JSONRPCError
-            ].} =
-                #Verify the params.
-                if (
-                    (params.len != 1) or
-                    (params[0].kind != JString)
-                ):
-                    raise newLoggedException(ParamError, "")
-
-                try:
-                    res["result"] = % newAddress(AddressType.PublicKey, params[0].getStr())
-                except ValueError:
-                    raise newJSONRPCError(-3, "Invalid Public Key")
     except Exception as e:
         panic("Couldn't create the Consensus Module: " & e.msg)

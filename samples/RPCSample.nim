@@ -41,8 +41,7 @@ const ARGUMENTS: Table[string, seq[char]] = {
     "personal_getAddress":         @[],
 
     "personal_send":               @['s', 's'],
-    "personal_data":               @['s'],
-    "personal_toAddress":          @['b']
+    "personal_data":               @['s']
 }.toTable()
 
 var
