@@ -52,9 +52,9 @@ class Blockchain:
     ) -> None:
         self.blocks.append(block)
 
-        if len(self.blocks) % 2048 == 0:
+        if len(self.blocks) % 384 == 0:
             self.upcomingKey = block.header.hash
-        elif len(self.blocks) % 2048 == 64:
+        elif len(self.blocks) % 384 == 12:
             setRandomXKey(self.upcomingKey)
 
         if len(self.blocks) < 6:

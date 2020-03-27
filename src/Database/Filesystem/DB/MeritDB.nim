@@ -487,6 +487,12 @@ proc hasBlock*(
     except DBReadError:
         return false
 
+#Delete the upcoming key.
+proc deleteUpcomingKey*(
+    db: DB
+) {.forceCheck: [].} =
+    db.del(UPCOMING_RANDOMX_KEY())
+
 #Delete a Block.
 proc deleteBlock*(
     db: DB,

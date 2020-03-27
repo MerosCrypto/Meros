@@ -37,7 +37,7 @@ signature = miner.sign(h1)
 hash = RandomX(h1 || signature)
 ```
 
-Meros uses a RandomX modified with a custom configuration. The modified configuration can be found [here](https://github.com/MerosCrypto/mc_randomx/tree/master/MerosConfiguration/configuration.h). The cache's key is updated when the Blockchain's height modulo 2048 is 64. The cache's key is updated to the hash of the latest Block on the Blockchain to match height modulo 2048 == 0.
+Meros uses a RandomX modified with a custom configuration. The modified configuration can be found [here](https://github.com/MerosCrypto/mc_randomx/tree/master/MerosConfiguration/configuration.h). The cache's key is updated when the Blockchain's height modulo 384 is 12. The cache's key is updated to the hash of the latest Block on the Blockchain to match height modulo 384 == 0.
 
 ### Block Data Type
 

@@ -214,9 +214,9 @@ proc revert*(
 
     #Update the RandomX keys.
     var
-        currentKeyHeight: int = blockchain.height - 64
-        blockUsedAsKey: int = (currentKeyHeight - (currentKeyHeight mod 2048)) - 1
-        blockUsedAsUpcomingKey: int = (blockchain.height - (blockchain.height mod 2048)) - 1
+        currentKeyHeight: int = blockchain.height - 12
+        blockUsedAsKey: int = (currentKeyHeight - (currentKeyHeight mod 384)) - 1
+        blockUsedAsUpcomingKey: int = (blockchain.height - (blockchain.height mod 384)) - 1
         currentKey: string
     if blockUsedAsKey == -1:
         currentKey = blockchain.genesis.toString()
@@ -233,7 +233,9 @@ proc revert*(
         blockchain.db.saveKey(blockchain.cacheKey)
 
     if blockUsedAsUpcomingKey == -1:
-        blockchain.db.saveUpcomingKey(blockchain.genesis.toString())
+        #We don't need to do this since we don't load the upcoming key at Block 12.
+        #The only reason we do is to ensure database equality between now and a historic moment.
+        blockchain.db.deleteUpcomingKey()
     else:
         try:
             blockchain.db.saveUpcomingKey(blockchain[blockUsedAsUpcomingKey].header.hash.toString())

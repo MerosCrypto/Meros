@@ -99,7 +99,6 @@ proc newBlockchainObj*(
     except DBReadError:
         result.cacheKey = genesis
         setRandomXKey(result.cacheKey)
-        result.db.saveUpcomingKey(result.cacheKey)
         result.db.saveKey(result.cacheKey)
 
     #Grab the height and tip from the DB.
@@ -198,10 +197,11 @@ proc add*(
     if newBlock.header.newMiner:
         blockchain.miners[newBlock.header.minerKey] = uint16(blockchain.miners.len)
 
-    #If the height mod 2048 == 0, save the upcoming key.
-    if blockchain.height mod 2048 == 0:
+    #If the height mod 384 == 0, save the upcoming key.
+    if blockchain.height mod 384 == 0:
         blockchain.db.saveUpcomingKey(newBlock.header.hash.toString())
-    elif blockchain.height mod 2048 == 64:
+    #If the height mod 384 == 12, switch to the upcoming key.
+    elif (blockchain.height mod 384 == 12) and (blockchain.height != 12):
         var key: string
         try:
             key = blockchain.db.loadUpcomingKey()
