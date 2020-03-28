@@ -89,7 +89,11 @@ func newSendOutput*(
 ): SendOutput {.forceCheck: [].} =
     case addy.addyType:
         of AddressType.PublicKey:
+            var key: EdPublicKey
+            for b in 0 ..< 32:
+                key.data[b] = cuchar(addy.data[b])
+
             result = newSendOutput(
-                cast[EdPublicKey](cstring(cast[string]((addy.data)))),
+                key,
                 amount
             )
