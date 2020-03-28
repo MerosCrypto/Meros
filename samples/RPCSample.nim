@@ -17,7 +17,7 @@ import json
 const ARGUMENTS: Table[string, seq[char]] = {
     "merit_getHeight":             @[],
     "merit_getDifficulty":         @[],
-    "merit_getBlock":              @['b'],
+    "merit_getBlock":              @['i'],
 
     "merit_getTotalMerit":         @[],
     "merit_getUnlockedMerit":      @[],
