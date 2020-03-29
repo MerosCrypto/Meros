@@ -43,11 +43,11 @@ import objects/SyncRequestObj
 import objects/SyncManagerObj
 export SyncManagerObj
 
+#Chronos external lib.
+import chronos
+
 #Algorithm standard lib.
 import algorithm
-
-#Async standard lib.
-import asyncdispatch
 
 #Sets standard lib.
 import sets

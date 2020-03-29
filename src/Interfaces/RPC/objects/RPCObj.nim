@@ -1,15 +1,11 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Chronos external lib.
+import chronos
+
 #Macros standard lib.
 import macros
-
-#Async standard lib.
-import asyncdispatch
-export asyncdispatch
-
-#Networking standard lib.
-import asyncnet
 
 #Tables standard lib.
 import tables

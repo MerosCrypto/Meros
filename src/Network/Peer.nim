@@ -17,11 +17,11 @@ export PeerObj
 #Element serialize lib. Implements getLength.
 import Serialize/Consensus/ParseElement
 
+#Chronos external lib.
+import chronos
+
 #Locks standard lib.
 import locks
-
-#Networking standard libs.
-import asyncdispatch, asyncnet
 
 #Tables lib.
 import tables

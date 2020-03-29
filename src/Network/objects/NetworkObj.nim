@@ -23,12 +23,11 @@ import ../Peer as PeerFile
 #SerializeCommon lib.
 import ../Serialize/SerializeCommon
 
+#Chronos external lib.
+import chronos
+
 #Tables standard lib.
 import tables
-
-#Networking standard libs.
-import asyncdispatch
-import asyncnet
 
 #Network object.
 type Network* = ref object

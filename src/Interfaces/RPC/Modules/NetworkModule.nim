@@ -7,8 +7,8 @@ import ../../../objects/GlobalFunctionBoxObj
 #RPC object.
 import ../objects/RPCObj
 
-#Async standard lib.
-import asyncdispatch
+#Chronos external lib.
+import chronos
 
 #Default network port.
 const DEFAULT_PORT {.intdefine.}: int = 5132

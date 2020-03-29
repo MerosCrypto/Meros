@@ -17,10 +17,6 @@ export BLSError
 #DB lib, imported so we can export a masked LMDBerror.
 import mc_lmdb
 
-#Selectors standard lib. Imported for an Error type asyncnet can raise but doesn't export.
-import selectors
-export IOSelectorsException
-
 #JSON standard lib.
 import json
 

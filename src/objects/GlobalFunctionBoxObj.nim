@@ -37,11 +37,11 @@ import ../Network/objects/MessageObj
 import ../Network/objects/PeerObj
 import ../Network/objects/SketchyBlockObj
 
+#Chronos external lib.
+import chronos
+
 #Locks standard lib.
 import locks
-
-#Async lib.
-import asyncdispatch
 
 type
     SystemFunctionBox* = ref object

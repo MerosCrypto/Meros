@@ -33,11 +33,11 @@ export SyncManager
 import objects/NetworkObj
 export NetworkObj
 
+#Chronos external lib.
+import chronos
+
 #Math standard lib.
 import math
-
-#Networking standard libs.
-import asyncdispatch, asyncnet
 
 #Table standard lib.
 import tables

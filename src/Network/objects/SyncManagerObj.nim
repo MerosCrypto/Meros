@@ -59,6 +59,9 @@ import ../Serialize/Transactions/ParseClaim
 import ../Serialize/Transactions/ParseSend
 import ../Serialize/Transactions/ParseData
 
+#Chronos external lib.
+import chronos
+
 #Algorithm standard lib.
 import algorithm
 
@@ -67,9 +70,6 @@ import sets
 
 #Tables standard lib.
 import tables
-
-#Async standard lib.
-import asyncdispatch
 
 #SyncManager object.
 type SyncManager* = ref object

@@ -18,8 +18,8 @@ import Modules/MeritModule
 import Modules/PersonalModule
 import Modules/NetworkModule
 
-#Networking standard lib.
-import asyncnet
+#Chronos external lib.
+import chronos
 
 #Constructor.
 proc newRPC*(

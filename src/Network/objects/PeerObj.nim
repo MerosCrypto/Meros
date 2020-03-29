@@ -4,6 +4,9 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
+#Chronos external lib.
+import chronos
+
 #Locks standard lib.
 import locks
 
@@ -12,9 +15,6 @@ import tables
 
 #Random standard lib.
 import random
-
-#Networking standard lib.
-import asyncnet
 
 #Service bytes.
 const SERVER_SERVICE*: uint8 = 0b10000000

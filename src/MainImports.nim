@@ -54,6 +54,9 @@ import objects/ConfigObj
 #StInt external lib.
 import stint
 
+#Chronos external lib.
+import chronos
+
 #OS standard lib.
 import os
 
@@ -62,9 +65,6 @@ import threadpool
 
 #Locks standard lib.
 import locks
-
-#Async standard lib.
-import asyncdispatch
 
 #JSON standard lib.
 import json

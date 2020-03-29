@@ -40,8 +40,8 @@ import ../Serialize/Transactions/ParseClaim
 import ../Serialize/Transactions/ParseSend
 import ../Serialize/Transactions/ParseData
 
-#Async standard lib.
-import asyncdispatch
+#Chronos external lib.
+import chronos
 
 #Tables standard lib.
 import tables
