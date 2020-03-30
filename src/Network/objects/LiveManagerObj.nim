@@ -91,10 +91,10 @@ func updateServices*(
 #Handle a new connection.
 proc handle*(
     manager: LiveManager,
-    peer: Peer
+    peer: Peer,
+    handshake: Message = newMessage(MessageType.End)
 ) {.forceCheck: [], async.} =
     #Send our Handshake and get their Handshake.
-    var msg: Message
     try:
         await peer.sendLive(newMessage(
             MessageType.Handshake,
@@ -109,15 +109,17 @@ proc handle*(
     except Exception as e:
         panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    try:
-        msg = await peer.recvLive()
-    except SocketError:
-        return
-    except PeerError:
-        peer.close()
-        return
-    except Exception as e:
-        panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
+    var msg: Message = handshake
+    if msg.content == MessageType.End:
+        try:
+            msg = await peer.recvLive()
+        except SocketError:
+            return
+        except PeerError:
+            peer.close()
+            return
+        except Exception as e:
+            panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     if msg.content != MessageType.Handshake:
         peer.close()

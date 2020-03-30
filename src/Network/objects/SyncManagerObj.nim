@@ -213,10 +213,10 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
 #Handle a new connection.
 proc handle*(
     manager: SyncManager,
-    peer: Peer
+    peer: Peer,
+    handshake: Message = newMessage(MessageType.End)
 ) {.forceCheck: [], async.} =
     #Send our Syncing and get their Syncing.
-    var msg: Message
     try:
         await peer.sendSync(newMessage(
             MessageType.Syncing,
@@ -226,14 +226,22 @@ proc handle*(
             manager.port.toBinary(PORT_LEN) &
             manager.functions.merit.getTail().toString()
         ))
-        msg = await peer.recvSync()
     except SocketError:
         return
-    except PeerError:
-        peer.close()
-        return
     except Exception as e:
-        panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        panic("Sync handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    var msg: Message = handshake
+    if msg.content == MessageType.End:
+        try:
+            msg = await peer.recvSync()
+        except SocketError:
+            return
+        except PeerError:
+            peer.close()
+            return
+        except Exception as e:
+            panic("Sync handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     if msg.content != MessageType.Syncing:
         peer.close()
