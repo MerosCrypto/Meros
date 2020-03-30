@@ -30,7 +30,9 @@ jobs:
             -   uses: jiro4989/setup-nim-action@v1.0.2
                 with:
                     nim-version: '1.0.4'
-            -   name: Run unit tests
+            -   name: Install dependencies
+                run: nimble install --depsOnly -Y
+            -   name: Run tests
                 run: nimble ci
     build:
         runs-on: ubuntu-latest

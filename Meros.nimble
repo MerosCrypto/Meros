@@ -97,7 +97,7 @@ task unit, "Run unit tests.":
             .join(" ")
 
     #Ensure dependencies are installed.
-    nimbleExec "install --depsOnly -Y"
+    nimbleExec "install --depsOnly"
 
     #Create a single test file will all test imports.
     var contents: string = "{.warning[UnusedImport]: off.}\n\n"
