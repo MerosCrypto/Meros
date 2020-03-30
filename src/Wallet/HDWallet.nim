@@ -94,7 +94,7 @@ proc newHDWallet*(
         #Set the Wallet fields.
         privateKey: privateKey,
         publicKey: publicKey,
-        address: newAddress(publicKey.toString()),
+        address: newAddress(AddressType.PublicKey, publicKey.toString()),
 
         #Create the chain code.
         chainCode: SHA2_256('\1' & secret)
@@ -175,7 +175,7 @@ proc derive*(
         #Set the Wallet fields.
         privateKey: privateKey,
         publicKey: publicKey,
-        address: newAddress(publicKey.toString()),
+        address: newAddress(AddressType.PublicKey, publicKey.toString()),
 
         #Set the chain code.
         chainCode: chainCode

@@ -42,6 +42,7 @@ proc compare*(
     check(bh1.proof == bh2.proof)
     check(bh1.signature == bh2.signature)
 
+    check(bh1.interimHash == bh2.interimHash)
     check(bh1.hash == bh2.hash)
 
 #Compare two BlockBodies to make sure they have the same value.
@@ -69,15 +70,6 @@ proc compare*(
     compare(b1.header, b2.header)
     compare(b1.body, b2.body)
 
-#Compare two Difficulties to make sure they have the same value.
-proc compare*(
-    d1: Difficulty,
-    d2: Difficulty
-) =
-    check(d1.start == d2.start)
-    check(d1.endHeight == d2.endHeight)
-    check(d1.difficulty == d2.difficulty)
-
 #Compare two Blockchains to make sure they have the same value.
 proc compare*(
     bc1: Blockchain,
@@ -85,7 +77,6 @@ proc compare*(
 ) =
     check(bc1.genesis == bc2.genesis)
     check(bc1.blockTime == bc2.blockTime)
-    compare(bc1.startDifficulty, bc2.startDifficulty)
 
     check(bc1.height == bc2.height)
     var last: Hash[256] = bc1.genesis
@@ -95,7 +86,8 @@ proc compare*(
         last = bc1[b].header.hash
     check(bc1.tail.header.hash == last)
     check(bc2.tail.header.hash == last)
-    compare(bc1.difficulty, bc2.difficulty)
+    check(bc1.difficulties == bc2.difficulties)
+    check(bc1.chainWork == bc2.chainWork)
 
     check(bc1.cacheKey == bc2.cacheKey)
 
@@ -116,7 +108,9 @@ proc compare*(
     for h in 0 ..< s1.holders.len:
         check(s1.holders[h] == s2.holders[h])
         check(uint16(h) == s1.reverseLookup(s1.holders[h]))
-        check(s1[uint16(h)] == s2[uint16(h)])
+        check(s1[uint16(h), s1.processedBlocks] == s2[uint16(h), s1.processedBlocks])
+
+    check(s1.pendingRemovals == s2.pendingRemovals)
 
 #Compare two Epochs to make sure they have the same values.
 proc compare*(

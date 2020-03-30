@@ -62,7 +62,7 @@ def EightyEightTest(
     #Merit.
     merit: Merit = Merit()
     #Spam Filter.
-    dataFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
+    dataFilter: SpamFilter = SpamFilter(5)
 
     #Handshake with the node.
     rpc.meros.liveConnect(merit.blockchain.blocks[0].header.hash)
@@ -148,7 +148,7 @@ def EightyEightTest(
             template["header"][-43 : -39],
             BlockHeader.createSketchCheck(template["header"][-43 : -39], packets),
             0,
-            int.from_bytes(template["header"][-4:], byteorder="big"),
+            int.from_bytes(template["header"][-4:], byteorder="big")
         ),
         BlockBody(
             packets,

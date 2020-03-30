@@ -63,7 +63,7 @@ suite "Transactions":
                 db,
                 "TRANSACTIONS_TEST",
                 30,
-                "".pad(32),
+                uint64(0),
                 100
             )
             #Transactions.
@@ -195,7 +195,9 @@ suite "Transactions":
                 return 1
 
         #Verify the Transactions DB pruned the right trees.
-        proc verify() =
+        proc verify(
+            justReverted: Hash[256] = Hash[256]()
+        ) =
             #Reload Transactions to fix its cache.
             commit(merit.blockchain.height)
             transactions = newTransactions(db, merit.blockchain)
@@ -222,6 +224,14 @@ suite "Transactions":
                 for i in 0 ..< inputs.len:
                     check(inputs[i].hash == revertedSpendable[w][i].hash)
                     check(inputs[i].nonce == revertedSpendable[w][i].nonce)
+
+            #Verify the Mint was pruned.
+            if justReverted != Hash[256]():
+                try:
+                    discard transactions[justReverted]
+                    check(false)
+                except IndexError:
+                    discard
 
         #Replay the Blockchain and Transactions from Block 10.
         proc replay() =
@@ -339,12 +349,10 @@ suite "Transactions":
                     check(inputs[i].hash == spendable[w][i].hash)
                     check(inputs[i].nonce == spendable[w][i].nonce)
 
-
-    noFuzzTest "Reloaded and reverted transactions.":
+    noFuzzTest "Reloaded and reverted Transactions.":
         for b in 1 .. 30:
             #Create a random amount of Wallets.
             for _ in 0 ..< rand(2) + 2:
-                var password: string = $char(wallets.len)
                 wallets.add(newWallet(""))
                 walletsLookup[wallets[^1].publicKey] = wallets.len - 1
 
@@ -380,12 +388,12 @@ suite "Transactions":
                         except KeyError:
                             data = newData(Hash[256](), wallets[w].publicKey.toString())
                             wallets[w].sign(data)
-                            data.mine(Hash[256]())
+                            data.mine(uint32(0))
                             add(data, initHashSet[Hash[256]]())
 
                         data = newData(dataTips[wallets[w].publicKey], dataStr)
                         wallets[w].sign(data)
-                        data.mine(Hash[256]())
+                        data.mine(uint32(0))
                         add(data, initHashSet[Hash[256]]())
 
                 #Calculate the actual amount of needed Meros.
@@ -472,7 +480,7 @@ suite "Transactions":
                     #Create and add the Send.
                     var send: Send = newSend(inputs, outputs)
                     wallets[w].sign(send)
-                    send.mine(Hash[256]())
+                    send.mine(uint32(0))
                     add(send, mints)
 
         #Create one last Block for the latest Claims/Sends.
@@ -480,8 +488,7 @@ suite "Transactions":
             last = merit.blockchain.tail.header.hash,
             miner = holder,
             nick = uint16(0),
-            packets = packets,
-            time = merit.blockchain.tail.header.time + 1
+            packets = packets
         )
         merit.processBlock(newBlock)
         blocks.add(newBlock)
@@ -495,10 +502,11 @@ suite "Transactions":
 
         #Revert each Block, verifying the various Transactions are deleted while leaving the others.
         while merit.blockchain.height != 10:
+            var justReverted: Hash[256] = merit.blockchain.tail.header.hash
             reverted.incl(merit.blockchain.tail.header.hash)
             transactions.revert(merit.blockchain, merit.blockchain.height - 1)
             revertSpendable()
-            verify()
+            verify(justReverted)
             merit.revert(merit.blockchain.height - 1)
 
         #Replay every Block/Transaction.

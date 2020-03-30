@@ -44,8 +44,8 @@ def HundredSixSignedElementsTest(
     #Create a signed Verification, SendDifficulty, and DataDifficulty.
     elements: List[SignedElement] = [
         SignedVerification(data, 1, sig),
-        SignedSendDifficulty(bytes.fromhex("00" * 32), 0, 1, sig),
-        SignedDataDifficulty(bytes.fromhex("00" * 32), 0, 1, sig)
+        SignedSendDifficulty(0, 0, 1, sig),
+        SignedDataDifficulty(0, 0, 1, sig)
     ]
 
     for elem in elements:

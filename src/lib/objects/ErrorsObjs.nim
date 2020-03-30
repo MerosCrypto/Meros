@@ -43,7 +43,6 @@ type
         element*: Element
 
     #Database/Merit Statuses.
-    NotConnected* = object of Exception #Used when we test a BlockHeader and it has a last we don't recognize.
     NotInEpochs*  = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
 
     #Network Errors.
@@ -56,6 +55,8 @@ type
         hash*: Hash[256]
         #Argon hash.
         argon*: Hash[256]
+        #Difficulty the argon was multiplied by.
+        difficulty*: uint32
 
     #Interfaces/RPC Errors.
     ParamError*   = object of Exception #Used when an invalid parameter is passed.

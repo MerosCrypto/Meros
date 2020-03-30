@@ -139,15 +139,24 @@ proc module*(
                     raise newLoggedException(ParamError, "")
 
                 #Get the UTXOs.
-                var utxos: seq[FundedInput]
+                var
+                    decodedAddy: Address
+                    utxos: seq[FundedInput]
                 try:
-                    utxos = functions.transactions.getUTXOs(
-                        newEdPublicKey(
-                            cast[string](Address.getEncodedData(params[0].getStr()))
-                        )
-                    )
+                    decodedAddy = Address.getEncodedData(params[0].getStr())
                 except ValueError:
                     raise newLoggedException(ParamError, "")
+
+                case decodedAddy.addyType:
+                    of AddressType.PublicKey:
+                        try:
+                            utxos = functions.transactions.getUTXOs(
+                                newEdPublicKey(
+                                    cast[string](decodedAddy.data)
+                                )
+                            )
+                        except ValueError:
+                            raise newLoggedException(ParamError, "")
 
                 var balance: uint64 = 0
                 for utxo in utxos:

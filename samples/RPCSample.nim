@@ -17,7 +17,7 @@ import json
 const ARGUMENTS: Table[string, seq[char]] = {
     "merit_getHeight":             @[],
     "merit_getDifficulty":         @[],
-    "merit_getBlock":              @['b'],
+    "merit_getBlock":              @['i'],
 
     "merit_getTotalMerit":         @[],
     "merit_getUnlockedMerit":      @[],
@@ -34,15 +34,14 @@ const ARGUMENTS: Table[string, seq[char]] = {
     "transactions_getBalance":     @['s'],
 
     "network_connect":             @['s', 'i'],
-    "network_peers":               @[],
+    "network_getPeers":            @[],
 
     "personal_getMiner":           @[],
     "personal_setMnemonic":        @['b', 'b'],
     "personal_getAddress":         @[],
 
     "personal_send":               @['s', 's'],
-    "personal_data":               @['s'],
-    "personal_toAddress":          @['b']
+    "personal_data":               @['s']
 }.toTable()
 
 var

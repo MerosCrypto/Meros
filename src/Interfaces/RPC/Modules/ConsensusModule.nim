@@ -27,14 +27,14 @@ proc module*(
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [].} =
-                res["result"] = % $functions.consensus.getSendDifficulty()
+                res["result"] = % functions.consensus.getSendDifficulty()
 
             #Get a Data Difficulty.
             "getDataDifficulty" = proc (
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [].} =
-                res["result"] = % $functions.consensus.getDataDifficulty()
+                res["result"] = % functions.consensus.getDataDifficulty()
 
             #Get a Transaction's Status.
             "getStatus" = proc (
@@ -72,14 +72,14 @@ proc module*(
                 for holder in status.holders:
                     verifiers.add(% holder)
                     if (status.merit == -1) and (not functions.consensus.isMalicious(holder)):
-                        merit += functions.merit.getMerit(holder)
+                        merit += functions.merit.getMerit(holder, status.epoch)
 
                 res["result"] = %* {
                     "verifiers":  verifiers,
                     "merit":      merit,
                     "threshold":  functions.consensus.getThreshold(status.epoch),
                     "verified":   status.verified,
-                    "competing": status.competing,
+                    "competing":  status.competing
                 }
     except Exception as e:
         panic("Couldn't create the Consensus Module: " & e.msg)

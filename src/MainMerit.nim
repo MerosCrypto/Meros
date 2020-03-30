@@ -1,4 +1,4 @@
-include MainDatabase
+include MainReorganization
 
 proc mainMerit() {.forceCheck: [].} =
     {.gcsafe.}:
@@ -39,8 +39,8 @@ proc mainMerit() {.forceCheck: [].} =
         ].} =
             discard
 
-        functions.merit.getDifficulty = proc (): Difficulty {.inline, forceCheck: [].} =
-            merit.blockchain.difficulty
+        functions.merit.getDifficulty = proc (): uint64 {.inline, forceCheck: [].} =
+            merit.blockchain.difficulties[^1]
 
         functions.merit.getBlockByNonce = proc (
             nonce: int
@@ -86,9 +86,10 @@ proc mainMerit() {.forceCheck: [].} =
         functions.merit.getUnlockedMerit = proc (): int {.inline, forceCheck: [].} =
             merit.state.unlocked
         functions.merit.getMerit = proc (
-            nick: uint16
+            nick: uint16,
+            height: int
         ): int {.inline, forceCheck: [].} =
-            merit.state[nick]
+            merit.state[nick, height]
 
         functions.merit.isUnlocked = proc (
             nick: uint16
@@ -128,7 +129,12 @@ proc mainMerit() {.forceCheck: [].} =
             var sketcher: Sketcher = sketcherArg
             if sketcher.len == 0:
                 sketcher = newSketcher(
-                    functions.merit.getMerit,
+                    (
+                        proc (
+                            nick: uint16
+                        ): int {.raises: [].} =
+                            functions.merit.getMerit(nick, functions.merit.getHeight())
+                    ),
                     functions.consensus.isMalicious,
                     cast[seq[VerificationPacket]](consensus.getPending().packets)
                 )
@@ -192,7 +198,7 @@ proc mainMerit() {.forceCheck: [].} =
             #Have the Consensus handle every person who suffered a MeritRemoval.
             try:
                 for removee in removed.keys():
-                    consensus.remove(removed[removee], rewardsState[removee])
+                    consensus.remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
             except KeyError as e:
                 panic("Couldn't get the Merit Removal of a holder who just had one archived: " & e.msg)
 
@@ -315,8 +321,7 @@ proc mainMerit() {.forceCheck: [].} =
         ) {.forceCheck: [
             ValueError,
             DataMissing,
-            DataExists,
-            NotConnected
+            DataExists
         ], async.} =
             while true:
                 if tryAcquire(lock[]):
@@ -348,68 +353,103 @@ proc mainMerit() {.forceCheck: [].} =
                         queue: seq[Hash[256]] = @[header.hash]
                         #Malformed size used for the first loop iteration.
                         size: int = queue.len - increment
-                    while not merit.blockchain.hasBlock(queue[^1]):
-                        #If we ran out of Blocks, raise.
-                        #The only three cases we run out of Blocks are:
-                        #A) We synced forwards. We didn't.
-                        #B) Their genesis doesn't match our genesis.
-                        #C) Our peer is an idiot.
-                        if queue.len != size + increment:
-                            raise newLoggedException(ValueError, "Blockchain has a different genesis.")
+                        lastCommonBlock: Hash[256] = header.last
+                    if not merit.blockchain.hasBlock(header.last):
+                        while not merit.blockchain.hasBlock(queue[^1]):
+                            #If we ran out of Blocks, raise.
+                            #The only three cases we run out of Blocks are:
+                            #A) We synced forwards. We didn't.
+                            #B) Their genesis doesn't match our genesis.
+                            #C) Our peer is an idiot.
+                            if queue.len != size + increment:
+                                raise newLoggedException(ValueError, "Blockchain has a different genesis.")
 
-                        #Update the size.
-                        size = queue.len
+                            #Update the size.
+                            size = queue.len
 
-                        #Get the list of Blocks before this Block.
+                            #Get the list of Blocks before this Block.
+                            try:
+                                queue &= await syncAwait network.syncManager.syncBlockList(false, increment, queue[^1])
+                            except DataMissing as e:
+                                #This should only be raised if:
+                                #A) The requested Block is unknown.
+                                #B) We requested ONLY the Blocks before the genesis.
+                                #The second is impossible as we break once we find a Block we know.
+                                raise e
+                            except Exception as e:
+                                panic("requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
+
+                        #Remove every Block we have from the queue's tail.
+                        lastCommonBlock = merit.blockchain.tail.header.hash
+                        for i in countdown(queue.len - 1, 1):
+                            if merit.blockchain.hasBlock(queue[i]):
+                                lastCommonBlock = queue[i]
+                                queue.del(i)
+                            else:
+                                break
+
+                    #If the last Block on both chains isn't our tail, this is a potentially longer chain.
+                    if lastCommonBlock != merit.blockchain.tail.header.hash:
+                        var altHeaders: seq[BlockHeader]
                         try:
-                            queue &= await syncAwait network.syncManager.syncBlockList(false, increment, queue[^1])
-                        except DataMissing as e:
-                            #This should only be raised if:
-                            #A) The requested Block is unknown.
-                            #B) We requested ONLY the Blocks before the genesis.
-                            #The second is impossible as we break once we find a Block we know.
-                            raise e
-                        except Exception as e:
-                            panic("requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
-
-                    #Remove every Block we have from the queue's tail.
-                    var lastRemoved: Hash[256] = merit.blockchain.tail.header.hash
-                    for i in countdown(queue.len - 1, 1):
-                        if merit.blockchain.hasBlock(queue[i]):
-                            lastRemoved = queue[i]
-                            queue.del(i)
-
-                    #If the last Block on both chains isn't our tail, raise NotConnected.
-                    if lastRemoved != merit.blockchain.tail.header.hash:
-                        raise newLoggedException(NotConnected, "Blockchain split.")
-
-                    #Clear the locked Block.
-                    lockedBlock = Hash[256]()
-
-                    #Add every previous Block.
-                    for h in countdown(queue.len - 1, 1):
-                        try:
-                            await functions.merit.addBlockByHashInternal(queue[h], true, innerBlockLock)
+                            altHeaders = await reorganize(lastCommonBlock, queue, header)
                         except ValueError as e:
                             raise e
                         except DataMissing as e:
                             raise e
-                        except DataExists as e:
-                            raise e
-                        except NotConnected as e:
-                            panic("Parent addBlockByHeader didn't detect a Blockchain split: " & e.msg)
                         except Exception as e:
-                            panic("addBlockByHash threw an Exception despite catching all Exceptions: " & e.msg)
+                            panic("Reorganizing the chain raised an Exception despite catching all Exceptions: " & e.msg)
+
+                        lockedBlock = Hash[256]()
+                        for header in altHeaders:
+                            try:
+                                await functions.merit.addBlockByHeaderInternal(header, true, innerBlockLock)
+                            except ValueError as e:
+                                logInfo "Reorganization failed", error = e.msg
+                                raise e
+                            except DataMissing as e:
+                                logInfo "Reorganization failed", error = e.msg
+                                raise e
+                            except DataExists as e:
+                                panic("Adding a missing Block before this alternate tail raised DataExists: " & e.msg)
+                            except Exception as e:
+                                panic("addBlockByHashInternal threw an Exception despite catching all Exceptions: " & e.msg)
+                        logInfo "Reorganized"
+                    else:
+                        #Clear the locked Block.
+                        lockedBlock = Hash[256]()
+
+                        #Add every previous Block.
+                        for h in countdown(queue.len - 1, 1):
+                            try:
+                                await functions.merit.addBlockByHashInternal(queue[h], true, innerBlockLock)
+                            except ValueError as e:
+                                raise e
+                            except DataMissing as e:
+                                raise e
+                            except DataExists as e:
+                                panic("Adding a missing Block before this tail raised DataExists: " & e.msg)
+                            except Exception as e:
+                                panic("addBlockByHashInternal threw an Exception despite catching all Exceptions: " & e.msg)
 
                     #Set back the locked Block.
                     lockedBlock = header.hash
 
+                if header.last != merit.blockchain.tail.header.hash:
+                    raise newException(ValueError, "Trying to add a Block which isn't after our current tail, despite calling reorganize and adding previous blocks.")
+
+                #This executes twice in the case of reorgs.
+                #That said, the only significant performance loss is in the double miner signature verify.
                 try:
-                    merit.blockchain.testBlockHeader(merit.state.holders, header)
+                    testBlockHeader(
+                        merit.blockchain.miners,
+                        merit.state.holders,
+                        merit.blockchain.tail.header,
+                        merit.blockchain.difficulties[^1],
+                        header
+                    )
                 except ValueError as e:
                     raise e
-                except NotConnected as e:
-                    panic("Tried to add a Block that wasn't after the last Block: " & e.msg)
 
                 try:
                     sketchyBlock = newSketchyBlockObj(header, await syncAwait network.syncManager.syncBlockBody(header.hash, header.contents))
@@ -422,8 +462,6 @@ proc mainMerit() {.forceCheck: [].} =
             except DataMissing as e:
                 raise e
             except DataExists as e:
-                raise e
-            except NotConnected as e:
                 raise e
             finally:
                 lockedBlock = Hash[256]()
@@ -445,8 +483,7 @@ proc mainMerit() {.forceCheck: [].} =
         ) {.forceCheck: [
             ValueError,
             DataMissing,
-            DataExists,
-            NotConnected
+            DataExists
         ], async.} =
             try:
                 await functions.merit.addBlockByHeaderInternal(header, syncing, blockLock)
@@ -455,8 +492,6 @@ proc mainMerit() {.forceCheck: [].} =
             except DataMissing as e:
                 raise e
             except DataExists as e:
-                raise e
-            except NotConnected as e:
                 raise e
             except Exception as e:
                 panic("addBlockByHeaderInternal threw an Exception despite catching all Exceptions: " & e.msg)
@@ -468,8 +503,7 @@ proc mainMerit() {.forceCheck: [].} =
         ) {.forceCheck: [
             ValueError,
             DataMissing,
-            DataExists,
-            NotConnected
+            DataExists
         ], async.} =
             #Return if we already have this Block.
             if merit.blockchain.hasBlock(hash):
@@ -483,8 +517,6 @@ proc mainMerit() {.forceCheck: [].} =
                 raise e
             except DataExists as e:
                 raise e
-            except NotConnected as e:
-                raise e
             except Exception as e:
                 panic("addBlockByHeaderInternal/requestBlockHeader threw an Exception despite catching all Exceptions: " & e.msg)
 
@@ -497,7 +529,7 @@ proc mainMerit() {.forceCheck: [].} =
             except ValueError, DataMissing:
                 peer.close()
                 return
-            except DataExists, NotConnected:
+            except DataExists:
                 discard
             except Exception as e:
                 panic("addBlockByHashInternal threw an Exception despite catching all Exceptions: " & e.msg)
@@ -506,12 +538,18 @@ proc mainMerit() {.forceCheck: [].} =
         functions.merit.testBlockHeader = proc (
             header: BlockHeader
         ) {.forceCheck: [
-            ValueError,
-            NotConnected
+            ValueError
         ].} =
+            if header.last != merit.blockchain.tail.header.hash:
+                raise newException(ValueError, "Trying to add a Block which isn't after our current tail.")
+
             try:
-                merit.blockchain.testBlockHeader(merit.state.holders, header)
+                testBlockHeader(
+                    merit.blockchain.miners,
+                    merit.state.holders,
+                    merit.blockchain.tail.header,
+                    merit.blockchain.difficulties[^1],
+                    header
+                )
             except ValueError as e:
-                raise e
-            except NotConnected as e:
                 raise e

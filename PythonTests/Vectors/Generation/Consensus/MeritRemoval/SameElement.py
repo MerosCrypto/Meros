@@ -65,17 +65,17 @@ blockchain.add(block)
 print("Generated Same Element Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a SendDifficulty.
-sendDiff: SignedSendDifficulty = SignedSendDifficulty(bytes.fromhex("BB" * 32), 0)
+sendDiff: SignedSendDifficulty = SignedSendDifficulty(4, 0)
 sendDiff.sign(0, blsPrivKey)
 
 #Create a DataDifficulty.
-dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("BB" * 32), 0)
+dataDiff: SignedDataDifficulty = SignedDataDifficulty(4, 0)
 dataDiff.sign(0, blsPrivKey)
 
 #Create a Data.
 data: Data = Data(bytes(32), edPubKey.to_bytes())
 data.sign(edPrivKey)
-data.beat(SpamFilter(bytes.fromhex("CC" * 32)))
+data.beat(SpamFilter(5))
 
 #Create a Verification.
 verif: SignedVerification = SignedVerification(data.hash)

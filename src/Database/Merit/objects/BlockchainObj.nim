@@ -13,9 +13,11 @@ import ../../../Wallet/MinerWallet
 #Merit DB lib.
 import ../../Filesystem/DB/MeritDB
 
-#Difficulty and Block objects.
-import DifficultyObj
+#Block object.
 import BlockObj
+
+#StInt external lib.
+import stint
 
 #Tables standard lib.
 import tables
@@ -28,16 +30,16 @@ type Blockchain* = object
     #Genesis hash (derives from the chain params).
     genesis*: Hash[256]
     #Block time (part of the chain params).
-    blockTime*: int
-    #Starting Difficulty (part of the chain params).
-    startDifficulty*: Difficulty
+    blockTime*: StUint[128]
 
     #Height.
     height*: int
     #Cache of the last 10 Blocks.
     blocks: seq[Block]
-    #Current Difficulty.
-    difficulty*: Difficulty
+    #Cache of difficulties for this chain.
+    difficulties*: seq[uint64]
+    #Chain work.
+    chainWork*: StUInt[128]
 
     #RandomX Cache Key.
     cacheKey*: string
@@ -45,24 +47,33 @@ type Blockchain* = object
     #Miners from past blocks. Serves as a reverse lookup.
     miners*: Table[BLSPublicKey, uint16]
 
+#Calculate a proper difficulty
+proc calculateDifficulties*(
+    db: DB,
+    genesis: Hash[256],
+    lastHeaderArg: BlockHeader
+): seq[uint64] {.forceCheck: [].} =
+    var lastHeader: BlockHeader = lastHeaderArg
+    while result.len != 72:
+        try:
+            result = db.loadDifficulty(lastHeader.hash) & result
+        except DBReadError as e:
+            panic("Couldn't load a difficulty for a Block on the chain: " & e.msg)
+
+        if lastHeader.last == genesis:
+            break
+        try:
+            lastHeader = db.loadBlockHeader(lastHeader.last)
+        except DBReadError as e:
+            panic("Couldn't load a BlockHeader for a Block on the chain: " & e.msg)
+
 #Create a Blockchain object.
 proc newBlockchainObj*(
     db: DB,
     genesisArg: string,
     blockTime: int,
-    startDifficultyArg: Hash[256]
+    initialDifficulty: uint64
 ): Blockchain {.forceCheck: [].} =
-    #Create the start difficulty.
-    var startDifficulty: Difficulty
-    try:
-        startDifficulty = newDifficultyObj(
-            0,
-            2,
-            startDifficultyArg
-        )
-    except ValueError:
-        panic("Couldn't create the Blockchain's starting difficulty.")
-
     #Create the Blockchain.
     var genesis: string = genesisArg.pad(32)
     try:
@@ -70,12 +81,11 @@ proc newBlockchainObj*(
             db: db,
 
             genesis: genesis.toRandomXHash(),
-            blockTime: blockTime,
-            startDifficulty: startDifficulty,
+            blockTime: stuint(blockTime, 128),
 
             height: 0,
             blocks: @[],
-            difficulty: startDifficulty,
+            difficulties: @[],
 
             miners: initTable[BLSPublicKey, uint16]()
         )
@@ -89,7 +99,6 @@ proc newBlockchainObj*(
     except DBReadError:
         result.cacheKey = genesis
         setRandomXKey(result.cacheKey)
-        result.db.saveUpcomingKey(result.cacheKey)
         result.db.saveKey(result.cacheKey)
 
     #Grab the height and tip from the DB.
@@ -134,11 +143,12 @@ proc newBlockchainObj*(
         #Grab the tip.
         tip = genesisBlock.header.hash
 
-        #Save the height, tip, the Genesis Block, and the starting Difficulty.
+        #Save the height, tip, the Genesis Block, the starting Difficulty, and the initial chain work.
         result.db.saveHeight(result.height)
         result.db.saveTip(tip)
         result.db.save(0, genesisBlock)
-        result.db.save(result.height, result.difficulty)
+        result.db.save(genesisBlock.header.hash, initialDifficulty)
+        result.db.save(genesisBlock.header.hash, stuint(initialDifficulty, 128))
 
     #Load the last 10 Blocks.
     var last: Block
@@ -153,11 +163,11 @@ proc newBlockchainObj*(
             break
         tip = last.header.last
 
-    #Load the Difficulty.
-    try:
-        result.difficulty = result.db.loadDifficulty(result.height)
-    except DBReadError as e:
-        panic("Couldn't load the Difficulty from the Database: " & e.msg)
+    #Load the last 72 difficulties.
+    result.difficulties = db.calculateDifficulties(result.genesis, result.blocks[^1].header)
+
+    #Load the chain work.
+    result.chainWork = result.db.loadChainWork(result.blocks[^1].header.hash)
 
     #Load the existing miners.
     var miners: seq[BLSPublicKey] = result.db.loadHolders()
@@ -183,14 +193,15 @@ proc add*(
     inc(blockchain.height)
     blockchain.db.saveHeight(blockchain.height)
 
-    #Update miners, if necessary
+    #Update miners, if necessary.
     if newBlock.header.newMiner:
         blockchain.miners[newBlock.header.minerKey] = uint16(blockchain.miners.len)
 
-    #If the height mod 2048 == 0, save the upcoming key.
-    if blockchain.height mod 2048 == 0:
+    #If the height mod 384 == 0, save the upcoming key.
+    if blockchain.height mod 384 == 0:
         blockchain.db.saveUpcomingKey(newBlock.header.hash.toString())
-    elif blockchain.height mod 2048 == 64:
+    #If the height mod 384 == 12, switch to the upcoming key.
+    elif (blockchain.height mod 384 == 12) and (blockchain.height != 12):
         var key: string
         try:
             key = blockchain.db.loadUpcomingKey()
@@ -250,8 +261,22 @@ proc `[]`*(
     except DBReadError:
         raise newLoggedException(IndexError, "Block not found.")
 
-#Gets the last Block.
+#Get the last Block.
 func tail*(
     blockchain: Blockchain
 ): Block {.inline, forceCheck: [].} =
     blockchain.blocks[^1]
+
+#Get the height of a Block by its hash.
+proc getHeightOf*(
+    blockchain: Blockchain,
+    hash: Hash[256]
+): int {.inline, forceCheck: [].} =
+    blockchain.db.loadHeight(hash)
+
+#Get the chain work at a specific Block.
+proc getChainWork*(
+    blockchain: Blockchain,
+    hash: Hash[256]
+): StUInt[128] {.inline, forceCheck: [].} =
+    blockchain.db.loadChainWork(hash)

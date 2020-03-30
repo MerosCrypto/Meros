@@ -61,18 +61,24 @@ proc newValidVerificationPacket*(
         result.holders.add(uint16(h))
 
 #Create a Block, with every setting optional.
+var lastTime {.threadvar.}: uint32
 proc newBlankBlock*(
     version: uint32 = 0,
     last: RandomXHash = RandomXHash(),
-    significant: uint16 = 0,
+    significant: uint16 = 1,
     sketchSalt: string = newString(4),
     miner: MinerWallet = newMinerWallet(),
     packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
     aggregate: BLSSignature = newBLSSignature(),
-    time: uint32 = getTime(),
+    time: uint32 = 0,
     proof: uint32 = 0
 ): Block =
+    var actualTime: uint32 = time
+    if actualTime == 0:
+        actualTime = max(getTime(), lastTime + 1)
+        lastTime = actualTime
+
     var contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(packets, elements)
     result = newBlockObj(
         version,
@@ -86,7 +92,7 @@ proc newBlankBlock*(
         packets,
         elements,
         aggregate,
-        time
+        actualTime
     )
     miner.hash(result.header, proof)
 
@@ -94,16 +100,21 @@ proc newBlankBlock*(
 proc newBlankBlock*(
     version: uint32 = 0,
     last: RandomXHash = RandomXHash(),
-    significant: uint16 = 0,
+    significant: uint16 = 1,
     sketchSalt: string = newString(4),
     nick: uint16,
     miner: MinerWallet = newMinerWallet(),
     packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
     aggregate: BLSSignature = newBLSSignature(),
-    time: uint32 = getTime(),
+    time: uint32 = 0,
     proof: uint32 = 0
 ): Block =
+    var actualTime: uint32 = time
+    if actualTime == 0:
+        actualTime = max(getTime(), lastTime + 1)
+        lastTime = actualTime
+
     var contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(packets, elements)
     result = newBlockObj(
         version,
@@ -117,6 +128,6 @@ proc newBlankBlock*(
         packets,
         elements,
         aggregate,
-        time
+        actualTime
     )
     miner.hash(result.header, proof)

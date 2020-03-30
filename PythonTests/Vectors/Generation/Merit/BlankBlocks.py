@@ -37,7 +37,7 @@ block: Block = Block(
     BlockBody()
 )
 
-#Generate blocks.
+#Generate Blocks.
 for i in range(1, 26):
     #Mine the Block.
     block.mine(privKey, blockchain.difficulty())

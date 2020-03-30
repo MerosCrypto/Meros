@@ -87,7 +87,7 @@ proc close*(
 proc getPeers*(
     peers: TableRef[int, Peer],
     reqArg: int,
-    skip: int = 1,
+    skip: int = 0,
     live: bool = false,
     server: bool = false
 ): seq[Peer] {.forceCheck: [].} =

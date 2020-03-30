@@ -533,7 +533,7 @@ proc handle*(
                                 ValueError
                             ].} =
                                 try:
-                                    result = serialization.parseSend(Hash[256]())
+                                    result = serialization.parseSend(uint32(0))
                                 except ValueError as e:
                                     raise e
                                 except Spam as e:
@@ -561,7 +561,7 @@ proc handle*(
                                 ValueError
                             ].} =
                                 try:
-                                    result = serialization.parseData(Hash[256]())
+                                    result = serialization.parseData(uint32(0))
                                 except ValueError as e:
                                     raise e
                                 except Spam as e:
@@ -589,11 +589,7 @@ proc handle*(
                                 ValueError
                             ].} =
                                 try:
-                                    result = serialization.parseBlockHeader(
-                                        cast[BlockHeaderSyncRequest](
-                                            manager.requests[peer.requests[0]]
-                                        ).check
-                                    )
+                                    result = serialization.parseBlockHeader()
                                 except ValueError as e:
                                     raise e
 

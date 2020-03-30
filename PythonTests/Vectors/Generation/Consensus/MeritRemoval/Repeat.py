@@ -49,7 +49,7 @@ blockchain.add(block)
 print("Generated Repeat Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a DataDifficulty.
-dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("AA" * 32), 0)
+dataDiff: SignedDataDifficulty = SignedDataDifficulty(3, 0)
 dataDiff.sign(0, blsPrivKey)
 
 #Generate a Block containing the DataDifficulty.
@@ -74,7 +74,7 @@ blockchain.add(block)
 print("Generated Repeat Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a conflicting DataDifficulty with the same nonce.
-dataDiffConflicting = SignedDataDifficulty(bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"), 0)
+dataDiffConflicting = SignedDataDifficulty(1, 0)
 dataDiffConflicting.sign(0, blsPrivKey)
 
 #Create a MeritRemoval out of the two of them.

@@ -43,9 +43,9 @@ suite "Epochs":
             #Database.
             db: DB = newTestDatabase()
             #Blockchain.
-            blockchain: Blockchain = newBlockchain(db, "EPOCH_TEST", 1, "".pad(32).toHash(256))
+            blockchain: Blockchain = newBlockchain(db, "EPOCH_TEST", 1, uint64(1))
             #State.
-            state: State = newState(db, 100, blockchain.height)
+            state: State = newState(db, 100, blockchain)
             #Epochs.
             epochs: Epochs = newEpochs(blockchain)
 

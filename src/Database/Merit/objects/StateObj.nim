@@ -36,6 +36,9 @@ type State* = object
     #Nickname -> Merit
     merit: Table[uint16, int]
 
+    #Pending removals.
+    pendingRemovals*: seq[int]
+
 #Constructor.
 proc newStateObj*(
     db: DB,
@@ -52,7 +55,9 @@ proc newStateObj*(
         processedBlocks: blockchainHeight,
 
         holders: @[],
-        merit: initTable[uint16, int]()
+        merit: initTable[uint16, int](),
+
+        pendingRemovals: @[]
     )
 
     #Load the amount of Unlocked Merit.
@@ -84,18 +89,18 @@ func unlocked*(
 
 proc loadUnlocked*(
     state: State,
-    blockNum: int
+    height: int,
 ): int {.forceCheck: [].} =
     #If the Block is in the future, return the amount it will be (without Merit Removals).
-    if blockNum >= state.processedBlocks:
+    if height >= state.processedBlocks:
         result = min(
-            (blockNum - state.processedBlocks) + state.unlocked,
+            (height - state.processedBlocks) + state.unlocked,
             state.deadBlocks
         )
     #Load the amount of Unlocked Merit at the specified Block.
     else:
         try:
-            result = state.db.loadUnlocked(blockNum)
+            result = state.db.loadUnlocked(height - 1)
         except DBReadError:
             panic("Couldn't load the Unlocked Merit for a Block below the `processedBlocks`.")
 
@@ -112,7 +117,8 @@ proc newHolder*(
 #Get a Merit Holder's Merit.
 proc `[]`*(
     state: State,
-    nick: uint16
+    nick: uint16,
+    height: int
 ): int {.forceCheck: [].} =
     #Throw a fatal error if the nickname is invalid.
     if nick < 0:
@@ -122,11 +128,16 @@ proc `[]`*(
     if nick >= uint16(state.holders.len):
         return 0
 
-    #Return the Merit.
+    #Set the Merit to the result.
     try:
         result = state.merit[nick]
     except KeyError as e:
         panic("State threw a KeyError when getting a value, despite checking the nick was in bounds: " & e.msg)
+
+    #Iterate over the pending removal cache, seeing if we need to decrement at all.
+    for r in 0 ..< height - state.processedBlocks:
+        if state.pendingRemovals[r] == int(nick):
+            dec(result)
 
 #Get the removals from a Block.
 proc loadBlockRemovals*(
@@ -149,7 +160,7 @@ proc `[]=`*(
     value: int
 ) {.inline, forceCheck: [].} =
     #Get the current value.
-    var current: int = state[nick]
+    var current: int = state[nick, state.processedBlocks]
     #Set their new value.
     state.merit[nick] = value
     #Update unlocked accrodingly.
@@ -168,9 +179,13 @@ proc remove*(
     nick: uint16,
     nonce: int
 ) {.forceCheck: [].} =
-    state.db.remove(nick, state[nick], nonce)
+    state.db.remove(nick, state[nick, state.processedBlocks], nonce)
     state[nick] = 0
     state.db.saveUnlocked(state.processedBlocks, state.unlocked)
+
+    for p in 0 ..< state.pendingRemovals.len:
+        if state.pendingRemovals[p] == int(nick):
+            state.pendingRemovals[p] = -1
 
 #Delete the last nickname from RAM.
 proc deleteLastNickname*(

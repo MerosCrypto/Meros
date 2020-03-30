@@ -38,10 +38,3 @@ The result is a string of the hash.
 - Data (string)
 
 The result is a string of the hash.
-
-### `toAddress`
-
-`toAddress` replies with the address for an Ed25519 Public Key. It takes in one argument:
-- Public Key (string)
-
-The result is a string of the address.

@@ -83,10 +83,7 @@ proc mainPersonal() {.forceCheck: [].} =
             var outputs: seq[SendOutput]
             try:
                 outputs = @[
-                    newSendOutput(
-                        newEdPublicKey(cast[string](destination.getEncodedData())),
-                        amountOut
-                    )
+                    newSendOutput(destination.getEncodedData(), amountOut)
                 ]
             except ValueError as e:
                 raise e

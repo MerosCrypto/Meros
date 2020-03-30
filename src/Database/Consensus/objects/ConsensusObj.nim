@@ -36,7 +36,7 @@ import sets
 import tables
 
 #Consensus object.
-type Consensus* = ref object
+type Consensus* = object
     #Global Functions.
     functions*: GlobalFunctionBox
     #DB.
@@ -48,7 +48,10 @@ type Consensus* = ref object
     malicious*: Table[uint16, seq[SignedMeritRemoval]]
 
     #Statuses of Transactions not yet out of Epochs.
-    statuses: Table[Hash[256], TransactionStatus]
+    when defined(merosTests):
+        statuses*: Table[Hash[256], TransactionStatus]
+    else:
+        statuses: Table[Hash[256], TransactionStatus]
     #Statuses which are close to becoming verified.
     #Every Transaction in this Table is checked when new Blocks are added to see if they crossed the threshold.
     close*: HashSet[Hash[256]]
@@ -65,8 +68,8 @@ proc newConsensusObj*(
     functions: GlobalFunctionBox,
     db: DB,
     state: State,
-    sendDiff: Hash[256],
-    dataDiff: Hash[256]
+    sendDiff: uint32,
+    dataDiff: uint32
 ): Consensus {.forceCheck: [].} =
     #Create the Consensus object.
     result = Consensus(
@@ -89,12 +92,12 @@ proc newConsensusObj*(
     for h in 0 ..< state.holders.len:
         #Reload the filters.
         try:
-            result.filters.send.update(uint16(h), state[uint16(h)], result.db.loadSendDifficulty(uint16(h)))
+            result.filters.send.update(uint16(h), state[uint16(h), state.processedBlocks], result.db.loadSendDifficulty(uint16(h)))
         except DBReadError:
             discard
 
         try:
-            result.filters.data.update(uint16(h), state[uint16(h)], result.db.loadDataDifficulty(uint16(h)))
+            result.filters.data.update(uint16(h), state[uint16(h), state.processedBlocks], result.db.loadDataDifficulty(uint16(h)))
         except DBReadError:
             discard
 
@@ -129,18 +132,18 @@ proc newConsensusObj*(
 
                 try:
                     result.statuses[packet.hash] = result.db.load(packet.hash)
-                except DBReadError:
-                    panic("Transaction archived on the Blockchain doesn't have a status.")
+                except DBReadError as e:
+                    panic("Transaction archived on the Blockchain doesn't have a status: " & e.msg)
 
                 #If this Transaction is close to being confirmed, add it to close.
                 try:
                     var merit: int = 0
                     for holder in result.statuses[packet.hash].holders:
                         if not result.malicious.hasKey(holder):
-                            merit += state[holder]
+                            merit += state[holder, result.statuses[packet.hash].epoch]
                     if (
                         (not result.statuses[packet.hash].verified) and
-                        (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 5)
+                        (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 6)
                     ):
                         result.close.incl(packet.hash)
                 except KeyError as e:
@@ -148,23 +151,38 @@ proc newConsensusObj*(
     except IndexError as e:
         panic("Couldn't get a Block on the Blockchain: " & e.msg)
 
+    #Load unmentioned statuses.
+    for hash in result.unmentioned:
+        try:
+            result.statuses[hash] = result.db.load(hash)
+        except DBReadError as e:
+            panic("Transaction not yet mentioned on the Blockchain doesn't have a status: " & e.msg)
+
 #Set a Transaction as unmentioned.
 proc setUnmentioned*(
-    consensus: Consensus,
+    consensus: var Consensus,
     hash: Hash[256]
 ) {.forceCheck: [].} =
     consensus.unmentioned.incl(hash)
+    consensus.db.addUnmentioned(hash)
 
 #Set a Transaction's status.
 proc setStatus*(
-    consensus: Consensus,
+    consensus: var Consensus,
     hash: Hash[256],
     status: TransactionStatus
 ) {.forceCheck: [].} =
     consensus.statuses[hash] = status
     consensus.db.save(hash, status)
 
-#Get a Transaction's statuses.
+#Get every Transaction with a status in the cache.
+iterator cachedTransactions*(
+    consensus: Consensus
+): Hash[256] {.forceCheck: [].} =
+    for hash in consensus.statuses.keys:
+        yield hash
+
+#Get a Transaction's status.
 proc getStatus*(
     consensus: Consensus,
     hash: Hash[256]
@@ -182,13 +200,9 @@ proc getStatus*(
     except DBReadError:
         raise newLoggedException(IndexError, "Transaction doesn't have a status.")
 
-    #Add the Transaction to the cache if it's not yet out of Epochs.
-    if result.merit == -1:
-        consensus.statuses[hash] = result
-
 #Increment a Status's Epoch.
 proc incEpoch*(
-    consensus: Consensus,
+    consensus: var Consensus,
     hash: Hash[256]
 ) {.forceCheck: [].} =
     var status: TransactionStatus
@@ -203,26 +217,27 @@ proc incEpoch*(
 
 #Calculate a Transaction's Merit.
 proc calculateMeritSingle(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     tx: Transaction,
-    status: TransactionStatus
+    status: TransactionStatus,
+    threshold: int
 ) {.forceCheck: [].} =
-    #If the Transaction is already verified, or it needs to default, return.
-    if status.verified or status.competing:
+    #If the Transaction is already verified, or it needs to default, or it's impossible to verify, return.
+    if status.verified or status.beaten or (status.competing and status.merit == -1):
         return
 
-    #Calculate Merit.
-    var merit: int = 0
-    for holder in status.holders:
-        #Skip malicious MeritHolders from Merit calculations.
-        if not consensus.malicious.hasKey(holder):
-            merit += state[holder]
+    #Calculate Merit, if needed.
+    var merit: int = status.merit
+    if merit == -1:
+        merit = 0
+        for holder in status.holders:
+            #Skip malicious MeritHolders from Merit calculations.
+            if not consensus.malicious.hasKey(holder):
+                merit += state[holder, status.epoch]
 
     #Check if the Transaction crossed its threshold.
-    if merit >= state.nodeThresholdAt(status.epoch):
-        if state.nodeThresholdAt(status.epoch) < 0:
-            panic($tx.hash & " " & $status.epoch & " " & $state.processedBlocks)
+    if merit >= threshold:
         #Make sure all parents are verified.
         try:
             for input in tx.inputs:
@@ -241,15 +256,16 @@ proc calculateMeritSingle(
         status.verified = true
         consensus.db.save(tx.hash, status)
         consensus.functions.transactions.verify(tx.hash)
-    elif merit >= state.nodeThresholdAt(status.epoch) - 5:
+    elif merit >= state.nodeThresholdAt(status.epoch) - 6:
         consensus.close.incl(tx.hash)
 
-#Calculate a Transaction's Merit. If it's verified, also check every descendant
+#Calculate a Transaction's Merit. If it's verified, also check every descendant.
 proc calculateMerit*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     hash: Hash[256],
-    statusArg: TransactionStatus
+    statusArg: TransactionStatus,
+    statusesOverride: TableRef[Hash[256], TransactionStatus] = nil
 ) {.forceCheck: [].} =
     var
         children: seq[Hash[256]] = @[hash]
@@ -257,38 +273,49 @@ proc calculateMerit*(
         tx: Transaction
         status: TransactionStatus = statusArg
         wasVerified: bool
+        threshold: int
 
     while children.len != 0:
         child = children.pop()
         try:
             tx = consensus.functions.transactions.getTransaction(child)
             if child != hash:
-                status = consensus.getStatus(child)
+                if statusesOverride.isNil:
+                    status = consensus.getStatus(child)
+                else:
+                    status = statusesOverride[child]
+        except KeyError:
+            panic("Couldn't get the TransactionStatus for a Transaction we're reverting from the overriden cache.")
         except IndexError:
             panic("Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
         wasVerified = status.verified
 
+        #Grab the node threshold.
+        threshold = state.nodeThresholdAt(status.epoch)
+        #If we're finalizing the Transaction, use the protocol threshold.
+        if status.merit != -1:
+            threshold = state.protocolThresholdAt(state.processedBlocks)
+
         consensus.calculateMeritSingle(
             state,
             tx,
-            status
+            status,
+            threshold
         )
 
         if (not wasVerified) and (status.verified):
             try:
-                for o in 0 ..< tx.outputs.len:
-                    var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
-                    for spender in spenders:
-                        children.add(spender)
+                for o in 0 ..< max(tx.outputs.len, 1):
+                    children &= consensus.functions.transactions.getSpenders(newFundedInput(child, o))
             except IndexError as e:
                 panic("Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
 #Unverify a Transaction.
 proc unverify*(
-    consensus: Consensus,
-    state: State,
+    consensus: var Consensus,
     hash: Hash[256],
-    status: TransactionStatus
+    status: TransactionStatus,
+    statusesOverride: TableRef[Hash[256], TransactionStatus] = nil
 ) {.forceCheck: [].} =
     var
         children: seq[Hash[256]] = @[hash]
@@ -301,7 +328,12 @@ proc unverify*(
         try:
             tx = consensus.functions.transactions.getTransaction(child)
             if child != hash:
-                childStatus = consensus.getStatus(child)
+                if statusesOverride.isNil:
+                    childStatus = consensus.getStatus(child)
+                else:
+                    childStatus = statusesOverride[child]
+        except KeyError:
+            panic("Couldn't get the TransactionStatus for a Transaction we're reverting from the overriden cache.")
         except IndexError:
             panic("Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
 
@@ -313,10 +345,8 @@ proc unverify*(
             consensus.db.save(child, childStatus)
 
             try:
-                for o in 0 ..< tx.outputs.len:
-                    var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
-                    for spender in spenders:
-                        children.add(spender)
+                for o in 0 ..< max(tx.outputs.len, 1):
+                    children &= consensus.functions.transactions.getSpenders(newFundedInput(child, o))
             except IndexError as e:
                 panic("Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
@@ -325,7 +355,7 @@ proc unverify*(
 
 #Finalize a TransactionStatus.
 proc finalize*(
-    consensus: Consensus,
+    consensus: var Consensus,
     state: State,
     hash: Hash[256]
 ) {.forceCheck: [].} =
@@ -345,32 +375,15 @@ proc finalize*(
         if status.pending.contains(holder):
             status.holders.excl(holder)
             continue
-        status.merit += state[holder]
+        status.merit += state[holder, status.epoch]
 
     #Make sure verified Transaction's Merit is above the node protocol threshold.
     if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):
         #If it's now unverified, unverify the tree.
-        consensus.unverify(state, hash, status)
+        consensus.unverify(hash, status)
     #If it wasn't verified, check if it actually was.
-    elif (not status.verified) and (status.merit >= state.protocolThresholdAt(state.processedBlocks)):
-        #Make sure all parents are verified.
-        try:
-            for input in tx.inputs:
-                if (tx of Data) and (cast[Data](tx).isFirstData):
-                    break
-
-                if (
-                    (not (consensus.functions.transactions.getTransaction(input.hash) of Mint)) and
-                    (not consensus.getStatus(input.hash).verified)
-                ):
-                    consensus.statuses.del(hash)
-                    return
-        except IndexError as e:
-            panic("Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
-
-        #Mark the Transaction as verified.
-        status.verified = true
-        consensus.functions.transactions.verify(tx.hash)
+    elif not status.verified:
+        consensus.calculateMerit(state, hash, status)
 
     #Check if the Transaction was beaten, if it's not already marked as beaten.
     if (not status.beaten) and (not status.verified):
@@ -379,12 +392,13 @@ proc finalize*(
             for spender in spenders:
                 try:
                     if consensus.getStatus(spender).verified:
+                        consensus.functions.transactions.beat(hash)
                         status.beaten = true
                 except IndexError as e:
                     panic("Couldn't get the Status of a competing Transaction: " & e.msg)
 
-    #If the status was beaten and has no holders, prune it and its descendants.
-    if status.beaten and (status.holders.len == 0):
+    #If the status was beaten and has no archived holders, prune it and its descendants.
+    if status.beaten and (status.holders.len - status.pending.len == 0):
         var
             #Discover the tree.
             tree: seq[Hash[256]] = consensus.functions.transactions.discoverTree(hash)
@@ -400,6 +414,7 @@ proc finalize*(
             #Remove the Transaction from RAM.
             consensus.statuses.del(tree[h])
             consensus.unmentioned.excl(tree[h])
+            consensus.db.mention(tree[h])
             consensus.close.excl(tree[h])
 
             #Remove the Transaction from the Database.
@@ -412,6 +427,16 @@ proc finalize*(
     #This will cause a double save for the finalized TX in the unverified case.
     consensus.db.save(hash, status)
     consensus.statuses.del(hash)
+
+#Delete a TransactionStatus.
+proc delete*(
+    consensus: var Consensus,
+    hash: Hash[256]
+) {.forceCheck: [].} =
+    consensus.statuses.del(hash)
+    consensus.close.excl(hash)
+    consensus.unmentioned.excl(hash)
+    consensus.db.delete(hash)
 
 #Get all pending Verification Packets/Elements, as well as the aggregate signature.
 proc getPending*(
@@ -481,10 +506,3 @@ proc getPending*(
         inc(p)
 
     result.aggregate = signatures.aggregate()
-
-#Provide debug access to the statuses table
-when defined(merosTests):
-    func statuses*(
-        consensus: Consensus
-    ): Table[Hash[256], TransactionStatus] {.inline, forceCheck: [].} =
-        consensus.statuses

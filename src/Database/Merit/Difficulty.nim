@@ -4,116 +4,78 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Hash lib.
-import ../../lib/Hash
+#StInt external lib.
+import stint
 
-#Blockchain object.
-import objects/BlockchainObj
+#Algorithm standard lib.
+import algorithm
 
-#Difficulty object.
-import objects/DifficultyObj
-export DifficultyObj
+#Calculate the window length.
+proc calculateWindowLength*(
+    height: int
+): int {.forceCheck: [].} =
+    #If we're in the first 5 Blocks, the difficulty is fixed.
+    if height < 6:
+        result = 0
+    #If we're in the first month, the window length is 5 Blocks (just under 1 hour).
+    elif height < 4320:
+        result = 5
+    #If we're in the first three months, the window length is 9 Blocks (1.5 hours).
+    elif height < 12960:
+        result = 9
+    #If we're in the first six months, the window length is 18 Blocks (3 hours).
+    elif height < 25920:
+        result = 18
+    #If we're in the first year, the window length is 36 Blocks (6 hours).
+    elif height < 52560:
+        result = 36
+    #Else, if it's over an year, the window length is 72 Blocks (12 hours).
+    else:
+        result = 72
 
-#StInt lib.
-import StInt
-
-let
-    #Ten.
-    TEN: StUint[256] = stuint(10, 256)
-    #Highest difficulty.
-    MAX: StUint[256] = "".pad(64, 'F').parse(StUint[256], 16)
-
-#Calculate the next difficulty using the blockchain and blocks per period.
+#Calculate the next difficulty.
 proc calculateNextDifficulty*(
-    blockchain: Blockchain,
-    blocksPerPeriod: int
-): Difficulty {.forceCheck: [].} =
-    var
-        #Last difficulty.
-        last: Difficulty = blockchain.difficulty
-        #New difficulty.
-        difficulty: StUint[256]
-
-    #Convert the difficulty to a StUInt.
-    try:
-         difficulty = ($last.difficulty).parse(StUInt[256], 16)
-    except ValueError as e:
-        panic("Couldn't parse a hash into a StUint: " & e.msg)
+    blockTime: StUInt[128],
+    windowLength: int,
+    difficultiesArg: seq[uint64],
+    time: uint32
+): uint64 {.forceCheck: [].} =
+    if windowLength == 0:
+        return difficultiesArg[0]
 
     var
-        #Final difficulty.
-        difficultyHash: Hash[256]
-        #Target time.
-        targetTime: uint32 = uint32(blockchain.blockTime * blocksPerPeriod)
-        #Start time of this period.
-        start: uint32
-        #End time.
-        endTime: uint32 = blockchain.tail.header.time
-        #Period time.
-        actualTime: uint32
-        #Possible values.
-        possible: StUint[256] = MAX - difficulty
-        #Change.
-        change: StUint[256]
+        #Difficulties.
+        difficulties: seq[uint64]
+        #Median difficulty.
+        median: uint64
 
-    #Grab the start time.
+    #Grab the difficulties.
+    #We exclude the first difficulty as its PoW was created before the indicated time.
+    difficulties = difficultiesArg[difficultiesArg.len - (windowLength - 1) ..< difficultiesArg.len]
+
+    #Sort the difficulties.
+    difficulties.sort()
+    #Grab the meddian difficulty.
+    median = difficulties[windowLength div 2]
+    #Remove outlying difficulties.
+    for _ in 0 ..< windowLength div 10:
+        if (difficulties[^1] - median) > (median - difficulties[0]):
+            difficulties.del(high(difficulties))
+        else:
+            difficulties.delete(0)
+
+    #Calculate the new difficulty.
+    var newDifficulty: StUInt[128]
+    for diff in difficulties:
+        newDifficulty += stuint(diff, 128)
+    newDifficulty = newDifficulty * blockTime
     try:
-        start = blockchain[blockchain.height - (blocksPerPeriod + 1)].header.time
-    except IndexError:
-        panic("Couldn't grab the Block which started this period.")
+        newDifficulty = newDifficulty div stuint(time, 128)
+    except DivByZeroError:
+        panic("DivByZeroError when dividing by " & $time & ".")
 
-    #Calculate the actual time.
-    actualTime = endTime - start
-
-    try:
-        #If we went faster...
-        if actualTime < targetTime:
-            #Set the change to be:
-                #The possible values multipled by
-                    #The targetTime (bigger) minus the actualTime (smaller)
-                    #Over the targetTime
-            #Since we need the difficulty to increase.
-            change = (possible * stuint(targetTime - actualTime, 256)) div stuint(targetTime, 256)
-
-            #If we're increasing the difficulty by more than 10%...
-            if possible div TEN < change:
-                #Set the change to be 10%.
-                change = possible div TEN
-
-            #Set the difficulty.
-            difficulty += change
-        #If we went slower...
-        elif actualTime > targetTime:
-            #Set the change to be:
-                #The invalid values
-                #Multipled by the targetTime (smaller)
-                #Divided by the actualTime (bigger)
-            #Since we need the difficulty to decrease.
-            change = difficulty * stuint(targetTime div actualTime, 256)
-
-            #If we're decreasing the difficulty by more than 10% of the possible values...
-            if possible div TEN < change:
-                #Set the change to be 10% of the possible values.
-                change = possible div TEN
-
-            #Set the difficulty.
-            difficulty -= change
-    except DivByZeroError as e:
-        panic("Dividing by ten raised a DivByZeroError: " & e.msg)
-
-    #Convert the difficulty to a hash.
-    try:
-        difficultyHash = dumpHex(difficulty).toHash(256)
-    except ValueError as e:
-        panic("Couldn't convert a StUInt to a hash: " & e.msg)
-
-    #If the difficulty is lower than the starting difficulty, use that.
-    if difficultyHash < blockchain.startDifficulty.difficulty:
-        difficultyHash = blockchain.startDifficulty.difficulty
-
-    #Create the new difficulty.
-    result = newDifficultyObj(
-        last.endHeight,
-        last.endHeight + blocksPerPeriod,
-        difficultyHash
+    #Convert it from an StUInt[128] to an uint64.
+    result = max(
+        uint64(cast[string](newDifficulty.toByteArrayBE()[8 ..< 16]).fromBinary()),
+        uint64(1)
     )

@@ -61,14 +61,14 @@ proc `%**`(
 
             result["holder"] = % sendDiff.holder
             result["nonce"] = % sendDiff.nonce
-            result["difficulty"] = % $sendDiff.difficulty
+            result["difficulty"] = % sendDiff.difficulty
 
         of DataDifficulty as dataDiff:
             result["descendant"] = % "DataDifficulty"
 
             result["holder"] = % dataDiff.holder
             result["nonce"] = % dataDiff.nonce
-            result["difficulty"] = % $dataDiff.difficulty
+            result["difficulty"] = % dataDiff.difficulty
 
         of MeritRemovalVerificationPacket as packet:
             result["descendant"] = % "VerificationPacket"
@@ -179,7 +179,7 @@ proc module*(
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [].} =
-                res["result"] = % $ functions.merit.getDifficulty().difficulty
+                res["result"] = % functions.merit.getDifficulty().toBinary().toHex().pad(16, '0')
 
             #Get Block by nonce or hash.
             "getBlock" = proc (
@@ -247,7 +247,7 @@ proc module*(
                 res["result"] = %* {
                     "unlocked": functions.merit.isUnlocked(nick),
                     "malicious": functions.consensus.isMalicious(nick),
-                    "merit": functions.merit.getMerit(nick)
+                    "merit": functions.merit.getMerit(nick, functions.merit.getHeight())
                 }
 
             #Get a Block template.
@@ -289,7 +289,12 @@ proc module*(
                 while true:
                     try:
                         sketchers[id] = newSketcher(
-                            functions.merit.getMerit,
+                            (
+                                proc (
+                                    nick: uint16
+                                ): int {.raises: [].} =
+                                    functions.merit.getMerit(nick, functions.merit.getHeight())
+                            ),
                             functions.consensus.isMalicious,
                             pending.packets
                         )
@@ -391,7 +396,7 @@ proc module*(
                 #Test the Block Header.
                 try:
                     functions.merit.testBlockHeader(sketchyBlock.data.header)
-                except ValueError, NotConnected:
+                except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
 
                 try:

@@ -16,6 +16,7 @@ import ../SerializeCommon
 #Parse functions.
 proc parseBlockHeader*(
     headerStr: string,
+    interimHash: string,
     hash: RandomXHash
 ): BlockHeader {.forceCheck: [
     ValueError
@@ -74,7 +75,8 @@ proc parseBlockHeader*(
     except BLSError:
         raise newLoggedException(ValueError, "Invalid Public Key or Signature.")
 
-    #Set the hash.
+    #Set the hashes.
+    result.interimHash = interimHash
     result.hash = hash
 
 proc parseBlockHeader*(
@@ -83,7 +85,7 @@ proc parseBlockHeader*(
     ValueError
 ].} =
     try:
-        result = parseBlockHeader(headerStr, Hash[256]())
+        result = parseBlockHeader(headerStr, "", Hash[256]())
     except ValueError as e:
         raise e
 

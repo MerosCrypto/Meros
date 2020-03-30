@@ -30,6 +30,9 @@ export Keccak
 import Hash/SHA3
 export SHA3
 
+#StInt lib.
+import StInt as StIntFile
+
 #Hashes standard lib.
 import hashes
 
@@ -54,3 +57,26 @@ proc hash*[L](
     for b in hash.data:
         result = result !& int(b)
     result = !$ result
+
+#Check if a hash overflows when multiplied by a factor.
+proc overflows*(
+    hash: HashCommon.Hash[256],
+    factor: uint32 or uint64
+): bool {.raises: [].} =
+    var original: StUInt[512]
+    original.initFromBytesBE(hash.data)
+
+    var product: array[64, byte] = (original * stuint(factor, 512)).toByteArrayBE()
+    for b in 0 ..< 32:
+        if product[b] != 0:
+            return true
+
+#These are stupid.
+#These aren't debugging code.
+#These aren't old code.
+#These are statements needed for Meros to compile.
+#Without these lines, the above function refuses to compile, complaining about an error in StInt.
+#Don't touch it.
+#-- Kayaba
+discard HashCommon.Hash[256]().overflows(uint32(0))
+discard HashCommon.Hash[256]().overflows(uint64(0))

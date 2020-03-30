@@ -51,7 +51,7 @@ def HundredTwentyFourTest(
 
             msg: bytes = rpc.meros.sync.recv()
             if MessageType(msg[0]) == MessageType.BlockListRequest:
-                reqHash = msg[3 : 51]
+                reqHash = msg[3 : 35]
                 for b in range(len(blockchain.blocks)):
                     if blockchain.blocks[b].header.hash == reqHash:
                         blockList: List[bytes] = []

@@ -14,8 +14,7 @@ import ../../Wallet/MinerWallet
 import ../Consensus/Elements/objects/VerificationPacketObj
 import ../Consensus/Elements/objects/MeritRemovalObj
 
-#Serialization libs.
-import ../../Network/Serialize/Merit/SerializeBlockHeader
+#Element Serialization lib.
 import ../../Network/Serialize/Consensus/SerializeElement
 
 #Merit DB lib.
@@ -33,6 +32,9 @@ import State
 import objects/BlockchainObj
 export BlockchainObj
 
+#StInt external lib.
+import stint
+
 #Sets standard lib.
 import sets
 
@@ -44,35 +46,32 @@ proc newBlockchain*(
     db: DB,
     genesis: string,
     blockTime: int,
-    startDifficulty: Hash[256]
-): Blockchain {.forceCheck: [].} =
+    initialDifficulty: uint64
+): Blockchain {.inline, forceCheck: [].} =
     newBlockchainObj(
         db,
         genesis,
         blockTime,
-        startDifficulty
+        initialDifficulty
     )
 
 #Test a BlockHeader.
 proc testBlockHeader*(
-    blockchain: Blockchain,
+    miners: Table[BLSPublicKey, uint16],
     lookup: seq[BLSPublicKey],
+    previous: BlockHeader,
+    difficulty: uint64,
     header: BlockHeader
 ) {.forceCheck: [
-    ValueError,
-    NotConnected
+    ValueError
 ].} =
     #Check the difficulty.
-    if header.hash < blockchain.difficulty.difficulty:
+    if header.hash.overflows(difficulty):
         raise newLoggedException(ValueError, "Block doesn't beat the difficulty.")
 
     #Check the version.
     if header.version != 0:
         raise newLoggedException(ValueError, "BlockHeader has an invalid version.")
-
-    #Check the last hash.
-    if header.last != blockchain.tail.header.hash:
-        raise newLoggedException(NotConnected, "Last hash isn't our tip.")
 
     #Check significant.
     if (header.significant == 0) or (header.significant > uint16(26280)):
@@ -81,7 +80,7 @@ proc testBlockHeader*(
     var key: BLSPublicKey
     if header.newMiner:
         #Check a miner with a nickname isn't being marked as new.
-        if blockchain.miners.hasKey(header.minerKey):
+        if miners.hasKey(header.minerKey):
             raise newLoggedException(ValueError, "Header marks a miner with a nickname as new.")
 
         #Make sure the key isn't infinite.
@@ -98,12 +97,12 @@ proc testBlockHeader*(
         key = lookup[header.minerNick]
 
     #Check the time.
-    if (header.time < blockchain.tail.header.time) or (header.time > getTime() + 30):
+    if (header.time <= previous.time) or (header.time > getTime() + 30):
         raise newLoggedException(ValueError, "Block has an invalid time.")
 
     #Check the signature.
     try:
-        if not header.signature.verify(newBLSAggregationInfo(key, RandomX(header.serializeHash()).toString())):
+        if not header.signature.verify(newBLSAggregationInfo(key, header.interimHash)):
             raise newLoggedException(ValueError, "Block has an invalid signature.")
     except BLSError as e:
         panic("Failed to verify a BlockHeader's signature: " & e.msg)
@@ -118,32 +117,28 @@ proc processBlock*(
     #Add the Block.
     blockchain.add(newBlock)
 
-    #If the difficulty needs to be updated...
-    if blockchain.height == blockchain.difficulty.endHeight:
-        var
-            #Blocks Per Month.
-            blocksPerMonth: int = 2592000 div blockchain.blockTime
-            #Period Length.
-            blocksPerPeriod: int
-        #Set the period length.
-        #If we're in the first month, the period length is one block.
-        if blockchain.height < blocksPerMonth:
-            blocksPerPeriod = 1
-        #If we're in the first three months, the period length is one hour.
-        elif blockchain.height < blocksPerMonth * 3:
-            blocksPerPeriod = 6
-        #If we're in the first six months, the period length is six hours.
-        elif blockchain.height < blocksPerMonth * 6:
-            blocksPerPeriod = 36
-        #If we're in the first year, the period length is twelve hours.
-        elif blockchain.height < blocksPerMonth * 12:
-            blocksPerPeriod = 72
-        #Else, if it's over an year, the period length is a day.
-        else:
-            blocksPerPeriod = 144
+    #Calculate the next difficulty.
+    var
+        windowLength: int = calculateWindowLength(blockchain.height)
+        time: uint32
+    if windowLength != 0:
+        try:
+            time = blockchain.tail.header.time - blockchain[blockchain.height - windowLength].header.time
+        except IndexError as e:
+            panic("Couldn't get Block " & $(blockchain.height - windowLength) & " when the height is " & $blockchain.height & ": " & e.msg)
+    blockchain.difficulties.add(calculateNextDifficulty(
+        blockchain.blockTime,
+        windowLength,
+        blockchain.difficulties,
+        time
+    ))
+    blockchain.db.save(newBlock.header.hash, blockchain.difficulties[^1])
+    if blockchain.difficulties.len > 72:
+        blockchain.difficulties.delete(0)
 
-        blockchain.difficulty = blockchain.calculateNextDifficulty(blocksPerPeriod)
-    blockchain.db.save(blockchain.height, blockchain.difficulty)
+    #Update the chain work.
+    blockchain.chainWork += stuint(blockchain.difficulties[^1], 128)
+    blockchain.db.save(newBlock.header.hash, blockchain.chainWork)
 
 #Revert the Blockchain to a certain height.
 proc revert*(
@@ -153,7 +148,6 @@ proc revert*(
 ) {.forceCheck: [].} =
     #Revert the State.
     state.revert(blockchain, height)
-    state.oldData = false
 
     #Miners we changed the Merit of.
     var changedMerit: HashSet[uint16] = initHashSet[uint16]()
@@ -213,17 +207,16 @@ proc revert*(
     #Save the reverted to height.
     blockchain.db.saveHeight(blockchain.height)
 
-    #Load the reverted to difficulty.
-    try:
-        blockchain.difficulty = blockchain.db.loadDifficulty(blockchain.height)
-    except DBReadError as e:
-        panic("Couldn't load the difficulty of the Block we reverted to: " & e.msg)
+    #Load the reverted to difficulties.
+    blockchain.difficulties = blockchain.db.calculateDifficulties(blockchain.genesis, blockchain.tail.header)
+    #Load the chain work.
+    blockchain.chainWork = blockchain.db.loadChainWork(blockchain.tail.header.hash)
 
     #Update the RandomX keys.
     var
-        currentKeyHeight: int = blockchain.height - 64
-        blockUsedAsKey: int = (currentKeyHeight - (currentKeyHeight mod 2048)) - 1
-        blockUsedAsUpcomingKey: int = (blockchain.height - (blockchain.height mod 2048)) - 1
+        currentKeyHeight: int = blockchain.height - 12
+        blockUsedAsKey: int = (currentKeyHeight - (currentKeyHeight mod 384)) - 1
+        blockUsedAsUpcomingKey: int = (blockchain.height - (blockchain.height mod 384)) - 1
         currentKey: string
     if blockUsedAsKey == -1:
         currentKey = blockchain.genesis.toString()
@@ -240,7 +233,9 @@ proc revert*(
         blockchain.db.saveKey(blockchain.cacheKey)
 
     if blockUsedAsUpcomingKey == -1:
-        blockchain.db.saveUpcomingKey(blockchain.genesis.toString())
+        #We don't need to do this since we don't load the upcoming key at Block 12.
+        #The only reason we do is to ensure database equality between now and a historic moment.
+        blockchain.db.deleteUpcomingKey()
     else:
         try:
             blockchain.db.saveUpcomingKey(blockchain[blockUsedAsUpcomingKey].header.hash.toString())
@@ -249,4 +244,4 @@ proc revert*(
 
     #Update the Merit of everyone who had their Merit changed.
     for holder in changedMerit:
-        blockchain.db.saveMerit(holder, state[holder])
+        blockchain.db.saveMerit(holder, state[holder, state.processedBlocks])

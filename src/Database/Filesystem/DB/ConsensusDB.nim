@@ -13,12 +13,8 @@ import ../../../Wallet/MinerWallet
 #Transaction object.
 import ../../Transactions/objects/TransactionObj
 
-#Element objects.
-import ../../Consensus/Elements/objects/VerificationObj
-import ../../Consensus/Elements/objects/VerificationPacketObj
-import ../../Consensus/Elements/objects/SendDifficultyObj
-import ../../Consensus/Elements/objects/DataDifficultyObj
-import ../../Consensus/Elements/MeritRemoval
+#Elements lib.
+import ../../Consensus/Elements/Elements
 
 #TransactionStatus object.
 import ../../Consensus/objects/TransactionStatusObj
@@ -220,26 +216,34 @@ proc save*(
     sendDiff: SendDifficulty
 ) {.forceCheck: [].} =
     db.put(HOLDER_NONCE(sendDiff.holder), sendDiff.nonce.toBinary())
-    db.put(HOLDER_SEND_DIFFICULTY(sendDiff.holder), sendDiff.difficulty.toString())
+    db.put(HOLDER_SEND_DIFFICULTY(sendDiff.holder), sendDiff.difficulty.toBinary(INT_LEN))
     db.put(SEND_DIFFICULTY_NONCE(sendDiff.holder), sendDiff.nonce.toBinary())
 
     db.put(
         BLOCK_ELEMENT(sendDiff.holder, sendDiff.nonce),
-        char(SEND_DIFFICULTY_PREFIX) & sendDiff.difficulty.toString()
+        char(SEND_DIFFICULTY_PREFIX) & sendDiff.difficulty.toBinary(INT_LEN)
     )
+
+proc override*(
+    db: DB,
+    holder: uint16,
+    nonce: int
+) {.forceCheck: [].} =
+    db.put(HOLDER_NONCE(holder), nonce.toBinary())
+    db.put(HOLDER_ARCHIVED_NONCE(holder), nonce.toBinary())
 
 proc override*(
     db: DB,
     sendDiff: SendDifficulty
 ) {.forceCheck: [].} =
-    db.put(HOLDER_SEND_DIFFICULTY(sendDiff.holder), sendDiff.difficulty.toString())
+    db.put(HOLDER_SEND_DIFFICULTY(sendDiff.holder), sendDiff.difficulty.toBinary(INT_LEN))
     db.put(SEND_DIFFICULTY_NONCE(sendDiff.holder), sendDiff.nonce.toBinary())
 
 proc override*(
     db: DB,
     dataDiff: DataDifficulty
 ) {.forceCheck: [].} =
-    db.put(HOLDER_DATA_DIFFICULTY(dataDiff.holder), dataDiff.difficulty.toString())
+    db.put(HOLDER_DATA_DIFFICULTY(dataDiff.holder), dataDiff.difficulty.toBinary(INT_LEN))
     db.put(DATA_DIFFICULTY_NONCE(dataDiff.holder), dataDiff.nonce.toBinary())
 
 proc save*(
@@ -247,12 +251,12 @@ proc save*(
     dataDiff: DataDifficulty
 ) {.forceCheck: [].} =
     db.put(HOLDER_NONCE(dataDiff.holder), dataDiff.nonce.toBinary())
-    db.put(HOLDER_DATA_DIFFICULTY(dataDiff.holder), dataDiff.difficulty.toString())
+    db.put(HOLDER_DATA_DIFFICULTY(dataDiff.holder), dataDiff.difficulty.toBinary(INT_LEN))
     db.put(DATA_DIFFICULTY_NONCE(dataDiff.holder), dataDiff.nonce.toBinary())
 
     db.put(
         BLOCK_ELEMENT(dataDiff.holder, dataDiff.nonce),
-        char(DATA_DIFFICULTY_PREFIX) & dataDiff.difficulty.toString()
+        char(DATA_DIFFICULTY_PREFIX) & dataDiff.difficulty.toBinary(INT_LEN)
     )
 
 proc saveSignature*(
@@ -343,6 +347,7 @@ proc loadUnmentioned*(
             result.incl(unmentioned[h ..< h + 32].toHash(256))
         except ValueError as e:
             panic("Couldn't parse an unmentioned hash: " & e.msg)
+    db.consensus.unmentioned = result
 
 proc load*(
     db: DB,
@@ -356,11 +361,11 @@ proc load*(
 proc loadSendDifficulty*(
     db: DB,
     holder: uint16
-): Hash[256] {.forceCheck: [
+): uint32 {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(HOLDER_SEND_DIFFICULTY(holder)).toHash(256)
+        result = uint32(db.get(HOLDER_SEND_DIFFICULTY(holder)).fromBinary())
     except ValueError:
         panic("Couldn't turn a 32-byte value into a 32-byte hash.")
     except DBReadError as e:
@@ -378,11 +383,11 @@ proc loadSendDifficultyNonce*(
 proc loadDataDifficulty*(
     db: DB,
     holder: uint16
-): Hash[256] {.forceCheck: [
+): uint32 {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(HOLDER_DATA_DIFFICULTY(holder)).toHash(256)
+        result = uint32(db.get(HOLDER_DATA_DIFFICULTY(holder)).fromBinary())
     except ValueError:
         panic("Couldn't turn a 32-byte value into a 32-byte hash.")
     except DBReadError as e:
@@ -413,10 +418,10 @@ proc load*(
     try:
         case int(elem[0]):
             of SEND_DIFFICULTY_PREFIX:
-                result = newSendDifficultyObj(nonce, elem[1 ..< 33].toHash(256))
+                result = newSendDifficultyObj(nonce, uint32(elem[1 ..< 5].fromBinary()))
                 result.holder = holder
             of DATA_DIFFICULTY_PREFIX:
-                result = newDataDifficultyObj(nonce, elem[1 ..< 33].toHash(256))
+                result = newDataDifficultyObj(nonce, uint32(elem[1 ..< 5].fromBinary()))
                 result.holder = holder
             else:
                 panic("Tried to load an unknown Block Element: " & $int(elem[0]))
@@ -500,13 +505,29 @@ proc loadMeritRemovalNonces*(
     for n in countup(0, nonces.len - 1, INT_LEN):
         result.incl(nonces[n ..< n + INT_LEN].fromBinary())
 
+#Delete a Transaction Status.
+proc delete*(
+    db: DB,
+    hash: Hash[256]
+) {.forceCheck: [].} =
+    db.del(STATUS(hash))
+    db.consensus.unmentioned.excl(hash)
+
+#Delete a Block Element.
+proc delete*(
+    db: DB,
+    holder: uint16,
+    nonce: int
+) {.forceCheck: [].} =
+    db.del(BLOCK_ELEMENT(holder, nonce))
+    db.del(SIGNATURE(holder, nonce))
+
 #Delete a now-aggregated signature.
 proc deleteSignature*(
     db: DB,
     holder: uint16,
     nonce: int
 ) {.inline, forceCheck: [].} =
-    db.del(SIGNATURE(holder, nonce))
     db.del(SIGNATURE(holder, nonce))
 
 #Delete a holder's current Send Difficulty.
@@ -558,6 +579,42 @@ proc deleteMaliciousProof*(
     #If we did find it, we moved the last proof to its place.
     db.del(HOLDER_MALICIOUS_PROOF(mr.holder, proofs))
 
+#Deletes a MeritRemoval.
+proc deleteMeritRemoval*(
+    db: DB,
+    mr: MeritRemoval
+) {.forceCheck: [].} =
+    #Delete the MeritRemoval.
+    db.del(MERIT_REMOVAL(mr))
+
+    #Delete its nonce.
+    var nonce: int = -1
+    case mr.element1:
+        of Verification as _:
+            discard
+        of VerificationPacket as _:
+            discard
+        of SendDifficulty as sd:
+            nonce = sd.nonce
+        of DataDifficulty as dd:
+            nonce = dd.nonce
+        else:
+            panic("Unknown Element included in the MeritRemoval being deleted.")
+
+    if nonce != -1:
+        var existing: string
+        try:
+            existing = db.get(MERIT_REMOVAL_NONCES(mr.holder))
+        except DBReadError as e:
+            panic("Couldn't get the nonces of a holder who has a MeritRemoval being deleted: " & e.msg)
+
+        for n in countup(0, existing.len - 1, INT_LEN):
+            if existing[n ..< n + INT_LEN].fromBinary() == nonce:
+                existing = existing[0 ..< n] & existing[n + INT_LEN ..< existing.len]
+                break
+
+        db.put(MERIT_REMOVAL_NONCES(mr.holder), existing)
+
 #Check if a MeritRemoval exists.
 proc hasMeritRemoval*(
     db: DB,
@@ -576,3 +633,4 @@ proc prune*(
 ) {.forceCheck: [].} =
     db.del(TRANSACTION(hash))
     db.del(STATUS(hash))
+    db.consensus.unmentioned.excl(hash)

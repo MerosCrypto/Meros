@@ -9,9 +9,6 @@ import ../../../Fuzzed
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash lib.
-import ../../../../src/lib/Hash
-
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
@@ -46,7 +43,7 @@ suite "Revert":
                 db,
                 "STATE_TEST",
                 1,
-                "".pad(32).toHash(256)
+                uint64(1)
             )
             #State.
             states: seq[State] = @[]
@@ -67,8 +64,8 @@ suite "Revert":
         states.add(
             newState(
                 db,
-                5,
-                blockchain.height
+                7,
+                blockchain
             )
         )
 
@@ -110,10 +107,6 @@ suite "Revert":
                     elements = elements
                 )
 
-            #Mine it.
-            while blockchain.difficulty.difficulty > mining.header.hash:
-                miners[miner].hash(mining.header, mining.header.proof + 1)
-
             #Add it to the Blockchain and latest State.
             blockchain.processBlock(mining)
             discard states[^1].processBlock(blockchain)
@@ -137,7 +130,7 @@ suite "Revert":
             copy.revert(blockchain, states[revertTo].processedBlocks)
             compare(copy, states[revertTo])
 
-            reloaded = newState(db, 5, blockchain.height)
+            reloaded = newState(db, 7, blockchain)
             compare(states[^1], reloaded)
 
     lowFuzzTest "Chained reversions.":
@@ -155,5 +148,5 @@ suite "Revert":
         revertedAtOnce.revert(blockchain, copy.processedBlocks)
         compare(copy, revertedAtOnce)
 
-        reloaded = newState(db, 5, blockchain.height)
+        reloaded = newState(db, 7, blockchain)
         compare(states[^1], reloaded)

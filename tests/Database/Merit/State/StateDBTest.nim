@@ -9,9 +9,6 @@ import ../../../Fuzzed
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash lib.
-import ../../../../src/lib/Hash
-
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
@@ -46,10 +43,10 @@ suite "StateDB":
                 db,
                 "STATE_DB_TEST",
                 30,
-                "".pad(32).toHash(256)
+                uint64(1)
             )
             #State.
-            state: State = newState(db, 30, blockchain.height)
+            state: State = newState(db, 30, blockchain)
 
             #Thresholds.
             thresholds: seq[int] = @[]
@@ -67,8 +64,8 @@ suite "StateDB":
             mining: Block
 
     noFuzzTest "Verify.":
-        #Iterate over 20 'rounds'.
-        for r in 1 .. 20:
+        #Iterate over 80 'rounds'.
+        for r in 1 .. 80:
             #Add the current Node Threshold to thresholds.
             thresholds.add(state.protocolThresholdAt(r))
 
@@ -108,10 +105,6 @@ suite "StateDB":
                     elements = elements
                 )
 
-            #Mine it.
-            while blockchain.difficulty.difficulty > mining.header.hash:
-                miners[miner].hash(mining.header, mining.header.proof + 1)
-
             #Add it to the Blockchain and State.
             blockchain.processBlock(mining)
             discard state.processBlock(blockchain)
@@ -123,20 +116,20 @@ suite "StateDB":
             elements = @[]
 
             #Reload and compare the States.
-            compare(state, newState(db, 30, blockchain.height))
+            compare(state, newState(db, 30, blockchain))
 
         #Check that the State saved it had 0 Merit at the start.
-        check(state.loadUnlocked(0) == 0)
+        check(state.loadUnlocked(1) == 0)
         #Check the threshold is just plus one.
-        check(state.protocolThresholdAt(0) == 1)
+        check(state.protocolThresholdAt(1) == 1)
 
         #Check every existing threshold.
-        for t in 0 ..< thresholds.len:
-            check(state.protocolThresholdAt(t) == thresholds[t])
+        for t in 1 .. thresholds.len:
+            check(state.protocolThresholdAt(t) == thresholds[t - 1])
 
         #Checking loading the Merit for the latest Block returns the State's Merit.
-        check(state.loadUnlocked(21) == state.unlocked)
+        check(state.loadUnlocked(blockchain.height) == state.unlocked)
 
         #Check future thresholds.
-        for t in len(thresholds) + 2 ..< len(thresholds) + 22:
-            check(state.protocolThresholdAt(t) == min(state.unlocked + (t - 21), state.deadBlocks) div 2 + 1)
+        for t in len(thresholds) + 2 ..< len(thresholds) + 82:
+            check(state.protocolThresholdAt(t) == min(state.unlocked + (t - 81), state.deadBlocks) div 2 + 1)

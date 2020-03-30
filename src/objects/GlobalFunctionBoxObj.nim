@@ -22,8 +22,7 @@ import ../Wallet/Wallet
 import ../Database/Consensus/objects/TransactionStatusObj
 import ../Database/Consensus/Elements/Elements
 
-#Difficulty, BlockHeader, and Block objects.
-import ../Database/Merit/objects/DifficultyObj
+#BlockHeader and Block objects.
 import ../Database/Merit/objects/BlockHeaderObj
 import ../Database/Merit/objects/BlockObj
 
@@ -89,11 +88,15 @@ type
 
         verify*: proc (
             hash: Hash[256]
-        ) {.raises: [].}
+        ) {.inline, raises: [].}
 
         unverify*: proc (
             hash: Hash[256]
-        ) {.raises: [].}
+        ) {.inline, raises: [].}
+
+        beat*: proc (
+            hash: Hash[256]
+        ) {.inline, raises: [].}
 
         discoverTree*: proc (
             hash: Hash[256]
@@ -104,8 +107,8 @@ type
         ) {.inline, raises: [].}
 
     ConsensusFunctionBox* = ref object
-        getSendDifficulty*: proc (): Hash[256] {.inline, raises: [].}
-        getDataDifficulty*: proc (): Hash[256] {.inline, raises: [].}
+        getSendDifficulty*: proc (): uint32 {.inline, raises: [].}
+        getDataDifficulty*: proc (): uint32 {.inline, raises: [].}
 
         isMalicious*: proc (
             nick: uint16,
@@ -196,7 +199,7 @@ type
             IndexError
         ].}
 
-        getDifficulty*: proc (): Difficulty {.inline, raises: [].}
+        getDifficulty*: proc (): uint64 {.inline, raises: [].}
 
         getBlockByNonce*: proc (
             nonce: int
@@ -225,7 +228,8 @@ type
         getTotalMerit*: proc (): int {.inline, raises: [].}
         getUnlockedMerit*: proc (): int {.inline, raises: [].}
         getMerit*: proc (
-            nick: uint16
+            nick: uint16,
+            height: int
         ): int {.inline, raises: [].}
 
         isUnlocked*: proc (
@@ -270,8 +274,7 @@ type
         testBlockHeader*: proc (
             header: BlockHeader
         ) {.raises: [
-            ValueError,
-            NotConnected
+            ValueError
         ].}
 
     PersonalFunctionBox* = ref object

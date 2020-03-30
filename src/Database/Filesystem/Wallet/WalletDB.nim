@@ -198,12 +198,16 @@ proc newWalletDB*(
     #Load the MinerWallet.
     try:
         result.miner = newMinerWallet(result.get(MINER_KEY()))
-        result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
     except BLSError as e:
         panic("Failed to load the MinerWallet from the Database: " & e.msg)
     except DBReadError:
         result.put(MINER_KEY(), result.miner.privateKey.serialize())
-        result.miner.initiated = false
+
+    try:
+        result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
+        result.miner.initiated = true
+    except DBReadError:
+        discard
 
     #Load the input nonces.
     try:
@@ -297,7 +301,7 @@ proc loadDataTip*(
         raise newLoggedException(DataMissing, "No Data Tip available.")
 
 #Mark that we're verifying a Transaction.
-#Assumes if the function completes, the nonce was used.
+#Assumes if the function completes, the input was used.
 #If the function doesn't complete, none of its data is written.
 proc verifyTransaction*(
     db: WalletDB,
@@ -312,6 +316,10 @@ proc verifyTransaction*(
 
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]]()
     for input in tx.inputs:
+        #Ignore initial Data inputs.
+        if input.hash == Hash[256]():
+            continue
+
         #Save the input to the nonce.
         items.add((INPUT_NONCE(db.unfinalizedNonces), char(0) & input.toString()))
         db.verified[input.toString()] = db.unfinalizedNonces

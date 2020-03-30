@@ -13,24 +13,24 @@ import ../../../Wallet/MinerWallet
 #Elements lib.
 import ../../Consensus/Elements/Elements
 
-#Difficulty, BlockHeader, and Block objects.
-import ../../Merit/objects/DifficultyObj
+#BlockHeader and Block objects.
 import ../../Merit/objects/BlockHeaderObj
 import ../../Merit/objects/BlockObj
 
 #Serialization libs.
 import ../../../Network/Serialize/SerializeCommon
 
-import Serialize/Merit/SerializeDifficulty
 import Serialize/Merit/DBSerializeBlock
 
-import Serialize/Merit/ParseDifficulty
 import Serialize/Merit/DBParseBlockHeader
 import Serialize/Merit/DBParseBlock
 
 #DB object.
 import objects/DBObj
 export DBObj
+
+#StInt external lib.
+import stint
 
 #Tables standard lib.
 import tables
@@ -59,6 +59,11 @@ template TOTAL_UNLOCKED_MERIT(
 ): string =
     blockNum.toBinary(INT_LEN) & "m"
 
+template INTERIM_HASH(
+    hash: Hash[256]
+): string =
+    hash.toString() & "i"
+
 template BLOCK_HASH(
     hash: Hash[256]
 ): string =
@@ -69,10 +74,20 @@ template BLOCK_NONCE(
 ): string =
     nonce.toBinary(INT_LEN)
 
-template DIFFICULTY(
-    nonce: int
+template BLOCK_HEIGHT(
+    hash: Hash[256]
 ): string =
-    nonce.toBinary(INT_LEN) & "d"
+    hash.toString() & "h"
+
+template DIFFICULTY(
+    hash: Hash[256]
+): string =
+    hash.toString() & "d"
+
+template CHAIN_WORK(
+    hash: Hash[256]
+): string =
+    hash.toString() & "w"
 
 template HOLDER_NICK(
     nick: uint16
@@ -209,10 +224,10 @@ proc saveTip*(
 
 proc save*(
     db: DB,
-    height: int,
-    difficulty: Difficulty
+    hash: Hash[256],
+    difficulty: uint64
 ) {.forceCheck: [].} =
-    db.put(DIFFICULTY(height), difficulty.serialize())
+    db.put(DIFFICULTY(hash), difficulty.toBinary())
 
 proc saveUnlocked*(
     db: DB,
@@ -226,8 +241,20 @@ proc save*(
     nonce: int,
     blockArg: Block
 ) {.forceCheck: [].} =
+    db.put(INTERIM_HASH(blockArg.header.hash), blockArg.header.interimHash)
     db.put(BLOCK_HASH(blockArg.header.hash), blockArg.serialize())
     db.put(BLOCK_NONCE(nonce), blockArg.header.hash.toString())
+    db.put(BLOCK_HEIGHT(blockArg.header.hash), (nonce + 1).toBinary())
+
+proc save*(
+    db: DB,
+    hash: Hash[256],
+    work: StUInt[128]
+) {.forceCheck: [].} =
+    var workStr: string
+    for b in work.toByteArrayBE():
+        workStr &= char(b)
+    db.put(CHAIN_WORK(hash), workStr)
 
 proc saveHolder*(
     db: DB,
@@ -307,14 +334,23 @@ proc loadTip*(
 
 proc loadDifficulty*(
     db: DB,
-    height: int
-): Difficulty {.forceCheck: [
+    hash: Hash[256]
+): uint64 {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(DIFFICULTY(height)).parseDifficulty()
+        result = uint64(db.get(DIFFICULTY(hash)).fromBinary())
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
+
+proc loadChainWork*(
+    db: DB,
+    hash: Hash[256]
+): StUInt[128] {.forceCheck: [].} =
+    try:
+        result = StUInt[128].fromBytesBE(cast[seq[byte]](db.get(CHAIN_WORK(hash))))
+    except Exception as e:
+        panic("Failed to get the chain work of a Block: " & e.msg)
 
 proc loadUnlocked*(
     db: DB,
@@ -334,7 +370,7 @@ proc loadBlockHeader*(
     DBReadError
 ].} =
     try:
-        result = db.get(BLOCK_HASH(hash)).parseBlockHeader(hash)
+        result = db.get(BLOCK_HASH(hash)).parseBlockHeader(db.get(INTERIM_HASH(hash)), hash)
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
@@ -345,7 +381,7 @@ proc loadBlock*(
     DBReadError
 ].} =
     try:
-        result = db.get(BLOCK_HASH(hash)).parseBlock()
+        result = db.get(BLOCK_HASH(hash)).parseBlock(db.get(INTERIM_HASH(hash)), hash)
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
@@ -356,9 +392,18 @@ proc loadBlock*(
     DBReadError
 ].} =
     try:
-        result = db.get(db.get(BLOCK_NONCE(nonce))).parseBlock()
+        result = db.loadBlock(db.get(BLOCK_NONCE(nonce)).toHash(256))
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
+
+proc loadHeight*(
+    db: DB,
+    hash: Hash[256]
+): int {.forceCheck: [].} =
+    try:
+        result = db.get(BLOCK_HEIGHT(hash)).fromBinary()
+    except Exception as e:
+        panic("Couldn't load the height of a Block: " & e.msg)
 
 proc loadHolders*(
     db: DB
@@ -442,6 +487,12 @@ proc hasBlock*(
     except DBReadError:
         return false
 
+#Delete the upcoming key.
+proc deleteUpcomingKey*(
+    db: DB
+) {.forceCheck: [].} =
+    db.del(UPCOMING_RANDOMX_KEY())
+
 #Delete a Block.
 proc deleteBlock*(
     db: DB,
@@ -457,8 +508,11 @@ proc deleteBlock*(
         panic("Tried to delete a Block which doesn't exist: " & e.msg)
 
     db.del(BLOCK_NONCE(nonce))
+    db.del(BLOCK_HEIGHT(hash))
+    db.del(INTERIM_HASH(hash))
     db.del(BLOCK_HASH(hash))
-    db.del(DIFFICULTY(nonce + 1))
+    db.del(DIFFICULTY(hash))
+    db.del(CHAIN_WORK(hash))
     db.del(TOTAL_UNLOCKED_MERIT(nonce))
     db.del(BLOCK_REMOVALS(nonce))
 

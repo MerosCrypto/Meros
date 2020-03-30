@@ -39,7 +39,7 @@ blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #SpamFilter.
-spamFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
+spamFilter: SpamFilter = SpamFilter(5)
 
 #Blockchain.
 blockchain: Blockchain = Blockchain()

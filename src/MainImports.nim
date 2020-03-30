@@ -51,6 +51,9 @@ import objects/GlobalFunctionBoxObj
 #Config object.
 import objects/ConfigObj
 
+#StInt external lib.
+import stint
+
 #OS standard lib.
 import os
 

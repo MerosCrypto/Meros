@@ -52,15 +52,15 @@ proc mainConsensus() {.forceCheck: [].} =
                 functions,
                 database,
                 merit.state,
-                params.SEND_DIFFICULTY.toHash(256),
-                params.DATA_DIFFICULTY.toHash(256)
+                params.SEND_DIFFICULTY,
+                params.DATA_DIFFICULTY
             )
         except ValueError:
             panic("Invalid initial Send/Data difficulty.")
 
-        functions.consensus.getSendDifficulty = proc (): Hash[256] {.inline, forceCheck: [].} =
+        functions.consensus.getSendDifficulty = proc (): uint32 {.inline, forceCheck: [].} =
             consensus.filters.send.difficulty
-        functions.consensus.getDataDifficulty = proc (): Hash[256] {.inline, forceCheck: [].} =
+        functions.consensus.getDataDifficulty = proc (): uint32 {.inline, forceCheck: [].} =
             consensus.filters.data.difficulty
 
         #Provide access to if a holder is malicious.
@@ -127,7 +127,7 @@ proc mainConsensus() {.forceCheck: [].} =
             DataExists
         ].} =
             #Print that we're adding the SignedVerification.
-            logInfo "New Verification", holder = verif.holder
+            logInfo "New Verification", holder = verif.holder, hash = verif.hash
 
             #Add the SignedVerification to the Consensus DAG.
             var mr: bool
@@ -158,7 +158,7 @@ proc mainConsensus() {.forceCheck: [].} =
                     panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
                 return
 
-            logInfo "Added Verification", holder = verif.holder
+            logInfo "Added Verification", holder = verif.holder, hash = verif.hash
 
             #Broadcast the SignedVerification.
             functions.network.broadcast(

@@ -82,3 +82,18 @@ func newSendOutput*(
         key: key,
         amount: amount
     )
+
+func newSendOutput*(
+    addy: Address,
+    amount: uint64
+): SendOutput {.forceCheck: [].} =
+    case addy.addyType:
+        of AddressType.PublicKey:
+            var key: EdPublicKey
+            for b in 0 ..< 32:
+                key.data[b] = cuchar(addy.data[b])
+
+            result = newSendOutput(
+                key,
+                amount
+            )

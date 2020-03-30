@@ -50,7 +50,7 @@ suite "Consensus":
                 db,
                 "CONSENSUS_DB_TEST",
                 1,
-                $Hash[256](),
+                uint64(1),
                 25
             )
 
@@ -62,8 +62,8 @@ suite "Consensus":
                 functions,
                 db,
                 merit.state,
-                Hash[256](),
-                Hash[256]()
+                3,
+                5
             )
 
             #Currently have Merit Removals.
@@ -78,15 +78,8 @@ suite "Consensus":
             #Create three removals.
             for r in 0 ..< 3:
                 var
-                    diff1: Hash[256]
-                    diff2: Hash[256]
-                for b in 0 ..< 32:
-                    diff1.data[b] = uint8(rand(255))
-                    diff2.data[b] = uint8(rand(255))
-
-                var
-                    sendDiff: SendDifficulty = newSendDifficultyObj(rand(200000), diff1)
-                    dataDiff: DataDifficulty = newDataDifficultyObj(rand(200000), diff2)
+                    sendDiff: SendDifficulty = newSendDifficultyObj(rand(200000), uint32(rand(high(int32))))
+                    dataDiff: DataDifficulty = newDataDifficultyObj(sendDiff.nonce, uint32(rand(high(int32))))
                     removal: SignedMeritRemoval = newSignedMeritRemoval(
                         uint16(rand(500)),
                         rand(1) == 0,
@@ -114,17 +107,14 @@ suite "Consensus":
                         continue
                     inc(mr)
 
-            #Reload Consensus.
-            var reloaded: Consensus = newConsensus(
+            #Reload and compare the Consensus DAGs.
+            compare(consensus, newConsensus(
                 functions,
                 db,
                 merit.state,
-                Hash[256](),
-                Hash[256]()
-            )
-
-            #Compare the Consensus DAGs.
-            compare(consensus, reloaded)
+                3,
+                5
+            ))
 
     noFuzzTest "Reloaded Consensus.":
         var
@@ -136,7 +126,7 @@ suite "Consensus":
                 db,
                 "CONSENSUS_DB_TEST",
                 1,
-                $Hash[256](),
+                uint64(1),
                 625
             )
             #Transactions.
@@ -153,8 +143,8 @@ suite "Consensus":
                 functions,
                 db,
                 merit.state,
-                Hash[256](),
-                Hash[256]()
+                3,
+                5
             )
 
             #Merit Holders.
@@ -232,7 +222,7 @@ suite "Consensus":
 
             #Have the Consensus handle every person who suffered a MeritRemoval.
             for removee in removed.keys():
-                consensus.remove(removed[removee], rewardsState[removee])
+                consensus.remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
 
             #Add the elements.
             for elem in elements:
@@ -254,17 +244,13 @@ suite "Consensus":
 
         #Compare the Consensus against the reloaded Consensus.
         proc compare() =
-            #Reload the Consensus.
-            var reloaded: Consensus = newConsensus(
+            compare(consensus, newConsensus(
                 functions,
                 db,
                 merit.state,
-                Hash[256](),
-                Hash[256]()
-            )
-
-            #Compare the Consensus DAGs.
-            compare(consensus, reloaded)
+                3,
+                5
+            ))
 
         #Iterate over 1250 'rounds'.
         for r in 1 .. 1250:
@@ -284,7 +270,7 @@ suite "Consensus":
                 var tx: Transaction = Transaction()
                 tx.hash = hash
                 transactions.transactions[tx.hash] = tx
-                consensus.register(merit.state, tx, r)
+                consensus.register(merit.state, tx, merit.blockchain.height)
 
                 #Create a packet for the Transaction.
                 packets.add(newVerificationPacketObj(hash))
@@ -356,38 +342,29 @@ suite "Consensus":
             #Add Difficulties.
             var
                 holder: int = rand(holders.len - 1)
-                diff1: Hash[256]
-                diff2: Hash[256]
                 sendDiff: SignedSendDifficulty
                 dataDiff: SignedDataDifficulty
-            for b in 0 ..< 32:
-                diff1.data[b] = uint8(rand(255))
-                diff2.data[b] = uint8(rand(255))
-
-            sendDiff = newSignedSendDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, diff1)
+            sendDiff = newSignedSendDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, uint32(rand(high(int32))))
             sendDiff.holder = uint16(holder)
             elements.add(sendDiff)
 
             holder = rand(holders.len - 1)
-            dataDiff = newSignedDataDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, diff2)
+            dataDiff = newSignedDataDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, uint32(rand(high(int32))))
             dataDiff.holder = uint16(holder)
             elements.add(dataDiff)
 
             if rand(125) == 0:
                 #Add a Merit Removal.
                 holder = rand(holders.len - 1)
-                while merit.state[uint16(holder)] == 0:
+                while merit.state[uint16(holder), merit.state.processedBlocks] == 0:
                     holder = rand(holders.len - 1)
-                for b in 0 ..< 32:
-                    diff1.data[b] = uint8(rand(255))
-                    diff2.data[b] = uint8(rand(255))
 
                 var
                     e1: SendDifficulty
                     e2: DataDifficulty
-                e1 = newSendDifficultyObj(0, diff1)
+                e1 = newSendDifficultyObj(0, uint32(rand(high(int32))))
                 e1.holder = uint16(holder)
-                e2 = newDataDifficultyObj(0, diff2)
+                e2 = newDataDifficultyObj(0, uint32(rand(high(int32))))
                 e2.holder = uint16(holder)
 
                 elements.add(newMeritRemoval(
