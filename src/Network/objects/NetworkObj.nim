@@ -26,11 +26,25 @@ import ../Serialize/SerializeCommon
 #Chronos external lib.
 import chronos
 
+#Locks standard lib.
+import locks
+
 #Tables standard lib.
 import tables
 
+#IP lock masks.
+const
+    CLIENT_IP_LOCK: uint8 = 1
+    LIVE_IP_LOCK*: uint8 = 2
+    SYNC_IP_LOCK*: uint8 = 4
+
 #Network object.
 type Network* = ref object
+    #Lock for the IP masks.
+    ipLock: Lock
+    #IP masks.
+    masks: Table[string, uint8]
+
     #Used to provide each Peer an unique ID.
     count*: int
     #Table of every Peer.
@@ -61,6 +75,8 @@ proc newNetwork*(
     functions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
     var network: Network = Network(
+        masks: initTable[string, uint8](),
+
         #Starts at 1 because the local node is 0.
         count: 1,
         peers: newTable[int, Peer](),
@@ -70,6 +86,7 @@ proc newNetwork*(
 
         functions: functions
     )
+    initLock(network.ipLocK)
 
     network.liveManager = newLiveManager(
         protocol,
@@ -162,6 +179,76 @@ proc newNetwork*(
         discard setTimer(Moment.fromNow(seconds(10)), removeInactive)
     except OSError as e:
         panic("Setting a timer to remove inactive peers failed: " & e.msg)
+
+proc lockIP*(
+    network: Network,
+    ip: string,
+    mask: uint8 = CLIENT_IP_LOCK
+): Future[bool] {.forceCheck: [], async.} =
+    #Acquire the IP lock.
+    while true:
+        if tryAcquire(network.ipLock):
+            break
+
+        try:
+            await sleepAsync(10)
+        except Exception as e:
+            panic("Failed to complete an async sleep: " & e.msg)
+
+    if not network.masks.hasKey(ip):
+        network.masks[ip] = mask
+        result = true
+    else:
+        var currMask: uint8
+        try:
+            currMask = network.masks[ip]
+        except KeyError as e:
+            panic("Couldn't get an IP's mask despite confirming the key exists: " & e.msg)
+
+        #If we're currently attempting a client connection, or attempting to handle this server connection, set the result to false.
+        if (
+            ((currMask and CLIENT_IP_LOCK) == CLIENT_IP_LOCK) or
+            ((currMask and mask) == mask)
+        ):
+            result = false
+        else:
+            #Add the mask and set the result to true.
+            network.masks[ip] = currMask or mask
+            result = true
+
+    #Release the IP lock.
+    release(network.ipLock)
+
+proc unlockIP*(
+    network: Network,
+    ip: string,
+    mask: uint8 = CLIENT_IP_LOCK
+) {.forceCheck: [], async.} =
+    #Acquire the IP lock.
+    while true:
+        if tryAcquire(network.ipLock):
+            break
+
+        try:
+            await sleepAsync(10)
+        except Exception as e:
+            panic("Failed to complete an async sleep: " & e.msg)
+
+    #Remove the bitmask.
+    var mask: uint8
+    try:
+        mask = network.masks[ip] and (not mask)
+    except KeyError as e:
+        panic("Attempted to unlock an IP that was never locked.")
+
+    #Delete the mask entirely if it's no longer used.
+    if mask == 0:
+        network.masks.del(ip)
+    else:
+        network.masks[ip] = mask
+
+    #Release the IP lock.
+    release(network.ipLock)
 
 #Add a peer.
 proc add*(

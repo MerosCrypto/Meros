@@ -58,8 +58,11 @@ proc connect*(
     #Lock the IP to stop multiple connections from happening at once.
     #We unlock the IP where we call connect.
     #If it's already locked, don't bother trying to connect.
-    if not network.lockIP(address):
-        return
+    try:
+        if not await network.lockIP(address):
+            return
+    except Exception as e:
+        panic("Locking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
     #Create a TAddress and verify it.
     var
@@ -71,7 +74,10 @@ proc connect*(
             hasSync: bool
         ] = network.verifyAddress(tAddy)
     if not verified.valid:
-        network.unlockIP(address)
+        try:
+            await network.unlockIP(address)
+        except Exception as e:
+            panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
         return
 
     #Create a socket.
@@ -80,7 +86,10 @@ proc connect*(
         socket = await connect(tAddy)
     except Exception:
         socket.safeClose()
-        network.unlockIP(address)
+        try:
+            await network.unlockIP(address)
+        except Exception as e:
+            panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
         return
 
     #Variable for the peer.
@@ -110,14 +119,20 @@ proc connect*(
             peer.live = await connect(tAddy)
         except Exception:
             peer.safeClose()
-            network.unlockIP(address)
+            try:
+                await network.unlockIP(address)
+            except Exception as e:
+                panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
         #Add it to the network.
         network.add(peer)
         network.live[verified.ip] = peer.id
         network.sync[verified.ip] = peer.id
 
-    network.unlockIP(address)
+    try:
+        await network.unlockIP(address)
+    except Exception as e:
+        panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
     #Handle the connections.
     logDebug "Handling Client connection", address = address, port = port
@@ -159,7 +174,12 @@ proc handle(
 
     #Lock the IP, passing the type of the Handshake.
     #Since up to two client connections can exist, it's fine if there's already one, as long as they're of different types.
-    network.lockIP(address, handshake.content)
+    var lock: uint8 = if handshake.content == MessageType.Handshake: LIVE_IP_LOCK else: SYNC_IP_LOCK
+    try:
+        if not await network.lockIP(address, lock):
+            return
+    except Exception as e:
+        panic("Locking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
     var
         tAddy: TAddress = initTAddress(address)
         verified: tuple[
@@ -169,7 +189,10 @@ proc handle(
             hasSync: bool
         ] = network.verifyAddress(tAddy, handshake)
     if not verified.valid:
-        network.unlockIP(address)
+        try:
+            await network.unlockIP(address, lock)
+        except Exception as e:
+            panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
         return
 
     #If there's a sync socket, this is a live socket.
@@ -190,7 +213,10 @@ proc handle(
             network.sync[verified.ip] = peer.id
 
     #Unlock the IP.
-    network.unlockIP(address)
+    try:
+        network.unlockIP(address, lock)
+    except Exception as e:
+        panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
     if handshake.content == MessageType.Handshake:
         try:
