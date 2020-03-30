@@ -37,7 +37,8 @@ proc sendLive*(
     SocketError
 ], async.} =
     try:
-        await peer.live.send(msg.toString())
+        if (await peer.live.write(msg.toString())) != (msg.message.len + 1):
+            raise newException(SocketError, "Couldn't send the full message over the Live socket.")
     except Exception as e:
         peer.sync.safeClose()
         if not noRaise:
@@ -52,7 +53,8 @@ proc sendSync*(
     SocketError
 ], async.} =
     try:
-        await peer.sync.send(msg.toString())
+        if (await peer.sync.write(msg.toString())) != (msg.message.len + 1):
+            raise newException(SocketError, "Couldn't send the full message over the Sync socket.")
     except Exception as e:
         peer.sync.safeClose()
         if not noRaise:
@@ -96,7 +98,7 @@ proc recv(
 
     #Receive the content type.
     try:
-        msg = await socket.recv(1)
+        msg = cast[string](await socket.read(1))
     except Exception as e:
         socket.safeClose()
         raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
@@ -162,7 +164,7 @@ proc recv(
                             size += len
 
                             try:
-                                msg &= await socket.recv(len)
+                                msg &= cast[string](await socket.read(len))
                             except Exception as e:
                                 raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
                             len = -1
@@ -190,7 +192,7 @@ proc recv(
                     for _ in 0 ..< msg[msg.len - INT_LEN ..< msg.len].fromBinary():
                         len += BYTE_LEN
                         try:
-                            msg &= await socket.recv(len)
+                            msg &= cast[string](await socket.read(len))
                         except Exception as e:
                             raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
                         size += len
@@ -205,7 +207,7 @@ proc recv(
                         if int(msg[^1]) == MERIT_REMOVAL_PREFIX:
                             for _ in 0 ..< 2:
                                 try:
-                                    msg &= await socket.recv(len)
+                                    msg &= cast[string](await socket.read(len))
                                 except Exception as e:
                                     raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
                                 size += len
@@ -222,7 +224,7 @@ proc recv(
                                         size += len
 
                                         try:
-                                            msg &= await socket.recv(len)
+                                            msg &= cast[string](await socket.read(len))
                                         except Exception as e:
                                             raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
                                         len = 0
@@ -247,7 +249,7 @@ proc recv(
 
         #Recv the data.
         try:
-            msg &= await socket.recv(len)
+            msg &= cast[string](await socket.read(len))
         except Exception as e:
             socket.safeClose()
             raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)

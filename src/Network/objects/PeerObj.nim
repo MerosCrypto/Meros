@@ -58,9 +58,9 @@ func isClosed*(
     peer: Peer
 ): bool {.inline, forceCheck: [].} =
     (
-        peer.live.isNil or peer.live.isClosed()
+        peer.live.isNil or peer.live.closed
     ) and (
-        peer.sync.isNil or peer.sync.isClosed()
+        peer.sync.isNil or peer.sync.closed
     )
 
 #Safely close a socket.
@@ -107,7 +107,7 @@ proc getPeers*(
                 continue
 
             #Skip peers who don't have a Live socket if that's a requirement.
-            if live and (peer.live.isNil or peer.live.isClosed):
+            if live and (peer.live.isNil or peer.live.closed):
                 dec(peersLeft)
                 if req > peersLeft:
                     dec(req)
