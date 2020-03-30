@@ -45,27 +45,27 @@ import locks
 
 type
     SystemFunctionBox* = ref object
-        quit*: proc () {.raises: [].}
+        quit*: proc () {.gcsafe, raises: [].}
 
     TransactionsFunctionBox* = ref object
         getTransaction*: proc (
             hash: Hash[256]
-        ): Transaction {.raises: [
+        ): Transaction {.gcsafe, raises: [
             IndexError
         ].}
 
         getUTXOs*: proc (
             key: EdPublicKey
-        ): seq[FundedInput] {.inline, raises: [].}
+        ): seq[FundedInput] {.inline, gcsafe, raises: [].}
 
         getSpenders*: proc (
             input: Input
-        ): seq[Hash[256]] {.inline, raises: [].}
+        ): seq[Hash[256]] {.inline, gcsafe, raises: [].}
 
         addClaim*: proc (
             claim: Claim,
             syncing: bool = false
-        ) {.raises: [
+        ) {.gcsafe, raises: [
             ValueError,
             DataExists
         ].}
@@ -73,7 +73,7 @@ type
         addSend*: proc (
             send: Send,
             syncing: bool = false
-        ) {.raises: [
+        ) {.gcsafe, raises: [
             ValueError,
             DataExists
         ].}
@@ -81,225 +81,225 @@ type
         addData*: proc (
             data: Data,
             syncing: bool = false
-        ) {.raises: [
+        ) {.gcsafe, raises: [
             ValueError,
             DataExists
         ].}
 
         verify*: proc (
             hash: Hash[256]
-        ) {.inline, raises: [].}
+        ) {.inline, gcsafe, raises: [].}
 
         unverify*: proc (
             hash: Hash[256]
-        ) {.inline, raises: [].}
+        ) {.inline, gcsafe, raises: [].}
 
         beat*: proc (
             hash: Hash[256]
-        ) {.inline, raises: [].}
+        ) {.inline, gcsafe, raises: [].}
 
         discoverTree*: proc (
             hash: Hash[256]
-        ): seq[Hash[256]] {.inline, raises: [].}
+        ): seq[Hash[256]] {.inline, gcsafe, raises: [].}
 
         prune*: proc (
             hash: Hash[256]
-        ) {.inline, raises: [].}
+        ) {.inline, gcsafe, raises: [].}
 
     ConsensusFunctionBox* = ref object
-        getSendDifficulty*: proc (): uint32 {.inline, raises: [].}
-        getDataDifficulty*: proc (): uint32 {.inline, raises: [].}
+        getSendDifficulty*: proc (): uint32 {.inline, gcsafe, raises: [].}
+        getDataDifficulty*: proc (): uint32 {.inline, gcsafe, raises: [].}
 
         isMalicious*: proc (
             nick: uint16,
-        ): bool {.inline, raises: [].}
+        ): bool {.inline, gcsafe, raises: [].}
 
         getArchivedNonce*: proc (
             holder: uint16
-        ): int {.inline, raises: [].}
+        ): int {.inline, gcsafe, raises: [].}
 
         hasArchivedPacket*: proc (
             hash: Hash[256]
-        ): bool {.raises: [
+        ): bool {.gcsafe, raises: [
             IndexError
         ].}
 
         getStatus*: proc (
             hash: Hash[256]
-        ): TransactionStatus {.raises: [
+        ): TransactionStatus {.gcsafe, raises: [
             IndexError
         ].}
 
         getThreshold*: proc (
             epoch: int
-        ): int {.inline, raises: [].}
+        ): int {.inline, gcsafe, raises: [].}
 
         getPending*: proc (): tuple[
             packets: seq[VerificationPacket],
             elements: seq[BlockElement],
             aggregate: BLSSignature
-        ] {.raises: [].}
+        ] {.gcsafe, raises: [].}
 
         addSignedVerification*: proc (
             verif: SignedVerification
-        ) {.raises: [
+        ) {.gcsafe, raises: [
             ValueError,
             DataExists
         ].}
 
         addVerificationPacket*: proc (
             packet: VerificationPacket
-        ) {.raises: [].}
+        ) {.gcsafe, raises: [].}
 
         addSendDifficulty*: proc (
             dataDiff: SendDifficulty
-        ) {.raises: [].}
+        ) {.gcsafe, raises: [].}
 
         addSignedSendDifficulty*: proc (
             dataDiff: SignedSendDifficulty
-        ) {.raises: [
+        ) {.gcsafe, raises: [
             ValueError,
             DataExists
         ].}
 
         addDataDifficulty*: proc (
             dataDiff: DataDifficulty
-        ) {.raises: [].}
+        ) {.gcsafe, raises: [].}
 
         addSignedDataDifficulty*: proc (
             dataDiff: SignedDataDifficulty
-        ) {.raises: [
+        ) {.gcsafe, raises: [
             ValueError,
             DataExists
         ].}
 
         verifyUnsignedMeritRemoval*: proc (
             mr: MeritRemoval
-        ): Future[void]
+        ): Future[void] {.gcsafe.}
 
         addSignedMeritRemoval*: proc (
             mr: SignedMeritRemoval
-        ): Future[void]
+        ): Future[void] {.gcsafe.}
 
     MeritFunctionBox* = ref object
-        getHeight*: proc (): int {.inline, raises: [].}
-        getTail*: proc (): Hash[256] {.inline, raises: [].}
+        getHeight*: proc (): int {.inline, gcsafe, raises: [].}
+        getTail*: proc (): Hash[256] {.inline, gcsafe, raises: [].}
 
-        getRandomXCacheKey*: proc (): string {.inline, raises: [].}
+        getRandomXCacheKey*: proc (): string {.inline, gcsafe, raises: [].}
 
         getBlockHashBefore*: proc (
             hash: Hash[256]
-        ): Hash[256] {.raises: [
+        ): Hash[256] {.gcsafe, raises: [
             IndexError
         ].}
 
         getBlockHashAfter*: proc (
             hash: Hash[256]
-        ): Hash[256] {.raises: [
+        ): Hash[256] {.gcsafe, raises: [
             IndexError
         ].}
 
-        getDifficulty*: proc (): uint64 {.inline, raises: [].}
+        getDifficulty*: proc (): uint64 {.inline, gcsafe, raises: [].}
 
         getBlockByNonce*: proc (
             nonce: int
-        ): Block {.raises: [
+        ): Block {.gcsafe, raises: [
             IndexError
         ].}
 
         getBlockByHash*: proc (
             hash: Hash[256]
-        ): Block {.raises: [
+        ): Block {.gcsafe, raises: [
             IndexError
         ].}
 
         getPublicKey*: proc (
             nick: uint16
-        ): BLSPublicKey {.raises: [
+        ): BLSPublicKey {.gcsafe, raises: [
             IndexError
         ].}
 
         getNickname*: proc (
             key: BLSPublicKey
-        ): uint16 {.raises: [
+        ): uint16 {.gcsafe, raises: [
             IndexError
         ].}
 
-        getTotalMerit*: proc (): int {.inline, raises: [].}
-        getUnlockedMerit*: proc (): int {.inline, raises: [].}
+        getTotalMerit*: proc (): int {.inline, gcsafe, raises: [].}
+        getUnlockedMerit*: proc (): int {.inline, gcsafe, raises: [].}
         getMerit*: proc (
             nick: uint16,
             height: int
-        ): int {.inline, raises: [].}
+        ): int {.inline, gcsafe, raises: [].}
 
         isUnlocked*: proc (
             nick: uint16
-        ): bool {.inline, raises: [].}
+        ): bool {.inline, gcsafe, raises: [].}
 
         addBlockInternal*: proc (
             newBlock: SketchyBlock,
             sketcher: Sketcher,
             syncing: bool,
             lock: ref Lock
-        ): Future[void]
+        ): Future[void] {.gcsafe.}
 
         addBlock*: proc (
             newBlock: SketchyBlock,
             sketcher: Sketcher,
             syncing: bool
-        ): Future[void]
+        ): Future[void] {.gcsafe.}
 
         addBlockByHeaderInternal*: proc (
             header: BlockHeader,
             syncing: bool,
             lock: ref Lock
-        ): Future[void]
+        ): Future[void] {.gcsafe.}
 
         addBlockByHeader*: proc (
             header: BlockHeader,
             syncing: bool
-        ): Future[void]
+        ): Future[void] {.gcsafe.}
 
         addBlockByHashInternal*: proc (
             hash: Hash[256],
             syncing: bool,
             lock: ref Lock
-        ): Future[void]
+        ): Future[void] {.gcsafe.}
 
         addBlockByHash*: proc (
             peer: Peer,
             hash: Hash[256]
-        ): Future[void]
+        ): Future[void] {.gcsafe.}
 
         testBlockHeader*: proc (
             header: BlockHeader
-        ) {.raises: [
+        ) {.gcsafe, raises: [
             ValueError
         ].}
 
     PersonalFunctionBox* = ref object
-        getMinerWallet*: proc(): MinerWallet {.inline, raises: [].}
+        getMinerWallet*: proc(): MinerWallet {.inline, gcsafe, raises: [].}
 
-        getWallet*: proc (): Wallet {.inline, raises: [].}
+        getWallet*: proc (): Wallet {.inline, gcsafe, raises: [].}
 
         setMnemonic*: proc (
             mnemonic: string,
             paassword: string
-        ) {.raises: [
+        ) {.gcsafe, raises: [
             ValueError
         ].}
 
         send*: proc (
             destination: string,
             amount: string
-        ): Hash[256] {.raises: [
+        ): Hash[256] {.gcsafe, raises: [
             ValueError,
             NotEnoughMeros
         ].}
 
         data*: proc (
             data: string
-        ): Hash[256] {.raises: [
+        ): Hash[256] {.gcsafe, raises: [
             ValueError,
             DataExists
         ].}
@@ -308,14 +308,14 @@ type
         connect*: proc (
             ip: string,
             port: int
-        ): Future[void]
+        ): Future[void] {.gcsafe.}
 
-        getPeers*: proc (): seq[Peer] {.inline, raises: [].}
+        getPeers*: proc (): seq[Peer] {.inline, gcsafe, raises: [].}
 
         broadcast*: proc (
             msgType: MessageType,
             msg: string
-        ) {.raises: [].}
+        ) {.gcsafe, raises: [].}
 
     GlobalFunctionBox* = ref object
         system*:       SystemFunctionBox

@@ -129,7 +129,7 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
     parse: proc (
         serialization: string,
         check: CheckType
-    ): ResultType {.raises: [
+    ): ResultType {.gcsafe, raises: [
         ValueError
     ].}
 ) {.forceCheck: [

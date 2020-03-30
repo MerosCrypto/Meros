@@ -127,7 +127,7 @@ proc verifyAggregate*(
     blockArg: Block,
     lookup: proc (
         holder: uint16
-    ): BLSPublicKey {.raises: [
+    ): BLSPublicKey {.gcsafe, raises: [
         IndexError
     ].}
 ): bool {.forceCheck: [].} =
