@@ -40,8 +40,8 @@ type Peer* = ref object
     requests*: seq[int]
 
     #Sockets.
-    live*: AsyncSocket
-    sync*: AsyncSocket
+    live*: StreamTransport
+    sync*: StreamTransport
 
 #Constructor.
 func newPeer*(
@@ -63,9 +63,9 @@ func isClosed*(
         peer.sync.isNil or peer.sync.isClosed()
     )
 
-#Safely close a Socket.
+#Safely close a socket.
 proc safeClose*(
-    socket: AsyncSocket
+    socket: StreamTransport
 ) {.forceCheck: [].} =
     if socket.isNil:
         return

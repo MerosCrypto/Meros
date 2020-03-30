@@ -83,7 +83,7 @@ proc syncRequest*(
 #Receive a message.
 proc recv(
     id: int,
-    socket: AsyncSocket,
+    socket: StreamTransport,
     lengths: Table[MessageType, seq[int]]
 ): Future[Message] {.forceCheck: [
     SocketError,
@@ -98,10 +98,12 @@ proc recv(
     try:
         msg = await socket.recv(1)
     except Exception as e:
+        socket.safeClose()
         raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
 
     #If the message length is 0, the Peer disconnected.
     if msg.len == 0:
+        socket.safeClose()
         raise newLoggedException(SocketError, "Peer disconnected.")
 
     #Make sure the content is valid.
@@ -247,11 +249,13 @@ proc recv(
         try:
             msg &= await socket.recv(len)
         except Exception as e:
+            socket.safeClose()
             raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
 
         #Add the length to the size and verify the size.
         size += len
         if msg.len != size:
+            socket.safeClose()
             raise newLoggedException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
     #Create a proper Message to be returned.
@@ -268,7 +272,6 @@ proc recvLive*(
     try:
         result = await recv(peer.id, peer.live, LIVE_LENS)
     except SocketError as e:
-        peer.live.safeClose()
         raise e
     except PeerError as e:
         raise e
@@ -289,7 +292,6 @@ proc recvSync*(
     try:
         result = await recv(peer.id, peer.sync, SYNC_LENS)
     except SocketError as e:
-        peer.sync.safeClose()
         raise e
     except PeerError as e:
         raise e

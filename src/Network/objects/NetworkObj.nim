@@ -43,7 +43,7 @@ type Network* = ref object
     sync*: Table[string, int]
 
     #Server.
-    server*: AsyncSocket
+    server*: StreamServer
 
     #Live Manager.
     liveManager*: LiveManager
