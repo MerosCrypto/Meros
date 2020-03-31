@@ -193,7 +193,7 @@ proc lockIP*(
             break
 
         try:
-            await sleepAsync(10)
+            await sleepAsync(milliseconds(10))
         except Exception as e:
             panic("Failed to complete an async sleep: " & e.msg)
 
@@ -236,7 +236,7 @@ proc unlockIP*(
             break
 
         try:
-            await sleepAsync(10)
+            await sleepAsync(milliseconds(10))
         except Exception as e:
             panic("Failed to complete an async sleep: " & e.msg)
 

@@ -68,7 +68,7 @@ proc syncRequest*(
 ) {.forceCheck: [], async.} =
     while not tryAcquire(peer.syncLock):
         try:
-            await sleepAsync(10)
+            await sleepAsync(milliseconds(10))
         except Exception as e:
             panic("Couldn't complete an async sleep: " & e.msg)
 

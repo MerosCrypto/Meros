@@ -122,14 +122,14 @@ proc mainMerit(
                 if lockedBlock[] != sketchyBlock.data.header.hash:
                     release(lock[])
                     try:
-                        await sleepAsync(50)
+                        await sleepAsync(milliseconds(50))
                     except Exception as e:
                         panic("Failed to complete an async sleep: " & e.msg)
                     continue
                 break
 
             try:
-                await sleepAsync(10)
+                await sleepAsync(milliseconds(10))
             except Exception as e:
                 panic("Failed to complete an async sleep: " & e.msg)
 
@@ -302,14 +302,14 @@ proc mainMerit(
                 if lockedBlock[] != Hash[256]():
                     release(blockLock[])
                     try:
-                        await sleepAsync(50)
+                        await sleepAsync(milliseconds(50))
                     except Exception as e:
                         panic("Failed to complete an async sleep: " & e.msg)
                     continue
                 break
 
             try:
-                await sleepAsync(10)
+                await sleepAsync(milliseconds(10))
             except Exception as e:
                 panic("Failed to complete an async sleep: " & e.msg)
 
@@ -339,14 +339,14 @@ proc mainMerit(
                 if lockedBlock[] != Hash[256]():
                     release(lock[])
                     try:
-                        await sleepAsync(50)
+                        await sleepAsync(milliseconds(50))
                     except Exception as e:
                         panic("Failed to complete an async sleep: " & e.msg)
                     continue
                 break
 
             try:
-                await sleepAsync(10)
+                await sleepAsync(milliseconds(10))
             except Exception as e:
                 panic("Failed to complete an async sleep: " & e.msg)
         lockedBlock[] = header.hash

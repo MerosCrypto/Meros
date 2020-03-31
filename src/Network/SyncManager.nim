@@ -88,7 +88,7 @@ proc syncAwait*[T](
 ], async.} =
     var timeout: Future[bool]
     try:
-        timeout = withTimeout(future.future, future.timeout)
+        timeout = withTimeout(future.future, seconds(future.timeout))
     except Exception as e:
         panic("Couldn't create a timeout for this SyncRequest: " & e.msg)
 
@@ -138,7 +138,7 @@ proc syncTransaction*(
         manager,
         id,
         newFuture[Transaction]("syncTransaction"),
-        2000
+        2
     )
 
     #Create the request and register it.
@@ -170,7 +170,7 @@ proc syncVerificationPackets*(
         manager,
         id,
         newFuture[seq[VerificationPacket]]("syncVerificationPackets"),
-        3000
+        3
     )
 
     #Create the request and register it.
@@ -201,7 +201,7 @@ proc syncSketchHashes*(
         manager,
         id,
         newFuture[seq[uint64]]("syncSketchHashes"),
-        3000
+        3
     )
 
     #Create the request and register it.
@@ -567,7 +567,7 @@ proc syncBlockBody*(
         manager,
         id,
         newFuture[SketchyBlockBody]("syncBlockBody"),
-        5000
+        5
     )
 
     #Create the request and register it.
@@ -597,7 +597,7 @@ proc syncBlockHeader*(
         manager,
         id,
         newFuture[BlockHeader]("syncBlockHeader"),
-        5000
+        5
     )
 
     #Create the request and register it.
@@ -629,7 +629,7 @@ proc syncBlockList*(
         manager,
         id,
         newFuture[seq[Hash[256]]]("syncBlockList"),
-        3000
+        3
     )
 
     #Create the request and register it.
@@ -659,7 +659,7 @@ proc syncPeers*(
             manager,
             0,
             newFuture[seq[tuple[ip: string, port: int]]]("syncPeers"),
-            3000
+            3
         )
         try:
             result.future.complete(seeds)
@@ -672,7 +672,7 @@ proc syncPeers*(
         manager,
         id,
         newFuture[seq[tuple[ip: string, port: int]]]("syncPeers"),
-        3000
+        3
     )
 
     #Create the request and register it.

@@ -302,7 +302,7 @@ proc start*(
     while rpc.alive:
         #Allow other async code to execute.
         try:
-            await sleepAsync(1)
+            await sleepAsync(milliseconds(1))
         except Exception as e:
             panic("Couldn't sleep for 1ms before checking the GUI->RPC channel for data: " & e.msg)
 
