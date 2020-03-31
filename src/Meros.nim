@@ -19,7 +19,7 @@ IDEs can't, and shouldn't, detect that an external file includes that file, and 
 include MainInterfaces
 
 #Config.
-var globalConfig: Config = newConfig()
+let globalConfig: Config = newConfig()
 
 #Start the logger.
 if not (addr defaultChroniclesStream.output).open(globalConfig.dataDir / globalConfig.logFile, fmAppend):

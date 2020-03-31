@@ -24,11 +24,11 @@ import StInt
 #Math standard lib.
 import math
 
-#BIP 44 Coin Type.
-const COIN_TYPE {.intdefine.}: uint32 = 0
-
-#Ed25519's l value.
-var l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
+const
+    #BIP 44 Coin Type.
+    COIN_TYPE {.intdefine.}: uint32 = 0
+    #Ed25519's l value.
+    l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
 
 #HDWallet.
 type HDWallet* = object

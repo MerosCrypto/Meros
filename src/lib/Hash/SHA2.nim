@@ -23,7 +23,7 @@ proc SHA2_256*(
     #If it's an empty string...
     if bytes.len == 0:
         return SHA2_256Hash(
-            data: sha256.digest(EmptyHash, uint(bytes.len)).data
+            data: sha256.digest(EMPTY_HASH, uint(bytes.len)).data
         )
 
     #Digest the byte array.
@@ -39,7 +39,7 @@ proc SHA2_512*(
     #If it's an empty string...
     if bytes.len == 0:
         return SHA2_512Hash(
-            data: sha512.digest(EmptyHash, uint(bytes.len)).data
+            data: sha512.digest(EMPTY_HASH, uint(bytes.len)).data
         )
 
     #Digest the byte array.

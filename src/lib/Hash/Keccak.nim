@@ -22,7 +22,7 @@ proc Keccak_256*(
     #If it's an empty string...
     if bytes.len == 0:
         return Keccak_256Hash(
-            data: keccak256.digest(EmptyHash, uint(bytes.len)).data
+            data: keccak256.digest(EMPTY_HASH, uint(bytes.len)).data
         )
 
     #Digest the byte array.
@@ -38,7 +38,7 @@ proc Keccak_512*(
     #If it's an empty string...
     if bytes.len == 0:
         return Keccak_512Hash(
-            data: keccak512.digest(EmptyHash, uint(bytes.len)).data
+            data: keccak512.digest(EMPTY_HASH, uint(bytes.len)).data
         )
 
     #Digest the byte array.

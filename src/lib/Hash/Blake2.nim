@@ -99,7 +99,7 @@ proc Blake2_512*(
     #If it's an empty string...
     if bytes.len == 0:
         return Blake2_512Hash(
-            data: blake2_512.digest(EmptyHash, uint(bytes.len)).data
+            data: blake2_512.digest(EMPTY_HASH, uint(bytes.len)).data
         )
 
     #Digest the byte array.
