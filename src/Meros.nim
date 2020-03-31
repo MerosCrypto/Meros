@@ -33,34 +33,34 @@ proc main() {.thread.} =
         config: Config = newConfig()
 
         #Chain Parames.
-        params {.threadvar.}: ChainParams
+        params: ChainParams
 
         #DB.
-        database {.threadvar.}: DB
+        database: DB
         #WalletDB.
-        wallet {.threadvar.}: WalletDB
+        wallet: WalletDB
 
         #Function Box.
-        functions {.threadvar.}: GlobalFunctionBox
+        functions: GlobalFunctionBox
 
         #Consensus.
-        consensus {.threadvar.}: ref Consensus
+        consensus: ref Consensus
 
         #Merit.
         #Merit is already a ref object. That said, we need to assign to it, and `var ref`s are illegal.
-        merit {.threadvar.}: ref Merit
-        blockLock {.threadvar.}: ref Lock
-        innerBlockLock {.threadvar.}: ref Lock
-        lockedBlock {.threadvar.}: ref Hash[256]
+        merit: ref Merit
+        blockLock: ref Lock
+        innerBlockLock: ref Lock
+        lockedBlock: ref Hash[256]
 
         #Transactions.
-        transactions {.threadvar.}: ref Transactions
+        transactions: ref Transactions
 
         #Network.
-        network {.threadvar.}: Network
+        network: Network
 
         #RPC.
-        rpc {.threadvar.}: RPC
+        rpc: RPC
 
     functions = newGlobalFunctionBox()
     params = newChainParams(config.network)
