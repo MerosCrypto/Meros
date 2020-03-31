@@ -1,7 +1,5 @@
 #TransactionsDB Spendable Test.
 
-#Test lib.
-import unittest
 
 #Fuzzed lib.
 import ../../../../Fuzzed

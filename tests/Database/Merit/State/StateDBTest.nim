@@ -1,8 +1,4 @@
 #State DB Test.
-
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 

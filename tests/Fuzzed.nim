@@ -1,4 +1,5 @@
 import unittest
+export unittest
 
 #Util lib.
 import ../src/lib/Util
@@ -10,8 +11,7 @@ const TEST_FUZZING_LOW {.intdefine.}: int = 1
 const TEST_FUZZING_MID {.intdefine.}: int = 4
 const TEST_FUZZING_HIGH {.intdefine.}: int = 8
 
-
-template setupRandom =
+template setupRandom() =
     var seed: int64 = int64(getTime())
     randomize(seed)
     checkpoint("Randomize Seed: " & $seed)

@@ -1,7 +1,5 @@
 #Serialize Data Test.
 
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 

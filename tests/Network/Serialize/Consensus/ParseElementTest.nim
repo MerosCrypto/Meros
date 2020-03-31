@@ -14,9 +14,6 @@ MeritRemoval DD/*
 MeritRemoval GP/*
 ]#
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 

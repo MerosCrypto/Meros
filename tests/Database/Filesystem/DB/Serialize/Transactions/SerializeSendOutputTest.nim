@@ -1,8 +1,5 @@
 #Serialize SendOutput Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../../../Fuzzed
 

@@ -1,8 +1,5 @@
 #Serialize BlockBody Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 

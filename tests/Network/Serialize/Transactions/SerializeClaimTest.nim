@@ -1,7 +1,5 @@
 #Serialize Claim Test.
 
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 

@@ -1,7 +1,7 @@
 #Consensus Revert Test.
 
-#Test lib.
-import unittest
+#Fuzzing lib.
+import ../../Fuzzed
 
 #Errors lib.
 import ../../../src/lib/Errors
@@ -735,7 +735,7 @@ suite "ConsensusRevert":
             #Compare the replayed Consensus DAG with the full DAG.
             compare(consensus, full)
 
-    test "Reverted Consensus.":
+    noFuzzTest "Reverted Consensus.":
         #Add a Block so there's a Merit Holder with Merit.
         addBlock()
 

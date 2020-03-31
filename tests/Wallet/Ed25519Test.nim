@@ -1,8 +1,5 @@
 #Ed25519 Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../Fuzzed
 

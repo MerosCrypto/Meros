@@ -1,7 +1,5 @@
 #Serialize Send Test.
 
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 

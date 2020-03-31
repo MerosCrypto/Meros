@@ -1,8 +1,5 @@
 #SHA2 Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../Fuzzed
 
