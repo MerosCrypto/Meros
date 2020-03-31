@@ -22,6 +22,39 @@ include MainInterfaces
 #Enable running main on a thread since the GUI must always run on the main thread.
 proc main() {.thread.} =
     {.gcsafe.}:
+        functions = newGlobalFunctionBox()
+
+        #Function to safely shut down all elements of the node.
+        functions.system.quit = proc () {.forceCheck: [].} =
+            #Shutdown the GUI.
+            try:
+                fromMain.send("shutdown")
+            except DeadThreadError as e:
+                echo "Couldn't shutdown the GUI due to a DeadThreadError: " & e.msg
+            except Exception as e:
+                echo "Couldn't shutdown the GUI due to an Exception: " & e.msg
+
+            #Shutdown the RPC.
+            rpc.shutdown()
+
+            #Shut down the Network.
+            network.shutdown()
+
+            #Shut down the databases.
+            try:
+                database.close()
+                wallet.close()
+            except DBError as e:
+                echo "Couldn't shutdown the DB: " & e.msg
+
+            #Quit.
+            quit(0)
+
+        blockLock = new(Lock)
+        innerBlockLock = new(Lock)
+        initLock(blockLock[])
+        initLock(innerBlockLock[])
+
         mainDatabase()
         mainMerit()
         mainConsensus()

@@ -38,7 +38,7 @@ proc sendLive*(
 ], async.} =
     try:
         if (await peer.live.write(msg.toString())) != (msg.message.len + 1):
-            raise newException(SocketError, "Couldn't send the full message over the Live socket.")
+            raise newException(Exception, "")
     except Exception as e:
         peer.sync.safeClose()
         if not noRaise:

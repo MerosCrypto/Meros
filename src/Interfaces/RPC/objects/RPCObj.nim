@@ -3,6 +3,7 @@ import ../../../lib/Errors
 
 #Chronos external lib.
 import chronos
+export chronos
 
 #Macros standard lib.
 import macros
@@ -20,7 +21,7 @@ type
     RPCFunction = proc (
         res: JSONNode,
         params: JSONNode
-    ): Future[void]
+    ): Future[void] {.gcsafe.}
 
     RPCFunctions* = Table[string, RPCFunction]
 
@@ -28,13 +29,12 @@ type
         alive*: bool
 
         functions*: RPCFunctions
-        quit*: proc () {.raises: [].}
+        quit*: proc () {.gcsafe, raises: [].}
 
         toRPC*: ptr Channel[JSONNode]
         toGUI*: ptr Channel[JSONNode]
 
-        server*: AsyncSocket
-        clients*: seq[AsyncSocket]
+        server*: StreamServer
 
 #RPCFunctions constructor.
 macro newRPCFunctions*(
@@ -54,6 +54,8 @@ macro newRPCFunctions*(
     for route in routes:
         #Make sure they're closures.
         route[1].addPragma(ident("closure"))
+        #Also add the gcsafe pragma for Chronos.
+        route[1].addPragma(ident("gcsafe"))
 
         #Make sure they're async.
         var async: bool = false
@@ -94,7 +96,7 @@ proc merge*(
 #RPC Object Constructor.
 proc newRPCObj*(
     functions: RPCFunctions,
-    quit: proc () {.raises: [].},
+    quit: proc () {.gcsafe, raises: [].},
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
 ): RPC {.inline, forceCheck: [].} =

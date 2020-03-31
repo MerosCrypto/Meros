@@ -124,10 +124,10 @@ proc commit*(
     popped: Epoch,
     getTransaction: proc (
         hash: Hash[256]
-    ): Transaction {.raises: [
+    ): Transaction {.gcsafe, raises: [
         IndexError
     ].}
-) {.forceCheck: [].} =
+) {.gcsafe, forceCheck: [].} =
     #Mark all inputs of all finalized Transactions as finalized.
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]]()
     for hash in popped.keys():

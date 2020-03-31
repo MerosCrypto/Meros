@@ -102,7 +102,7 @@ proc mainMerit() {.forceCheck: [].} =
             sketcherArg: Sketcher,
             syncing: bool,
             lock: ref Lock
-        ) {.forceCheck: [
+        ) {.gcsafe, forceCheck: [
             ValueError,
             DataMissing
         ], async.} =
@@ -132,7 +132,7 @@ proc mainMerit() {.forceCheck: [].} =
                     (
                         proc (
                             nick: uint16
-                        ): int {.raises: [].} =
+                        ): int {.gcsafe, raises: [].} =
                             functions.merit.getMerit(nick, functions.merit.getHeight())
                     ),
                     functions.consensus.isMalicious,

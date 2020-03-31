@@ -106,7 +106,9 @@ proc newNetwork*(
     result = network
 
     #Add a repeating timer to remove inactive Peers.
-    proc removeInactive(data: pointer = nil) {.gcsafe, forceCheck: [].} =
+    proc removeInactive(
+        data: pointer = nil
+    ) {.gcsafe, forceCheck: [].} =
         var
             p: int = 0
             peer: Peer

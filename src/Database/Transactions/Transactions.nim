@@ -46,10 +46,10 @@ proc add*(
     claim: Claim,
     lookup: proc (
         holder: uint16
-    ): BLSPublicKey {.raises: [
+    ): BLSPublicKey {.gcsafe, raises: [
         IndexError
     ].}
-) {.forceCheck: [
+) {.gcsafe, forceCheck: [
     ValueError,
     DataExists
 ].} =
@@ -115,7 +115,7 @@ proc add*(
 proc add*(
     transactions: var Transactions,
     send: Send
-) {.forceCheck: [
+) {.gcsafe, forceCheck: [
     ValueError,
     DataExists
 ].} =
@@ -201,7 +201,7 @@ proc add*(
 proc add*(
     transactions: var Transactions,
     data: Data
-) {.forceCheck: [
+) {.gcsafe, forceCheck: [
     ValueError,
     DataExists
 ].} =

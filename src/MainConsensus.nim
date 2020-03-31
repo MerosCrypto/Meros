@@ -338,15 +338,6 @@ proc mainConsensus() {.forceCheck: [].} =
             except Exception as e:
                 panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            while true:
-                if tryAcquire(smrLock):
-                    break
-
-                try:
-                    await sleepAsync(10)
-                except Exception as e:
-                    panic("Failed to complete an async sleep: " & e.msg)
-
             #Add the MeritRemoval.
             try:
                 consensus.add(merit.blockchain, merit.state, mr)
@@ -354,8 +345,6 @@ proc mainConsensus() {.forceCheck: [].} =
                 raise e
             except DataExists as e:
                 raise e
-            finally:
-                release(smrLock)
 
             logInfo "Added Merit Removal", holder = mr.holder, reason = mr.reason
 

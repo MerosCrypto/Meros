@@ -3,23 +3,22 @@ include MainChainParams
 #Global variables used throughout Main.
 var
     #Global Function Box.
-    functions: GlobalFunctionBox = newGlobalFunctionBox()
+    functions {.threadvar.}: GlobalFunctionBox
 
     #Config.
     config: Config = newConfig()
 
     #Chain Parames.
-    params: ChainParams
+    params {.threadvar.}: ChainParams
 
     #Consensus.
     consensus {.threadvar.}: Consensus
-    smrLock: Lock
 
     #Merit.
     merit {.threadvar.}: Merit
-    blockLock: ref Lock = new(Lock)
-    innerBlockLock: ref Lock = new(Lock)
-    lockedBlock: Hash[256]
+    blockLock {.threadvar.}: ref Lock
+    innerBlockLock {.threadvar.}: ref Lock
+    lockedBlock {.threadvar.}: Hash[256]
 
     #Transactions.
     transactions {.threadvar.}: Transactions
@@ -31,16 +30,13 @@ var
     wallet {.threadvar.}: WalletDB
 
     #Network.
-    network {.threadvar.}: Network #Network.
+    network {.threadvar.}: Network
 
     #Interfaces.
     fromMain: Channel[string] #Channel from the 'main' thread to the Interfaces thread.
     toRPC: Channel[JSONNode]  #Channel to the RPC from the GUI.
     toGUI: Channel[JSONNode]  #Channel to the GUI from the RPC.
     rpc {.threadvar.}: RPC    #RPC object.
-
-initLock(blockLock[])
-initLock(innerBlockLock[])
 
 case config.network:
     of "mainnet":
@@ -89,32 +85,6 @@ case config.network:
     else:
         echo "Invalid network specified."
         quit(0)
-
-#Function to safely shut down all elements of the node.
-functions.system.quit = proc () {.forceCheck: [].} =
-    #Shutdown the GUI.
-    try:
-        fromMain.send("shutdown")
-    except DeadThreadError as e:
-        echo "Couldn't shutdown the GUI due to a DeadThreadError: " & e.msg
-    except Exception as e:
-        echo "Couldn't shutdown the GUI due to an Exception: " & e.msg
-
-    #Shutdown the RPC.
-    rpc.shutdown()
-
-    #Shut down the Network.
-    network.shutdown()
-
-    #Shut down the databases.
-    try:
-        database.close()
-        wallet.close()
-    except DBError as e:
-        echo "Couldn't shutdown the DB: " & e.msg
-
-    #Quit.
-    quit(0)
 
 #Start the logger.
 if not (addr defaultChroniclesStream.output).open(config.dataDir / config.logFile, fmAppend):

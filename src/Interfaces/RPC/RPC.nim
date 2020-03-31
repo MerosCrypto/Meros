@@ -78,7 +78,7 @@ proc handle*(
     res: ref JSONNode,
     reply: proc (
         res: JSONNode
-    ): Future[void]
+    ): Future[void] {.gcsafe.}
 ) {.forceCheck: [], async.} =
     #Verify the version.
     try:
@@ -172,7 +172,7 @@ proc handle*(
     req: JSONNode,
     reply: proc (
         res: JSONNode
-    ): Future[void]
+    ): Future[void] {.gcsafe.}
 ): Future[ref JSONNode] {.forceCheck: [], async.} =
     #Init the result.
     result = new(ref JSONNode)
@@ -262,7 +262,7 @@ proc handle*(
     reqStr: string,
     reply: proc (
         res: string
-    ): Future[void]
+    ): Future[void] {.gcsafe.}
 ): Future[string] {.forceCheck: [], async.} =
     var
         req: JSONNode
@@ -347,145 +347,113 @@ proc start*(
         except Exception as e:
             panic("Sending over a channel threw an Exception: " & e.msg)
 
-#Handle a connection.
+#Create a function to handle a connection.
 proc handle(
-    rpc: RPC,
-    client: AsyncSocket
-) {.forceCheck: [], async.} =
-    #Handle the client.
-    while not client.isClosed():
-        #Read in a message.
-        var
-            data: string = ""
-            counter: int = 0
-            oldLen: int = 1
-        while true:
-            try:
-                data &= await client.recv(1)
-            except Exception:
+    rpc: RPC
+): proc (
+    server: StreamServer,
+    socket: StreamTransport
+): Future[void] {.gcsafe.} {.inline, forceCheck: [].} =
+    result = proc (
+        server: StreamServer,
+        socket: StreamTransport
+    ) {.forceCheck: [], async.} =
+        #Handle the client.
+        while not socket.closed():
+            #Read in a message.
+            var
+                data: string = ""
+                counter: int = 0
+                oldLen: int = 1
+            while true:
                 try:
-                    client.close()
+                    data &= cast[string](await socket.read(1))
                 except Exception:
-                    discard
-                return
-
-            if data.len != oldLen:
-                try:
-                    client.close()
-                except Exception:
-                    discard
-                return
-            inc(oldLen)
-
-            if data[^1] == data[0]:
-                inc(counter)
-            elif (data[^1] == ']') and (data[0] == '['):
-                dec(counter)
-            elif (data[^1] == '}') and (data[0] == '{'):
-                dec(counter)
-            if counter == 0:
-                break
-
-        #Handle the message.
-        var res: string
-        try:
-            res = await rpc.handle(
-                data,
-                proc (
-                    replyArg: string
-                ) {.forceCheck: [], async.} =
                     try:
-                        await client.send(replyArg)
+                        socket.close()
                     except Exception:
-                        try:
-                            client.close()
-                        except Exception:
-                            discard
-                        return
-            )
-        except Exception as e:
-            panic("RPC's handle threw an Exception despite not naturally throwing anything: " & e.msg)
+                        discard
+                    return
 
-        try:
-            await client.send(res)
-        except Exception:
+                if data.len != oldLen:
+                    try:
+                        socket.close()
+                    except Exception:
+                        discard
+                    return
+                inc(oldLen)
+
+                if data[^1] == data[0]:
+                    inc(counter)
+                elif (data[^1] == ']') and (data[0] == '['):
+                    dec(counter)
+                elif (data[^1] == '}') and (data[0] == '{'):
+                    dec(counter)
+                if counter == 0:
+                    break
+
+            #Handle the message.
+            var res: string
             try:
-                client.close()
+                res = await rpc.handle(
+                    data,
+                    proc (
+                        replyArg: string
+                    ) {.forceCheck: [], async.} =
+                        try:
+                            if (await socket.write(replyArg)) != replyArg.len:
+                                raise newException(Exception, "")
+                        except Exception:
+                            try:
+                                socket.close()
+                            except Exception:
+                                discard
+                            return
+                )
+            except Exception as e:
+                panic("RPC's handle threw an Exception despite not naturally throwing anything: " & e.msg)
+
+            try:
+                if (await socket.write(res)) != res.len:
+                    raise newException(Exception, "")
             except Exception:
-                discard
-            return
+                try:
+                    socket.close()
+                except Exception:
+                    discard
+                return
 
 #Start up the RPC's server socket.
 proc listen*(
     rpc: RPC,
     config: Config
 ) {.forceCheck: [], async.} =
-    #Create the server socket.
+    #Create the server.
     try:
-        rpc.server = newAsyncSocket()
-    except ValueError as e:
-        panic("Failed to create the RPC's server socket due to a ValueError: " & e.msg)
-    except IOSelectorsException as e:
-        panic("Failed to create the RPC's server socket due to an IOSelectorsException: " & e.msg)
-    except Exception as e:
-        panic("Failed to create the RPC's server socket due to an Exception: " & e.msg)
-
-    try:
-        rpc.server.setSockOpt(OptReuseAddr, true)
-        rpc.server.bindAddr(Port(config.rpcPort))
+        rpc.server = createStreamServer(initTAddress("127.0.0.1", config.rpcPort), handle(rpc), {ReuseAddr})
     except OSError as e:
-        panic("Failed to set the RPC's server socket options and bind it due to an OSError: " & e.msg)
-    except ValueError as e:
-        panic("Failed to bind the RPC's server socket due to a ValueError: " & e.msg)
+        panic("Couldn't create the RPC server due to an OSError: " & e.msg)
+    except TransportAddressError as e:
+        panic("Couldn't create the RPC server due to an invalid address to listen on: " & e.msg)
+    except Exception as e:
+        panic("Couldn't create the RPC server due to an Exception: " & e.msg)
 
     #Start listening.
     try:
-        rpc.server.listen()
+        rpc.server.start()
     except OSError as e:
-        panic("Failed to start listening on the RPC's server socket due to an OSError: " & e.msg)
+        panic("Couldn't start listening due to an OSError: " & e.msg)
+    except TransportOSError as e:
+        panic("Couldn't start listening due to an TransportOSError: " & e.msg)
     except Exception as e:
-        panic("Failed to start listening on the RPC's server socket due to an Exception: " & e.msg)
+        panic("Couldn't start listening due to an Exception: " & e.msg)
 
-    #Add a repeating timer to remove dead RPC clients.
+    #Don't return until the server closes.
     try:
-        addTimer(
-            60000,
-            false,
-            proc (
-                fd: AsyncFD
-            ): bool {.forceCheck: [].} =
-                var i: int = 0
-                while i < rpc.clients.len:
-                    if rpc.clients[i].isClosed():
-                        rpc.clients.delete(i)
-                        continue
-                    inc(i)
-        )
-    except OSError as e:
-        panic("Couldn't set a timer due to an OSError: " & e.msg)
+        await rpc.server.join()
     except Exception as e:
-        panic("Couldn't set a timer due to an Exception: " & e.msg)
+        panic("Couldn't join the server with this async function: " & e.msg)
 
-    #Accept new connections infinitely.
-    while not rpc.server.isClosed():
-        #Add the client to the seq.
-        #Receive the new client.
-        var connection: AsyncSocket
-        try:
-            connection = await rpc.server.accept()
-        except Exception:
-            #This could happen by a crtical error, a closed server socket, or a bad client. We don't have enough info.
-            #In the first case, we should crash. In the second, break. #In the third, continue.
-            #If the socket is closed, continuuing will break. Therefore, a continue covers two/three cases and tries to keep going.
-            continue
-
-        #Add the new client to the list.
-        rpc.clients.add(connection)
-
-        try:
-            asyncCheck rpc.handle(connection)
-        except Exception as e:
-            panic("Handle threw an Exception despite not naturally throwing anything: " & e.msg)
 #Shutdown.
 proc shutdown*(
     rpc: RPC
@@ -496,11 +464,3 @@ proc shutdown*(
             rpc.server.close()
         except Exception:
             discard
-
-    #Close each client.
-    while rpc.clients.len != 0:
-        try:
-            rpc.clients[0].close()
-        except Exception:
-            discard
-        rpc.clients.delete(0)

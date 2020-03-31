@@ -44,7 +44,7 @@ proc mainTransactions() {.forceCheck: [].} =
         #Handle requests for an Transaction.
         functions.transactions.getTransaction = proc (
             hash: Hash[256]
-        ): Transaction {.forceCheck: [
+        ): Transaction {.gcsafe, forceCheck: [
             IndexError
         ].} =
             try:
@@ -55,14 +55,14 @@ proc mainTransactions() {.forceCheck: [].} =
         #Get a Transaction's spenders.
         functions.transactions.getSpenders = proc (
             input: Input
-        ): seq[Hash[256]] {.inline, forceCheck: [].} =
+        ): seq[Hash[256]] {.inline, gcsafe, forceCheck: [].} =
             transactions.loadSpenders(input)
 
         #Handle Claims.
         functions.transactions.addClaim = proc (
             claim: Claim,
             syncing: bool = false
-        ) {.forceCheck: [
+        ) {.gcsafe, forceCheck: [
             ValueError,
             DataExists
         ].} =
@@ -104,7 +104,7 @@ proc mainTransactions() {.forceCheck: [].} =
         functions.transactions.addSend = proc (
             send: Send,
             syncing: bool = false
-        ) {.forceCheck: [
+        ) {.gcsafe, forceCheck: [
             ValueError,
             DataExists
         ].} =
@@ -143,7 +143,7 @@ proc mainTransactions() {.forceCheck: [].} =
         functions.transactions.addData = proc (
             data: Data,
             syncing: bool = false
-        ) {.forceCheck: [
+        ) {.gcsafe, forceCheck: [
             ValueError,
             DataExists
         ].} =
@@ -180,35 +180,35 @@ proc mainTransactions() {.forceCheck: [].} =
         #Mark a Transaction as verified.
         functions.transactions.verify = proc (
             hash: Hash[256]
-        ) {.inline, forceCheck: [].} =
+        ) {.inline, gcsafe, forceCheck: [].} =
             transactions.verify(hash)
 
         #Mark a Transaction as unverified.
         functions.transactions.unverify = proc (
             hash: Hash[256]
-        ) {.inline, forceCheck: [].} =
+        ) {.inline, gcsafe, forceCheck: [].} =
             transactions.unverify(hash)
 
         #Mark a Transaction as beaten.
         functions.transactions.beat = proc (
             hash: Hash[256]
-        ) {.inline, forceCheck: [].} =
+        ) {.inline, gcsafe, forceCheck: [].} =
             transactions.beat(hash)
 
         #Discover a Transaction tree.
         functions.transactions.discoverTree = proc (
             hash: Hash[256]
-        ): seq[Hash[256]] {.inline, forceCheck: [].} =
+        ): seq[Hash[256]] {.inline, gcsafe, forceCheck: [].} =
             transactions.discoverTree(hash)
 
         #Prune a Transaction from the Database.
         functions.transactions.prune = proc (
             hash: Hash[256]
-        ) {.inline, forceCheck: [].} =
+        ) {.inline, gcsafe, forceCheck: [].} =
             transactions.prune(hash)
 
         #Get a key's UTXOs.
         functions.transactions.getUTXOs = proc (
             key: EdPublicKey
-        ): seq[FundedInput] {.inline, forceCheck: [].} =
+        ): seq[FundedInput] {.inline, gcsafe, forceCheck: [].} =
             transactions.getUTXOs(key)

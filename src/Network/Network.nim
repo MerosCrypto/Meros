@@ -207,7 +207,7 @@ proc handle(
     result = proc (
         server: StreamServer,
         socket: StreamTransport
-    ) {.gcsafe, async.} =
+    ) {.gcsafe, forceCheck: [], async.} =
         #Get their address.
         var address: string
         try:
