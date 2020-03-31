@@ -19,8 +19,7 @@ IDEs can't, and shouldn't, detect that an external file includes that file, and 
 include MainInterfaces
 
 #Config.
-var globalConfig {.threadvar.}: Config
-globalConfig = newConfig()
+var globalConfig: Config = newConfig()
 
 #Start the logger.
 if not (addr defaultChroniclesStream.output).open(globalConfig.dataDir / globalConfig.logFile, fmAppend):
@@ -28,10 +27,14 @@ if not (addr defaultChroniclesStream.output).open(globalConfig.dataDir / globalC
     quit(0)
 
 #Enable running main on a thread since the GUI must always run on the main thread.
-proc main(
-    config: Config
-) {.thread.} =
+proc main() {.thread.} =
     var
+        #Config. Reloaded to enforce heap isolation.
+        config: Config = newConfig()
+
+        #Chain Parames.
+        params {.threadvar.}: ChainParams
+
         #DB.
         database {.threadvar.}: DB
         #WalletDB.
@@ -39,9 +42,6 @@ proc main(
 
         #Function Box.
         functions {.threadvar.}: GlobalFunctionBox
-
-        #Chain Parames.
-        params {.threadvar.}: ChainParams
 
         #Consensus.
         consensus {.threadvar.}: ref Consensus
@@ -113,16 +113,16 @@ proc main(
 #If we weren't compiled with a GUI...
 when defined(nogui):
     #Run main.
-    main(globalConfig)
+    main()
 #If we were...
 else:
     #If it's disabled...
     if not globalConfig.gui:
-        main(globalConfig)
+        main()
     #If it's enabled...
     else:
         #Spawn main on a thread.
-        spawn main(globalConfig)
+        spawn main()
         #Run the GUI on the main thread,
         mainGUI()
         #If WebView exits, perform a safe shutdown.

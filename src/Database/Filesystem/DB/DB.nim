@@ -13,7 +13,7 @@ import MeritDB
 proc commit*(
     db: DB,
     height: int
-) {.gcsafe, forceCheck: [].} =
+) {.forceCheck: [].} =
     TransactionsDB.commit(db)
     ConsensusDB.commit(db)
     MeritDB.commit(db, height)

@@ -127,7 +127,7 @@ proc commit*(
     ): Transaction {.gcsafe, raises: [
         IndexError
     ].}
-) {.gcsafe, forceCheck: [].} =
+) {.forceCheck: [].} =
     #Mark all inputs of all finalized Transactions as finalized.
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]]()
     for hash in popped.keys():

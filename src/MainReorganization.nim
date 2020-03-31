@@ -9,7 +9,7 @@ proc reorganize(
     lastCommonBlock: Hash[256],
     queue: seq[Hash[256]],
     tail: BlockHeader
-): Future[seq[BlockHeader]] {.gcsafe, forceCheck: [
+): Future[seq[BlockHeader]] {.forceCheck: [
     ValueError,
     DataMissing
 ], async.} =

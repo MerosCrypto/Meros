@@ -68,9 +68,9 @@ proc mainConsensus(
     except ValueError:
         panic("Invalid initial Send/Data difficulty.")
 
-    functions.consensus.getSendDifficulty = proc (): uint32 {.inline, gcsafe, forceCheck: [].} =
+    functions.consensus.getSendDifficulty = proc (): uint32 {.inline, forceCheck: [].} =
         consensus.filters.send.difficulty
-    functions.consensus.getDataDifficulty = proc (): uint32 {.inline, gcsafe, forceCheck: [].} =
+    functions.consensus.getDataDifficulty = proc (): uint32 {.inline, forceCheck: [].} =
         consensus.filters.data.difficulty
 
     #Provide access to if a holder is malicious.
@@ -132,7 +132,7 @@ proc mainConsensus(
     #Handle SignedVerifications.
     functions.consensus.addSignedVerification = proc (
         verif: SignedVerification
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataExists
     ].} =
@@ -179,7 +179,7 @@ proc mainConsensus(
     #Handle VerificationPackets.
     functions.consensus.addVerificationPacket = proc (
         packet: VerificationPacket
-    ) {.gcsafe, forceCheck: [].} =
+    ) {.forceCheck: [].} =
         #Print that we're adding the VerificationPacket.
         logInfo "New Verification Packet from Block", hash = packet.hash, holders = packet.holders
 
@@ -191,7 +191,7 @@ proc mainConsensus(
     #Handle SendDifficulties.
     functions.consensus.addSendDifficulty = proc (
         sendDiff: SendDifficulty
-    ) {.gcsafe, forceCheck: [].} =
+    ) {.forceCheck: [].} =
         #Print that we're adding the SendDifficulty.
         logInfo "New Send Difficulty from Block", holder = sendDiff.holder, difficulty = sendDiff.difficulty
 
@@ -203,7 +203,7 @@ proc mainConsensus(
     #Handle SignedSendDifficulties.
     functions.consensus.addSignedSendDifficulty = proc (
         sendDiff: SignedSendDifficulty
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataExists
     ].} =
@@ -247,7 +247,7 @@ proc mainConsensus(
     #Handle DataDifficulties.
     functions.consensus.addDataDifficulty = proc (
         dataDiff: DataDifficulty
-    ) {.gcsafe, forceCheck: [].} =
+    ) {.forceCheck: [].} =
         #Print that we're adding the DataDifficulty.
         logInfo "New Data Difficulty from Block", holder = dataDiff.holder, difficulty = dataDiff.difficulty
 
@@ -259,7 +259,7 @@ proc mainConsensus(
     #Handle SignedDataDifficulties.
     functions.consensus.addSignedDataDifficulty = proc (
         dataDiff: SignedDataDifficulty
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataExists
     ].} =
@@ -334,7 +334,7 @@ proc mainConsensus(
     #Handle SignedMeritRemovals.
     functions.consensus.addSignedMeritRemoval = proc (
         mr: SignedMeritRemoval
-    ): Future[void] {.gcsafe, forceCheck: [
+    ): Future[void] {.forceCheck: [
         ValueError,
         DataExists
     ], async.} =

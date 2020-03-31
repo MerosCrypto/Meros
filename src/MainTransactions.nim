@@ -72,7 +72,7 @@ proc mainTransactions(
     functions.transactions.addClaim = proc (
         claim: Claim,
         syncing: bool = false
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataExists
     ].} =
@@ -114,7 +114,7 @@ proc mainTransactions(
     functions.transactions.addSend = proc (
         send: Send,
         syncing: bool = false
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataExists
     ].} =
@@ -153,7 +153,7 @@ proc mainTransactions(
     functions.transactions.addData = proc (
         data: Data,
         syncing: bool = false
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataExists
     ].} =

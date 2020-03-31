@@ -55,7 +55,7 @@ proc mainNetwork(
     proc requestPeersRegularly(
         data: pointer = nil
     ) {.gcsafe, forceCheck: [].} =
-        proc requestPeers() {.gcsafe, forceCheck: [], async.} =
+        proc requestPeers() {.forceCheck: [], async.} =
             if network.peers.len >= 8:
                 return
 

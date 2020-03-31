@@ -24,7 +24,7 @@ proc mainMerit(
 
     functions.merit.getHeight = proc (): int {.forceCheck: [].} =
         merit.blockchain.height
-    functions.merit.getTail = proc (): Hash[256] {.gcsafe, forceCheck: [].} =
+    functions.merit.getTail = proc (): Hash[256] {.forceCheck: [].} =
         merit.blockchain.tail.header.hash
 
     functions.merit.getRandomXCacheKey = proc (): string {.forceCheck: [].} =
@@ -113,7 +113,7 @@ proc mainMerit(
         sketcherArg: Sketcher,
         syncing: bool,
         lock: ref Lock
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataMissing
     ], async.} =
@@ -293,7 +293,7 @@ proc mainMerit(
         sketchyBlock: SketchyBlock,
         sketcherArg: Sketcher,
         syncing: bool
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataMissing
     ], async.} =
@@ -329,7 +329,7 @@ proc mainMerit(
         header: BlockHeader,
         syncing: bool,
         lock: ref Lock
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataMissing,
         DataExists
@@ -500,7 +500,7 @@ proc mainMerit(
     functions.merit.addBlockByHeader = proc (
         header: BlockHeader,
         syncing: bool
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataMissing,
         DataExists
@@ -520,7 +520,7 @@ proc mainMerit(
         hash: Hash[256],
         syncing: bool,
         lock: ref Lock
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError,
         DataMissing,
         DataExists
@@ -543,7 +543,7 @@ proc mainMerit(
     functions.merit.addBlockByHash = proc (
         peer: Peer,
         hash: Hash[256]
-    ) {.gcsafe, forceCheck: [], async.} =
+    ) {.forceCheck: [], async.} =
         try:
             await functions.merit.addBlockByHashInternal(hash, true, blockLock)
         except ValueError, DataMissing:
@@ -557,7 +557,7 @@ proc mainMerit(
     #Tests a BlockHeader. Used by the RPC's addBlock method.
     functions.merit.testBlockHeader = proc (
         header: BlockHeader
-    ) {.gcsafe, forceCheck: [
+    ) {.forceCheck: [
         ValueError
     ].} =
         if header.last != merit.blockchain.tail.header.hash:
