@@ -33,7 +33,7 @@ proc main() {.thread.} =
         config: Config = newConfig()
 
         #Chain Parames.
-        params: ChainParams
+        params: ChainParams = newChainParams(config.network)
 
         #DB.
         database: DB
@@ -41,35 +41,26 @@ proc main() {.thread.} =
         wallet: WalletDB
 
         #Function Box.
-        functions: GlobalFunctionBox
+        functions: GlobalFunctionBox = newGlobalFunctionBox()
 
         #Consensus.
-        consensus: ref Consensus
+        consensus: ref Consensus = new(Consensus)
 
         #Merit.
         #Merit is already a ref object. That said, we need to assign to it, and `var ref`s are illegal.
-        merit: ref Merit
-        blockLock: ref Lock
-        innerBlockLock: ref Lock
-        lockedBlock: ref Hash[256]
+        merit: ref Merit = new(ref Merit)
+        blockLock: ref Lock = new(Lock)
+        innerBlockLock: ref Lock = new(Lock)
+        lockedBlock: ref Hash[256] = new(Hash[256])
 
         #Transactions.
-        transactions: ref Transactions
+        transactions: ref Transactions = new(Transactions)
 
         #Network.
         network: Network
 
         #RPC.
         rpc: RPC
-
-    functions = newGlobalFunctionBox()
-    params = newChainParams(config.network)
-    consensus = new(Consensus)
-    merit = new(ref Merit)
-    blockLock = new(Lock)
-    innerBlockLock = new(Lock)
-    lockedBlock = new(Hash[256])
-    transactions = new(Transactions)
 
     #Function to safely shut down all elements of the node.
     functions.system.quit = proc () {.forceCheck: [].} =
