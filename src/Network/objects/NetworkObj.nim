@@ -195,9 +195,13 @@ proc lockIP*(
         except Exception as e:
             panic("Failed to complete an async sleep: " & e.msg)
 
+    #Create the mask if there isn't one.
     if not network.masks.hasKey(ip):
         network.masks[ip] = mask
         result = true
+    #If we're forming a client connection, and either already have one or they're already connecting to us, return false.
+    elif mask == CLIENT_IP_LOCK:
+        result = false
     else:
         var currMask: uint8
         try:
@@ -205,7 +209,7 @@ proc lockIP*(
         except KeyError as e:
             panic("Couldn't get an IP's mask despite confirming the key exists: " & e.msg)
 
-        #If we're currently attempting a client connection, or attempting to handle this server connection, set the result to false.
+        #If we're currently attempting a client connection, or attempting to handle this type of server connection, set the result to false.
         if (
             ((currMask and CLIENT_IP_LOCK) == CLIENT_IP_LOCK) or
             ((currMask and mask) == mask)
