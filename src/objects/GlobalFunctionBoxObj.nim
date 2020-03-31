@@ -185,6 +185,7 @@ type
         getHeight*: proc (): int {.gcsafe, raises: [].}
         getTail*: proc (): Hash[256] {.gcsafe, raises: [].}
 
+        getRandomX*: proc (): RandomX {.gcsafe, raises: [].}
         getRandomXCacheKey*: proc (): string {.gcsafe, raises: [].}
 
         getBlockHashBefore*: proc (

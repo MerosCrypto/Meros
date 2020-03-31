@@ -389,7 +389,7 @@ proc module*(
 
                 var sketchyBlock: SketchyBlock
                 try:
-                    sketchyBlock = params[1].getStr().parseHexStr().parseBlock()
+                    sketchyBlock = functions.merit.getRandomX().parseBlock(params[1].getStr().parseHexStr())
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
 

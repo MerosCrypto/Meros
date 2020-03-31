@@ -597,7 +597,7 @@ proc handle*(
                                 ValueError
                             ].} =
                                 try:
-                                    result = serialization.parseBlockHeader()
+                                    result = manager.functions.merit.getRandomX().parseBlockHeader(serialization)
                                 except ValueError as e:
                                     raise e
 

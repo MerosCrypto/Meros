@@ -27,8 +27,10 @@ proc mainMerit(
     functions.merit.getTail = proc (): Hash[256] {.forceCheck: [].} =
         merit.blockchain.tail.header.hash
 
+    functions.merit.getRandomX = proc (): RandomX {.forceCheck: [].} =
+        merit.blockchain.rx
     functions.merit.getRandomXCacheKey = proc (): string {.forceCheck: [].} =
-        merit.blockchain.cacheKey
+        merit.blockchain.rx.cacheKey
 
     functions.merit.getBlockHashBefore = proc (
         hash: Hash[256]
