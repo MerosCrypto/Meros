@@ -24,8 +24,7 @@ proc module*(
                 res: JSONNode,
                 params: JSONNode
             ): Future[void] {.forceCheck: [
-                ParamError,
-                JSONRPCError
+                ParamError
             ], async.} =
                 #Verify the parameters length.
                 if (params.len != 1) and (params.len != 2):
@@ -43,8 +42,6 @@ proc module*(
 
                 try:
                     await functions.network.connect(params[0].getStr(), params[1].getInt())
-                except PeerError:
-                    raise newJSONRPCError(-6, "Couldn't connect")
                 except Exception as e:
                     panic("MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 

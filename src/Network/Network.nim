@@ -83,11 +83,13 @@ proc isOurPublicIP(
     socket: StreamTransport
 ): bool {.forceCheck: [].} =
     try:
-        result = socket.localAddress == socket.remoteAddress
+        result = socket.localAddress.address_v4 == socket.remoteAddress.address_v4
     #If we couldn't get the local or peer address, we can either panic or shut down this socket.
     #The safe way to shut down the socket is to return that's invalid.
     #That said, this can have side effects when we implement peer karma.
-    except OSError:
+    except TransportError as e:
+        panic("Trying to handle a socket which isn't a socket: " & e.msg)
+    except TransportOSError:
         result = true
 
 #Connect to a new Peer.
@@ -95,9 +97,7 @@ proc connect*(
     network: Network,
     address: string,
     port: int
-) {.forceCheck: [
-    PeerError
-], async.} =
+) {.forceCheck: [], async.} =
     logDebug "Connecting", address = address, port = port
 
     #Lock the IP to stop multiple connections from happening at once.
@@ -111,13 +111,18 @@ proc connect*(
 
     #Create a TransportAddress and verify it.
     var
-        tAddy: TransportAddress = initTAddress(address, port)
+        tAddy: TransportAddress
         verified: tuple[
             ip: string,
             valid: bool,
             hasLive: bool,
             hasSync: bool
-        ] = network.verifyAddress(tAddy)
+        ]
+    try:
+        tAddy = initTAddress(address, port)
+    except TransportAddressError:
+        return
+    verified = network.verifyAddress(tAddy)
     if not verified.valid:
         try:
             await network.unlockIP(address)
@@ -165,7 +170,7 @@ proc connect*(
         try:
             peer.live = await connect(tAddy)
         except Exception:
-            peer.safeClose()
+            peer.close()
             try:
                 await network.unlockIP(address)
             except Exception as e:
@@ -197,27 +202,28 @@ proc handle(
     network: Network,
     socket: StreamTransport
 ) {.forceCheck: [], async.} =
+    #Get their address.
+    var address: string
+    try:
+        address = $IpAddress(
+            family: IpAddressFamily.IPv4,
+            address_v4: socket.remoteAddress.address_v4
+        )
+    except TransportError as e:
+        panic("Trying to handle a socket which isn't a socket: " & e.msg)
     logDebug "Accepting ", address = address
 
     #Receive the Handhshake.
     var handshake: Message
     try:
-        handshake = await recv(
-            0,
-            socket,
-            {
-                MessageType.Handshake: LIVE_LENS[MessageType.Handshake],
-                MessageType.Syncing:   SYNC_LENS[MessageType.Syncing],
-            }.toTable()
-        )
+        handshake = await recv(0, socket, HANDSHAKE_LENS)
     except SocketError:
         return
     except PeerError:
         socket.safeClose()
         return
-
-    #Get their address.
-    var address: string = socket.getPeerAddr()[0]
+    except Exception as e:
+        panic("Couldn't receive from a socket despite catching all errors recv throws: " & e.msg)
 
     #Lock the IP, passing the type of the Handshake.
     #Since up to two client connections can exist, it's fine if there's already one, as long as they're of different types.
@@ -228,14 +234,20 @@ proc handle(
             return
     except Exception as e:
         panic("Locking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
+
     var
-        tAddy: TransportAddress = initTAddress(address)
+        tAddy: TransportAddress
         verified: tuple[
             ip: string,
             valid: bool,
             hasLive: bool,
             hasSync: bool
-        ] = network.verifyAddress(tAddy, handshake)
+        ]
+    try:
+        tAddy = initTAddress(address)
+    except TransportAddressError as e:
+        panic("Couldn't create a TransportAddress out of a peer's address: " & e.msg)
+    verified = network.verifyAddress(tAddy)
     if (not verified.valid) or socket.isOurPublicIP():
         socket.safeClose()
         try:
@@ -244,15 +256,36 @@ proc handle(
             panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
         return
 
+    var peer: Peer
     #If there's a sync socket, this is a live socket.
     if verified.hasSync:
-        network.peers[network.sync[verified.ip]].live = socket
+        try:
+            peer = network.peers[network.sync[verified.ip]]
+        except KeyError:
+            socket.safeClose()
+            try:
+                await network.unlockIP(address, lock)
+            except Exception as e:
+                panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
+            return
+
+        peer.live = socket
     #If there's a live socket, this is a sync socket.
     elif verified.hasLive:
-        network.peers[network.live[verified.ip]].sync = socket
+        try:
+            peer = network.peers[network.live[verified.ip]]
+        except KeyError:
+            socket.safeClose()
+            try:
+                await network.unlockIP(address, lock)
+            except Exception as e:
+                panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
+            return
+
+        peer.sync = socket
     #If there's no socket, we need to switch off of the handshake.
     else:
-        var peer: Peer = newPeer(ip)
+        peer = newPeer(verified.ip)
         network.add(peer)
         if handshake.content == MessageType.Handshake:
             peer.live = socket
@@ -263,7 +296,7 @@ proc handle(
 
     #Unlock the IP.
     try:
-        network.unlockIP(address, lock)
+        await network.unlockIP(address, lock)
     except Exception as e:
         panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
@@ -275,7 +308,7 @@ proc handle(
             network.disconnect(peer)
         except Exception as e:
             panic("Handling a Live socket threw an Exception despite catching all Exceptions: " & e.msg)
-    else
+    else:
         try:
             logDebug "Handling Sync Server connection", address = address
             asyncCheck network.syncManager.handle(peer)

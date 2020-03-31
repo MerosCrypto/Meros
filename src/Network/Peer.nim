@@ -83,7 +83,7 @@ proc syncRequest*(
     release(peer.syncLock)
 
 #Receive a message.
-proc recv(
+proc recv*(
     id: int,
     socket: StreamTransport,
     lengths: Table[MessageType, seq[int]]

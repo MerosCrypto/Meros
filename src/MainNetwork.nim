@@ -22,13 +22,9 @@ proc mainNetwork() {.forceCheck: [].} =
         functions.network.connect = proc (
             ip: string,
             port: int
-        ) {.forceCheck: [
-            PeerError
-        ], async.} =
+        ) {.forceCheck: [], async.} =
             try:
                 await network.connect(ip, port)
-            except PeerError as e:
-                raise e
             except Exception as e:
                 panic("Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
 
@@ -65,8 +61,6 @@ proc mainNetwork() {.forceCheck: [].} =
             for peer in peers:
                 try:
                     await network.connect(peer.ip, peer.port)
-                except PeerError:
-                    discard
                 except Exception as e:
                     panic("Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
 
