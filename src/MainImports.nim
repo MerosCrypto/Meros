@@ -15,13 +15,13 @@ import Wallet/MinerWallet
 import Wallet/Wallet
 
 #Transactions.
-import Database/Transactions/Transactions
+import Database/Transactions/Transactions as TransactionsFile
 
 #Consensus.
-import Database/Consensus/Consensus
+import Database/Consensus/Consensus as ConsensusFile
 
 #Merit.
-import Database/Merit/Merit
+import Database/Merit/Merit as MeritFile
 
 #DB.
 import Database/Filesystem/DB/DB

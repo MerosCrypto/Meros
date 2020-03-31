@@ -182,10 +182,10 @@ type
         ): Future[void] {.gcsafe.}
 
     MeritFunctionBox* = ref object
-        getHeight*: proc (): int {.inline, gcsafe, raises: [].}
-        getTail*: proc (): Hash[256] {.inline, gcsafe, raises: [].}
+        getHeight*: proc (): int {.gcsafe, raises: [].}
+        getTail*: proc (): Hash[256] {.gcsafe, raises: [].}
 
-        getRandomXCacheKey*: proc (): string {.inline, gcsafe, raises: [].}
+        getRandomXCacheKey*: proc (): string {.gcsafe, raises: [].}
 
         getBlockHashBefore*: proc (
             hash: Hash[256]
@@ -199,7 +199,7 @@ type
             IndexError
         ].}
 
-        getDifficulty*: proc (): uint64 {.inline, gcsafe, raises: [].}
+        getDifficulty*: proc (): uint64 {.gcsafe, raises: [].}
 
         getBlockByNonce*: proc (
             nonce: int
@@ -225,16 +225,16 @@ type
             IndexError
         ].}
 
-        getTotalMerit*: proc (): int {.inline, gcsafe, raises: [].}
-        getUnlockedMerit*: proc (): int {.inline, gcsafe, raises: [].}
+        getTotalMerit*: proc (): int {.gcsafe, raises: [].}
+        getUnlockedMerit*: proc (): int {.gcsafe, raises: [].}
         getMerit*: proc (
             nick: uint16,
             height: int
-        ): int {.inline, gcsafe, raises: [].}
+        ): int {.gcsafe, raises: [].}
 
         isUnlocked*: proc (
             nick: uint16
-        ): bool {.inline, gcsafe, raises: [].}
+        ): bool {.gcsafe, raises: [].}
 
         addBlockInternal*: proc (
             newBlock: SketchyBlock,

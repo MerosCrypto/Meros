@@ -1,6 +1,9 @@
 include MainMerit
 
 proc syncMeritRemovalTransactions(
+    functions: GlobalFunctionBox,
+    consensus: ref Consensus,
+    network: Network,
     removal: MeritRemoval
 ): Future[void] {.forceCheck: [
     ValueError
@@ -15,10 +18,10 @@ proc syncMeritRemovalTransactions(
             discard functions.transactions.getTransaction(hash)
         except IndexError:
             try:
-                discard consensus.getMeritRemovalTransaction(hash)
+                discard consensus[].getMeritRemovalTransaction(hash)
             except IndexError:
                 try:
-                    consensus.addMeritRemovalTransaction(await syncAwait network.syncManager.syncTransaction(hash))
+                    consensus[].addMeritRemovalTransaction(await syncAwait network.syncManager.syncTransaction(hash))
                 except DataMissing:
                     raise newLoggedException(ValueError, "Couldn't find the Transaction behind a MeritRemoval.")
                 except Exception as e:
@@ -45,314 +48,321 @@ proc syncMeritRemovalTransactions(
     except Exception as e:
         panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-proc mainConsensus() {.forceCheck: [].} =
-    {.gcsafe.}:
+proc mainConsensus(
+    params: ChainParams,
+    database: DB,
+    functions: GlobalFunctionBox,
+    merit: ref Merit,
+    consensus: ref Consensus,
+    transactions: ref Transactions,
+    network: Network
+) {.forceCheck: [].} =
+    try:
+        consensus[] = newConsensus(
+            functions,
+            database,
+            merit.state,
+            params.SEND_DIFFICULTY,
+            params.DATA_DIFFICULTY
+        )
+    except ValueError:
+        panic("Invalid initial Send/Data difficulty.")
+
+    functions.consensus.getSendDifficulty = proc (): uint32 {.inline, gcsafe, forceCheck: [].} =
+        consensus.filters.send.difficulty
+    functions.consensus.getDataDifficulty = proc (): uint32 {.inline, gcsafe, forceCheck: [].} =
+        consensus.filters.data.difficulty
+
+    #Provide access to if a holder is malicious.
+    functions.consensus.isMalicious = proc (
+        nick: uint16
+    ): bool {.inline, forceCheck: [].} =
+        consensus.malicious.hasKey(nick)
+
+    #Provides access to a holder's nonce.
+    functions.consensus.getArchivedNonce = proc (
+        holder: uint16
+    ): int {.inline, forceCheck: [].} =
+        consensus[].getArchivedNonce(holder)
+
+    #Get if a hash has an archived packet or not.
+    #Any hash with holder(s) that isn't unmentioned has an archived packet.
+    functions.consensus.hasArchivedPacket = proc (
+        hash: Hash[256]
+    ): bool {.forceCheck: [
+        IndexError
+    ].} =
+        var status: TransactionStatus
         try:
-            consensus = newConsensus(
-                functions,
-                database,
-                merit.state,
-                params.SEND_DIFFICULTY,
-                params.DATA_DIFFICULTY
-            )
-        except ValueError:
-            panic("Invalid initial Send/Data difficulty.")
+            status = consensus[].getStatus(hash)
+        except IndexError as e:
+            fcRaise e
 
-        functions.consensus.getSendDifficulty = proc (): uint32 {.inline, forceCheck: [].} =
-            consensus.filters.send.difficulty
-        functions.consensus.getDataDifficulty = proc (): uint32 {.inline, forceCheck: [].} =
-            consensus.filters.data.difficulty
+        return (status.holders.len != 0) and (not consensus.unmentioned.contains(hash))
 
-        #Provide access to if a holder is malicious.
-        functions.consensus.isMalicious = proc (
-            nick: uint16
-        ): bool {.inline, forceCheck: [].} =
-            consensus.malicious.hasKey(nick)
+    #Get a Transaction's status.
+    functions.consensus.getStatus = proc (
+        hash: Hash[256]
+    ): TransactionStatus {.forceCheck: [
+        IndexError
+    ].} =
+        try:
+            result = consensus[].getStatus(hash)
+        except IndexError:
+            raise newLoggedException(IndexError, "Couldn't find a Status for that hash.")
 
-        #Provides access to a holder's nonce.
-        functions.consensus.getArchivedNonce = proc (
-            holder: uint16
-        ): int {.inline, forceCheck: [].} =
-            consensus.getArchivedNonce(holder)
+    functions.consensus.getThreshold = proc (
+        epoch: int
+    ): int {.inline, forceCheck: [].} =
+        merit.state.nodeThresholdAt(epoch)
 
-        #Get if a hash has an archived packet or not.
-        #Any hash with holder(s) that isn't unmentioned has an archived packet.
-        functions.consensus.hasArchivedPacket = proc (
-            hash: Hash[256]
-        ): bool {.forceCheck: [
-            IndexError
-        ].} =
-            var status: TransactionStatus
-            try:
-                status = consensus.getStatus(hash)
-            except IndexError as e:
-                fcRaise e
-
-            return (status.holders.len != 0) and (not consensus.unmentioned.contains(hash))
-
-        #Get a Transaction's status.
-        functions.consensus.getStatus = proc (
-            hash: Hash[256]
-        ): TransactionStatus {.forceCheck: [
-            IndexError
-        ].} =
-            try:
-                result = consensus.getStatus(hash)
-            except IndexError:
-                raise newLoggedException(IndexError, "Couldn't find a Status for that hash.")
-
-        functions.consensus.getThreshold = proc (
-            epoch: int
-        ): int {.inline, forceCheck: [].} =
-            merit.state.nodeThresholdAt(epoch)
-
-        functions.consensus.getPending = proc (): tuple[
-            packets: seq[VerificationPacket],
+    functions.consensus.getPending = proc (): tuple[
+        packets: seq[VerificationPacket],
+        elements: seq[BlockElement],
+        aggregate: BLSSignature
+    ] {.forceCheck: [].} =
+        var pending: tuple[
+            packets: seq[SignedVerificationPacket],
             elements: seq[BlockElement],
             aggregate: BLSSignature
-        ] {.forceCheck: [].} =
-            var pending: tuple[
-                packets: seq[SignedVerificationPacket],
-                elements: seq[BlockElement],
-                aggregate: BLSSignature
-            ] = consensus.getPending()
+        ] = consensus[].getPending()
 
-            result = (cast[seq[VerificationPacket]](pending.packets), pending.elements, pending.aggregate)
+        result = (cast[seq[VerificationPacket]](pending.packets), pending.elements, pending.aggregate)
 
-        #Handle SignedVerifications.
-        functions.consensus.addSignedVerification = proc (
-            verif: SignedVerification
-        ) {.forceCheck: [
-            ValueError,
-            DataExists
-        ].} =
-            #Print that we're adding the SignedVerification.
-            logInfo "New Verification", holder = verif.holder, hash = verif.hash
+    #Handle SignedVerifications.
+    functions.consensus.addSignedVerification = proc (
+        verif: SignedVerification
+    ) {.gcsafe, forceCheck: [
+        ValueError,
+        DataExists
+    ].} =
+        #Print that we're adding the SignedVerification.
+        logInfo "New Verification", holder = verif.holder, hash = verif.hash
 
-            #Add the SignedVerification to the Consensus DAG.
-            var mr: bool
+        #Add the SignedVerification to the Consensus DAG.
+        var mr: bool
+        try:
+            consensus[].add(merit.state, verif)
+        #Invalid signature.
+        except ValueError as e:
+            raise e
+        #Already added.
+        except DataExists as e:
+            raise e
+        #MeritHolder committed a malicious act against the network.
+        except MaliciousMeritHolder as e:
+            #Flag the MeritRemoval.
+            consensus[].flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
+
+            #Set mr to true.
+            mr = true
+
+        if mr:
             try:
-                consensus.add(merit.state, verif)
-            #Invalid signature.
-            except ValueError as e:
-                raise e
-            #Already added.
-            except DataExists as e:
-                raise e
-            #MeritHolder committed a malicious act against the network.
-            except MaliciousMeritHolder as e:
-                #Flag the MeritRemoval.
-                consensus.flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
-
-                #Set mr to true.
-                mr = true
-
-            if mr:
-                try:
-                    #Broadcast the first MeritRemoval.
-                    functions.network.broadcast(
-                        MessageType.SignedMeritRemoval,
-                        cast[SignedMeritRemoval](consensus.malicious[verif.holder][0]).signedSerialize()
-                    )
-                except KeyError as e:
-                    panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
-                return
-
-            logInfo "Added Verification", holder = verif.holder, hash = verif.hash
-
-            #Broadcast the SignedVerification.
-            functions.network.broadcast(
-                MessageType.SignedVerification,
-                verif.signedSerialize()
-            )
-
-        #Handle VerificationPackets.
-        functions.consensus.addVerificationPacket = proc (
-            packet: VerificationPacket
-        ) {.forceCheck: [].} =
-            #Print that we're adding the VerificationPacket.
-            logInfo "New Verification Packet from Block", hash = packet.hash, holders = packet.holders
-
-            #Add the Verification to the Consensus DAG.
-            consensus.add(merit.state, packet)
-
-            logInfo "Added Verification Packet from Block", hash = packet.hash, holders = packet.holders
-
-        #Handle SendDifficulties.
-        functions.consensus.addSendDifficulty = proc (
-            sendDiff: SendDifficulty
-        ) {.forceCheck: [].} =
-            #Print that we're adding the SendDifficulty.
-            logInfo "New Send Difficulty from Block", holder = sendDiff.holder, difficulty = sendDiff.difficulty
-
-            #Add the SendDifficulty to the Consensus DAG.
-            consensus.add(merit.state, sendDiff)
-
-            logInfo "Added Send Difficulty from Block", holder = sendDiff.holder, difficulty = sendDiff.difficulty
-
-        #Handle SignedSendDifficulties.
-        functions.consensus.addSignedSendDifficulty = proc (
-            sendDiff: SignedSendDifficulty
-        ) {.forceCheck: [
-            ValueError,
-            DataExists
-        ].} =
-            #Print that we're adding the SendDifficulty.
-            logInfo "New Send Difficulty", holder = sendDiff.holder, difficulty = sendDiff.difficulty
-
-            #Add the SendDifficulty.
-            var mr: bool
-            try:
-                consensus.add(merit.state, sendDiff)
-            except ValueError as e:
-                raise e
-            except DataExists as e:
-                raise e
-            except MaliciousMeritHolder as e:
-                #Flag the MeritRemoval.
-                consensus.flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
-
-                #Set mr to true.
-                mr = true
-
-            if mr:
-                try:
-                    #Broadcast the first MeritRemoval.
-                    functions.network.broadcast(
-                        MessageType.SignedMeritRemoval,
-                        cast[SignedMeritRemoval](consensus.malicious[sendDiff.holder][0]).signedSerialize()
-                    )
-                except KeyError as e:
-                    panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
-                return
-
-            logInfo "Added Send Difficulty", holder = sendDiff.holder, difficulty = sendDiff.difficulty
-
-            #Broadcast the SendDifficulty.
-            functions.network.broadcast(
-                MessageType.SignedSendDifficulty,
-                sendDiff.signedSerialize()
-            )
-
-        #Handle DataDifficulties.
-        functions.consensus.addDataDifficulty = proc (
-            dataDiff: DataDifficulty
-        ) {.forceCheck: [].} =
-            #Print that we're adding the DataDifficulty.
-            logInfo "New Data Difficulty from Block", holder = dataDiff.holder, difficulty = dataDiff.difficulty
-
-            #Add the DataDifficulty to the Consensus DAG.
-            consensus.add(merit.state, dataDiff)
-
-            logInfo "Added Data Difficulty from Block", holder = dataDiff.holder, difficulty = dataDiff.difficulty
-
-        #Handle SignedDataDifficulties.
-        functions.consensus.addSignedDataDifficulty = proc (
-            dataDiff: SignedDataDifficulty
-        ) {.forceCheck: [
-            ValueError,
-            DataExists
-        ].} =
-            #Print that we're adding the DataDifficulty.
-            logInfo "New Data Difficulty", holder = dataDiff.holder, difficulty = dataDiff.difficulty
-
-            #Add the DataDifficulty.
-            var mr: bool = false
-            try:
-                consensus.add(merit.state, dataDiff)
-            except ValueError as e:
-                raise e
-            except DataExists as e:
-                raise e
-            except MaliciousMeritHolder as e:
-                #Flag the MeritRemoval.
-                consensus.flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
-
-                #Set mr to true.
-                mr = true
-
-            if mr:
-                try:
-                    #Broadcast the first MeritRemoval.
-                    functions.network.broadcast(
-                        MessageType.SignedMeritRemoval,
-                        cast[SignedMeritRemoval](consensus.malicious[dataDiff.holder][0]).signedSerialize()
-                    )
-                except KeyError as e:
-                    panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
-                return
-
-            logInfo "Added Data Difficulty", holder = dataDiff.holder, difficulty = dataDiff.difficulty
-
-            #Broadcast the DataDifficulty.
-            functions.network.broadcast(
-                MessageType.SignedDataDifficulty,
-                dataDiff.signedSerialize()
-            )
-
-        #Verify an unsigned MeritRemoval.
-        functions.consensus.verifyUnsignedMeritRemoval = proc (
-            mr: MeritRemoval
-        ): Future[void] {.forceCheck: [
-            ValueError,
-            DataExists
-        ], async.} =
-            try:
-                await syncMeritRemovalTransactions(mr)
-            except ValueError as e:
-                raise e
-            except Exception as e:
-                panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-            try:
-                consensus.verify(mr, merit.state.holders)
-            except ValueError as e:
-                raise e
-            except DataExists as e:
-                #If it's cached, it's already been verified and it's not archived yet.
-                if not consensus.malicious.hasKey(mr.holder):
-                    raise e
-
-                try:
-                    for cachedMR in consensus.malicious[mr.holder]:
-                        if mr.reason == cachedMR.reason:
-                            return
-                except KeyError:
-                    panic("Merit Holder confirmed to be in malicious doesn't have an entry in malicious.")
-                raise e
-
-        #Handle SignedMeritRemovals.
-        functions.consensus.addSignedMeritRemoval = proc (
-            mr: SignedMeritRemoval
-        ): Future[void] {.forceCheck: [
-            ValueError,
-            DataExists
-        ], async.} =
-            #Print that we're adding the MeritRemoval.
-            logInfo "New Merit Removal", holder = mr.holder, reason = mr.reason
-
-            try:
-                await syncMeritRemovalTransactions(mr)
-            except ValueError as e:
-                raise e
-            except Exception as e:
-                panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-            #Add the MeritRemoval.
-            try:
-                consensus.add(merit.blockchain, merit.state, mr)
-            except ValueError as e:
-                raise e
-            except DataExists as e:
-                raise e
-
-            logInfo "Added Merit Removal", holder = mr.holder, reason = mr.reason
-
-            #Broadcast the first MeritRemoval.
-            try:
+                #Broadcast the first MeritRemoval.
                 functions.network.broadcast(
                     MessageType.SignedMeritRemoval,
-                    cast[SignedMeritRemoval](consensus.malicious[mr.holder][0]).signedSerialize()
+                    cast[SignedMeritRemoval](consensus.malicious[verif.holder][0]).signedSerialize()
                 )
             except KeyError as e:
                 panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+            return
+
+        logInfo "Added Verification", holder = verif.holder, hash = verif.hash
+
+        #Broadcast the SignedVerification.
+        functions.network.broadcast(
+            MessageType.SignedVerification,
+            verif.signedSerialize()
+        )
+
+    #Handle VerificationPackets.
+    functions.consensus.addVerificationPacket = proc (
+        packet: VerificationPacket
+    ) {.gcsafe, forceCheck: [].} =
+        #Print that we're adding the VerificationPacket.
+        logInfo "New Verification Packet from Block", hash = packet.hash, holders = packet.holders
+
+        #Add the Verification to the Consensus DAG.
+        consensus[].add(merit.state, packet)
+
+        logInfo "Added Verification Packet from Block", hash = packet.hash, holders = packet.holders
+
+    #Handle SendDifficulties.
+    functions.consensus.addSendDifficulty = proc (
+        sendDiff: SendDifficulty
+    ) {.gcsafe, forceCheck: [].} =
+        #Print that we're adding the SendDifficulty.
+        logInfo "New Send Difficulty from Block", holder = sendDiff.holder, difficulty = sendDiff.difficulty
+
+        #Add the SendDifficulty to the Consensus DAG.
+        consensus[].add(merit.state, sendDiff)
+
+        logInfo "Added Send Difficulty from Block", holder = sendDiff.holder, difficulty = sendDiff.difficulty
+
+    #Handle SignedSendDifficulties.
+    functions.consensus.addSignedSendDifficulty = proc (
+        sendDiff: SignedSendDifficulty
+    ) {.gcsafe, forceCheck: [
+        ValueError,
+        DataExists
+    ].} =
+        #Print that we're adding the SendDifficulty.
+        logInfo "New Send Difficulty", holder = sendDiff.holder, difficulty = sendDiff.difficulty
+
+        #Add the SendDifficulty.
+        var mr: bool
+        try:
+            consensus[].add(merit.state, sendDiff)
+        except ValueError as e:
+            raise e
+        except DataExists as e:
+            raise e
+        except MaliciousMeritHolder as e:
+            #Flag the MeritRemoval.
+            consensus[].flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
+
+            #Set mr to true.
+            mr = true
+
+        if mr:
+            try:
+                #Broadcast the first MeritRemoval.
+                functions.network.broadcast(
+                    MessageType.SignedMeritRemoval,
+                    cast[SignedMeritRemoval](consensus.malicious[sendDiff.holder][0]).signedSerialize()
+                )
+            except KeyError as e:
+                panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+            return
+
+        logInfo "Added Send Difficulty", holder = sendDiff.holder, difficulty = sendDiff.difficulty
+
+        #Broadcast the SendDifficulty.
+        functions.network.broadcast(
+            MessageType.SignedSendDifficulty,
+            sendDiff.signedSerialize()
+        )
+
+    #Handle DataDifficulties.
+    functions.consensus.addDataDifficulty = proc (
+        dataDiff: DataDifficulty
+    ) {.gcsafe, forceCheck: [].} =
+        #Print that we're adding the DataDifficulty.
+        logInfo "New Data Difficulty from Block", holder = dataDiff.holder, difficulty = dataDiff.difficulty
+
+        #Add the DataDifficulty to the Consensus DAG.
+        consensus[].add(merit.state, dataDiff)
+
+        logInfo "Added Data Difficulty from Block", holder = dataDiff.holder, difficulty = dataDiff.difficulty
+
+    #Handle SignedDataDifficulties.
+    functions.consensus.addSignedDataDifficulty = proc (
+        dataDiff: SignedDataDifficulty
+    ) {.gcsafe, forceCheck: [
+        ValueError,
+        DataExists
+    ].} =
+        #Print that we're adding the DataDifficulty.
+        logInfo "New Data Difficulty", holder = dataDiff.holder, difficulty = dataDiff.difficulty
+
+        #Add the DataDifficulty.
+        var mr: bool = false
+        try:
+            consensus[].add(merit.state, dataDiff)
+        except ValueError as e:
+            raise e
+        except DataExists as e:
+            raise e
+        except MaliciousMeritHolder as e:
+            #Flag the MeritRemoval.
+            consensus[].flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
+
+            #Set mr to true.
+            mr = true
+
+        if mr:
+            try:
+                #Broadcast the first MeritRemoval.
+                functions.network.broadcast(
+                    MessageType.SignedMeritRemoval,
+                    cast[SignedMeritRemoval](consensus.malicious[dataDiff.holder][0]).signedSerialize()
+                )
+            except KeyError as e:
+                panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+            return
+
+        logInfo "Added Data Difficulty", holder = dataDiff.holder, difficulty = dataDiff.difficulty
+
+        #Broadcast the DataDifficulty.
+        functions.network.broadcast(
+            MessageType.SignedDataDifficulty,
+            dataDiff.signedSerialize()
+        )
+
+    #Verify an unsigned MeritRemoval.
+    functions.consensus.verifyUnsignedMeritRemoval = proc (
+        mr: MeritRemoval
+    ): Future[void] {.forceCheck: [
+        ValueError,
+        DataExists
+    ], async.} =
+        try:
+            await syncMeritRemovalTransactions(functions, consensus, network, mr)
+        except ValueError as e:
+            raise e
+        except Exception as e:
+            panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        try:
+            consensus[].verify(mr, merit.state.holders)
+        except ValueError as e:
+            raise e
+        except DataExists as e:
+            #If it's cached, it's already been verified and it's not archived yet.
+            if not consensus.malicious.hasKey(mr.holder):
+                raise e
+
+            try:
+                for cachedMR in consensus.malicious[mr.holder]:
+                    if mr.reason == cachedMR.reason:
+                        return
+            except KeyError:
+                panic("Merit Holder confirmed to be in malicious doesn't have an entry in malicious.")
+            raise e
+
+    #Handle SignedMeritRemovals.
+    functions.consensus.addSignedMeritRemoval = proc (
+        mr: SignedMeritRemoval
+    ): Future[void] {.gcsafe, forceCheck: [
+        ValueError,
+        DataExists
+    ], async.} =
+        #Print that we're adding the MeritRemoval.
+        logInfo "New Merit Removal", holder = mr.holder, reason = mr.reason
+
+        try:
+            await syncMeritRemovalTransactions(functions, consensus, network, mr)
+        except ValueError as e:
+            raise e
+        except Exception as e:
+            panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        #Add the MeritRemoval.
+        try:
+            consensus[].add(merit.blockchain, merit.state, mr)
+        except ValueError as e:
+            raise e
+        except DataExists as e:
+            raise e
+
+        logInfo "Added Merit Removal", holder = mr.holder, reason = mr.reason
+
+        #Broadcast the first MeritRemoval.
+        try:
+            functions.network.broadcast(
+                MessageType.SignedMeritRemoval,
+                cast[SignedMeritRemoval](consensus.malicious[mr.holder][0]).signedSerialize()
+            )
+        except KeyError as e:
+            panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)

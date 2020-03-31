@@ -203,11 +203,11 @@ proc handle(
 ): proc (
     server: StreamServer,
     socket: StreamTransport
-): Future[void] {.gcsafe.} {.inline, forceCheck: [].} =
+): Future[void] {.gcsafe.} {.inline, gcsafe, forceCheck: [].} =
     result = proc (
         server: StreamServer,
         socket: StreamTransport
-    ) {.gcsafe, forceCheck: [], async.} =
+    ) {.forceCheck: [], async.} =
         #Get their address.
         var address: string
         try:

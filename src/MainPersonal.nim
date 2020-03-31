@@ -1,124 +1,127 @@
 include MainTransactions
 
-proc mainPersonal() {.forceCheck: [].} =
-    {.gcsafe.}:
-        #Get the MinerWallet.
-        functions.personal.getMinerWallet = proc (): MinerWallet {.inline, forceCheck: [].} =
-            wallet.miner
+proc mainPersonal(
+    wallet: WalletDB,
+    functions: GlobalFunctionBox,
+    transactions: ref Transactions
+) {.forceCheck: [].} =
+    #Get the MinerWallet.
+    functions.personal.getMinerWallet = proc (): MinerWallet {.inline, forceCheck: [].} =
+        wallet.miner
 
-        #Get the Wallet.
-        functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =
-            wallet.wallet
+    #Get the Wallet.
+    functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =
+        wallet.wallet
 
-        #Set the Wallet's Mnemonic.
-        functions.personal.setMnemonic = proc (
-            mnemonic: string,
-            password: string
-        ) {.forceCheck: [
-            ValueError
-        ].} =
-            try:
-                wallet.setWallet(mnemonic, password)
-            except ValueError as e:
-                raise e
+    #Set the Wallet's Mnemonic.
+    functions.personal.setMnemonic = proc (
+        mnemonic: string,
+        password: string
+    ) {.forceCheck: [
+        ValueError
+    ].} =
+        try:
+            wallet.setWallet(mnemonic, password)
+        except ValueError as e:
+            raise e
 
-        #Create a Send Transaction.
-        functions.personal.send = proc (
-            destination: string,
-            amountStr: string
-        ): Hash[256] {.forceCheck: [
-            ValueError,
-            NotEnoughMeros
-        ].} =
-            var
-                #Wallet we're using.
-                child: HDWallet
-                #Spendable UTXOs.
-                utxos: seq[FundedInput]
-                #Amount in.
-                amountIn: uint64
-                #Amount out.
-                amountOut: uint64
-                #Send we'll end up creating.
-                send: Send
+    #Create a Send Transaction.
+    functions.personal.send = proc (
+        destination: string,
+        amountStr: string
+    ): Hash[256] {.forceCheck: [
+        ValueError,
+        NotEnoughMeros
+    ].} =
+        var
+            #Wallet we're using.
+            child: HDWallet
+            #Spendable UTXOs.
+            utxos: seq[FundedInput]
+            #Amount in.
+            amountIn: uint64
+            #Amount out.
+            amountOut: uint64
+            #Send we'll end up creating.
+            send: Send
 
-            #Grab a child.
-            try:
-                child = wallet.wallet.external.next()
-            except ValueError as e:
-                panic("Wallet has no usable keys: " & e.msg)
-            utxos = transactions.getUTXOs(child.publicKey)
-            try:
-                amountOut = parseUInt(amountStr)
-            except ValueError as e:
-                raise e
+        #Grab a child.
+        try:
+            child = wallet.wallet.external.next()
+        except ValueError as e:
+            panic("Wallet has no usable keys: " & e.msg)
+        utxos = transactions[].getUTXOs(child.publicKey)
+        try:
+            amountOut = parseUInt(amountStr)
+        except ValueError as e:
+            raise e
 
-            #Grab the needed UTXOs.
-            try:
-                var i: int = 0
-                while i < utxos.len:
-                    if transactions.loadSpenders(utxos[i]).len != 0:
-                        utxos.delete(i)
-                        continue
+        #Grab the needed UTXOs.
+        try:
+            var i: int = 0
+            while i < utxos.len:
+                if transactions[].loadSpenders(utxos[i]).len != 0:
+                    utxos.delete(i)
+                    continue
 
-                    #Add this UTXO's amount to the amount in.
-                    amountIn += transactions[utxos[i].hash].outputs[utxos[i].nonce].amount
+                #Add this UTXO's amount to the amount in.
+                amountIn += transactions[][utxos[i].hash].outputs[utxos[i].nonce].amount
 
-                    #Remove uneeded UTXOs.
-                    if amountIn >= amountOut:
-                        if i + 1 < utxos.len:
-                            utxos.delete(i + 1, utxos.len - 1)
-                        break
+                #Remove uneeded UTXOs.
+                if amountIn >= amountOut:
+                    if i + 1 < utxos.len:
+                        utxos.delete(i + 1, utxos.len - 1)
+                    break
 
-                    #Increment i.
-                    inc(i)
-            except IndexError as e:
-                panic("Couldn't load a transaction we have an UTXO for: " & e.msg)
+                #Increment i.
+                inc(i)
+        except IndexError as e:
+            panic("Couldn't load a transaction we have an UTXO for: " & e.msg)
 
-            #Make sure we have enough Meros.
-            if amountIn < amountOut:
-                raise newLoggedException(NotEnoughMeros, "Wallet didn't have enough money to create a Send.")
+        #Make sure we have enough Meros.
+        if amountIn < amountOut:
+            raise newLoggedException(NotEnoughMeros, "Wallet didn't have enough money to create a Send.")
 
-            #Create the outputs.
-            var outputs: seq[SendOutput]
-            try:
-                outputs = @[
-                    newSendOutput(destination.getEncodedData(), amountOut)
-                ]
-            except ValueError as e:
-                raise e
+        #Create the outputs.
+        var outputs: seq[SendOutput]
+        try:
+            outputs = @[
+                newSendOutput(destination.getEncodedData(), amountOut)
+            ]
+        except ValueError as e:
+            raise e
 
-            #Add a change output.
-            if amountIn != amountOut:
-                outputs.add(
-                    newSendOutput(
-                        child.publicKey,
-                        amountIn - amountOut
-                    )
+        #Add a change output.
+        if amountIn != amountOut:
+            outputs.add(
+                newSendOutput(
+                    child.publicKey,
+                    amountIn - amountOut
                 )
-
-            #Create the Send.
-            send = newSend(
-                utxos,
-                outputs
             )
 
-            #Sign the Send.
-            child.sign(send)
+        #Create the Send.
+        send = newSend(
+            utxos,
+            outputs
+        )
 
-            #Mine the Send.
-            send.mine(functions.consensus.getSendDifficulty())
+        #Sign the Send.
+        child.sign(send)
 
-            #Add the Send.
-            try:
-                functions.transactions.addSend(send)
-            except ValueError as e:
-                panic("Created a Send which was invalid: " & e.msg)
-            except DataExists as e:
-                panic("Created a Send which already existed: " & e.msg)
+        #Mine the Send.
+        send.mine(functions.consensus.getSendDifficulty())
 
-            #Retun the hash.
-            result = send.hash
+        #Add the Send.
+        try:
+            functions.transactions.addSend(send)
+        except ValueError as e:
+            panic("Created a Send which was invalid: " & e.msg)
+        except DataExists as e:
+            panic("Created a Send which already existed: " & e.msg)
+
+        #Retun the hash.
+        result = send.hash
 
     #Create a Data Transaction.
     functions.personal.data = proc (
@@ -190,7 +193,7 @@ proc mainPersonal() {.forceCheck: [].} =
         #Verify the tip exists.
         #It may not if we created a Data, saved the tip, rebooted without flushing the Transactions DB, and then tried to create a new Data.
         try:
-            discard transactions[tip]
+            discard transactions[][tip]
         except IndexError as e:
             raise newLoggedException(ValueError, "Creating a Data which competed with a previous Data thanks to missing Datas: " & e.msg)
 

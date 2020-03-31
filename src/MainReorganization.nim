@@ -1,10 +1,15 @@
 include MainDatabase
 
 proc reorganize(
+    database: DB,
+    merit: ref Merit,
+    consensus: ref Consensus,
+    transactions: ref Transactions,
+    network: Network,
     lastCommonBlock: Hash[256],
     queue: seq[Hash[256]],
     tail: BlockHeader
-): Future[seq[BlockHeader]] {.forceCheck: [
+): Future[seq[BlockHeader]] {.gcsafe, forceCheck: [
     ValueError,
     DataMissing
 ], async.} =
@@ -23,7 +28,7 @@ proc reorganize(
         reverted: tuple[
             miners: Table[BLSPublicKey, uint16],
             holders: seq[BLSPublicKey]
-        ] = merit.revertMinersAndHolders(lastCommonHeight)
+        ] = merit[].revertMinersAndHolders(lastCommonHeight)
         #Alternate miners/holders. Needed to verify the alternate headers.
         alternate: tuple[
             miners: Table[BLSPublicKey, uint16],
@@ -140,12 +145,12 @@ proc reorganize(
         #The first step is to revert everything to a point it can be advanced again.
         logInfo "Reorganizing", depth = merit.blockchain.height - lastCommonHeight, oldWork = oldWorkStr, newWork = newWorkStr
 
-        consensus.revert(merit.blockchain, merit.state, transactions, lastCommonHeight)
-        transactions.revert(merit.blockchain, lastCommonHeight)
-        merit.revert(lastCommonHeight)
+        consensus[].revert(merit.blockchain, merit.state, transactions[], lastCommonHeight)
+        transactions[].revert(merit.blockchain, lastCommonHeight)
+        merit[].revert(lastCommonHeight)
         database.commit(merit.blockchain.height)
-        transactions = newTransactions(database, merit.blockchain)
-        consensus.postRevert(merit.blockchain, merit.state, transactions)
+        transactions[] = newTransactions(database, merit.blockchain)
+        consensus[].postRevert(merit.blockchain, merit.state, transactions[])
         logInfo "Reverted"
 
         #We now return the headers so MainMerit adds the alternate Blocks.
