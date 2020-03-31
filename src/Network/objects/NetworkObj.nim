@@ -175,12 +175,10 @@ proc newNetwork*(
         try:
             discard setTimer(Moment.fromNow(seconds(10)), removeInactive)
         except OSError as e:
-            panic("Re-setting a timer to remove inactive peers failed: " & e.msg)
+            panic("Setting a timer to remove inactive peers failed: " & e.msg)
 
-    try:
-        discard setTimer(Moment.fromNow(seconds(10)), removeInactive)
-    except OSError as e:
-        panic("Setting a timer to remove inactive peers failed: " & e.msg)
+    #Call removeInactive so it registers the timer.
+    removeInactive()
 
 proc lockIP*(
     network: Network,
