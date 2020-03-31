@@ -239,7 +239,7 @@ proc unlockIP*(
     try:
         mask = network.masks[ip] and (not mask)
     except KeyError as e:
-        panic("Attempted to unlock an IP that was never locked.")
+        panic("Attempted to unlock an IP that was never locked: " & e.msg)
 
     #Delete the mask entirely if it's no longer used.
     if mask == 0:

@@ -45,6 +45,51 @@ import tables
 #String utils standard lib.
 import strutils
 
+#Verify the validity of an address.
+#If the address isn't IPv4, it's invalid (unfortunately).
+#If the IP is ours, it's invalid. We check later if it's our public IP.
+#If the IP already has both sockets, it's invalid.
+proc verifyAddress(
+    network: Network,
+    address: TransportAddress
+): tuple[
+    ip: string,
+    valid: bool,
+    hasLive: bool,
+    hasSync: bool
+] {.forceCheck: [].} =
+    if address.family != AddressFamily.IPv4:
+        result.valid = false
+        return
+
+    result.ip = char(address.address_v4[0]) & char(address.address_v4[1]) & char(address.address_v4[2]) & char(address.address_v4[3])
+    result.hasLive = network.live.hasKey(result.ip)
+    result.hasSync = network.sync.hasKey(result.ip)
+
+    result.valid = not (
+        #Most common case.
+        (result.hasLive and result.hasSync) or
+        #Most malicious case.
+        address.isLoopback() or
+        #A malicious case.
+        address.isMulticast() or
+        #Invalid address.
+        address.isZero() or
+        #This should never happen.
+        address.isUnspecified()
+    )
+
+proc isOurPublicIP(
+    socket: StreamTransport
+): bool {.forceCheck: [].} =
+    try:
+        result = socket.localAddress == socket.remoteAddress
+    #If we couldn't get the local or peer address, we can either panic or shut down this socket.
+    #The safe way to shut down the socket is to return that's invalid.
+    #That said, this can have side effects when we implement peer karma.
+    except OSError:
+        result = true
+
 #Connect to a new Peer.
 proc connect*(
     network: Network,
@@ -64,9 +109,9 @@ proc connect*(
     except Exception as e:
         panic("Locking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
-    #Create a TAddress and verify it.
+    #Create a TransportAddress and verify it.
     var
-        tAddy: TAddress = initTAddress(address & ":" & $port)
+        tAddy: TransportAddress = initTAddress(address, port)
         verified: tuple[
             ip: string,
             valid: bool,
@@ -84,6 +129,8 @@ proc connect*(
     var socket: StreamTransport
     try:
         socket = await connect(tAddy)
+        if socket.isOurPublicIP():
+            raise newException(Exception, "")
     except Exception:
         socket.safeClose()
         try:
@@ -177,18 +224,20 @@ proc handle(
     var lock: uint8 = if handshake.content == MessageType.Handshake: LIVE_IP_LOCK else: SYNC_IP_LOCK
     try:
         if not await network.lockIP(address, lock):
+            socket.safeClose()
             return
     except Exception as e:
         panic("Locking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
     var
-        tAddy: TAddress = initTAddress(address)
+        tAddy: TransportAddress = initTAddress(address)
         verified: tuple[
             ip: string,
             valid: bool,
             hasLive: bool,
             hasSync: bool
         ] = network.verifyAddress(tAddy, handshake)
-    if not verified.valid:
+    if (not verified.valid) or socket.isOurPublicIP():
+        socket.safeClose()
         try:
             await network.unlockIP(address, lock)
         except Exception as e:
