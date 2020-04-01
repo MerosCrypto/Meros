@@ -82,6 +82,21 @@ proc syncRequest*(
 
     release(peer.syncLock)
 
+#Custom recv which ignores lengths of 0.
+#While asyncnet recv(0) returned 0, chronos has different behavior. It returns all available.
+proc recv*(
+    socket: StreamTransport,
+    len: int
+): Future[seq[byte]] {.forceCheck: [
+    Exception
+], async.} =
+    if len == 0:
+        return
+    try:
+        return await socket.read(len)
+    except Exception as e:
+        raise e
+
 #Receive a message.
 proc recv*(
     id: int,
@@ -98,7 +113,7 @@ proc recv*(
 
     #Receive the content type.
     try:
-        msg = cast[string](await socket.read(1))
+        msg = cast[string](await socket.recv(1))
     except Exception as e:
         socket.safeClose("Couldn't receive from this socket: " & e.msg)
         raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
@@ -164,7 +179,7 @@ proc recv*(
                             size += len
 
                             try:
-                                msg &= cast[string](await socket.read(len))
+                                msg &= cast[string](await socket.recv(len))
                             except Exception as e:
                                 socket.safeClose("Couldn't receive from this socket: " & e.msg)
                                 raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
@@ -193,7 +208,7 @@ proc recv*(
                     for _ in 0 ..< msg[msg.len - INT_LEN ..< msg.len].fromBinary():
                         len += BYTE_LEN
                         try:
-                            msg &= cast[string](await socket.read(len))
+                            msg &= cast[string](await socket.recv(len))
                         except Exception as e:
                             socket.safeClose("Couldn't receive from this socket: " & e.msg)
                             raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
@@ -210,7 +225,7 @@ proc recv*(
                         if int(msg[^1]) == MERIT_REMOVAL_PREFIX:
                             for _ in 0 ..< 2:
                                 try:
-                                    msg &= cast[string](await socket.read(len))
+                                    msg &= cast[string](await socket.recv(len))
                                 except Exception as e:
                                     socket.safeClose("Couldn't receive from this socket: " & e.msg)
                                     raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
@@ -229,7 +244,7 @@ proc recv*(
                                         size += len
 
                                         try:
-                                            msg &= cast[string](await socket.read(len))
+                                            msg &= cast[string](await socket.recv(len))
                                         except Exception as e:
                                             socket.safeClose("Couldn't receive from this socket: " & e.msg)
                                             raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
@@ -255,7 +270,7 @@ proc recv*(
 
         #Recv the data.
         try:
-            msg &= cast[string](await socket.read(len))
+            msg &= cast[string](await socket.recv(len))
         except Exception as e:
             socket.safeClose("Couldn't receive from this socket: " & e.msg)
             raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
