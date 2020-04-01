@@ -211,7 +211,7 @@ proc lockIP*(
 
         #If we're currently attempting a client connection, or attempting to handle this type of server connection, set the result to false.
         if (
-            ((currMask and CLIENT_IP_LOCK) == CLIENT_IP_LOCK) or
+            (currMask == CLIENT_IP_LOCK) or
             ((currMask and mask) == mask)
         ):
             result = false
@@ -239,17 +239,17 @@ proc unlockIP*(
             panic("Failed to complete an async sleep: " & e.msg)
 
     #Remove the bitmask.
-    var mask: uint8
+    var newMask: uint8
     try:
-        mask = network.masks[ip] and (not mask)
+        newMask = network.masks[ip] and (not mask)
     except KeyError as e:
         panic("Attempted to unlock an IP that was never locked: " & e.msg)
 
     #Delete the mask entirely if it's no longer used.
-    if mask == 0:
+    if newMask == 0:
         network.masks.del(ip)
     else:
-        network.masks[ip] = mask
+        network.masks[ip] = newMask
 
     #Release the IP lock.
     release(network.ipLock)
