@@ -128,7 +128,7 @@ proc newNetwork*(
 
             #Close Peers who have been inactive for half a minute.
             if peer.isClosed or (peer.last + 30 <= getTime()):
-                peer.close()
+                peer.close("Peer is closed/inactive.")
                 network.live.del(peer.ip)
                 network.sync.del(peer.ip)
                 network.peers.del(network.ids[p])
@@ -271,7 +271,7 @@ proc disconnect*(
     peer: Peer
 ) {.forceCheck: [].} =
     #Close the peer and delete it from the tables.
-    peer.close()
+    peer.close("Ordered to disconnect the peer.")
     network.peers.del(peer.id)
     network.live.del(peer.ip)
     network.sync.del(peer.ip)
@@ -289,7 +289,7 @@ proc shutdown*(
     #Delete the first Peer until there is no first Peer.
     while network.ids.len != 0:
         try:
-            network.peers[network.ids[0]].close()
+            network.peers[network.ids[0]].close("Shutting down.")
         except Exception:
             discard
 

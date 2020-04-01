@@ -115,22 +115,22 @@ proc handle*(
             msg = await peer.recvLive()
         except SocketError:
             return
-        except PeerError:
-            peer.close()
+        except PeerError as e:
+            peer.close(e.msg)
             return
         except Exception as e:
             panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     if msg.content != MessageType.Handshake:
-        peer.close()
+        peer.close("Peer didn't send a Handshake.")
         return
 
     if int(msg.message[0]) != manager.protocol:
-        peer.close()
+        peer.close("Peer uses a different protocol.")
         return
 
     if int(msg.message[1]) != manager.network:
-        peer.close()
+        peer.close("Peer uses a different network.")
         return
 
     if (uint8(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE:
@@ -146,8 +146,8 @@ proc handle*(
             msg = await peer.recvLive()
         except SocketError:
             return
-        except PeerError:
-            peer.close()
+        except PeerError as e:
+            peer.close(e.msg)
             return
         except Exception as e:
             panic("Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -222,8 +222,8 @@ proc handle*(
 
                     try:
                         await manager.functions.consensus.addSignedMeritRemoval(mr)
-                    except ValueError:
-                        peer.close()
+                    except ValueError as e:
+                        peer.close(e.msg)
                         return
                     except DataExists:
                         continue
@@ -235,19 +235,21 @@ proc handle*(
 
                     try:
                         await manager.functions.merit.addBlockByHeader(header, false)
-                    except ValueError, DataMissing:
-                        peer.close()
+                    except ValueError as e:
+                        peer.close(e.msg)
                         return
+                    except DataMissing:
+                        continue
                     except DataExists:
                         continue
                     except Exception as e:
                         panic("Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 else:
-                    peer.close()
+                    peer.close("Peer sent an invalid Message type.")
                     return
-        except ValueError, DataMissing:
-            peer.close()
+        except ValueError as e:
+            peer.close(e.msg)
             return
         except Spam, DataExists:
             continue

@@ -65,7 +65,8 @@ func isClosed*(
 
 #Safely close a socket.
 proc safeClose*(
-    socket: StreamTransport
+    socket: StreamTransport,
+    reason: string
 ) {.forceCheck: [].} =
     if socket.isNil:
         return
@@ -75,12 +76,18 @@ proc safeClose*(
     except Exception:
         discard
 
+    if reason != "":
+        logInfo "Closing raw socket", reason = reason
+
 #Close a Peer.
 proc close*(
-    peer: Peer
+    peer: Peer,
+    reason: string
 ) {.forceCheck: [].} =
-    peer.live.safeClose()
-    peer.sync.safeClose()
+    peer.live.safeClose("")
+    peer.sync.safeClose("")
+
+    logInfo "Closing peer", reason = reason
 
 #Get random peers which meet criteria.
 #Helper function used in a few places.

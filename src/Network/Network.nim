@@ -137,7 +137,7 @@ proc connect*(
         if socket.isOurPublicIP():
             raise newException(Exception, "")
     except Exception:
-        socket.safeClose()
+        socket.safeClose("Either couldn't connect or connected to ourself.")
         try:
             await network.unlockIP(address)
         except Exception as e:
@@ -170,7 +170,7 @@ proc connect*(
         try:
             peer.live = await connect(tAddy)
         except Exception:
-            peer.close()
+            peer.close("Could only connect to this Peer for the sync socket.")
             try:
                 await network.unlockIP(address)
             except Exception as e:
@@ -225,8 +225,8 @@ proc handle(
             handshake = await recv(0, socket, HANDSHAKE_LENS)
         except SocketError:
             return
-        except PeerError:
-            socket.safeClose()
+        except PeerError as e:
+            socket.safeClose("Invalid handshake: " & e.msg)
             return
         except Exception as e:
             panic("Couldn't receive from a socket despite catching all errors recv throws: " & e.msg)
@@ -236,7 +236,7 @@ proc handle(
         var lock: uint8 = if handshake.content == MessageType.Handshake: LIVE_IP_LOCK else: SYNC_IP_LOCK
         try:
             if not await network.lockIP(address, lock):
-                socket.safeClose()
+                socket.safeClose("Already handling a socket of this type from this IP.")
                 return
         except Exception as e:
             panic("Locking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
@@ -250,12 +250,12 @@ proc handle(
                 hasSync: bool
             ]
         try:
-            tAddy = initTAddress(address)
+            tAddy = initTAddress(address, 0)
         except TransportAddressError as e:
             panic("Couldn't create a TransportAddress out of a peer's address: " & e.msg)
         verified = network.verifyAddress(tAddy)
         if (not verified.valid) or socket.isOurPublicIP():
-            socket.safeClose()
+            socket.safeClose("Invalid address or our own address.")
             try:
                 await network.unlockIP(address, lock)
             except Exception as e:
@@ -267,26 +267,16 @@ proc handle(
         if verified.hasSync:
             try:
                 peer = network.peers[network.sync[verified.ip]]
-            except KeyError:
-                socket.safeClose()
-                try:
-                    await network.unlockIP(address, lock)
-                except Exception as e:
-                    panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
-                return
+            except KeyError as e:
+                panic("Couldn't get a Peer who has a sync socket via the sync table: " & e.msg)
 
             peer.live = socket
         #If there's a live socket, this is a sync socket.
         elif verified.hasLive:
             try:
                 peer = network.peers[network.live[verified.ip]]
-            except KeyError:
-                socket.safeClose()
-                try:
-                    await network.unlockIP(address, lock)
-                except Exception as e:
-                    panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
-                return
+            except KeyError as e:
+                panic("Couldn't get a Peer who has a live socket via the live table: " & e.msg)
 
             peer.sync = socket
         #If there's no socket, we need to switch off of the handshake.

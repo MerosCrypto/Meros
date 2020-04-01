@@ -237,22 +237,22 @@ proc handle*(
             msg = await peer.recvSync()
         except SocketError:
             return
-        except PeerError:
-            peer.close()
+        except PeerError as e:
+            peer.close(e.msg)
             return
         except Exception as e:
             panic("Sync handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     if msg.content != MessageType.Syncing:
-        peer.close()
+        peer.close("Peer didn't send Syncing.")
         return
 
     if int(msg.message[0]) != manager.protocol:
-        peer.close()
+        peer.close("Peer uses a different protocol.")
         return
 
     if int(msg.message[1]) != manager.network:
-        peer.close()
+        peer.close("Peer uses a different network.")
         return
 
     if (uint8(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE:
@@ -337,8 +337,8 @@ proc handle*(
                         )
                     except ValueError as e:
                         panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                    except PeerError:
-                        peer.close()
+                    except PeerError as e:
+                        peer.close(e.msg)
                         return
 
                 of MessageType.BlockListRequest:
@@ -366,7 +366,7 @@ proc handle*(
                                 list &= last.toString()
                                 inc(i)
                         else:
-                            peer.close()
+                            peer.close("Peer requested an invalid BlockList direction.")
                             return
                     except IndexError:
                         discard
@@ -394,8 +394,8 @@ proc handle*(
                                     except ValueError as e:
                                         panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
                         )
-                    except PeerError:
-                        peer.close()
+                    except PeerError as e:
+                        peer.close(e.msg)
                         return
 
                 of MessageType.BlockHeaderRequest:
@@ -498,8 +498,8 @@ proc handle*(
                             ): void {.forceCheck: [].} =
                                 panic("Handling a DataMissing got to the parse function.")
                         )
-                    except PeerError:
-                        peer.close()
+                    except PeerError as e:
+                        peer.close(e.msg)
                         return
 
                 of MessageType.Claim:
@@ -524,8 +524,8 @@ proc handle*(
                         )
                     except ValueError as e:
                         panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                    except PeerError:
-                        peer.close()
+                    except PeerError as e:
+                        peer.close(e.msg)
                         return
 
                 of MessageType.Send:
@@ -552,8 +552,8 @@ proc handle*(
                         )
                     except ValueError as e:
                         panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                    except PeerError:
-                        peer.close()
+                    except PeerError as e:
+                        peer.close(e.msg)
                         return
 
                 of MessageType.Data:
@@ -580,8 +580,8 @@ proc handle*(
                         )
                     except ValueError as e:
                         panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                    except PeerError:
-                        peer.close()
+                    except PeerError as e:
+                        peer.close(e.msg)
                         return
 
                 of MessageType.BlockHeader:
@@ -606,8 +606,8 @@ proc handle*(
                         )
                     except ValueError as e:
                         panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                    except PeerError:
-                        peer.close()
+                    except PeerError as e:
+                        peer.close(e.msg)
                         return
 
                 of MessageType.BlockBody:
@@ -644,8 +644,8 @@ proc handle*(
                         )
                     except ValueError as e:
                         panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                    except PeerError:
-                        peer.close()
+                    except PeerError as e:
+                        peer.close(e.msg)
                         return
 
                 of MessageType.SketchHashes:
@@ -676,14 +676,14 @@ proc handle*(
                         )
                     except ValueError as e:
                         panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                    except PeerError:
-                        peer.close()
+                    except PeerError as e:
+                        peer.close(e.msg)
                         return
 
                 of MessageType.VerificationPacket:
                     #Verify there's a Sync Request to check.
                     if peer.requests.len == 0:
-                        peer.close()
+                        peer.close("Peer sent a VerificationPacket when we have no open requests.")
                         return
 
                     #Verify the Request is still active.
@@ -695,7 +695,7 @@ proc handle*(
                     try:
                         #Verify the Request is a SketchHashSyncRequests.
                         if not (manager.requests[peer.requests[0]] of SketchHashSyncRequests):
-                            peer.close()
+                            peer.close("Peer responded with a VerificationPacket to a different SyncRequest.")
                             return
 
                         request = cast[SketchHashSyncRequests](manager.requests[peer.requests[0]])
@@ -708,11 +708,11 @@ proc handle*(
                     #Parse and verify the initial packet.
                     try:
                         packets[0] = msg.message.parseVerificationPacket()
-                    except ValueError:
-                        peer.close()
+                    except ValueError as e:
+                        peer.close(e.msg)
                         return
                     if sketchHash(request.check.salt, packets[0]) != request.check.sketchHashes[0]:
-                        peer.close()
+                        peer.close("Peer sent the wrong VerificationPacket.")
                         return
 
                     var i: int = 1
@@ -721,8 +721,8 @@ proc handle*(
                             msg = await peer.recvSync()
                         except SocketError:
                             return
-                        except PeerError:
-                            peer.close()
+                        except PeerError as e:
+                            peer.close(e.msg)
                             return
                         except Exception as e:
                             panic("Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -733,11 +733,11 @@ proc handle*(
                         #Parse and verify the packet.
                         try:
                             packets[i] = msg.message.parseVerificationPacket()
-                        except ValueError:
-                            peer.close()
+                        except ValueError as e:
+                            peer.close(e.msg)
                             return
                         if sketchHash(request.check.salt, packets[i]) != request.check.sketchHashes[i]:
-                            peer.close()
+                            peer.close("Peer sent the wrong VerificationPacket.")
                             return
 
                         #Increment i.
@@ -759,7 +759,7 @@ proc handle*(
                     peer.requests.delete(0)
 
                 else:
-                    peer.close()
+                    peer.close("Peer sent an invalid Message type.")
                     return
 
             #Reply with the response, if there is one.
@@ -776,8 +776,8 @@ proc handle*(
             msg = await peer.recvSync()
         except SocketError:
             return
-        except PeerError:
-            peer.close()
+        except PeerError as e:
+            peer.close(e.msg)
             return
         except Exception as e:
             panic("Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)

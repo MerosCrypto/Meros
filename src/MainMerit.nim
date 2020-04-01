@@ -554,9 +554,11 @@ proc mainMerit(
     ) {.forceCheck: [], async.} =
         try:
             await functions.merit.addBlockByHashInternal(hash, true, blockLock)
-        except ValueError, DataMissing:
-            peer.close()
+        except ValueError as e:
+            peer.close(e.msg)
             return
+        except DataMissing:
+            discard
         except DataExists:
             discard
         except Exception as e:

@@ -40,7 +40,7 @@ proc sendLive*(
         if (await peer.live.write(msg.toString())) != (msg.message.len + 1):
             raise newException(Exception, "")
     except Exception as e:
-        peer.sync.safeClose()
+        peer.live.safeClose("Couldn't send to this live socket: " & e.msg)
         if not noRaise:
             raise newLoggedException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
 
@@ -56,7 +56,7 @@ proc sendSync*(
         if (await peer.sync.write(msg.toString())) != (msg.message.len + 1):
             raise newException(SocketError, "Couldn't send the full message over the Sync socket.")
     except Exception as e:
-        peer.sync.safeClose()
+        peer.sync.safeClose("Couldn't send to this sync socket: " & e.msg)
         if not noRaise:
             raise newLoggedException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
 
@@ -100,12 +100,12 @@ proc recv*(
     try:
         msg = cast[string](await socket.read(1))
     except Exception as e:
-        socket.safeClose()
+        socket.safeClose("Couldn't receive from this socket: " & e.msg)
         raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
 
     #If the message length is 0, the Peer disconnected.
     if msg.len == 0:
-        socket.safeClose()
+        socket.safeClose("Peer disconnected.")
         raise newLoggedException(SocketError, "Peer disconnected.")
 
     #Make sure the content is valid.
@@ -166,7 +166,8 @@ proc recv*(
                             try:
                                 msg &= cast[string](await socket.read(len))
                             except Exception as e:
-                                raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                                socket.safeClose("Couldn't receive from this socket: " & e.msg)
+                                raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
                             len = -1
 
                         len += MERIT_REMOVAL_ELEMENT_SET.getLength(
@@ -194,10 +195,12 @@ proc recv*(
                         try:
                             msg &= cast[string](await socket.read(len))
                         except Exception as e:
-                            raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                            socket.safeClose("Couldn't receive from this socket: " & e.msg)
+                            raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
                         size += len
                         if msg.len != size:
-                            raise newLoggedException(PeerError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
+                            socket.safeClose("Didn't get a full message.")
+                            raise newLoggedException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
                         try:
                             len = BLOCK_ELEMENT_SET.getLength(msg[^1])
@@ -209,10 +212,12 @@ proc recv*(
                                 try:
                                     msg &= cast[string](await socket.read(len))
                                 except Exception as e:
-                                    raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                                    socket.safeClose("Couldn't receive from this socket: " & e.msg)
+                                    raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
                                 size += len
                                 if msg.len != size:
-                                    raise newLoggedException(PeerError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
+                                    socket.safeClose("Didn't get a full message.")
+                                    raise newLoggedException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
                                 var elemI: int = msg.len - 1
                                 len = 0
@@ -226,7 +231,8 @@ proc recv*(
                                         try:
                                             msg &= cast[string](await socket.read(len))
                                         except Exception as e:
-                                            raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                                            socket.safeClose("Couldn't receive from this socket: " & e.msg)
+                                            raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
                                         len = 0
 
                                     len += MERIT_REMOVAL_ELEMENT_SET.getLength(
@@ -251,13 +257,13 @@ proc recv*(
         try:
             msg &= cast[string](await socket.read(len))
         except Exception as e:
-            socket.safeClose()
+            socket.safeClose("Couldn't receive from this socket: " & e.msg)
             raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
 
         #Add the length to the size and verify the size.
         size += len
         if msg.len != size:
-            socket.safeClose()
+            socket.safeClose("Didn't get the full message.")
             raise newLoggedException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
     #Create a proper Message to be returned.
