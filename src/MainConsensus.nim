@@ -55,7 +55,7 @@ proc mainConsensus(
     merit: Merit,
     consensus: ref Consensus,
     transactions: ref Transactions,
-    network: Network
+    network: ref Network
 ) {.forceCheck: [].} =
     try:
         consensus[] = newConsensus(
@@ -308,7 +308,7 @@ proc mainConsensus(
         DataExists
     ], async.} =
         try:
-            await syncMeritRemovalTransactions(functions, consensus, network, mr)
+            await syncMeritRemovalTransactions(functions, consensus, network[], mr)
         except ValueError as e:
             raise e
         except Exception as e:
@@ -342,7 +342,7 @@ proc mainConsensus(
         logInfo "New Merit Removal", holder = mr.holder, reason = mr.reason
 
         try:
-            await syncMeritRemovalTransactions(functions, consensus, network, mr)
+            await syncMeritRemovalTransactions(functions, consensus, network[], mr)
         except ValueError as e:
             raise e
         except Exception as e:

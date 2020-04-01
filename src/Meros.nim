@@ -93,8 +93,8 @@ proc main() {.thread.} =
     initLock(innerBlockLock[])
 
     mainDatabase(config, database, wallet)
-    mainMerit(params, database, wallet, functions, merit, consensus, transactions, network[], blockLock, innerBlockLock, lockedBlock)
-    mainConsensus(params, database, functions, merit[], consensus, transactions, network[])
+    mainMerit(params, database, wallet, functions, merit, consensus, transactions, network, blockLock, innerBlockLock, lockedBlock)
+    mainConsensus(params, database, functions, merit[], consensus, transactions, network)
     mainTransactions(database, wallet, functions, merit[], consensus, transactions)
     mainPersonal(wallet, functions, transactions)
     mainNetwork(params, config, functions, network)

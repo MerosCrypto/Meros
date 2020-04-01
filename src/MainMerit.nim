@@ -8,7 +8,7 @@ proc mainMerit(
     merit: ref Merit,
     consensus: ref Consensus,
     transactions: ref Transactions,
-    network: Network,
+    network: ref Network,
     blockLock: ref Lock,
     innerBlockLock: ref Lock,
     lockedBlock: ref Hash[256]
@@ -410,7 +410,7 @@ proc mainMerit(
                             merit[],
                             consensus,
                             transactions,
-                            network,
+                            network[],
                             lastCommonBlock,
                             queue,
                             header
