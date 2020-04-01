@@ -2,7 +2,7 @@ include MainDatabase
 
 proc reorganize(
     database: DB,
-    merit: ref Merit,
+    merit: Merit,
     consensus: ref Consensus,
     transactions: ref Transactions,
     network: Network,
@@ -28,7 +28,7 @@ proc reorganize(
         reverted: tuple[
             miners: Table[BLSPublicKey, uint16],
             holders: seq[BLSPublicKey]
-        ] = merit[].revertMinersAndHolders(lastCommonHeight)
+        ] = merit.revertMinersAndHolders(lastCommonHeight)
         #Alternate miners/holders. Needed to verify the alternate headers.
         alternate: tuple[
             miners: Table[BLSPublicKey, uint16],
@@ -147,7 +147,7 @@ proc reorganize(
 
         consensus[].revert(merit.blockchain, merit.state, transactions[], lastCommonHeight)
         transactions[].revert(merit.blockchain, lastCommonHeight)
-        merit[].revert(lastCommonHeight)
+        merit.revert(lastCommonHeight)
         database.commit(merit.blockchain.height)
         transactions[] = newTransactions(database, merit.blockchain)
         consensus[].postRevert(merit.blockchain, merit.state, transactions[])

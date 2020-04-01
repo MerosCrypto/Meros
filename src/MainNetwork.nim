@@ -4,10 +4,10 @@ proc mainNetwork(
     params: ChainParams,
     config: Config,
     functions: GlobalFunctionBox,
-    network: var Network
+    network: ref Network
 ) {.forceCheck: [].} =
     #Create the Network..
-    network = newNetwork(
+    network[] = newNetwork(
         params.NETWORK_PROTOCOL,
         params.NETWORK_ID,
         config.tcpPort,
@@ -17,7 +17,7 @@ proc mainNetwork(
     #Start listening, if we're supposed to.
     if config.server:
         try:
-            asyncCheck network.listen()
+            asyncCheck network[].listen()
         except Exception:
             discard
 
@@ -28,12 +28,12 @@ proc mainNetwork(
         port: int
     ) {.forceCheck: [], async.} =
         try:
-            await network.connect(ip, port)
+            await network[].connect(ip, port)
         except Exception as e:
             panic("Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
 
     #Get the peers we're connected to.
-    functions.network.getPeers = proc (): seq[Peer] {.inline, forceCheck: [].} =
+    functions.network.getPeers = proc (): seq[Peer] {.forceCheck: [].} =
         network.peers.getPeers(network.peers.len)
 
     #Broadcast a message.
@@ -42,7 +42,7 @@ proc mainNetwork(
         msg: string
     ) {.forceCheck: [].} =
         try:
-            asyncCheck network.broadcast(
+            asyncCheck network[].broadcast(
                 newMessage(
                     msgType,
                     msg
@@ -67,7 +67,7 @@ proc mainNetwork(
 
             for peer in peers:
                 try:
-                    await network.connect(peer.ip, peer.port)
+                    await network[].connect(peer.ip, peer.port)
                 except Exception as e:
                     panic("Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
         try:

@@ -407,7 +407,7 @@ proc mainMerit(
                     try:
                         altHeaders = await reorganize(
                             database,
-                            merit,
+                            merit[],
                             consensus,
                             transactions,
                             network,

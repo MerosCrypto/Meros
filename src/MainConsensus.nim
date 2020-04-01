@@ -52,7 +52,7 @@ proc mainConsensus(
     params: ChainParams,
     database: DB,
     functions: GlobalFunctionBox,
-    merit: ref Merit,
+    merit: Merit,
     consensus: ref Consensus,
     transactions: ref Transactions,
     network: Network
@@ -68,21 +68,21 @@ proc mainConsensus(
     except ValueError:
         panic("Invalid initial Send/Data difficulty.")
 
-    functions.consensus.getSendDifficulty = proc (): uint32 {.inline, forceCheck: [].} =
+    functions.consensus.getSendDifficulty = proc (): uint32 {.forceCheck: [].} =
         consensus.filters.send.difficulty
-    functions.consensus.getDataDifficulty = proc (): uint32 {.inline, forceCheck: [].} =
+    functions.consensus.getDataDifficulty = proc (): uint32 {.forceCheck: [].} =
         consensus.filters.data.difficulty
 
     #Provide access to if a holder is malicious.
     functions.consensus.isMalicious = proc (
         nick: uint16
-    ): bool {.inline, forceCheck: [].} =
+    ): bool {.forceCheck: [].} =
         consensus.malicious.hasKey(nick)
 
     #Provides access to a holder's nonce.
     functions.consensus.getArchivedNonce = proc (
         holder: uint16
-    ): int {.inline, forceCheck: [].} =
+    ): int {.forceCheck: [].} =
         consensus[].getArchivedNonce(holder)
 
     #Get if a hash has an archived packet or not.
@@ -113,7 +113,7 @@ proc mainConsensus(
 
     functions.consensus.getThreshold = proc (
         epoch: int
-    ): int {.inline, forceCheck: [].} =
+    ): int {.forceCheck: [].} =
         merit.state.nodeThresholdAt(epoch)
 
     functions.consensus.getPending = proc (): tuple[

@@ -4,7 +4,7 @@ include MainConsensus
 proc verify(
     wallet: WalletDB,
     functions: GlobalFunctionBox,
-    merit: ref Merit,
+    merit: Merit,
     consensus: ref Consensus,
     transaction: Transaction
 ) {.forceCheck: [], async.} =
@@ -44,7 +44,7 @@ proc mainTransactions(
     database: DB,
     wallet: WalletDB,
     functions: GlobalFunctionBox,
-    merit: ref Merit,
+    merit: Merit,
     consensus: ref Consensus,
     transactions: ref Transactions
 ) {.forceCheck: [].} =
@@ -65,7 +65,7 @@ proc mainTransactions(
     #Get a Transaction's spenders.
     functions.transactions.getSpenders = proc (
         input: Input
-    ): seq[Hash[256]] {.inline, forceCheck: [].} =
+    ): seq[Hash[256]] {.forceCheck: [].} =
         transactions[].loadSpenders(input)
 
     #Handle Claims.
@@ -190,35 +190,35 @@ proc mainTransactions(
     #Mark a Transaction as verified.
     functions.transactions.verify = proc (
         hash: Hash[256]
-    ) {.inline, forceCheck: [].} =
+    ) {.forceCheck: [].} =
         transactions[].verify(hash)
 
     #Mark a Transaction as unverified.
     functions.transactions.unverify = proc (
         hash: Hash[256]
-    ) {.inline, forceCheck: [].} =
+    ) {.forceCheck: [].} =
         transactions[].unverify(hash)
 
     #Mark a Transaction as beaten.
     functions.transactions.beat = proc (
         hash: Hash[256]
-    ) {.inline, forceCheck: [].} =
+    ) {.forceCheck: [].} =
         transactions[].beat(hash)
 
     #Discover a Transaction tree.
     functions.transactions.discoverTree = proc (
         hash: Hash[256]
-    ): seq[Hash[256]] {.inline, forceCheck: [].} =
+    ): seq[Hash[256]] {.forceCheck: [].} =
         transactions[].discoverTree(hash)
 
     #Prune a Transaction from the Database.
     functions.transactions.prune = proc (
         hash: Hash[256]
-    ) {.inline, forceCheck: [].} =
+    ) {.forceCheck: [].} =
         transactions[].prune(hash)
 
     #Get a key's UTXOs.
     functions.transactions.getUTXOs = proc (
         key: EdPublicKey
-    ): seq[FundedInput] {.inline, forceCheck: [].} =
+    ): seq[FundedInput] {.forceCheck: [].} =
         transactions[].getUTXOs(key)

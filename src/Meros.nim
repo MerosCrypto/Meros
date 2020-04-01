@@ -57,7 +57,8 @@ proc main() {.thread.} =
         transactions: ref Transactions = new(Transactions)
 
         #Network.
-        network: Network
+        #Same as Merit.
+        network: ref Network = new(ref Network)
 
         #RPC.
         rpc: RPC
@@ -76,7 +77,7 @@ proc main() {.thread.} =
         rpc.shutdown()
 
         #Shut down the Network.
-        network.shutdown()
+        network[].shutdown()
 
         #Shut down the databases.
         try:
@@ -92,9 +93,9 @@ proc main() {.thread.} =
     initLock(innerBlockLock[])
 
     mainDatabase(config, database, wallet)
-    mainMerit(params, database, wallet, functions, merit, consensus, transactions, network, blockLock, innerBlockLock, lockedBlock)
-    mainConsensus(params, database, functions, merit, consensus, transactions, network)
-    mainTransactions(database, wallet, functions, merit, consensus, transactions)
+    mainMerit(params, database, wallet, functions, merit, consensus, transactions, network[], blockLock, innerBlockLock, lockedBlock)
+    mainConsensus(params, database, functions, merit[], consensus, transactions, network[])
+    mainTransactions(database, wallet, functions, merit[], consensus, transactions)
     mainPersonal(wallet, functions, transactions)
     mainNetwork(params, config, functions, network)
     mainRPC(config, functions, rpc)

@@ -56,11 +56,11 @@ type
 
         getUTXOs*: proc (
             key: EdPublicKey
-        ): seq[FundedInput] {.inline, gcsafe, raises: [].}
+        ): seq[FundedInput] {.gcsafe, raises: [].}
 
         getSpenders*: proc (
             input: Input
-        ): seq[Hash[256]] {.inline, gcsafe, raises: [].}
+        ): seq[Hash[256]] {.gcsafe, raises: [].}
 
         addClaim*: proc (
             claim: Claim,
@@ -88,35 +88,35 @@ type
 
         verify*: proc (
             hash: Hash[256]
-        ) {.inline, gcsafe, raises: [].}
+        ) {.gcsafe, raises: [].}
 
         unverify*: proc (
             hash: Hash[256]
-        ) {.inline, gcsafe, raises: [].}
+        ) {.gcsafe, raises: [].}
 
         beat*: proc (
             hash: Hash[256]
-        ) {.inline, gcsafe, raises: [].}
+        ) {.gcsafe, raises: [].}
 
         discoverTree*: proc (
             hash: Hash[256]
-        ): seq[Hash[256]] {.inline, gcsafe, raises: [].}
+        ): seq[Hash[256]] {.gcsafe, raises: [].}
 
         prune*: proc (
             hash: Hash[256]
-        ) {.inline, gcsafe, raises: [].}
+        ) {.gcsafe, raises: [].}
 
     ConsensusFunctionBox* = ref object
-        getSendDifficulty*: proc (): uint32 {.inline, gcsafe, raises: [].}
-        getDataDifficulty*: proc (): uint32 {.inline, gcsafe, raises: [].}
+        getSendDifficulty*: proc (): uint32 {.gcsafe, raises: [].}
+        getDataDifficulty*: proc (): uint32 {.gcsafe, raises: [].}
 
         isMalicious*: proc (
             nick: uint16,
-        ): bool {.inline, gcsafe, raises: [].}
+        ): bool {.gcsafe, raises: [].}
 
         getArchivedNonce*: proc (
             holder: uint16
-        ): int {.inline, gcsafe, raises: [].}
+        ): int {.gcsafe, raises: [].}
 
         hasArchivedPacket*: proc (
             hash: Hash[256]
@@ -132,7 +132,7 @@ type
 
         getThreshold*: proc (
             epoch: int
-        ): int {.inline, gcsafe, raises: [].}
+        ): int {.gcsafe, raises: [].}
 
         getPending*: proc (): tuple[
             packets: seq[VerificationPacket],
@@ -279,9 +279,9 @@ type
         ].}
 
     PersonalFunctionBox* = ref object
-        getMinerWallet*: proc(): MinerWallet {.inline, gcsafe, raises: [].}
+        getMinerWallet*: proc(): MinerWallet {.gcsafe, raises: [].}
 
-        getWallet*: proc (): Wallet {.inline, gcsafe, raises: [].}
+        getWallet*: proc (): Wallet {.gcsafe, raises: [].}
 
         setMnemonic*: proc (
             mnemonic: string,
@@ -311,7 +311,7 @@ type
             port: int
         ): Future[void] {.gcsafe.}
 
-        getPeers*: proc (): seq[Peer] {.inline, gcsafe, raises: [].}
+        getPeers*: proc (): seq[Peer] {.gcsafe, raises: [].}
 
         broadcast*: proc (
             msgType: MessageType,

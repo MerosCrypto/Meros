@@ -54,7 +54,7 @@ proc newSketcher*(
     ): int {.gcsafe, raises: [].},
     isMalicious: proc (
         holder: uint16
-    ): bool {.inline, gcsafe, raises: [].},
+    ): bool {.gcsafe, raises: [].},
     packets: seq[VerificationPacket]
 ): Sketcher {.forceCheck: [].} =
     result = @[]

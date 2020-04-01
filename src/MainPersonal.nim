@@ -6,11 +6,11 @@ proc mainPersonal(
     transactions: ref Transactions
 ) {.forceCheck: [].} =
     #Get the MinerWallet.
-    functions.personal.getMinerWallet = proc (): MinerWallet {.inline, forceCheck: [].} =
+    functions.personal.getMinerWallet = proc (): MinerWallet {.forceCheck: [].} =
         wallet.miner
 
     #Get the Wallet.
-    functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =
+    functions.personal.getWallet = proc (): Wallet {.forceCheck: [].} =
         wallet.wallet
 
     #Set the Wallet's Mnemonic.
