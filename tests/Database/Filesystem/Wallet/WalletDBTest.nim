@@ -135,11 +135,12 @@ suite "WalletDB":
                     epoch,
                     proc (
                         hash: Hash[256]
-                    ): Transaction {.raises: [
+                    ): Transaction {.gcsafe, raises: [
                         IndexError
                     ].} =
                         try:
-                            result = lookup[hash]
+                            {.gcsafe.}:
+                                result = lookup[hash]
                         except KeyError as e:
                             raise newException(IndexError, e.msg)
                 )

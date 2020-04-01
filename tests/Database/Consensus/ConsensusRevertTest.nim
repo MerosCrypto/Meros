@@ -180,8 +180,9 @@ suite "ConsensusRevert":
                         claim,
                         proc (
                             h: uint16
-                        ): BLSPublicKey =
-                            holders[h].publicKey
+                        ): BLSPublicKey {.gcsafe.} =
+                            {.gcsafe.}:
+                                holders[h].publicKey
                     )
                 of Send as send:
                     for rawInput in send.inputs:
@@ -316,6 +317,7 @@ suite "ConsensusRevert":
             #Create a Block.
             if merit.blockchain.height < holders.len + 1:
                 newBlock = newBlankBlock(
+                    rx = merit.blockchain.rx,
                     last = merit.blockchain.tail.header.hash,
                     miner = holders[merit.blockchain.height - 1],
                     packets = packets,
@@ -326,6 +328,7 @@ suite "ConsensusRevert":
             else:
                 var holder: int = rand(high(holders) - 1)
                 newBlock = newBlankBlock(
+                    rx = merit.blockchain.rx,
                     last = merit.blockchain.tail.header.hash,
                     miner = holders[holder],
                     nick = uint16(holder),
@@ -649,8 +652,9 @@ suite "ConsensusRevert":
                                 claim,
                                 proc (
                                     h: uint16
-                                ): BLSPublicKey =
-                                    holders[h].publicKey
+                                ): BLSPublicKey {.gcsafe.} =
+                                    {.gcsafe.}:
+                                        holders[h].publicKey
                             )
                         of Send as send:
                             transactions.add(send)

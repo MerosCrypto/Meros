@@ -95,6 +95,7 @@ suite "Epochs":
             if (i == 1) or (rand(1) == 0):
                 holders.add(newMinerWallet())
                 newBlock = newBlankBlock(
+                    rx = blockchain.rx,
                     last = blockchain.tail.header.hash,
                     miner = holders[^1],
                     packets = packets
@@ -102,6 +103,7 @@ suite "Epochs":
             else:
                 miner = uint16(rand(high(holders)))
                 newBlock = newBlankBlock(
+                    rx = blockchain.rx,
                     last = blockchain.tail.header.hash,
                     nick = miner,
                     miner = holders[miner],
@@ -124,7 +126,7 @@ suite "Epochs":
             compare(epochs, newEpochs(blockchain))
 
     test "Empty.":
-        check(epochs.shift(newBlankBlock()).calculate(state, initTable[uint16, MeritRemoval]()).len == 0)
+        check(epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]()).len == 0)
 
     test "Perfect 1000.":
         var
@@ -143,7 +145,10 @@ suite "Epochs":
 
         for m in 0 ..< miners.len:
             #Give the miner Merit.
-            blockchain.processBlock(newBlankBlock(miner = miners[m]))
+            blockchain.processBlock(newBlankBlock(
+                rx = blockchain.rx,
+                miner = miners[m]
+            ))
             discard state.processBlock(blockchain)
 
             #Set the miner's nickname.
@@ -154,7 +159,10 @@ suite "Epochs":
             #Below, we mine 4 Blocks with a mod 3.
             #That adds 2, 1, and 1, respectively, balancing everything out.
             if m != 0:
-                blockchain.processBlock(newBlankBlock(miner = miners[m]))
+                blockchain.processBlock(newBlankBlock(
+                    rx = blockchain.rx,
+                    miner = miners[m]
+                ))
                 discard state.processBlock(blockchain)
 
             #Create the Verification.
@@ -166,6 +174,7 @@ suite "Epochs":
 
         #Shift on the packet.
         rewards = epochs.shift(newBlankBlock(
+            rx = blockchain.rx,
             packets = cast[seq[VerificationPacket]](@[packet])
         )).calculate(state, initTable[uint16, MeritRemoval]())
         check(rewards.len == 0)
@@ -173,6 +182,7 @@ suite "Epochs":
         #Shift 4 over.
         for e in 0 ..< 4:
             newBlock = newBlankBlock(
+                rx = blockchain.rx,
                 nick = uint16(e mod 3),
                 miner = miners[e mod 3]
             )
@@ -183,7 +193,7 @@ suite "Epochs":
             check(rewards.len == 0)
 
         #Next shift should result in a Rewards of 0: 334, 1: 333, and 2: 333.
-        rewards = epochs.shift(newBlankBlock()).calculate(state, initTable[uint16, MeritRemoval]())
+        rewards = epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]())
 
         #Veirfy the length.
         check(rewards.len == 3)
@@ -210,7 +220,10 @@ suite "Epochs":
             packet: SignedVerificationPacket = newSignedVerificationPacketObj(hash)
 
         #Give the miner Merit.
-        blockchain.processBlock(newBlankBlock(miner = miner))
+        blockchain.processBlock(newBlankBlock(
+            rx = blockchain.rx,
+            miner = miner
+        ))
         discard state.processBlock(blockchain)
 
         #Set the miner's nickname.
@@ -225,6 +238,7 @@ suite "Epochs":
 
         #Shift on the packet.
         rewards = epochs.shift(newBlankBlock(
+            rx = blockchain.rx,
             packets = cast[seq[VerificationPacket]](@[packet])
         )).calculate(state, initTable[uint16, MeritRemoval]())
         check(rewards.len == 0)
@@ -232,6 +246,7 @@ suite "Epochs":
         #Shift 4 over.
         for e in 0 ..< 4:
             newBlock = newBlankBlock(
+                rx = blockchain.rx,
                 nick = uint16(0),
                 miner = miner
             )
@@ -242,7 +257,7 @@ suite "Epochs":
             check(rewards.len == 0)
 
         #Next shift should result in a Rewards of 0: 1000.
-        rewards = epochs.shift(newBlankBlock()).calculate(state, initTable[uint16, MeritRemoval]())
+        rewards = epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]())
         check(rewards.len == 1)
         check(rewards[0].nick == 0)
         check(state.holders[0] == miner.publicKey)
@@ -264,7 +279,10 @@ suite "Epochs":
 
         for m in 0 ..< miners.len:
             #Give the miner Merit.
-            blockchain.processBlock(newBlankBlock(miner = miners[m]))
+            blockchain.processBlock(newBlankBlock(
+                rx = blockchain.rx,
+                miner = miners[m]
+            ))
             discard state.processBlock(blockchain)
 
             #Set the miner's nickname.
@@ -280,6 +298,7 @@ suite "Epochs":
 
             #Shift on the packet.
             rewards = epochs.shift(newBlankBlock(
+                rx = blockchain.rx,
                 packets = cast[seq[VerificationPacket]](@[packet])
             )).calculate(state, initTable[uint16, MeritRemoval]())
             check(rewards.len == 0)
@@ -288,11 +307,12 @@ suite "Epochs":
         for e in 0 ..< 3:
             if e < 2:
                 newBlock = newBlankBlock(
+                    rx = blockchain.rx,
                     nick = uint16(e),
                     miner = miners[e]
                 )
             else:
-                newBlock = newBlankBlock()
+                newBlock = newBlankBlock(rx = blockchain.rx)
             blockchain.processBlock(newBlock)
             discard state.processBlock(blockchain)
 
@@ -300,7 +320,7 @@ suite "Epochs":
             check(rewards.len == 0)
 
         #Next shift should result in a Rewards of 0: 500, 1: 500, and 2: 500.
-        rewards = epochs.shift(newBlankBlock()).calculate(state, initTable[uint16, MeritRemoval]())
+        rewards = epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]())
 
         #Veirfy the length.
         check(rewards.len == 2)

@@ -89,6 +89,7 @@ suite "StateDB":
 
                 #Create the Block with the new miner.
                 mining = newBlankBlock(
+                    rx = blockchain.rx,
                     last = blockchain.tail.header.hash,
                     miner = miners[miner],
                     elements = elements
@@ -99,6 +100,7 @@ suite "StateDB":
 
                 #Create the Block with the existing miner.
                 mining = newBlankBlock(
+                    rx = blockchain.rx,
                     last = blockchain.tail.header.hash,
                     nick = uint16(miner),
                     miner = miners[miner],

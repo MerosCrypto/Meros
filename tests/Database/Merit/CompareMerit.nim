@@ -89,7 +89,7 @@ proc compare*(
     check(bc1.difficulties == bc2.difficulties)
     check(bc1.chainWork == bc2.chainWork)
 
-    check(bc1.cacheKey == bc2.cacheKey)
+    check(bc1.rx.cacheKey == bc2.rx.cacheKey)
 
     check(bc1.miners.len == bc2.miners.len)
     for key in bc1.miners.keys():

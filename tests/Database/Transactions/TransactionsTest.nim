@@ -403,12 +403,14 @@ suite "Transactions":
             #Create a Block.
             if merit.blockchain.height == 1:
                 newBlock = newBlankBlock(
+                    rx = merit.blockchain.rx,
                     last = merit.blockchain.tail.header.hash,
                     miner = holder,
                     packets = packets
                 )
             else:
                 newBlock = newBlankBlock(
+                    rx = merit.blockchain.rx,
                     last = merit.blockchain.tail.header.hash,
                     miner = holder,
                     nick = uint16(0),
@@ -486,6 +488,7 @@ suite "Transactions":
 
         #Create one last Block for the latest Claims/Sends.
         newBlock = newBlankBlock(
+            rx = merit.blockchain.rx,
             last = merit.blockchain.tail.header.hash,
             miner = holder,
             nick = uint16(0),

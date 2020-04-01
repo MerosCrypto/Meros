@@ -176,6 +176,7 @@ suite "Consensus":
                 holders.add(miner)
 
                 mining = newBlankBlock(
+                    rx = merit.blockchain.rx,
                     last = merit.blockchain.tail.header.hash,
                     sketchSalt = char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                     miner = miner,
@@ -188,6 +189,7 @@ suite "Consensus":
                 miner = holders[h]
 
                 mining = newBlankBlock(
+                    rx = merit.blockchain.rx,
                     last = merit.blockchain.tail.header.hash,
                     sketchSalt = char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                     nick = uint16(h),

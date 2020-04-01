@@ -9,11 +9,13 @@ import mc_randomx
 
 type
     #Flags + VM + Cache.
-    RandomX* = ref object
+    RandomXObj* = object
         flags: RandomXFlags
         cacheKey*: string
         cache: RandomXCache
         vm: RandomXVM
+
+    RandomX* = ref RandomXObj
 
     #Hash type.
     RandomXHash* = HashCommon.Hash[256]
@@ -26,6 +28,15 @@ proc newRandomX*(): RandomX {.forceCheck: [].} =
     result.cache = allocCache(result.flags)
     result.cache.init(result.cacheKey)
     result.vm = createVM(result.flags, result.cache, nil)
+
+#Destructor to ensure the pointers are freed.
+proc `=destroy`*(
+    rx: var RandomXObj
+) {.forceCheck: [].} =
+    mc_randomx.dealloc(rx.cache)
+    rx.cache = nil
+    destroy rx.vm
+    rx.vm = nil
 
 #Set the key.
 proc setCacheKey*(
