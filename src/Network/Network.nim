@@ -219,7 +219,7 @@ proc handle(
             panic("Trying to handle a socket which isn't a socket: " & e.msg)
         logDebug "Accepting ", address = address
 
-        #Receive the Handhshake.
+        #Receive the Handshake.
         var handshake: Message
         try:
             handshake = await recv(0, socket, HANDSHAKE_LENS)
@@ -299,7 +299,7 @@ proc handle(
         if handshake.content == MessageType.Handshake:
             try:
                 logDebug "Handling Live Server connection", address = address
-                asyncCheck network.liveManager.handle(peer)
+                asyncCheck network.liveManager.handle(peer, handshake)
             except PeerError:
                 network.disconnect(peer)
             except Exception as e:
@@ -307,7 +307,7 @@ proc handle(
         else:
             try:
                 logDebug "Handling Sync Server connection", address = address
-                asyncCheck network.syncManager.handle(peer)
+                asyncCheck network.syncManager.handle(peer, handshake)
             except PeerError:
                 network.disconnect(peer)
             except Exception as e:
