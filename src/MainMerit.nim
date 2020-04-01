@@ -532,7 +532,13 @@ proc mainMerit(
             raise newLoggedException(DataExists, "Block was already added.")
 
         try:
-            await functions.merit.addBlockByHeaderInternal(await syncAwait network.syncManager.syncBlockHeader(hash), syncing, lock)
+            #This following line fails.
+            #await functions.merit.addBlockByHeaderInternal(await syncAwait network.syncManager.syncBlockHeader(hash), syncing, lock)
+            #https://github.com/nim-lang/Nim/issues/13815 is the reason why.
+            #That said, even when the issue is fixed, it'll be a while before 1.0.8.
+            #This longer code will last until at least then.
+            var header: BlockHeader = await syncAwait network.syncManager.syncBlockHeader(hash)
+            await functions.merit.addBlockByHeaderInternal(header, syncing, lock)
         except ValueError as e:
             raise e
         except DataMissing as e:
