@@ -135,3 +135,6 @@ suite "StateDB":
         #Check future thresholds.
         for t in len(thresholds) + 2 ..< len(thresholds) + 82:
             check(state.protocolThresholdAt(t) == min(state.unlocked + (t - 81), state.deadBlocks) div 2 + 1)
+
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        blockchain.rx = nil

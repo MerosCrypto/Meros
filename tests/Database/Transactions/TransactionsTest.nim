@@ -523,3 +523,6 @@ suite "Transactions":
 
         #Replay every Block/Transaction again.
         replay()
+
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        merit.blockchain.rx = nil

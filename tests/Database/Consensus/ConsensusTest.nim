@@ -120,6 +120,9 @@ suite "Consensus":
                 5
             ))
 
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        merit.blockchain.rx = nil
+
     test "Reloaded Consensus.":
         var
             #Database.
@@ -386,3 +389,6 @@ suite "Consensus":
 
             #Compare the Consensus DAGs.
             compare()
+
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        merit.blockchain.rx = nil

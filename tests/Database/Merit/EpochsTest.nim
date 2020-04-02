@@ -125,8 +125,14 @@ suite "Epochs":
             #Compare the Epochs.
             compare(epochs, newEpochs(blockchain))
 
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        blockchain.rx = nil
+
     test "Empty.":
         check(epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]()).len == 0)
+
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        blockchain.rx = nil
 
     test "Perfect 1000.":
         var
@@ -208,6 +214,9 @@ suite "Epochs":
         check(rewards[1].score == 333)
         check(rewards[2].score == 333)
 
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        blockchain.rx = nil
+
     test "Single.":
         var
             #Hash.
@@ -262,6 +271,9 @@ suite "Epochs":
         check(rewards[0].nick == 0)
         check(state.holders[0] == miner.publicKey)
         check(rewards[0].score == 1000)
+
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        blockchain.rx = nil
 
     test "Split.":
         var
@@ -333,3 +345,6 @@ suite "Epochs":
         #Verify the scores.
         check(rewards[0].score == 500)
         check(rewards[1].score == 500)
+
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        blockchain.rx = nil

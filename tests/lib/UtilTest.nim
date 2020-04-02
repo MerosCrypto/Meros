@@ -24,7 +24,7 @@ const
 suite "Util":
     setup:
         #Seed random.
-        randomize(int64(5))
+        randomize(int64(getTime()))
 
     test "Make sure leading 0 bytes are ignored.":
         check(0.toBinary() == "")
