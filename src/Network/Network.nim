@@ -51,7 +51,8 @@ import strutils
 #If the IP already has both sockets, it's invalid.
 proc verifyAddress(
     network: Network,
-    address: TransportAddress
+    address: TransportAddress,
+    handshake: MessageType
 ): tuple[
     ip: string,
     valid: bool,
@@ -67,7 +68,9 @@ proc verifyAddress(
     result.hasSync = network.sync.hasKey(result.ip)
 
     result.valid = not (
-        #Most common case.
+        #Most common cases.
+        (result.hasLive and (handshake == MessageType.Handshake)) or
+        (result.hasSync and (handshake == MessageType.Syncing)) or
         (result.hasLive and result.hasSync) or
         #A malicious case.
         address.isMulticast() or
@@ -78,6 +81,7 @@ proc verifyAddress(
     )
 
     #If the result is valid, we still need to check if it's a loopback.
+    #This will be the most malicious case.
     #Loopbacks are allowed IF it's 127.0.0.1 AND to a different node.
     #This could be merged with the above result.valid declaration statement yet isn't for readability.
     if (
@@ -142,7 +146,7 @@ proc connect*(
         tAddy = initTAddress(address, port)
     except TransportAddressError:
         return
-    verified = network.verifyAddress(tAddy)
+    verified = network.verifyAddress(tAddy, MessageType.End)
     if not verified.valid:
         try:
             await network.unlockIP(address)
@@ -268,7 +272,7 @@ proc handle(
             hasSync: bool
         ]
         try:
-            verified = network.verifyAddress(socket.remoteAddress)
+            verified = network.verifyAddress(socket.remoteAddress, handshake.content)
         except TransportError as e:
             panic("Trying to handle a socket which isn't a socket: " & e.msg)
         if (not verified.valid) or socket.isOurPublicIP():
