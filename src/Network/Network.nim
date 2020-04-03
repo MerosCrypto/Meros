@@ -69,8 +69,6 @@ proc verifyAddress(
     result.valid = not (
         #Most common case.
         (result.hasLive and result.hasSync) or
-        #Most malicious case.
-        address.isLoopback() or
         #A malicious case.
         address.isMulticast() or
         #Invalid address.
@@ -79,11 +77,33 @@ proc verifyAddress(
         address.isUnspecified()
     )
 
+    #If the result is valid, we still need to check if it's a loopback.
+    #Loopbacks are allowed IF it's 127.0.0.1 AND to a different node.
+    #This could be merged with the above result.valid declaration statement yet isn't for readability.
+    if (
+        result.valid and
+        address.isLoopback() and
+        (
+            #If the address isn't 127.0.0.1, this result isn't valid.
+            (address.address_v4 != [127'u8, 0, 0, 1]) or
+            #If we're listening and this is our port, this address isn't valid.
+            (
+                ((not network.server.isNil) and (network.server.status == ServerStatus.Running)) and
+                #This works for client connections as well because the source port will never equal the listening port.
+                (address.port == Port(network.liveManager.port))
+            )
+        )
+    ):
+        result.valid = false
+
 proc isOurPublicIP(
     socket: StreamTransport
 ): bool {.forceCheck: [].} =
     try:
-        result = socket.localAddress.address_v4 == socket.remoteAddress.address_v4
+        result = (
+            (socket.localAddress.address_v4 == socket.remoteAddress.address_v4) and
+            (socket.localAddress.address_v4 != [127'u8, 0, 0, 1])
+        )
     #If we couldn't get the local or peer address, we can either panic or shut down this socket.
     #The safe way to shut down the socket is to return that's invalid.
     #That said, this can have side effects when we implement peer karma.
@@ -241,19 +261,16 @@ proc handle(
         except Exception as e:
             panic("Locking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
-        var
-            tAddy: TransportAddress
-            verified: tuple[
-                ip: string,
-                valid: bool,
-                hasLive: bool,
-                hasSync: bool
-            ]
+        var verified: tuple[
+            ip: string,
+            valid: bool,
+            hasLive: bool,
+            hasSync: bool
+        ]
         try:
-            tAddy = initTAddress(address, 0)
-        except TransportAddressError as e:
-            panic("Couldn't create a TransportAddress out of a peer's address: " & e.msg)
-        verified = network.verifyAddress(tAddy)
+            verified = network.verifyAddress(socket.remoteAddress)
+        except TransportError as e:
+            panic("Trying to handle a socket which isn't a socket: " & e.msg)
         if (not verified.valid) or socket.isOurPublicIP():
             socket.safeClose("Invalid address or our own address.")
             try:
