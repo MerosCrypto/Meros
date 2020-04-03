@@ -187,7 +187,7 @@ proc connect*(
         panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
     #Handle the connections.
-    logDebug "Handling Client connection", address = address, port = port
+    logDebug "Handling Client connection", id = peer.id, address = address, port = port
 
     try:
         if not verified.hasSync:
@@ -271,6 +271,7 @@ proc handle(
                 panic("Couldn't get a Peer who has a sync socket via the sync table: " & e.msg)
 
             peer.live = socket
+            network.live[verified.ip] = peer.id
         #If there's a live socket, this is a sync socket.
         elif verified.hasLive:
             try:
@@ -279,6 +280,7 @@ proc handle(
                 panic("Couldn't get a Peer who has a live socket via the live table: " & e.msg)
 
             peer.sync = socket
+            network.sync[verified.ip] = peer.id
         #If there's no socket, we need to switch off of the handshake.
         else:
             peer = newPeer(verified.ip)
@@ -298,7 +300,7 @@ proc handle(
 
         if handshake.content == MessageType.Handshake:
             try:
-                logDebug "Handling Live Server connection", address = address
+                logDebug "Handling Live Server connection", id = peer.id, address = address
                 asyncCheck network.liveManager.handle(peer, handshake)
             except PeerError:
                 network.disconnect(peer)
@@ -306,7 +308,7 @@ proc handle(
                 panic("Handling a Live socket threw an Exception despite catching all Exceptions: " & e.msg)
         else:
             try:
-                logDebug "Handling Sync Server connection", address = address
+                logDebug "Handling Sync Server connection", id = peer.id, address = address
                 asyncCheck network.syncManager.handle(peer, handshake)
             except PeerError:
                 network.disconnect(peer)

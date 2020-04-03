@@ -77,7 +77,7 @@ proc safeClose*(
         discard
 
     if reason != "":
-        logInfo "Closing raw socket", reason = reason
+        logDebug "Closing raw socket", reason = reason
 
 #Close a Peer.
 proc close*(
@@ -87,7 +87,7 @@ proc close*(
     peer.live.safeClose("")
     peer.sync.safeClose("")
 
-    logInfo "Closing peer", reason = reason
+    logDebug "Closing peer", id = peer.id, reason = reason
 
 #Get random peers which meet criteria.
 #Helper function used in a few places.
