@@ -348,7 +348,7 @@ proc listen*(
 
     #Create the server.
     try:
-        network.server = createStreamServer(initTAddress("127.0.0.1", network.liveManager.port), handle(network), {ReuseAddr})
+        network.server = createStreamServer(initTAddress("0.0.0.0", network.liveManager.port), handle(network), {ReuseAddr})
     except OSError as e:
         panic("Couldn't create the server due to an OSError: " & e.msg)
     except TransportAddressError as e:
