@@ -55,8 +55,8 @@ def HundredSixSignedElementsTest(
         #Send the Element.
         rpc.meros.signedElement(elem)
 
-        #Sleep for a bit.
-        sleep(0.2)
+        #Sleep for thirty seconds to make sure Meros realizes our connection is dead.
+        sleep(30)
 
         #Verify the node didn't crash.
         try:

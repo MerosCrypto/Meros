@@ -9,7 +9,7 @@ import objects/HashObj
 export HashObj
 
 #Empty uint8 'array'.
-var EmptyHash*: ptr uint8
+const EMPTY_HASH*: ptr uint8 = nil
 
 #toHash functions.
 proc toHash*(

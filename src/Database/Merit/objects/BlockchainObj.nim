@@ -41,11 +41,11 @@ type Blockchain* = object
     #Chain work.
     chainWork*: StUInt[128]
 
-    #RandomX Cache Key.
-    cacheKey*: string
-
     #Miners from past blocks. Serves as a reverse lookup.
     miners*: Table[BLSPublicKey, uint16]
+
+    #RandomX instance.
+    rx*: RandomX
 
 #Calculate a proper difficulty
 proc calculateDifficulties*(
@@ -87,19 +87,19 @@ proc newBlockchainObj*(
             blocks: @[],
             difficulties: @[],
 
-            miners: initTable[BLSPublicKey, uint16]()
+            miners: initTable[BLSPublicKey, uint16](),
+
+            rx: newRandomX()
         )
     except ValueError as e:
         panic("Couldn't convert the genesis to a hash, despite being padded to 32 bytes: " & e.msg)
 
     #Get the RandomX key from the DB.
     try:
-        result.cacheKey = result.db.loadKey()
-        setRandomXKey(result.cacheKey)
+        result.rx.setCacheKey(result.db.loadKey())
     except DBReadError:
-        result.cacheKey = genesis
-        setRandomXKey(result.cacheKey)
-        result.db.saveKey(result.cacheKey)
+        result.rx.setCacheKey(genesis)
+        result.db.saveKey(result.rx.cacheKey)
 
     #Grab the height and tip from the DB.
     var tip: Hash[256]
@@ -135,7 +135,7 @@ proc newBlockchainObj*(
                 0,
                 newBLSSignature()
             )
-            hash(genesisBlock.header)
+            result.rx.hash(genesisBlock.header)
         except ValueError as e:
             panic("Couldn't create the Genesis Block due to a ValueError: " & e.msg)
         except BLSError as e:
@@ -208,9 +208,8 @@ proc add*(
         except DBReadError:
             panic("Couldn't load the latest RandomX key.")
 
-        blockchain.cacheKey = key
-        setRandomXKey(blockchain.cacheKey)
-        blockchain.db.saveKey(blockchain.cacheKey)
+        blockchain.rx.setCacheKey(key)
+        blockchain.db.saveKey(blockchain.rx.cacheKey)
 
 #Rewind the cache a Block.
 proc rewindCache*(

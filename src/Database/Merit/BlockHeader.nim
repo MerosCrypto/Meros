@@ -39,19 +39,20 @@ import algorithm
 
 #Sign and hash the header.
 proc hash*(
+    rx: RandomX,
     miner: MinerWallet,
     header: var BlockHeader,
     proof: uint32
 ) {.forceCheck: [].} =
     header.proof = proof
-    miner.hash(header, header.serializeHash(), proof)
+    rx.hash(miner, header, header.serializeHash(), proof)
 
 #Hash the header.
 proc hash*(
+    rx: RandomX,
     header: var BlockHeader
 ) {.forceCheck: [].} =
-    #header.hash would be preferred yet it failed to compile. Likely due to the hash field.
-    hash(
+    rx.hash(
         header,
         header.serializeHash()
     )
@@ -120,7 +121,8 @@ proc newBlockHeader*(
     miner: BLSPublicKey,
     time: uint32,
     proof: uint32 = 0,
-    signature: BLSSignature = newBLSSignature()
+    signature: BLSSignature = newBLSSignature(),
+    rx: RandomX = nil
 ): BlockHeader {.forceCheck: [].} =
     result = newBlockHeaderObj(
         version,
@@ -134,8 +136,8 @@ proc newBlockHeader*(
         proof,
         signature
     )
-    if not signature.isInf:
-        hash(result)
+    if (not signature.isInf) and (not rx.isNil):
+        rx.hash(result)
 
 proc newBlockHeader*(
     version: uint32,
@@ -147,7 +149,8 @@ proc newBlockHeader*(
     miner: uint16,
     time: uint32,
     proof: uint32 = 0,
-    signature: BLSSignature = newBLSSignature()
+    signature: BLSSignature = newBLSSignature(),
+    rx: RandomX = nil
 ): BlockHeader {.forceCheck: [].} =
     result = newBlockHeaderObj(
         version,
@@ -161,5 +164,5 @@ proc newBlockHeader*(
         proof,
         signature
     )
-    if not signature.isInf:
-        hash(result)
+    if (not signature.isInf) and (not rx.isNil):
+        rx.hash(result)

@@ -4,6 +4,9 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
+#Socket object.
+import SocketObj
+
 #Locks standard lib.
 import locks
 
@@ -12,9 +15,6 @@ import tables
 
 #Random standard lib.
 import random
-
-#Networking standard lib.
-import asyncnet
 
 #Service bytes.
 const SERVER_SERVICE*: uint8 = 0b10000000
@@ -40,8 +40,8 @@ type Peer* = ref object
     requests*: seq[int]
 
     #Sockets.
-    live*: AsyncSocket
-    sync*: AsyncSocket
+    live*: Socket
+    sync*: Socket
 
 #Constructor.
 func newPeer*(
@@ -58,29 +58,20 @@ func isClosed*(
     peer: Peer
 ): bool {.inline, forceCheck: [].} =
     (
-        peer.live.isNil or peer.live.isClosed()
+        peer.live.isNil or peer.live.closed
     ) and (
-        peer.sync.isNil or peer.sync.isClosed()
+        peer.sync.isNil or peer.sync.closed
     )
-
-#Safely close a Socket.
-proc safeClose*(
-    socket: AsyncSocket
-) {.forceCheck: [].} =
-    if socket.isNil:
-        return
-
-    try:
-        socket.close()
-    except Exception:
-        discard
 
 #Close a Peer.
 proc close*(
-    peer: Peer
+    peer: Peer,
+    reason: string
 ) {.forceCheck: [].} =
-    peer.live.safeClose()
-    peer.sync.safeClose()
+    peer.live.safeClose("")
+    peer.sync.safeClose("")
+
+    logDebug "Closing peer", id = peer.id, reason = reason
 
 #Get random peers which meet criteria.
 #Helper function used in a few places.
@@ -107,7 +98,7 @@ proc getPeers*(
                 continue
 
             #Skip peers who don't have a Live socket if that's a requirement.
-            if live and (peer.live.isNil or peer.live.isClosed):
+            if live and (peer.live.isNil or peer.live.closed):
                 dec(peersLeft)
                 if req > peersLeft:
                     dec(req)

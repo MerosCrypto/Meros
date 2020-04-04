@@ -1,18 +1,15 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #Hash lib.
 import ../../../lib/Hash
+
+#Util lib.
+import ../../../lib/Util
 
 #Wallet libs.
 import ../../../Wallet/Wallet
 import ../../../Wallet/MinerWallet
-
-#Transactions lib.
-import ../../../Database/Transactions/Transactions
 
 #GlobalFunctionBox object.
 import ../../../objects/GlobalFunctionBoxObj

@@ -8,6 +8,9 @@ from PythonTests.Tests.Errors import TestError
 #RPC class.
 from PythonTests.Meros.RPC import RPC
 
+#Sleep standard function.
+from time import sleep
+
 #Verify a Transaction.
 def verifyTransaction(
     rpc: RPC,
@@ -21,5 +24,8 @@ def verifyTransactions(
     rpc: RPC,
     transactions: Transactions
 ) -> None:
+    #Sleep to ensure data races aren't a problem.
+    sleep(2)
+
     for tx in transactions.txs:
         verifyTransaction(rpc, transactions.txs[tx])

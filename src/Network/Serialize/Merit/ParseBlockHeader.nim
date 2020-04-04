@@ -80,6 +80,7 @@ proc parseBlockHeader*(
     result.hash = hash
 
 proc parseBlockHeader*(
+    rx: RandomX,
     headerStr: string
 ): BlockHeader {.forceCheck: [
     ValueError
@@ -90,7 +91,7 @@ proc parseBlockHeader*(
         raise e
 
     #Set the BlockHeader's actual hash.
-    hash(
+    rx.hash(
         result,
         headerStr[0 ..< (
                 BLOCK_HEADER_DATA_LEN +

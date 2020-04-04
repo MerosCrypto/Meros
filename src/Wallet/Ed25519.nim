@@ -135,7 +135,6 @@ func `$`*(
     data.toString().toHex()
 
 #Aggregate Public Keys.
-var blankScalar: array[32, cuchar]
 proc aggregate*(
     keys: var seq[EdPublicKey]
 ): EdPublicKey {.forceCheck: [].} =
@@ -167,6 +166,7 @@ proc aggregate*(
         serialize(addr bytes[0], addr keyPoint)
         keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
 
+        var blankScalar: array[32, cuchar]
         multiplyScalar(
             addr a,
             cast[ptr cuchar](addr keyHash.data[0]),

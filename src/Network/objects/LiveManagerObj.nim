@@ -40,8 +40,8 @@ import ../Serialize/Transactions/ParseClaim
 import ../Serialize/Transactions/ParseSend
 import ../Serialize/Transactions/ParseData
 
-#Async standard lib.
-import asyncdispatch
+#Chronos external lib.
+import chronos
 
 #Tables standard lib.
 import tables
@@ -91,10 +91,10 @@ func updateServices*(
 #Handle a new connection.
 proc handle*(
     manager: LiveManager,
-    peer: Peer
+    peer: Peer,
+    handshake: Message = newMessage(MessageType.End)
 ) {.forceCheck: [], async.} =
     #Send our Handshake and get their Handshake.
-    var msg: Message
     try:
         await peer.sendLive(newMessage(
             MessageType.Handshake,
@@ -109,26 +109,28 @@ proc handle*(
     except Exception as e:
         panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    try:
-        msg = await peer.recvLive()
-    except SocketError:
-        return
-    except PeerError:
-        peer.close()
-        return
-    except Exception as e:
-        panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
+    var msg: Message = handshake
+    if msg.content == MessageType.End:
+        try:
+            msg = await peer.recvLive()
+        except SocketError:
+            return
+        except PeerError as e:
+            peer.close(e.msg)
+            return
+        except Exception as e:
+            panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     if msg.content != MessageType.Handshake:
-        peer.close()
+        peer.close("Peer didn't send a Handshake.")
         return
 
     if int(msg.message[0]) != manager.protocol:
-        peer.close()
+        peer.close("Peer uses a different protocol.")
         return
 
     if int(msg.message[1]) != manager.network:
-        peer.close()
+        peer.close("Peer uses a different network.")
         return
 
     if (uint8(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE:
@@ -144,8 +146,8 @@ proc handle*(
             msg = await peer.recvLive()
         except SocketError:
             return
-        except PeerError:
-            peer.close()
+        except PeerError as e:
+            peer.close(e.msg)
             return
         except Exception as e:
             panic("Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -220,8 +222,8 @@ proc handle*(
 
                     try:
                         await manager.functions.consensus.addSignedMeritRemoval(mr)
-                    except ValueError:
-                        peer.close()
+                    except ValueError as e:
+                        peer.close(e.msg)
                         return
                     except DataExists:
                         continue
@@ -229,23 +231,25 @@ proc handle*(
                         panic("Adding a SignedMeritRemoval threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 of MessageType.BlockHeader:
-                    var header: BlockHeader = msg.message.parseBlockHeader()
+                    var header: BlockHeader = manager.functions.merit.getRandomX().parseBlockHeader(msg.message)
 
                     try:
                         await manager.functions.merit.addBlockByHeader(header, false)
-                    except ValueError, DataMissing:
-                        peer.close()
+                    except ValueError as e:
+                        peer.close(e.msg)
                         return
+                    except DataMissing:
+                        continue
                     except DataExists:
                         continue
                     except Exception as e:
                         panic("Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 else:
-                    peer.close()
+                    peer.close("Peer sent an invalid Message type.")
                     return
-        except ValueError, DataMissing:
-            peer.close()
+        except ValueError as e:
+            peer.close(e.msg)
             return
         except Spam, DataExists:
             continue

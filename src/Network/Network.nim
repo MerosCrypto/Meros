@@ -18,6 +18,12 @@ export MessageObj
 import objects/SketchyBlockObj
 export SketchyBlockObj
 
+#SerializeCommon lib.
+import Serialize/SerializeCommon
+
+#Socket object.
+import objects/SocketObj
+
 #Peer lib.
 import Peer
 export Peer
@@ -33,11 +39,11 @@ export SyncManager
 import objects/NetworkObj
 export NetworkObj
 
+#Chronos external lib.
+import chronos
+
 #Math standard lib.
 import math
-
-#Networking standard libs.
-import asyncdispatch, asyncnet
 
 #Table standard lib.
 import tables
@@ -45,211 +51,314 @@ import tables
 #String utils standard lib.
 import strutils
 
+#Verify the validity of an address.
+#If the address isn't IPv4, it's invalid (unfortunately).
+#If the IP is ours, it's invalid. We check later if it's our public IP.
+#If the IP already has both sockets, it's invalid.
+proc verifyAddress(
+    network: Network,
+    address: TransportAddress,
+    handshake: MessageType
+): tuple[
+    ip: string,
+    valid: bool,
+    hasLive: bool,
+    hasSync: bool
+] {.forceCheck: [].} =
+    if address.family != AddressFamily.IPv4:
+        result.valid = false
+        return
+
+    result.ip = char(address.address_v4[0]) & char(address.address_v4[1]) & char(address.address_v4[2]) & char(address.address_v4[3])
+    if address.address_v4 == [127'u8, 0, 0, 1]:
+        #Append the port to support multiple connections from localhost.
+        result.ip &= uint16(address.port).toBinary(PORT_LEN)
+
+        #If there's already a local peer missing this type of socket, use that IP.
+        #Mostly, yet sometimes inaccurate, attempt at linking live/sync sockets.
+        if (
+            (not network.lastLocalPeer.isNil) and
+            (
+                ((handshake == MessageType.Handshake) and (network.lastLocalPeer.live.isNil or network.lastLocalPeer.live.closed)) or
+                ((handshake == MessageType.Syncing) and (network.lastLocalPeer.sync.isNil or network.lastLocalPeer.sync.closed))
+            )
+        ):
+            result.ip = network.lastLocalPeer.ip
+    result.hasLive = network.live.hasKey(result.ip)
+    result.hasSync = network.sync.hasKey(result.ip)
+
+    result.valid = not (
+        #Most common cases.
+        (result.hasLive and (handshake == MessageType.Handshake)) or
+        (result.hasSync and (handshake == MessageType.Syncing)) or
+        (result.hasLive and result.hasSync) or
+        #A malicious case.
+        address.isMulticast() or
+        #Invalid address.
+        address.isZero() or
+        #This should never happen.
+        address.isUnspecified()
+    )
+
+    #If the result is valid, we still need to check if it's a loopback.
+    #This will be the most malicious case.
+    #Loopbacks are allowed IF it's 127.0.0.1 AND to a different node.
+    #This could be merged with the above result.valid declaration statement yet isn't for readability.
+    if (
+        result.valid and
+        address.isLoopback() and
+        (
+            #If the address isn't 127.0.0.1, this result isn't valid.
+            (address.address_v4 != [127'u8, 0, 0, 1]) or
+            #If we're listening and this is our port, this address isn't valid.
+            (
+                ((not network.server.isNil) and (network.server.status == ServerStatus.Running)) and
+                #This works for client connections as well because the source port will never equal the listening port.
+                (address.port == Port(network.liveManager.port))
+            )
+        )
+    ):
+        result.valid = false
+
+proc isOurPublicIP(
+    socket: SocketObj.Socket
+): bool {.forceCheck: [].} =
+    try:
+        result = (
+            (socket.localAddress.address_v4 == socket.remoteAddress.address_v4) and
+            (socket.localAddress.address_v4 != [127'u8, 0, 0, 1])
+        )
+    #If we couldn't get the local or peer address, we can either panic or shut down this socket.
+    #The safe way to shut down the socket is to return that's invalid.
+    #That said, this can have side effects when we implement peer karma.
+    except TransportOSError:
+        result = true
+
 #Connect to a new Peer.
 proc connect*(
     network: Network,
     address: string,
     port: int
-) {.forceCheck: [
-    PeerError
-], async.} =
+) {.forceCheck: [], async.} =
     logDebug "Connecting", address = address, port = port
 
-    #Don't allow connections to self.
-    if (not network.server.isClosed) and (address == "127.0.0.1") and (port == network.liveManager.port):
+    #Lock the IP to stop multiple connections from happening at once.
+    #We unlock the IP where we call connect.
+    #If it's already locked, don't bother trying to connect.
+    try:
+        if not await network.lockIP(address):
+            return
+    except Exception as e:
+        panic("Locking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
+
+    #Create a TransportAddress and verify it.
+    var
+        tAddy: TransportAddress
+        verified: tuple[
+            ip: string,
+            valid: bool,
+            hasLive: bool,
+            hasSync: bool
+        ]
+    try:
+        tAddy = initTAddress(address, port)
+    except TransportAddressError:
+        return
+    verified = network.verifyAddress(tAddy, MessageType.End)
+    if not verified.valid:
+        try:
+            await network.unlockIP(address)
+        except Exception as e:
+            panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
         return
 
     #Create a socket.
-    var socket: AsyncSocket
+    var socket: SocketObj.Socket
     try:
-        socket = newAsyncSocket()
-        await socket.connect(address, Port(port))
+        socket = await newSocket(tAddy)
+        if socket.isOurPublicIP():
+            raise newException(Exception, "")
     except Exception:
-        socket.safeClose()
-        return
-
-    var
-        addressParts: seq[string]
-        ip: string
-    try:
-        addressParts = socket.getPeerAddr()[0].split(".")
-        ip = (
-            char(parseInt(addressParts[0])) &
-            char(parseInt(addressParts[1])) &
-            char(parseInt(addressParts[2])) &
-            char(parseInt(addressParts[3]))
-        )
-    except OSError:
-        socket.safeClose()
-        return
-    except ValueError:
-        raise newLoggedException(PeerError, "Invalid IP.")
-
-    #If we're already connected, don't create a new peer. Just create the missing connection, if possible.
-    var
-        peer: Peer
-        hasLive: bool = network.live.hasKey(ip)
-        hasSync: bool = network.sync.hasKey(ip)
-        live: AsyncSocket = nil
-        sync: AsyncSocket = nil
-
-    #Don't connect to someone we've already connected to.
-    if hasLive and hasSync:
-        return
-
-    #Try to get the existing Peer.
-    if hasLive:
+        socket.safeClose("Either couldn't connect or connected to ourself.")
         try:
-            peer = network.peers[network.live[ip]]
+            await network.unlockIP(address)
+        except Exception as e:
+            panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
+        return
+
+    #Variable for the peer.
+    var peer: Peer
+
+    #If we already have a live connection, set the sync socket.
+    if verified.hasLive:
+        try:
+            peer = network.peers[network.live[verified.ip]]
+            network.sync[verified.ip] = network.live[verified.ip]
         except KeyError:
             panic("Peer has a live socket but either not an entry in the live table or the peers table.")
-
-        live = peer.live
-        sync = peer.sync
-    elif hasSync:
+        peer.sync = socket
+    #If we already have a sync socket, set the live socket.
+    elif verified.hasSync:
         try:
-            peer = network.peers[network.sync[ip]]
+            peer = network.peers[network.sync[verified.ip]]
+            network.live[verified.ip] = network.sync[verified.ip]
         except KeyError:
             panic("Peer has a sync socket but either not an entry in the sync table or the peers table.")
+        peer.live = socket
+    #If we don't have a peer, create one and set both sockets.
+    else:
+        peer = newPeer(verified.ip)
+        peer.sync = socket
+        try:
+            peer.live = await newSocket(tAddy)
+        except Exception:
+            peer.close("Could only connect to this Peer for the sync socket.")
+            try:
+                await network.unlockIP(address)
+            except Exception as e:
+                panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
-        live = peer.live
-        sync = peer.sync
+        #Add it to the network.
+        network.add(peer)
+        network.live[verified.ip] = peer.id
+        network.sync[verified.ip] = peer.id
 
     try:
-        #Create the Sync socket if necessary.
-        if not hasSync:
-            sync = socket
-            socket = nil
-        #Create the Live socket if necessary.
-        if not hasLive:
-            live = socket
-            if live.isNil:
-                live = newAsyncSocket()
-                await live.connect(address, Port(port))
-    except Exception:
-        if not peer.isNil:
-            peer.close()
-            network.disconnect(peer)
-        return
-
-    #Create the Peer, if necessary.
-    if peer.isNil:
-        peer = newPeer(ip)
-        network.add(peer)
-
-    #Set the sockets.
-    peer.live = live
-    peer.sync = sync
-    network.live[ip] = peer.id
-    network.sync[ip] = peer.id
+        await network.unlockIP(address)
+    except Exception as e:
+        panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
     #Handle the connections.
-    logDebug "Handling Client connection", address = address, port = port
+    logDebug "Handling Client connection", id = peer.id, address = address, port = port
 
     try:
-        if not hasSync:
+        if not verified.hasSync:
             asyncCheck network.syncManager.handle(peer)
-        if not hasLive:
+        if not verified.hasLive:
             asyncCheck network.liveManager.handle(peer)
     except Exception as e:
         panic("Handling a new connection raised an Exception despite not throwing any Exceptions: " & e.msg)
 
-#Handle a new connection.
+#Create a function to handle a new connection.
 proc handle(
-    network: Network,
-    socket: AsyncSocket
-) {.forceCheck: [], async.} =
-    #Get the IP.
-    var
-        address: string
-        addressParts: seq[string]
-    try:
-        address = socket.getPeerAddr()[0]
+    network: Network
+): proc (
+    server: StreamServer,
+    rawSocket: StreamTransport
+): Future[void] {.gcsafe.} {.inline, gcsafe, forceCheck: [].} =
+    result = proc (
+        server: StreamServer,
+        rawSocket: StreamTransport
+    ) {.forceCheck: [], async.} =
+        #Wrap the StreamTransport.
+        var socket: SocketObj.Socket = newSocket(rawSocket)
 
-        #Don't allow connections from our machine unless they're over localhost.
-        if (socket.getLocalAddr()[0] == address) and (address != "127.0.0.1"):
-            socket.safeClose()
-            return
-
-        addressParts = address.split(".")
-    except OSError:
-        socket.safeClose()
-        return
-
-    logDebug "Accepting ", address = address
-
-    var ip: string
-    try:
-        ip = (
-            char(parseInt(addressParts[0])) &
-            char(parseInt(addressParts[1])) &
-            char(parseInt(addressParts[2])) &
-            char(parseInt(addressParts[3]))
-        )
-    except ValueError as e:
-        panic("IP contained an invalid integer: " & e.msg)
-
-    var first: string
-    try:
-        first = await socket.recv(1, {SocketFlag.Peek})
-        if first.len != 1:
-            raise newLoggedException(Exception, "")
-    except Exception:
-        socket.safeClose()
-        return
-
-    if not (int(first[0]) < int(MessageType.End)):
-        socket.safeClose()
-        return
-
-    if not {MessageType.Handshake, MessageType.Syncing}.contains(MessageType(first[0])):
-        socket.safeClose()
-        return
-
-    var peer: Peer
-    if MessageType(first[0]) == MessageType.Handshake:
-        if network.live.hasKey(ip) and (address != "127.0.0.1"):
-            socket.safeClose()
-            return
-
+        #Get their address.
+        var address: string
         try:
-            peer = network.peers[network.sync[ip]]
-        except KeyError:
-            peer = newPeer(ip)
-            network.add(peer)
-        network.live[ip] = peer.id
+            address = $IpAddress(
+                family: IpAddressFamily.IPv4,
+                address_v4: socket.remoteAddress.address_v4
+            )
+        except TransportOSError as e:
+            socket.safeClose("Couldn't get the socket's remote address: " & e.msg)
+            return
+        logDebug "Accepting ", address = address
 
-        peer.live = socket
+        #Receive the Handshake.
+        var handshake: Message
         try:
-            logDebug "Handling Live Server connection", address = address
-            asyncCheck network.liveManager.handle(peer)
-        except PeerError:
-            network.disconnect(peer)
+            handshake = await recv(0, socket, HANDSHAKE_LENS)
+        except SocketError:
+            return
+        except PeerError as e:
+            socket.safeClose("Invalid handshake: " & e.msg)
+            return
         except Exception as e:
-            panic("Handling a Live socket threw an Exception despite catching all Exceptions: " & e.msg)
+            panic("Couldn't receive from a socket despite catching all errors recv throws: " & e.msg)
 
-    elif MessageType(first[0]) == MessageType.Syncing:
-        if network.sync.hasKey(ip) and (address != "127.0.0.1"):
-            socket.safeClose()
+        #Lock the IP, passing the type of the Handshake.
+        #Since up to two client connections can exist, it's fine if there's already one, as long as they're of different types.
+        var lock: uint8 = if handshake.content == MessageType.Handshake: LIVE_IP_LOCK else: SYNC_IP_LOCK
+        try:
+            if not await network.lockIP(address, lock):
+                socket.safeClose("Already handling a socket of this type from this IP.")
+                return
+        except Exception as e:
+            panic("Locking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
+
+        var verified: tuple[
+            ip: string,
+            valid: bool,
+            hasLive: bool,
+            hasSync: bool
+        ]
+        try:
+            verified = network.verifyAddress(socket.remoteAddress, handshake.content)
+        except TransportOSError:
+            verified.valid = false
+        if (not verified.valid) or socket.isOurPublicIP():
+            socket.safeClose("Invalid address or our own address.")
+            try:
+                await network.unlockIP(address, lock)
+            except Exception as e:
+                panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
             return
 
-        try:
-            peer = network.peers[network.live[ip]]
-        except KeyError:
-            peer = newPeer(ip)
+        var peer: Peer
+        #If there's a sync socket, this is a live socket.
+        if verified.hasSync:
+            try:
+                peer = network.peers[network.sync[verified.ip]]
+            except KeyError as e:
+                panic("Couldn't get a Peer who has a sync socket via the sync table: " & e.msg)
+
+            peer.live = socket
+            network.live[verified.ip] = peer.id
+        #If there's a live socket, this is a sync socket.
+        elif verified.hasLive:
+            try:
+                peer = network.peers[network.live[verified.ip]]
+            except KeyError as e:
+                panic("Couldn't get a Peer who has a live socket via the live table: " & e.msg)
+
+            peer.sync = socket
+            network.sync[verified.ip] = peer.id
+        #If there's no socket, we need to switch off of the handshake.
+        else:
+            peer = newPeer(verified.ip)
             network.add(peer)
-        network.sync[ip] = peer.id
+            if handshake.content == MessageType.Handshake:
+                peer.live = socket
+                network.live[verified.ip] = peer.id
+            else:
+                peer.sync = socket
+                network.sync[verified.ip] = peer.id
 
-        peer.sync = socket
+        #Unlock the IP.
         try:
-            logDebug "Handling Sync Server connection", address = address
-            asyncCheck network.syncManager.handle(peer)
-        except PeerError:
-            network.disconnect(peer)
+            await network.unlockIP(address, lock)
         except Exception as e:
-            panic("Handling a Sync socket threw an Exception despite catching all Exceptions: " & e.msg)
+            panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
-#Listen for new Network.
+        if handshake.content == MessageType.Handshake:
+            try:
+                logDebug "Handling Live Server connection", id = peer.id, address = address
+                asyncCheck network.liveManager.handle(peer, handshake)
+            except PeerError:
+                network.disconnect(peer)
+            except Exception as e:
+                panic("Handling a Live socket threw an Exception despite catching all Exceptions: " & e.msg)
+        else:
+            try:
+                logDebug "Handling Sync Server connection", id = peer.id, address = address
+                asyncCheck network.syncManager.handle(peer, handshake)
+            except PeerError:
+                network.disconnect(peer)
+            except Exception as e:
+                panic("Handling a Sync socket threw an Exception despite catching all Exceptions: " & e.msg)
+
+#Listen for new connections.
 proc listen*(
     network: Network
 ) {.forceCheck: [], async.} =
@@ -259,32 +368,34 @@ proc listen*(
     network.liveManager.updateServices(SERVER_SERVICE)
     network.syncManager.updateServices(SERVER_SERVICE)
 
-    #Start listening.
+    #Create the server.
     try:
-        network.server = newAsyncSocket()
+        network.server = createStreamServer(initTAddress("0.0.0.0", network.liveManager.port), handle(network), {ReuseAddr})
+    except OSError as e:
+        panic("Couldn't create the server due to an OSError: " & e.msg)
+    except TransportAddressError as e:
+        panic("Couldn't create the server due to an invalid address to listen on: " & e.msg)
     except Exception as e:
-        panic("Failed to create the Network's server socket: " & e.msg)
-
-    try:
-        network.server.setSockOpt(OptReuseAddr, true)
-        network.server.bindAddr(Port(network.liveManager.port))
-    except Exception as e:
-        panic("Failed to set the Network's server socket options and bind it: " & e.msg)
+        panic("Couldn't create the server due to an Exception: " & e.msg)
 
     #Start listening.
     try:
-        network.server.listen()
+        network.server.start()
+    except OSError as e:
+        panic("Couldn't start listening due to an OSError: " & e.msg)
+    except TransportOSError as e:
+        panic("Couldn't start listening due to an TransportOSError: " & e.msg)
     except Exception as e:
-        panic("Failed to start listening on the Network's server socket: " & e.msg)
+        panic("Couldn't start listening due to an Exception: " & e.msg)
 
-    #Accept new connections infinitely.
-    while not network.server.isClosed():
-        #Accept and handle a new connection.
-        #This is in a try/catch since ending the server while accepting a new Peer will throw an Exception.
-        try:
-            asyncCheck network.handle(await network.server.accept())
-        except Exception:
-            continue
+    #Don't return until the server closes.
+    #This function should be called with asynccheck so this should mean nothing.
+    #That said, the original function that was here (before we moved to chronos), had this behavior.
+    #This is to limit potential side effects.
+    try:
+        await network.server.join()
+    except Exception as e:
+        panic("Couldn't join the server with this async function: " & e.msg)
 
 #Broadcast a message to our Network.
 proc broadcast*(

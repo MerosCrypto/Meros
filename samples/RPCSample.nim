@@ -1,8 +1,8 @@
+#Chronos external lib.
+import chronos
+
 #OS standard lib.
 import os
-
-#Networking standard libs.
-import asyncdispatch, asyncnet
 
 #String utils standard lib.
 import strutils

@@ -8,6 +8,7 @@ import ../lib/Util
 import Serialize/SerializeCommon
 
 #Network objects.
+import objects/SocketObj
 import objects/MessageObj
 import objects/PeerObj
 
@@ -17,11 +18,11 @@ export PeerObj
 #Element serialize lib. Implements getLength.
 import Serialize/Consensus/ParseElement
 
+#Chronos external lib.
+import chronos
+
 #Locks standard lib.
 import locks
-
-#Networking standard libs.
-import asyncdispatch, asyncnet
 
 #Tables lib.
 import tables
@@ -38,10 +39,12 @@ proc sendLive*(
 ], async.} =
     try:
         await peer.live.send(msg.toString())
-    except Exception as e:
-        peer.sync.safeClose()
+    except SocketError as e:
+        peer.live.safeClose(e.msg)
         if not noRaise:
-            raise newLoggedException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
+            raise e
+    except Exception as e:
+        panic("Couldn't get the result of sending to a live socket: " & e.msg)
 
 #Send a message via the Sync socket.
 proc sendSync*(
@@ -53,10 +56,12 @@ proc sendSync*(
 ], async.} =
     try:
         await peer.sync.send(msg.toString())
-    except Exception as e:
-        peer.sync.safeClose()
+    except SocketError as e:
+        peer.sync.safeClose(e.msg)
         if not noRaise:
-            raise newLoggedException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
+            raise e
+    except Exception as e:
+        panic("Couldn't get the result of sending to a sync socket: " & e.msg)
 
 #Send a Sync Request.
 proc syncRequest*(
@@ -66,7 +71,7 @@ proc syncRequest*(
 ) {.forceCheck: [], async.} =
     while not tryAcquire(peer.syncLock):
         try:
-            await sleepAsync(10)
+            await sleepAsync(milliseconds(10))
         except Exception as e:
             panic("Couldn't complete an async sleep: " & e.msg)
 
@@ -81,9 +86,9 @@ proc syncRequest*(
     release(peer.syncLock)
 
 #Receive a message.
-proc recv(
+proc recv*(
     id: int,
-    socket: AsyncSocket,
+    socket: SocketObj.Socket,
     lengths: Table[MessageType, seq[int]]
 ): Future[Message] {.forceCheck: [
     SocketError,
@@ -97,11 +102,15 @@ proc recv(
     #Receive the content type.
     try:
         msg = await socket.recv(1)
+    except SocketError as e:
+        socket.safeClose(e.msg)
+        raise e
     except Exception as e:
-        raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+        panic("Couldn't get the result of receiving from a socket: " & e.msg)
 
     #If the message length is 0, the Peer disconnected.
     if msg.len == 0:
+        socket.safeClose("Peer disconnected.")
         raise newLoggedException(SocketError, "Peer disconnected.")
 
     #Make sure the content is valid.
@@ -161,8 +170,11 @@ proc recv(
 
                             try:
                                 msg &= await socket.recv(len)
+                            except SocketError as e:
+                                socket.safeClose(e.msg)
+                                raise e
                             except Exception as e:
-                                raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                                panic("Couldn't get the result of receiving from a socket: " & e.msg)
                             len = -1
 
                         len += MERIT_REMOVAL_ELEMENT_SET.getLength(
@@ -189,11 +201,16 @@ proc recv(
                         len += BYTE_LEN
                         try:
                             msg &= await socket.recv(len)
+                        except SocketError as e:
+                            socket.safeClose(e.msg)
+                            raise e
                         except Exception as e:
-                            raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                            panic("Couldn't get the result of receiving from a socket: " & e.msg)
+
                         size += len
                         if msg.len != size:
-                            raise newLoggedException(PeerError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
+                            socket.safeClose("Didn't get a full message.")
+                            raise newLoggedException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
                         try:
                             len = BLOCK_ELEMENT_SET.getLength(msg[^1])
@@ -204,11 +221,16 @@ proc recv(
                             for _ in 0 ..< 2:
                                 try:
                                     msg &= await socket.recv(len)
+                                except SocketError as e:
+                                    socket.safeClose(e.msg)
+                                    raise e
                                 except Exception as e:
-                                    raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                                    panic("Couldn't get the result of receiving from a socket: " & e.msg)
+
                                 size += len
                                 if msg.len != size:
-                                    raise newLoggedException(PeerError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
+                                    socket.safeClose("Didn't get a full message.")
+                                    raise newLoggedException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
                                 var elemI: int = msg.len - 1
                                 len = 0
@@ -221,8 +243,11 @@ proc recv(
 
                                         try:
                                             msg &= await socket.recv(len)
+                                        except SocketError as e:
+                                            socket.safeClose(e.msg)
+                                            raise e
                                         except Exception as e:
-                                            raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                                            panic("Couldn't get the result of receiving from a socket: " & e.msg)
                                         len = 0
 
                                     len += MERIT_REMOVAL_ELEMENT_SET.getLength(
@@ -246,12 +271,16 @@ proc recv(
         #Recv the data.
         try:
             msg &= await socket.recv(len)
+        except SocketError as e:
+            socket.safeClose(e.msg)
+            raise e
         except Exception as e:
-            raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+            panic("Couldn't get the result of receiving from a socket: " & e.msg)
 
         #Add the length to the size and verify the size.
         size += len
         if msg.len != size:
+            socket.safeClose("Didn't get the full message.")
             raise newLoggedException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
     #Create a proper Message to be returned.
@@ -268,7 +297,6 @@ proc recvLive*(
     try:
         result = await recv(peer.id, peer.live, LIVE_LENS)
     except SocketError as e:
-        peer.live.safeClose()
         raise e
     except PeerError as e:
         raise e
@@ -289,7 +317,6 @@ proc recvSync*(
     try:
         result = await recv(peer.id, peer.sync, SYNC_LENS)
     except SocketError as e:
-        peer.sync.safeClose()
         raise e
     except PeerError as e:
         raise e

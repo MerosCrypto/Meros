@@ -59,7 +59,7 @@ proc newTestGlobalFunctionBox*(
     #Create the functions.
     result = newGlobalFunctionBox()
 
-    result.merit.getHeight = proc (): int {.inline.} =
+    result.merit.getHeight = proc (): int =
         blockchain[].height
 
     result.merit.getBlockByNonce = proc (
@@ -74,30 +74,30 @@ proc newTestGlobalFunctionBox*(
 
     result.transactions.getSpenders = proc (
         input: Input
-    ): seq[Hash[256]] {.inline.} =
+    ): seq[Hash[256]] =
         transactions[].loadSpenders(input)
 
     result.transactions.verify = proc (
         hash: Hash[256]
-    ) {.inline.} =
+    ) =
         transactions[].verify(hash)
 
     result.transactions.unverify = proc (
         hash: Hash[256]
-    ) {.inline.} =
+    ) =
         transactions[].unverify(hash)
 
     result.transactions.beat = proc (
         hash: Hash[256]
-    ) {.inline.} =
+    ) =
         transactions[].beat(hash)
 
     result.transactions.discoverTree = proc (
         hash: Hash[256]
-    ): seq[Hash[256]] {.inline.} =
+    ): seq[Hash[256]] =
         transactions[].discoverTree(hash)
 
     result.transactions.prune = proc (
         hash: Hash[256]
-    ) {.inline.} =
+    ) =
         transactions[].prune(hash)

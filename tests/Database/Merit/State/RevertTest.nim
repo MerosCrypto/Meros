@@ -94,6 +94,7 @@ suite "Revert":
 
                 #Create the Block with the new miner.
                 mining = newBlankBlock(
+                    rx = blockchain.rx,
                     last = blockchain.tail.header.hash,
                     miner = miners[miner],
                     elements = elements
@@ -104,6 +105,7 @@ suite "Revert":
 
                 #Create the Block with the existing miner.
                 mining = newBlankBlock(
+                    rx = blockchain.rx,
                     last = blockchain.tail.header.hash,
                     nick = uint16(miner),
                     miner = miners[miner],
@@ -136,6 +138,9 @@ suite "Revert":
             reloaded = newState(db, 7, blockchain)
             compare(states[^1], reloaded)
 
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        blockchain.rx = nil
+
     lowFuzzTest "Chained reversions.":
         var
             copy: State
@@ -153,3 +158,6 @@ suite "Revert":
 
         reloaded = newState(db, 7, blockchain)
         compare(states[^1], reloaded)
+
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        blockchain.rx = nil

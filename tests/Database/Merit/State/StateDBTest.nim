@@ -89,6 +89,7 @@ suite "StateDB":
 
                 #Create the Block with the new miner.
                 mining = newBlankBlock(
+                    rx = blockchain.rx,
                     last = blockchain.tail.header.hash,
                     miner = miners[miner],
                     elements = elements
@@ -99,6 +100,7 @@ suite "StateDB":
 
                 #Create the Block with the existing miner.
                 mining = newBlankBlock(
+                    rx = blockchain.rx,
                     last = blockchain.tail.header.hash,
                     nick = uint16(miner),
                     miner = miners[miner],
@@ -133,3 +135,6 @@ suite "StateDB":
         #Check future thresholds.
         for t in len(thresholds) + 2 ..< len(thresholds) + 82:
             check(state.protocolThresholdAt(t) == min(state.unlocked + (t - 81), state.deadBlocks) div 2 + 1)
+
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        blockchain.rx = nil

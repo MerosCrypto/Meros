@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Hash lib.
+import ../../../lib/Hash
+
 #BlockHeader lib.
 import ../../../Database/Merit/BlockHeader
 
@@ -14,6 +17,7 @@ import ParseBlockBody
 
 #Parse a Block.
 proc parseBlock*(
+    rx: RandomX,
     blockStr: string
 ): SketchyBlock {.forceCheck: [
     ValueError
@@ -24,7 +28,7 @@ proc parseBlock*(
         body: SketchyBlockBody
 
     try:
-        header = blockStr.parseBlockHeader()
+        header = rx.parseBlockHeader(blockStr)
         body = blockStr.substr(
             BLOCK_HEADER_DATA_LEN +
             (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +

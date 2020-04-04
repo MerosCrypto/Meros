@@ -43,7 +43,8 @@ proc newBlockObj*(
     aggregate: BLSSignature,
     time: uint32 = getTime(),
     proof: uint32 = 0,
-    signature: BLSSignature = newBLSSignature()
+    signature: BLSSignature = newBLSSignature(),
+    rx: RandomX = nil
 ): Block {.inline, forceCheck: [].} =
     Block(
         header: newBlockHeader(
@@ -56,7 +57,8 @@ proc newBlockObj*(
             miner,
             time,
             proof,
-            signature
+            signature,
+            rx
         ),
         body: newBlockBodyObj(
             packetsContents,
@@ -80,7 +82,8 @@ proc newBlockObj*(
     aggregate: BLSSignature,
     time: uint32 = getTime(),
     proof: uint32 = 0,
-    signature: BLSSignature = newBLSSignature()
+    signature: BLSSignature = newBLSSignature(),
+    rx: RandomX = nil
 ): Block {.inline, forceCheck: [].} =
     Block(
         header: newBlockHeader(
@@ -93,7 +96,8 @@ proc newBlockObj*(
             miner,
             time,
             proof,
-            signature
+            signature,
+            rx
         ),
         body: newBlockBodyObj(
             packetsContents,

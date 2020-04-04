@@ -14,41 +14,38 @@ import strformat
 #JSON standard lib.
 import json
 
-#Thread vars needed by loop.
-var
-    gui {.threadvar.}: GUI
+proc newLoop(
+    gui: GUI,
     fromMain: ptr Channel[string]
+): proc () {.raises: [].} {.forceCheck: [].} =
+    #Loop. Called by WebView 10 times a second.
+    result = proc () {.forceCheck: [].} =
+        #Get a message if one exists.
+        var msg: tuple[dataAvailable: bool, msg: string]
+        try:
+            msg = fromMain[].tryRecv()
+        except ValueError as e:
+            panic("Couldn't try to receive a message from main due to a ValueError: " & e.msg)
+        except Exception as e:
+            panic("Couldn't try to receive a message from main due to a Exception: " & e.msg)
 
-#Loop. Called by WebView 10 times a second.
-proc loop() {.forceCheck: [].} =
-    #Get a message if one exists.
-    var msg: tuple[dataAvailable: bool, msg: string]
-    try:
-        msg = fromMain[].tryRecv()
-    except ValueError as e:
-        panic("Couldn't try to receive a message from main due to a ValueError: " & e.msg)
-    except Exception as e:
-        panic("Couldn't try to receive a message from main due to a Exception: " & e.msg)
-
-    #If there is a message...
-    if msg.dataAvailable:
-        #Switch on it.
-        case msg.msg:
-            of "shutdown":
-                gui.webview.exit()
+        #If there is a message...
+        if msg.dataAvailable:
+            #Switch on it.
+            case msg.msg:
+                of "shutdown":
+                    gui.webview.exit()
 
 #Constructor.
 proc newGUI*(
-    fromMainArg: ptr Channel[string],
+    fromMain: ptr Channel[string],
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode],
     width: int,
     height: int
 ) {.forceCheck: [].} =
-    #Set the fromMain channel.
-    fromMain = fromMainArg
-
     #Create the GUI.
+    var gui: GUI
     try:
         gui = newGUIObj(
             toRPC,
@@ -64,7 +61,7 @@ proc newGUI*(
         panic("Couldn't create the WebView: " & e.msg)
 
     #Add the Bindings.
-    gui.createBindings(loop)
+    gui.createBindings(newLoop(gui, fromMain))
 
     #Schedule a function to load the main page/start the loop.
     try:

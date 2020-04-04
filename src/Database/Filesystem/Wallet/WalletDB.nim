@@ -124,7 +124,7 @@ proc commit*(
     popped: Epoch,
     getTransaction: proc (
         hash: Hash[256]
-    ): Transaction {.raises: [
+    ): Transaction {.gcsafe, raises: [
         IndexError
     ].}
 ) {.forceCheck: [].} =

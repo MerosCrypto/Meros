@@ -20,7 +20,7 @@ proc RipeMD_160*(
     #If it's an empty string...
     if bytes.len == 0:
         return RipeMD_160Hash(
-            data: ripemd160.digest(EmptyHash, 0).data
+            data: ripemd160.digest(EMPTY_HASH, 0).data
         )
 
     #Digest the byte array.

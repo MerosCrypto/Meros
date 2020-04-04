@@ -22,7 +22,7 @@ proc SHA3_256*(
     #If it's an empty string...
     if bytes.len == 0:
         return SHA3_256Hash(
-            data: sha3_256.digest(EmptyHash, uint(bytes.len)).data
+            data: sha3_256.digest(EMPTY_HASH, uint(bytes.len)).data
         )
 
     #Digest the byte array.
@@ -38,7 +38,7 @@ proc SHA3_512*(
     #If it's an empty string...
     if bytes.len == 0:
         return SHA3_512Hash(
-            data: sha3_512.digest(EmptyHash, uint(bytes.len)).data
+            data: sha3_512.digest(EMPTY_HASH, uint(bytes.len)).data
         )
 
     #Digest the byte array.

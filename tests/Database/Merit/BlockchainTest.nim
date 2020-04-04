@@ -152,6 +152,7 @@ suite "Blockchain":
 
                 #Create the Block with the new miner.
                 mining = newBlankBlock(
+                    rx = blockchains[^1].rx,
                     uint32(0),
                     blockchains[^1].tail.header.hash,
                     uint16(rand(26279) + 1),
@@ -167,6 +168,7 @@ suite "Blockchain":
 
                 #Create the Block with the existing miner.
                 mining = newBlankBlock(
+                    rx = blockchains[^1].rx,
                     uint32(0),
                     blockchains[^1].tail.header.hash,
                     uint16(rand(26279) + 1),
@@ -179,12 +181,12 @@ suite "Blockchain":
                 )
 
             #Perform the intial hash.
-            miners[miner].hash(mining.header, 0)
+            blockchains[^1].rx.hash(miners[miner], mining.header, 0)
 
             #Mine it.
             var iter: int = 1
             while mining.header.hash.overflows(blockchains[^1].difficulties[^1]):
-                miners[miner].hash(mining.header, mining.header.proof + 1)
+                blockchains[^1].rx.hash(miners[miner], mining.header, mining.header.proof + 1)
                 inc(iter)
                 if iter mod 50 == 0:
                     mining.header.time = max(getTime(), mining.header.time + 1)

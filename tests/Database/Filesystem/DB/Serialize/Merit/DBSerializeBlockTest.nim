@@ -68,6 +68,7 @@ suite "DBSerializeBlock":
 
         if newMiner:
             newBlock = newBlankBlock(
+                getRandomX(),
                 uint32(rand(4096)),
                 last,
                 uint16(rand(50000)),
@@ -81,6 +82,7 @@ suite "DBSerializeBlock":
             )
         else:
             newBlock = newBlankBlock(
+                getRandomX(),
                 uint32(rand(4096)),
                 last,
                 uint16(rand(50000)),
