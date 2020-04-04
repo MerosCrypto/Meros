@@ -317,7 +317,7 @@ proc handle*(
 
                     res = newMessage(MessageType.Peers, peers.len.toBinary(BYTE_LEN))
                     for peer in peers:
-                        res.message &= peer.ip & peer.port.toBinary(PORT_LEN)
+                        res.message &= peer.ip[0 ..< IP_LEN] & peer.port.toBinary(PORT_LEN)
 
                 of MessageType.Peers:
                     try:

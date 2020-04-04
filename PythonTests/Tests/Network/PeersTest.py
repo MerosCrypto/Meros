@@ -66,7 +66,7 @@ def PeersTest(
     if MessageType(res[0]) != MessageType.Syncing:
         raise Exception("Expected Syncing.")
     rpc.meros.sync.send(MessageType.BlockchainTail.toByte() + blockchain.blocks[0].header.hash)
-    sleep(20)
+    sleep(10)
 
     rpc.meros.peersRequest()
     res = rpc.meros.sync.recv()

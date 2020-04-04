@@ -56,6 +56,12 @@ type Network* = ref object
     #Set of the IPs of our peers who have Sync sockets.
     sync*: Table[string, int]
 
+    #Last local peer.
+    #We support unlimited connections from 127.0.0.1.
+    #That said, we still attempt to link live/sync sockets.
+    #This is how.
+    lastLocalPeer*: Peer
+
     #Server.
     server*: StreamServer
 
@@ -264,6 +270,9 @@ proc add*(
 
     network.peers[peer.id] = peer
     network.ids.add(peer.id)
+
+    if peer.ip.len == 6:
+        network.lastLocalPeer = peer
 
 #Disconnect a peer.
 proc disconnect*(

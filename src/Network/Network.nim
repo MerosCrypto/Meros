@@ -18,6 +18,9 @@ export MessageObj
 import objects/SketchyBlockObj
 export SketchyBlockObj
 
+#SerializeCommon lib.
+import Serialize/SerializeCommon
+
 #Peer lib.
 import Peer
 export Peer
@@ -64,6 +67,20 @@ proc verifyAddress(
         return
 
     result.ip = char(address.address_v4[0]) & char(address.address_v4[1]) & char(address.address_v4[2]) & char(address.address_v4[3])
+    if address.address_v4 == [127'u8, 0, 0, 1]:
+        #Append the port to support multiple connections from localhost.
+        result.ip &= uint16(address.port).toBinary(PORT_LEN)
+
+        #If there's already a local peer missing this type of socket, use that IP.
+        #Mostly, yet sometimes inaccurate, attempt at linking live/sync sockets.
+        if (
+            (not network.lastLocalPeer.isNil) and
+            (
+                ((handshake == MessageType.Handshake) and (network.lastLocalPeer.live.isNil or network.lastLocalPeer.live.closed)) or
+                ((handshake == MessageType.Syncing) and (network.lastLocalPeer.sync.isNil or network.lastLocalPeer.sync.closed))
+            )
+        ):
+            result.ip = network.lastLocalPeer.ip
     result.hasLive = network.live.hasKey(result.ip)
     result.hasSync = network.sync.hasKey(result.ip)
 
@@ -108,11 +125,11 @@ proc isOurPublicIP(
             (socket.localAddress.address_v4 == socket.remoteAddress.address_v4) and
             (socket.localAddress.address_v4 != [127'u8, 0, 0, 1])
         )
+    except TransportError as e:
+        panic("Trying to handle a socket which isn't a socket: " & e.msg)
     #If we couldn't get the local or peer address, we can either panic or shut down this socket.
     #The safe way to shut down the socket is to return that's invalid.
     #That said, this can have side effects when we implement peer karma.
-    except TransportError as e:
-        panic("Trying to handle a socket which isn't a socket: " & e.msg)
     except TransportOSError:
         result = true
 
