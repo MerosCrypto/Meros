@@ -11,7 +11,7 @@ switch("define", "MESSAGE_LENGTH_LIMIT=8388608")
 switch("opt", "size")
 
 #Define release for usable StInt performance.
-switch("define", "release"))
+switch("define", "release")
 
 #Enable stackTrace and lineTrace so users can submit workable crash reports.
 switch("stackTrace", "on")

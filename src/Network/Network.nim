@@ -233,9 +233,11 @@ proc connect*(
 
     try:
         if not verified.hasSync:
-            asyncCheck network.syncManager.handle(peer)
+            asyncCheck network.syncManager.handle(peer, socket.remoteAddress)
         if not verified.hasLive:
-            asyncCheck network.liveManager.handle(peer)
+            asyncCheck network.liveManager.handle(peer, socket.remoteAddress)
+    except TransportOSError as e:
+        panic("Couldn't get the remote address of a socket we've already gotten the remote address of: " & e.msg)
     except Exception as e:
         panic("Handling a new connection raised an Exception despite not throwing any Exceptions: " & e.msg)
 
@@ -341,22 +343,20 @@ proc handle(
         except Exception as e:
             panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
-        if handshake.content == MessageType.Handshake:
-            try:
+        try:
+            if handshake.content == MessageType.Handshake:
                 logDebug "Handling Live Server connection", id = peer.id, address = address
-                asyncCheck network.liveManager.handle(peer, handshake)
-            except PeerError:
-                network.disconnect(peer)
-            except Exception as e:
-                panic("Handling a Live socket threw an Exception despite catching all Exceptions: " & e.msg)
-        else:
-            try:
+                asyncCheck network.liveManager.handle(peer, socket.remoteAddress, handshake)
+            else:
                 logDebug "Handling Sync Server connection", id = peer.id, address = address
-                asyncCheck network.syncManager.handle(peer, handshake)
-            except PeerError:
-                network.disconnect(peer)
-            except Exception as e:
-                panic("Handling a Sync socket threw an Exception despite catching all Exceptions: " & e.msg)
+                asyncCheck network.syncManager.handle(peer, socket.remoteAddress, handshake)
+        except TransportOSError as e:
+            panic("Couldn't get the remote address of a socket we've already gotten the remote address of: " & e.msg)
+        except PeerError:
+            network.disconnect(peer)
+        except Exception as e:
+            panic("Handling a socket threw an Exception despite catching all Exceptions: " & e.msg)
+
 
 #Listen for new connections.
 proc listen*(

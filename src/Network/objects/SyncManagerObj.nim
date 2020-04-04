@@ -214,6 +214,7 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
 proc handle*(
     manager: SyncManager,
     peer: Peer,
+    tAddy: TransportAddress,
     handshake: Message = newMessage(MessageType.End)
 ) {.forceCheck: [], async.} =
     #Send our Syncing and get their Syncing.
@@ -255,7 +256,12 @@ proc handle*(
         peer.close("Peer uses a different network.")
         return
 
-    if (uint8(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE:
+    if (
+        ((uint8(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE) and
+        (not tAddy.isLoopback()) and
+        (not tAddy.isLinkLocal()) and
+        (not tAddy.isSiteLocal())
+    ):
         peer.server = true
 
     peer.port = msg.message[3 ..< 5].fromBinary()
