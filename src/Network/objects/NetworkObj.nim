@@ -13,6 +13,9 @@ import ../../objects/GlobalFunctionBoxObj
 #Message object.
 import MessageObj
 
+#Socket object.
+import SocketObj
+
 #Manager objects.
 import LiveManagerObj
 import SyncManagerObj

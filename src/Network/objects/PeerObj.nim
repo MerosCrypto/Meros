@@ -4,8 +4,8 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Chronos external lib.
-import chronos
+#Socket object.
+import SocketObj
 
 #Locks standard lib.
 import locks
@@ -40,8 +40,8 @@ type Peer* = ref object
     requests*: seq[int]
 
     #Sockets.
-    live*: StreamTransport
-    sync*: StreamTransport
+    live*: Socket
+    sync*: Socket
 
 #Constructor.
 func newPeer*(
@@ -62,22 +62,6 @@ func isClosed*(
     ) and (
         peer.sync.isNil or peer.sync.closed
     )
-
-#Safely close a socket.
-proc safeClose*(
-    socket: StreamTransport,
-    reason: string
-) {.forceCheck: [].} =
-    if socket.isNil:
-        return
-
-    try:
-        socket.close()
-    except Exception:
-        discard
-
-    if reason != "":
-        logDebug "Closing raw socket", reason = reason
 
 #Close a Peer.
 proc close*(

@@ -21,6 +21,9 @@ export SketchyBlockObj
 #SerializeCommon lib.
 import Serialize/SerializeCommon
 
+#Socket object.
+import objects/SocketObj
+
 #Peer lib.
 import Peer
 export Peer
@@ -118,15 +121,13 @@ proc verifyAddress(
         result.valid = false
 
 proc isOurPublicIP(
-    socket: StreamTransport
+    socket: SocketObj.Socket
 ): bool {.forceCheck: [].} =
     try:
         result = (
             (socket.localAddress.address_v4 == socket.remoteAddress.address_v4) and
             (socket.localAddress.address_v4 != [127'u8, 0, 0, 1])
         )
-    except TransportError as e:
-        panic("Trying to handle a socket which isn't a socket: " & e.msg)
     #If we couldn't get the local or peer address, we can either panic or shut down this socket.
     #The safe way to shut down the socket is to return that's invalid.
     #That said, this can have side effects when we implement peer karma.
@@ -172,9 +173,9 @@ proc connect*(
         return
 
     #Create a socket.
-    var socket: StreamTransport
+    var socket: SocketObj.Socket
     try:
-        socket = await connect(tAddy)
+        socket = await newSocket(tAddy)
         if socket.isOurPublicIP():
             raise newException(Exception, "")
     except Exception:
@@ -209,7 +210,7 @@ proc connect*(
         peer = newPeer(verified.ip)
         peer.sync = socket
         try:
-            peer.live = await connect(tAddy)
+            peer.live = await newSocket(tAddy)
         except Exception:
             peer.close("Could only connect to this Peer for the sync socket.")
             try:
@@ -243,12 +244,15 @@ proc handle(
     network: Network
 ): proc (
     server: StreamServer,
-    socket: StreamTransport
+    rawSocket: StreamTransport
 ): Future[void] {.gcsafe.} {.inline, gcsafe, forceCheck: [].} =
     result = proc (
         server: StreamServer,
-        socket: StreamTransport
+        rawSocket: StreamTransport
     ) {.forceCheck: [], async.} =
+        #Wrap the StreamTransport.
+        var socket: SocketObj.Socket = newSocket(rawSocket)
+
         #Get their address.
         var address: string
         try:
@@ -256,8 +260,9 @@ proc handle(
                 family: IpAddressFamily.IPv4,
                 address_v4: socket.remoteAddress.address_v4
             )
-        except TransportError as e:
-            panic("Trying to handle a socket which isn't a socket: " & e.msg)
+        except TransportOSError as e:
+            socket.safeClose("Couldn't get the socket's remote address: " & e.msg)
+            return
         logDebug "Accepting ", address = address
 
         #Receive the Handshake.
@@ -290,8 +295,8 @@ proc handle(
         ]
         try:
             verified = network.verifyAddress(socket.remoteAddress, handshake.content)
-        except TransportError as e:
-            panic("Trying to handle a socket which isn't a socket: " & e.msg)
+        except TransportOSError:
+            verified.valid = false
         if (not verified.valid) or socket.isOurPublicIP():
             socket.safeClose("Invalid address or our own address.")
             try:

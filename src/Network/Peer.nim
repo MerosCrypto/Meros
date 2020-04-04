@@ -8,6 +8,7 @@ import ../lib/Util
 import Serialize/SerializeCommon
 
 #Network objects.
+import objects/SocketObj
 import objects/MessageObj
 import objects/PeerObj
 
@@ -37,12 +38,13 @@ proc sendLive*(
     SocketError
 ], async.} =
     try:
-        if (await peer.live.write(msg.toString())) != (msg.message.len + 1):
-            raise newException(Exception, "")
-    except Exception as e:
-        peer.live.safeClose("Couldn't send to this live socket: " & e.msg)
+        await peer.live.send(msg.toString())
+    except SocketError as e:
+        peer.live.safeClose(e.msg)
         if not noRaise:
-            raise newLoggedException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
+            raise e
+    except Exception as e:
+        panic("Couldn't get the result of sending to a live socket: " & e.msg)
 
 #Send a message via the Sync socket.
 proc sendSync*(
@@ -53,12 +55,13 @@ proc sendSync*(
     SocketError
 ], async.} =
     try:
-        if (await peer.sync.write(msg.toString())) != (msg.message.len + 1):
-            raise newException(SocketError, "Couldn't send the full message over the Sync socket.")
-    except Exception as e:
-        peer.sync.safeClose("Couldn't send to this sync socket: " & e.msg)
+        await peer.sync.send(msg.toString())
+    except SocketError as e:
+        peer.sync.safeClose(e.msg)
         if not noRaise:
-            raise newLoggedException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
+            raise e
+    except Exception as e:
+        panic("Couldn't get the result of sending to a sync socket: " & e.msg)
 
 #Send a Sync Request.
 proc syncRequest*(
@@ -82,25 +85,10 @@ proc syncRequest*(
 
     release(peer.syncLock)
 
-#Custom recv which ignores lengths of 0.
-#While asyncnet recv(0) returned 0, chronos has different behavior. It returns all available.
-proc recv*(
-    socket: StreamTransport,
-    len: int
-): Future[seq[byte]] {.forceCheck: [
-    Exception
-], async.} =
-    if len == 0:
-        return
-    try:
-        return await socket.read(len)
-    except Exception as e:
-        raise e
-
 #Receive a message.
 proc recv*(
     id: int,
-    socket: StreamTransport,
+    socket: SocketObj.Socket,
     lengths: Table[MessageType, seq[int]]
 ): Future[Message] {.forceCheck: [
     SocketError,
@@ -113,10 +101,12 @@ proc recv*(
 
     #Receive the content type.
     try:
-        msg = cast[string](await socket.recv(1))
+        msg = await socket.recv(1)
+    except SocketError as e:
+        socket.safeClose(e.msg)
+        raise e
     except Exception as e:
-        socket.safeClose("Couldn't receive from this socket: " & e.msg)
-        raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+        panic("Couldn't get the result of receiving from a socket: " & e.msg)
 
     #If the message length is 0, the Peer disconnected.
     if msg.len == 0:
@@ -179,10 +169,12 @@ proc recv*(
                             size += len
 
                             try:
-                                msg &= cast[string](await socket.recv(len))
+                                msg &= await socket.recv(len)
+                            except SocketError as e:
+                                socket.safeClose(e.msg)
+                                raise e
                             except Exception as e:
-                                socket.safeClose("Couldn't receive from this socket: " & e.msg)
-                                raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                                panic("Couldn't get the result of receiving from a socket: " & e.msg)
                             len = -1
 
                         len += MERIT_REMOVAL_ELEMENT_SET.getLength(
@@ -208,10 +200,13 @@ proc recv*(
                     for _ in 0 ..< msg[msg.len - INT_LEN ..< msg.len].fromBinary():
                         len += BYTE_LEN
                         try:
-                            msg &= cast[string](await socket.recv(len))
+                            msg &= await socket.recv(len)
+                        except SocketError as e:
+                            socket.safeClose(e.msg)
+                            raise e
                         except Exception as e:
-                            socket.safeClose("Couldn't receive from this socket: " & e.msg)
-                            raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                            panic("Couldn't get the result of receiving from a socket: " & e.msg)
+
                         size += len
                         if msg.len != size:
                             socket.safeClose("Didn't get a full message.")
@@ -225,10 +220,13 @@ proc recv*(
                         if int(msg[^1]) == MERIT_REMOVAL_PREFIX:
                             for _ in 0 ..< 2:
                                 try:
-                                    msg &= cast[string](await socket.recv(len))
+                                    msg &= await socket.recv(len)
+                                except SocketError as e:
+                                    socket.safeClose(e.msg)
+                                    raise e
                                 except Exception as e:
-                                    socket.safeClose("Couldn't receive from this socket: " & e.msg)
-                                    raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                                    panic("Couldn't get the result of receiving from a socket: " & e.msg)
+
                                 size += len
                                 if msg.len != size:
                                     socket.safeClose("Didn't get a full message.")
@@ -244,10 +242,12 @@ proc recv*(
                                         size += len
 
                                         try:
-                                            msg &= cast[string](await socket.recv(len))
+                                            msg &= await socket.recv(len)
+                                        except SocketError as e:
+                                            socket.safeClose(e.msg)
+                                            raise e
                                         except Exception as e:
-                                            socket.safeClose("Couldn't receive from this socket: " & e.msg)
-                                            raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                                            panic("Couldn't get the result of receiving from a socket: " & e.msg)
                                         len = 0
 
                                     len += MERIT_REMOVAL_ELEMENT_SET.getLength(
@@ -270,10 +270,12 @@ proc recv*(
 
         #Recv the data.
         try:
-            msg &= cast[string](await socket.recv(len))
+            msg &= await socket.recv(len)
+        except SocketError as e:
+            socket.safeClose(e.msg)
+            raise e
         except Exception as e:
-            socket.safeClose("Couldn't receive from this socket: " & e.msg)
-            raise newLoggedException(SocketError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+            panic("Couldn't get the result of receiving from a socket: " & e.msg)
 
         #Add the length to the size and verify the size.
         size += len
