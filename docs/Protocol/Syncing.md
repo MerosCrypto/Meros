@@ -1,9 +1,5 @@
 # Syncing
 
-### Syncing
-
-`Syncing` is described in the Handshake documentation.
-
 ### PeersRequest and Peers
 
 `PeersRequest` is used to request the connection info of other Meros nodes, and has a message length of 0 bytes. The expected response is a `Peers`, which has a variable message length; the 1-byte amount of peers, and for each peer, the 4-byte IPv4 address and 2-byte port. The peers sent in a `Peers` message is completely up to the syncee.
