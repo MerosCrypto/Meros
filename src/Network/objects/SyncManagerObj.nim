@@ -32,6 +32,9 @@ import SyncRequestObj
 #SketchyBlock object.
 import SketchyBlockObj
 
+#Socket object.
+import SocketObj
+
 #Peer lib.
 import ../Peer as PeerFile
 
@@ -244,7 +247,21 @@ proc handle*(
         except Exception as e:
             panic("Sync handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    if msg.content != MessageType.Syncing:
+    if msg.content == MessageType.Busy:
+        peer.sync.safeClose("Server we connected to was busy.")
+        try:
+            for p in 0 ..< msg.message[0].fromBinary():
+                var ip: string = msg.message[BYTE_LEN + (p * PEER_LEN) ..< BYTE_LEN + (p * PEER_LEN) + IP_LEN]
+                asyncCheck manager.functions.network.connect(
+                    $(ip[0].fromBinary()) & "." & $(ip[1].fromBinary()) & "." & $(ip[2].fromBinary()) & "." & $(ip[3].fromBinary()),
+                    msg.message[BYTE_LEN + (p * PEER_LEN) + IP_LEN ..< BYTE_LEN + (p * PEER_LEN) + PEER_LEN].fromBinary()
+                )
+        except IndexError as e:
+            panic("Extracting peers from a Busy message raised an IndexError: " & e.msg)
+        except Exception as e:
+            panic("Calling connect due to a Busy message raised despite not throwing anything: " & e.msg)
+        return
+    elif msg.content != MessageType.Syncing:
         peer.close("Peer didn't send Syncing.")
         return
 
