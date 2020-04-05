@@ -126,7 +126,7 @@ suite "Epochs":
         blockchain.rx = nil
 
     noFuzzTest "Empty.":
-        check(epochs.shift(newBlankBlock()).calculate(state, initTable[uint16, MeritRemoval]()).len == 0)
+        check(epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]()).len == 0)
         
         #Manually set the RandomX instance to null to make sure it's GC'able.
         blockchain.rx = nil
