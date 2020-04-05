@@ -21,6 +21,9 @@ import mc_lmdb
 import json
 
 type
+    #Compile-time Exception used when Meros is being built for an unsupported target.
+    UnsupportedTarget* = object of Exception
+
     #lib Errors.
     RandomError* = object of CatchableError #Used when the RNG fails.
     SaltError*   = object of CatchableError #Used when a sketch salt causes a collision.
