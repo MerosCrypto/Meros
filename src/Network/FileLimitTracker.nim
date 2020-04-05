@@ -76,7 +76,7 @@ proc newFileLimitTracker*(): FileLimitTracker {.forceCheck: [].} =
 proc allocateSocket*(
     tracker: FileLimitTracker
 ): PeerStatus {.forceCheck: [].} =
-    if (tracker.current + tracker.socketsSinceLastUpdate) < (tracker.max - BUFFER_FILES)):
+    if (tracker.current + tracker.socketsSinceLastUpdate) < (tracker.max - BUFFER_FILES):
         inc(tracker.socketsSinceLastUpdate)
         result = PeerStatus.Valid
     else:

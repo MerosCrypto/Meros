@@ -20,6 +20,9 @@ import SocketObj
 import LiveManagerObj
 import SyncManagerObj
 
+#FileLimitTracker lib.
+import ../FileLimitTracker
+
 #Peer library.
 import ../Peer as PeerFile
 
@@ -87,7 +90,7 @@ proc newNetwork*(
     functions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
     var network: Network = Network(
-        tracker: newFileLimitTracker(),
+        fileTracker: newFileLimitTracker(),
 
         masks: initTable[string, uint8](),
 

@@ -24,6 +24,9 @@ import Serialize/SerializeCommon
 #Socket object.
 import objects/SocketObj
 
+#FileLimitTracker lib.
+import FileLimitTracker
+
 #Peer lib.
 import Peer
 export Peer
@@ -176,7 +179,7 @@ proc connect*(
     var socket: SocketObj.Socket
     try:
         #Make sure we have the file for that.
-        if network.tracker.allocateSocket() == PeerStatus.Busy:
+        if network.fileTracker.allocateSocket() == PeerStatus.Busy:
             raise newException(Exception, "")
 
         socket = await newSocket(tAddy)
@@ -216,7 +219,7 @@ proc connect*(
 
         try:
             #Make sure we have the file for the new socket.
-            if network.tracker.allocateSocket() == PeerStatus.Busy:
+            if network.fileTracker.allocateSocket() == PeerStatus.Busy:
                 raise newException(Exception, "")
             peer.live = await newSocket(tAddy)
         except Exception:
@@ -260,19 +263,21 @@ proc handle(
         var socket: SocketObj.Socket = newSocket(rawSocket)
 
         #Check if we have the file to handle this socket.
-        if network.tracker.allocateSocket() == PeerStatus.Busy
+        if network.fileTracker.allocateSocket() == PeerStatus.Busy:
             var
                 peers: seq[Peer] = network.peers.getPeers(
-                    min(manager.peers.len, 4),
+                    min(network.peers.len, 4),
                     0,
                     server = true
                 )
-                busy: MessageType.Busy = newMessage(MessageType.Busy, peers.len.toBinary(BYTE_LEN))
+                busy: Message = newMessage(MessageType.Busy, peers.len.toBinary(BYTE_LEN))
             for peer in peers:
-                busy.message &= peer.ip[0 ..< IP_LEN] & peer.port.toBinary(PORT_LEN):
-
-            socket.send(busy)
-            socket.close()
+                busy.message &= peer.ip[0 ..< IP_LEN] & peer.port.toBinary(PORT_LEN)
+            try:
+                await socket.send(busy.toString())
+            except Exception:
+                discard
+            socket.safeClose("We are busy.")
             return
 
         #Get their address.
@@ -299,7 +304,7 @@ proc handle(
         except Exception as e:
             panic("Couldn't receive from a socket despite catching all errors recv throws: " & e.msg)
         if handshake.content == MessageType.Busy:
-            socket.safeClose("Client who connected to us claimed to be busy: " & e.msg)
+            socket.safeClose("Client who connected to us claimed to be busy.")
             return
 
         #Lock the IP, passing the type of the Handshake.
@@ -379,7 +384,6 @@ proc handle(
             network.disconnect(peer)
         except Exception as e:
             panic("Handling a socket threw an Exception despite catching all Exceptions: " & e.msg)
-
 
 #Listen for new connections.
 proc listen*(
