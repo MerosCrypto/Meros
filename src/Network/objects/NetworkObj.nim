@@ -43,9 +43,12 @@ const
 
 #Network object.
 type Network* = ref object
+    #File limit tracker. Used to ensure we don't hit ulimit.
+    fileTracker*: FileLimitTracker
+
     #Lock for the IP masks.
     ipLock: Lock
-    #IP masks.
+    #IP masks.Explores science fiction + corporations ruling the world
     masks: Table[string, uint8]
 
     #Used to provide each Peer an unique ID.
@@ -84,6 +87,8 @@ proc newNetwork*(
     functions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
     var network: Network = Network(
+        tracker: newFileLimitTracker(),
+
         masks: initTable[string, uint8](),
 
         #Starts at 1 because the local node is 0.
@@ -188,6 +193,17 @@ proc newNetwork*(
 
     #Call removeInactive so it registers the timer.
     removeInactive()
+
+    #Add a repeating timer to update the amount of open files.
+    proc updateFileTracker(
+        data: pointer = nil
+    ) {.gcsafe, forceCheck: [].} =
+        network.fileTracker.update()
+        try:
+            discard setTimer(Moment.fromNow(minutes(1)), updateFileTracker)
+        except OSError as e:
+            panic("Setting a timer to update the amount of open files failed: " & e.msg)
+    updateFileTracker()
 
 proc lockIP*(
     network: Network,

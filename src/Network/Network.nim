@@ -175,6 +175,10 @@ proc connect*(
     #Create a socket.
     var socket: SocketObj.Socket
     try:
+        #Make sure we have the file for that.
+        if network.tracker.allocateSocket() == PeerStatus.Busy:
+            raise newException(Exception, "")
+
         socket = await newSocket(tAddy)
         if socket.isOurPublicIP():
             raise newException(Exception, "")
@@ -209,14 +213,14 @@ proc connect*(
     else:
         peer = newPeer(verified.ip)
         peer.sync = socket
+
         try:
+            #Make sure we have the file for the new socket.
+            if network.tracker.allocateSocket() == PeerStatus.Busy:
+                raise newException(Exception, "")
             peer.live = await newSocket(tAddy)
         except Exception:
-            peer.close("Could only connect to this Peer for the sync socket.")
-            try:
-                await network.unlockIP(address)
-            except Exception as e:
-                panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
+            discard
 
         #Add it to the network.
         network.add(peer)
@@ -255,6 +259,22 @@ proc handle(
         #Wrap the StreamTransport.
         var socket: SocketObj.Socket = newSocket(rawSocket)
 
+        #Check if we have the file to handle this socket.
+        if network.tracker.allocateSocket() == PeerStatus.Busy
+            var
+                peers: seq[Peer] = network.peers.getPeers(
+                    min(manager.peers.len, 4),
+                    0,
+                    server = true
+                )
+                busy: MessageType.Busy = newMessage(MessageType.Busy, peers.len.toBinary(BYTE_LEN))
+            for peer in peers:
+                busy.message &= peer.ip[0 ..< IP_LEN] & peer.port.toBinary(PORT_LEN):
+
+            socket.send(busy)
+            socket.close()
+            return
+
         #Get their address.
         var address: string
         try:
@@ -278,6 +298,9 @@ proc handle(
             return
         except Exception as e:
             panic("Couldn't receive from a socket despite catching all errors recv throws: " & e.msg)
+        if handshake.content == MessageType.Busy:
+            socket.safeClose("Client who connected to us claimed to be busy: " & e.msg)
+            return
 
         #Lock the IP, passing the type of the Handshake.
         #Since up to two client connections can exist, it's fine if there's already one, as long as they're of different types.
@@ -387,6 +410,9 @@ proc listen*(
         panic("Couldn't start listening due to an TransportOSError: " & e.msg)
     except Exception as e:
         panic("Couldn't start listening due to an Exception: " & e.msg)
+
+    #Update the file limit tracker.
+    network.fileTracker.update()
 
     #Don't return until the server closes.
     #This function should be called with asynccheck so this should mean nothing.
