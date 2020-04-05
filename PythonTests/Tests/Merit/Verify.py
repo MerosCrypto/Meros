@@ -7,11 +7,17 @@ from PythonTests.Tests.Errors import TestError
 #RPC class.
 from PythonTests.Meros.RPC import RPC
 
+#Sleep standard function.
+from time import sleep
+
 #Verify the Blockchain.
 def verifyBlockchain(
     rpc: RPC,
     blockchain: Blockchain
 ) -> None:
+    #Sleep to ensure data races aren't a problem.
+    sleep(2)
+
     #Verify the height.
     if rpc.call("merit", "getHeight") != len(blockchain.blocks):
         raise TestError("Height doesn't match.")

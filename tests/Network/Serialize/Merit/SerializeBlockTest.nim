@@ -70,6 +70,7 @@ suite "SerializeBlock":
         while true:
             if newMiner:
                 newBlock = newBlankBlock(
+                    getRandomX(),
                     uint32(rand(4096)),
                     last,
                     uint16(rand(50000)),
@@ -83,6 +84,7 @@ suite "SerializeBlock":
                 )
             else:
                 newBlock = newBlankBlock(
+                    getRandomX(),
                     uint32(rand(4096)),
                     last,
                     uint16(rand(50000)),
@@ -102,7 +104,7 @@ suite "SerializeBlock":
             break
 
         #Serialize it and parse it back.
-        reloaded = newBlock.serialize().parseBlock()
+        reloaded = getRandomX().parseBlock(newBlock.serialize())
 
         #Create the Sketch and extract its elements.
         sketchResult = newSketcher(packets).merge(

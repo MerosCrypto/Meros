@@ -15,13 +15,13 @@ import Wallet/MinerWallet
 import Wallet/Wallet
 
 #Transactions.
-import Database/Transactions/Transactions
+import Database/Transactions/Transactions as TransactionsFile
 
 #Consensus.
-import Database/Consensus/Consensus
+import Database/Consensus/Consensus as ConsensusFile
 
 #Merit.
-import Database/Merit/Merit
+import Database/Merit/Merit as MeritFile
 
 #DB.
 import Database/Filesystem/DB/DB
@@ -54,6 +54,9 @@ import objects/ConfigObj
 #StInt external lib.
 import stint
 
+#Chronos external lib.
+import chronos
+
 #OS standard lib.
 import os
 
@@ -62,9 +65,6 @@ import threadpool
 
 #Locks standard lib.
 import locks
-
-#Async standard lib.
-import asyncdispatch
 
 #JSON standard lib.
 import json

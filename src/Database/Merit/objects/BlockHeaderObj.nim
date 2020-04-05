@@ -102,20 +102,22 @@ func newBlockHeaderObj*(
 
 #Sign and hash the header via a passed in serialization.
 proc hash*(
+    rx: RandomX,
     miner: MinerWallet,
     header: var BlockHeader,
     serialized: string,
     proof: uint32
 ) {.forceCheck: [].} =
     header.proof = proof
-    header.interimHash = RandomX(serialized).toString()
+    header.interimHash = rx.hash(serialized).toString()
     header.signature = miner.sign(header.interimHash)
-    header.hash = RandomX(header.interimHash & header.signature.serialize())
+    header.hash = rx.hash(header.interimHash & header.signature.serialize())
 
 #Hash the header via a passed in serialization.
 proc hash*(
+    rx: RandomX,
     header: var BlockHeader,
     serialized: string
 ) {.forceCheck: [].} =
-    header.interimHash = RandomX(serialized).toString()
-    header.hash = RandomX(header.interimHash & header.signature.serialize())
+    header.interimHash = rx.hash(serialized).toString()
+    header.hash = rx.hash(header.interimHash & header.signature.serialize())

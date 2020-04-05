@@ -15,17 +15,18 @@ skipExt = @["nim"]
 #Dependencies
 requires "nim >= 1.0.4"
 requires "https://github.com/MerosCrypto/Argon2 >= 1.1.2"
-requires "https://github.com/MerosCrypto/mc_randomx"
+requires "https://github.com/MerosCrypto/mc_randomx >= 0.9.4"
 requires "https://github.com/MerosCrypto/mc_bls"
 requires "https://github.com/MerosCrypto/mc_ed25519"
 requires "https://github.com/MerosCrypto/mc_minisketch"
 requires "https://github.com/MerosCrypto/mc_lmdb"
 requires "https://github.com/MerosCrypto/mc_webview"
 requires "https://github.com/kayabaNerve/ForceCheck >= 1.3.2"
-requires "stint"
 requires "nimcrypto"
-requires "normalize"
+requires "stint"
+requires "https://github.com/status-im/nim-chronos"
 requires "chronicles"
+requires "normalize"
 
 #Procedures.
 proc gatherTestFiles(

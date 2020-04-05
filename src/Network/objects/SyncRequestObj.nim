@@ -22,11 +22,11 @@ import SketchyBlockObj
 #SerializeCommon standard lib.
 import ../Serialize/SerializeCommon
 
+#Chronos external lib.
+import chronos
+
 #Sets standard lib.
 import sets
-
-#Async standard lib.
-import asyncdispatch
 
 type
     SyncRequest* = ref object of RootObj

@@ -22,6 +22,12 @@ export TestDatabase
 #Random standard lib.
 import random
 
+#Get a RandomX instance.
+var rx: RandomX = newRandomX()
+proc getRandomX*(): RandomX =
+    {.gcsafe.}:
+        rx
+
 #Create a valid VerificationPacket.
 proc newValidVerificationPacket*(
     holders: seq[BLSPublicKey],
@@ -63,6 +69,7 @@ proc newValidVerificationPacket*(
 #Create a Block, with every setting optional.
 var lastTime {.threadvar.}: uint32
 proc newBlankBlock*(
+    rx: RandomX,
     version: uint32 = 0,
     last: RandomXHash = RandomXHash(),
     significant: uint16 = 1,
@@ -94,10 +101,11 @@ proc newBlankBlock*(
         aggregate,
         actualTime
     )
-    miner.hash(result.header, proof)
+    rx.hash(miner, result.header, proof)
 
 #Create a Block with a nicname.
 proc newBlankBlock*(
+    rx: RandomX,
     version: uint32 = 0,
     last: RandomXHash = RandomXHash(),
     significant: uint16 = 1,
@@ -130,4 +138,4 @@ proc newBlankBlock*(
         aggregate,
         actualTime
     )
-    miner.hash(result.header, proof)
+    rx.hash(miner, result.header, proof)

@@ -40,7 +40,8 @@ def HundredTwentyFiveTest(
             blockchain.blocks[0].header.hash,
             False
         )
-        connection.recv(38)
+        if len(connection.recv(38)) == 0:
+            raise Exception("")
     except Exception:
         raise SuccessError("Meros closed a connection from the same IP as itself which wasn't 127.0.0.1.")
     raise TestError("Meros allowed a connection from the same IP as itself which wasn't 127.0.0.1.")

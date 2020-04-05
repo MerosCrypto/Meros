@@ -32,3 +32,54 @@ type ChainParams = object
 
     #Seed servers.
     SEEDS: seq[tuple[ip: string, port: int]]
+
+proc newChainParams(
+    network: string
+): ChainParams {.forceCheck: [].} =
+    case network:
+        of "mainnet":
+            echo "The mainnet has yet to launch."
+            quit(0)
+
+        of "testnet":
+            result = ChainParams(
+                GENESIS: "MEROS_DEVELOPER_TESTNET_2",
+
+                BLOCK_TIME: 600,
+                DEAD_MERIT: 1000,
+
+                BLOCK_DIFFICULTY: 10000,
+                SEND_DIFFICULTY:  3,
+                DATA_DIFFICULTY:  5,
+
+                NETWORK_PROTOCOL: 0,
+                NETWORK_ID: 0,
+
+                SEEDS: @[
+                    (ip: "seed1.meroscrypto.io", port: 5132),
+                    (ip: "seed2.meroscrypto.io", port: 5132),
+                    (ip: "seed3.meroscrypto.io", port: 5132),
+                ]
+            )
+
+        of "devnet":
+            result = ChainParams(
+                GENESIS: "MEROS_DEVELOPER_NETWORK",
+
+                BLOCK_TIME: 60,
+                DEAD_MERIT: 100,
+
+                BLOCK_DIFFICULTY: 100,
+                SEND_DIFFICULTY:  3,
+                DATA_DIFFICULTY:  5,
+
+                #By not using 255, we allow eventually extending these fields. If we read 255, we can also read an extra byte,
+                NETWORK_PROTOCOL: 254,
+                NETWORK_ID: 254,
+
+                SEEDS: @[]
+            )
+
+        else:
+            echo "Invalid network specified."
+            quit(0)

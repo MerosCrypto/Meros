@@ -113,6 +113,9 @@ suite "Consensus":
                 5
             ))
 
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        merit.blockchain.rx = nil
+
     noFuzzTest "Reloaded Consensus.":
         var
             #Database.
@@ -169,6 +172,7 @@ suite "Consensus":
                 holders.add(miner)
 
                 mining = newBlankBlock(
+                    rx = merit.blockchain.rx,
                     last = merit.blockchain.tail.header.hash,
                     sketchSalt = char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                     miner = miner,
@@ -181,6 +185,7 @@ suite "Consensus":
                 miner = holders[h]
 
                 mining = newBlankBlock(
+                    rx = merit.blockchain.rx,
                     last = merit.blockchain.tail.header.hash,
                     sketchSalt = char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                     nick = uint16(h),
@@ -377,3 +382,6 @@ suite "Consensus":
 
             #Compare the Consensus DAGs.
             compare()
+
+        #Manually set the RandomX instance to null to make sure it's GC'able.
+        merit.blockchain.rx = nil

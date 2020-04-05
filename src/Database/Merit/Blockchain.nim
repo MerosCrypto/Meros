@@ -227,10 +227,9 @@ proc revert*(
             panic("Couldn't grab the Block used as the current RandomX key: " & e.msg)
 
     #Rebuild the RandomX cache if needed.
-    if currentKey != blockchain.cacheKey:
-        blockchain.cacheKey = currentKey
-        setRandomXKey(blockchain.cacheKey)
-        blockchain.db.saveKey(blockchain.cacheKey)
+    if currentKey != blockchain.rx.cacheKey:
+        blockchain.rx.setCacheKey(currentKey)
+        blockchain.db.saveKey(blockchain.rx.cacheKey)
 
     if blockUsedAsUpcomingKey == -1:
         #We don't need to do this since we don't load the upcoming key at Block 12.

@@ -46,7 +46,7 @@ proc add*(
     claim: Claim,
     lookup: proc (
         holder: uint16
-    ): BLSPublicKey {.raises: [
+    ): BLSPublicKey {.gcsafe, raises: [
         IndexError
     ].}
 ) {.forceCheck: [

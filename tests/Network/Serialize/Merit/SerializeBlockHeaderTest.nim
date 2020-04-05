@@ -19,7 +19,8 @@ import ../../../../src/Database/Merit/BlockHeader
 import ../../../../src/Network/Serialize/Merit/SerializeBlockHeader
 import ../../../../src/Network/Serialize/Merit/ParseBlockHeader
 
-#Compare Merit lib.
+#Test and Compare Merit libs.
+import ../../../Database/Merit/TestMerit
 import ../../../Database/Merit/CompareMerit
 
 #Random standard lib.
@@ -60,8 +61,7 @@ suite "SerializeBlockHeader":
                 last,
                 contents,
                 uint16(rand(50000)),
-                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(
-                        255)),
+                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                 sketchCheck,
                 miner.publicKey,
                 uint32(rand(high(int32)))
@@ -72,16 +72,15 @@ suite "SerializeBlockHeader":
                 last,
                 contents,
                 uint16(rand(50000)),
-                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(
-                        255)),
+                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                 sketchCheck,
                 uint16(rand(high(int16))),
                 uint32(rand(high(int32)))
             )
-        miner.hash(header, uint16(rand(high(int16))))
+        getRandomX().hash(miner, header, uint16(rand(high(int16))))
 
         #Serialize it and parse it back.
-        reloaded = header.serialize().parseBlockHeader()
+        reloaded = getRandomX().parseBlockHeader(header.serialize())
 
         #Compare the BlockHeaders.
         compare(header, reloaded)
