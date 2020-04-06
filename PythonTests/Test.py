@@ -60,6 +60,7 @@ from PythonTests.Tests.Consensus.HundredSix.HundredSixBlockElementsTest import H
 from PythonTests.Tests.Consensus.HundredSix.HundredSixMeritRemovalsTest import HundredSixMeritRemovalsTest
 
 from PythonTests.Tests.Network.LANPeersTest import LANPeersTest
+from PythonTests.Tests.Network.ULimitTest import ULimitTest
 from PythonTests.Tests.Network.HundredTwentyFiveTest import HundredTwentyFiveTest
 
 #Arguments.
@@ -133,6 +134,7 @@ tests: List[Callable[[RPC], None]] = [
     HundredSixMeritRemovalsTest,
 
     LANPeersTest,
+    ULimitTest,
     HundredTwentyFiveTest
 ]
 

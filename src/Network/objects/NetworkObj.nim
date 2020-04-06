@@ -123,6 +123,7 @@ proc newNetwork*(
     result = network
 
     #Add a repeating timer to remove inactive Peers.
+    var removeInactiveTimer: TimerCallback = nil
     proc removeInactive(
         data: pointer = nil
     ) {.gcsafe, forceCheck: [].} =
@@ -188,9 +189,13 @@ proc newNetwork*(
             #Move on to the next Peer.
             inc(p)
 
+        #Clear the existing timer.
+        if not removeInactiveTimer.isNil:
+            clearTimer(removeInactiveTimer)
+
         #Register the timer again.
         try:
-            discard setTimer(Moment.fromNow(seconds(10)), removeInactive)
+            removeInactiveTimer = setTimer(Moment.fromNow(seconds(10)), removeInactive)
         except OSError as e:
             panic("Setting a timer to remove inactive peers failed: " & e.msg)
 
@@ -198,12 +203,15 @@ proc newNetwork*(
     removeInactive()
 
     #Add a repeating timer to update the amount of open files.
+    var updateFileTrackerTimer: TimerCallback = nil
     proc updateFileTracker(
         data: pointer = nil
     ) {.gcsafe, forceCheck: [].} =
         network.fileTracker.update()
+        if not updateFileTrackerTimer.isNil:
+            clearTimer(updateFileTrackerTimer)
         try:
-            discard setTimer(Moment.fromNow(minutes(1)), updateFileTracker)
+            updateFileTrackerTimer = setTimer(Moment.fromNow(minutes(1)), updateFileTracker)
         except OSError as e:
             panic("Setting a timer to update the amount of open files failed: " & e.msg)
     updateFileTracker()

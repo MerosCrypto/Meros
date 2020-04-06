@@ -37,33 +37,34 @@ class MessageType(
 ):
     Handshake                 = 0
     Syncing                   = 1
-    BlockchainTail            = 2
+    Busy                      = 2
+    BlockchainTail            = 3
 
-    PeersRequest              = 3
-    Peers                     = 4
-    BlockListRequest          = 5
-    BlockList                 = 6
+    PeersRequest              = 4
+    Peers                     = 5
+    BlockListRequest          = 6
+    BlockList                 = 7
 
-    BlockHeaderRequest        = 8
-    BlockBodyRequest          = 9
-    SketchHashesRequest       = 10
-    SketchHashRequests        = 11
-    TransactionRequest        = 12
-    DataMissing               = 13
+    BlockHeaderRequest        = 9
+    BlockBodyRequest          = 10
+    SketchHashesRequest       = 11
+    SketchHashRequests        = 12
+    TransactionRequest        = 13
+    DataMissing               = 14
 
-    Claim                     = 14
-    Send                      = 15
-    Data                      = 16
+    Claim                     = 15
+    Send                      = 16
+    Data                      = 17
 
-    SignedVerification        = 19
-    SignedSendDifficulty      = 20
-    SignedDataDifficulty      = 21
-    SignedMeritRemoval        = 23
+    SignedVerification        = 20
+    SignedSendDifficulty      = 21
+    SignedDataDifficulty      = 22
+    SignedMeritRemoval        = 24
 
-    BlockHeader               = 25
-    BlockBody                 = 26
-    SketchHashes              = 27
-    VerificationPacket        = 28
+    BlockHeader               = 26
+    BlockBody                 = 27
+    SketchHashes              = 28
+    VerificationPacket        = 29
 
     #MessageType -> byte.
     def toByte(
@@ -81,6 +82,7 @@ class MessageType(
 #A zero means custom logic should be used.
 live_lengths: Dict[MessageType, List[int]] = {
     MessageType.Handshake:            [37],
+    MessageType.Busy:                 [1, -6],
     MessageType.BlockchainTail:       [32],
 
     MessageType.Claim:                [1, -33, 80],
@@ -97,10 +99,11 @@ live_lengths: Dict[MessageType, List[int]] = {
 
 sync_lengths: Dict[MessageType, List[int]] = {
     MessageType.Syncing:             live_lengths[MessageType.Handshake],
+    MessageType.Busy:                live_lengths[MessageType.Busy],
     MessageType.BlockchainTail:      [32],
 
     MessageType.PeersRequest:        [],
-    MessageType.Peers:               [1, -6],
+    MessageType.Peers:               live_lengths[MessageType.Busy],
     MessageType.BlockListRequest:    [34],
     MessageType.BlockList:           [1, -32, 32],
 
@@ -204,6 +207,19 @@ def recv(
 
     return result
 
+#Raised when the node is busy.
+#This isn't defined in Errors because it has no relation to the test suite.
+class BusyError(
+    Exception
+):
+    def __init__(
+        self,
+        msg: str,
+        handshake: bytes
+    ) -> None:
+        Exception.__init__(self, msg)
+        self.handshake: bytes = handshake
+
 class MerosSocket:
     #Constructor.
     def __init__(
@@ -232,6 +248,14 @@ class MerosSocket:
 
         #Receive their Handshake.
         response: bytes = recv(self.connection, live_lengths if live else sync_lengths)
+        if MessageType(response[0]) == MessageType.Busy:
+            #Wrapped in a try/except as this will error out if Meros beats it to the punch.
+            try:
+                self.connection.shutdown(socket.SHUT_RDWR)
+                self.connection.close()
+            except OSError:
+                pass
+            raise BusyError("Node was busy.", response)
         if MessageType(response[0]) != (MessageType.Handshake if live else MessageType.Syncing):
             raise TestError("Node didn't send the right Handshake for this connection type.")
         if response[1] != network:
