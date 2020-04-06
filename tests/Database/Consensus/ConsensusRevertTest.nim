@@ -48,9 +48,6 @@ import tables
 
 suite "ConsensusRevert":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             initialSendDifficulty: uint32 = uint32(rand(high(int32)))
             initialDataDifficulty: uint32 = uint32(rand(high(int32)))
