@@ -9,6 +9,7 @@ switch("define", "ADDRESS_HRP=bc")
 switch("define", "COIN_TYPE=5132")
 switch("define", "DEFAULT_PORT=5132")
 switch("define", "MESSAGE_LENGTH_LIMIT=8388608")
+switch("define", "BUFFER_FILES=16")
 
 #Optimize for size (which is faster than `opt=speed` for Meros (at least on x86_64)).
 switch("opt", "size")

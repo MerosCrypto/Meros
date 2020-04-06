@@ -22,6 +22,9 @@ import ../../objects/GlobalFunctionBoxObj
 #Message object.
 import MessageObj
 
+#Socket object.
+import SocketObj
+
 #Peer lib.
 import ../Peer as PeerFile
 
@@ -122,7 +125,21 @@ proc handle*(
         except Exception as e:
             panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    if msg.content != MessageType.Handshake:
+    if msg.content == MessageType.Busy:
+        peer.live.safeClose("Server we connected to was busy.")
+        try:
+            for p in 0 ..< msg.message[0].fromBinary():
+                var ip: string = msg.message[BYTE_LEN + (p * PEER_LEN) ..< BYTE_LEN + (p * PEER_LEN) + IP_LEN]
+                asyncCheck manager.functions.network.connect(
+                    $(ip[0].fromBinary()) & "." & $(ip[1].fromBinary()) & "." & $(ip[2].fromBinary()) & "." & $(ip[3].fromBinary()),
+                    msg.message[BYTE_LEN + (p * PEER_LEN) + IP_LEN ..< BYTE_LEN + (p * PEER_LEN) + PEER_LEN].fromBinary()
+                )
+        except IndexError as e:
+            panic("Extracting peers from a Busy message raised an IndexError: " & e.msg)
+        except Exception as e:
+            panic("Calling connect due to a Busy message raised despite not throwing anything: " & e.msg)
+        return
+    elif msg.content != MessageType.Handshake:
         peer.close("Peer didn't send a Handshake.")
         return
 

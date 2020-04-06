@@ -20,6 +20,9 @@ import SocketObj
 import LiveManagerObj
 import SyncManagerObj
 
+#FileLimitTracker lib.
+import ../FileLimitTracker
+
 #Peer library.
 import ../Peer as PeerFile
 
@@ -43,9 +46,12 @@ const
 
 #Network object.
 type Network* = ref object
+    #File limit tracker. Used to ensure we don't hit ulimit.
+    fileTracker*: FileLimitTracker
+
     #Lock for the IP masks.
     ipLock: Lock
-    #IP masks.
+    #IP masks.Explores science fiction + corporations ruling the world
     masks: Table[string, uint8]
 
     #Used to provide each Peer an unique ID.
@@ -84,6 +90,8 @@ proc newNetwork*(
     functions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
     var network: Network = Network(
+        fileTracker: newFileLimitTracker(),
+
         masks: initTable[string, uint8](),
 
         #Starts at 1 because the local node is 0.
@@ -115,6 +123,7 @@ proc newNetwork*(
     result = network
 
     #Add a repeating timer to remove inactive Peers.
+    var removeInactiveTimer: TimerCallback = nil
     proc removeInactive(
         data: pointer = nil
     ) {.gcsafe, forceCheck: [].} =
@@ -180,14 +189,32 @@ proc newNetwork*(
             #Move on to the next Peer.
             inc(p)
 
+        #Clear the existing timer.
+        if not removeInactiveTimer.isNil:
+            clearTimer(removeInactiveTimer)
+
         #Register the timer again.
         try:
-            discard setTimer(Moment.fromNow(seconds(10)), removeInactive)
+            removeInactiveTimer = setTimer(Moment.fromNow(seconds(10)), removeInactive)
         except OSError as e:
             panic("Setting a timer to remove inactive peers failed: " & e.msg)
 
     #Call removeInactive so it registers the timer.
     removeInactive()
+
+    #Add a repeating timer to update the amount of open files.
+    var updateFileTrackerTimer: TimerCallback = nil
+    proc updateFileTracker(
+        data: pointer = nil
+    ) {.gcsafe, forceCheck: [].} =
+        network.fileTracker.update()
+        if not updateFileTrackerTimer.isNil:
+            clearTimer(updateFileTrackerTimer)
+        try:
+            updateFileTrackerTimer = setTimer(Moment.fromNow(minutes(1)), updateFileTracker)
+        except OSError as e:
+            panic("Setting a timer to update the amount of open files failed: " & e.msg)
+    updateFileTracker()
 
 proc lockIP*(
     network: Network,

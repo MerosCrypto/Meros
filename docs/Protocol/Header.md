@@ -7,6 +7,7 @@ The message types are as follows (with their list number being their byte header
 <ol start="0">
 <li><code>Handshake</code></li>
 <li><code>Syncing</code></li>
+<li><code>Busy</code></li>
 <li><code>BlockchainTail</code></li>
 <br>
 <li><code>PeersRequest</code></li>
@@ -41,7 +42,7 @@ The message types are as follows (with their list number being their byte header
 <li><code>VerificationPacket</code></li>
 </ol>
 
-Every message between `Syncing` and `DataMissing`, as well as everything after `BlockBody` (inclusive), can only be sent over the Sync socket. `Handshake`, as well as every message between `SignedVerification` and `SignedMeritRemoval` can only be sent over the Live socket. Every other message (`BlockchainTail`, `Claim` through `Unlock`, `Checkpoint`, and `BlockHeader`) can be sent over either socket.
+Every message between `Syncing` and `DataMissing`, excluding `Busy`, as well as everything after `BlockBody` (inclusive), can only be sent over the Sync socket. `Handshake`, as well as every message between `SignedVerification` and `SignedMeritRemoval` can only be sent over the Live socket. Every other message (`Busy`, `BlockchainTail`, `Claim` through `Unlock`, `Checkpoint`, and `BlockHeader`) can be sent over either socket.
 
 The Live socket is a connection where every message is proactive. When a node rebroadcasts new data, it's sent over the Live Socket. The Sync socket is a connection where every message is reactive. One party makes a request and one party makes a response. Either party can make a request at any point in time, yet the responses must be in the exact same order as the requests.
 

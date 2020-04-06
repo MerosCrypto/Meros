@@ -15,37 +15,38 @@ type
     MessageType* {.pure.} = enum
         Handshake                 = 0,
         Syncing                   = 1,
-        BlockchainTail            = 2,
+        Busy                      = 2,
+        BlockchainTail            = 3,
 
-        PeersRequest              = 3,
-        Peers                     = 4,
-        BlockListRequest          = 5,
-        BlockList                 = 6,
+        PeersRequest              = 4,
+        Peers                     = 5,
+        BlockListRequest          = 6,
+        BlockList                 = 7,
 
-        BlockHeaderRequest        = 8,
-        BlockBodyRequest          = 9,
-        SketchHashesRequest       = 10,
-        SketchHashRequests        = 11,
-        TransactionRequest        = 12,
-        DataMissing               = 13,
+        BlockHeaderRequest        = 9,
+        BlockBodyRequest          = 10,
+        SketchHashesRequest       = 11,
+        SketchHashRequests        = 12,
+        TransactionRequest        = 13,
+        DataMissing               = 14,
 
-        Claim                     = 14,
-        Send                      = 15,
-        Data                      = 16,
+        Claim                     = 15,
+        Send                      = 16,
+        Data                      = 17,
 
-        SignedVerification        = 19,
-        SignedSendDifficulty      = 20,
-        SignedDataDifficulty      = 21,
-        SignedMeritRemoval        = 23,
+        SignedVerification        = 20,
+        SignedSendDifficulty      = 21,
+        SignedDataDifficulty      = 22,
+        SignedMeritRemoval        = 24,
 
-        BlockHeader               = 25,
-        BlockBody                 = 26,
-        SketchHashes              = 27,
-        VerificationPacket        = 28,
+        BlockHeader               = 26,
+        BlockBody                 = 27,
+        SketchHashes              = 28,
+        VerificationPacket        = 29,
 
         #End is used to mark the end of the Enum.
         #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-        End = 29
+        End = 30
 
     #Message object.
     Message* = object
@@ -67,6 +68,7 @@ proc hash*(
 const
     LIVE_LENS*: Table[MessageType, seq[int]] = {
         MessageType.Handshake:                 @[BYTE_LEN + BYTE_LEN + BYTE_LEN + PORT_LEN + HASH_LEN],
+        MessageType.Busy:                      @[BYTE_LEN, -PEER_LEN],
         MessageType.BlockchainTail:            @[HASH_LEN],
 
         MessageType.Claim:                     @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), ED_PUBLIC_KEY_LEN + BLS_SIGNATURE_LEN],
@@ -83,10 +85,11 @@ const
 
     SYNC_LENS*: Table[MessageType, seq[int]] = {
         MessageType.Syncing:                   LIVE_LENS[MessageType.Handshake],
+        MessageType.Busy:                      LIVE_LENS[MessageType.Busy],
         MessageType.BlockchainTail:            LIVE_LENS[MessageType.BlockchainTail],
 
         MessageType.PeersRequest:              @[],
-        MessageType.Peers:                     @[BYTE_LEN, -PEER_LEN],
+        MessageType.Peers:                     LIVE_LENS[MessageType.Busy],
         MessageType.BlockListRequest:          @[BYTE_LEN + BYTE_LEN + HASH_LEN],
         MessageType.BlockList:                 @[BYTE_LEN, -HASH_LEN, HASH_LEN],
 
@@ -110,6 +113,7 @@ const
     HANDSHAKE_LENS*: Table[MessageType, seq[int]] = {
         MessageType.Handshake: LIVE_LENS[MessageType.Handshake],
         MessageType.Syncing:   SYNC_LENS[MessageType.Syncing],
+        MessageType.Busy:      LIVE_LENS[MessageType.Busy]
     }.toTable()
 
 #Constructor for incoming data.

@@ -52,6 +52,7 @@ proc mainNetwork(
             panic("Network.broadcast threw an Exception despite not naturally throwing any: " & e.msg)
 
     #Look for new peers if we don't have enough already.
+    var requestPeersTimer: TimerCallback = nil
     proc requestPeersRegularly(
         data: pointer = nil
     ) {.gcsafe, forceCheck: [].} =
@@ -75,9 +76,13 @@ proc mainNetwork(
         except Exception as e:
             panic("Couldn't request peers despite requesting peers not raising anything: " & e.msg)
 
+        #Clear the existing timer.
+        if not requestPeersTimer.isNil:
+            clearTimer(requestPeersTimer)
+
         #Add a new timer to look for peers since this one expired.
         try:
-            discard setTimer(Moment.fromNow(minutes(2)), requestPeersRegularly)
+            requestPeersTimer = setTimer(Moment.fromNow(minutes(2)), requestPeersRegularly)
         except OSError as e:
             panic("Couldn't re-set a timer to request peers: " & e.msg)
 
