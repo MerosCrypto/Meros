@@ -70,9 +70,6 @@ def ULimitTest(
             )
         sleep(20)
 
-    for _ in range(100):
-        print("Sent all the handshakes.")
-
     #Connect 50 sockets and verify Meros doesn't think it's still at capacity.
     for s in range(50):
         try:
