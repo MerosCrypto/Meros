@@ -30,7 +30,6 @@ def ULimitTest(
     blockchain: Blockchain = Blockchain()
 
     #Create peers until Meros sends us busy.
-    newSocket: MerosSocket
     sockets: List[MerosSocket] = []
     while True:
         #Only create live sockets to trigger new peers for each socket.
@@ -71,7 +70,7 @@ def ULimitTest(
         sleep(20)
 
     #Connect 50 sockets and verify Meros doesn't think it's still at capacity.
-    for s in range(50):
+    for _ in range(50):
         try:
             sockets.append(MerosSocket(5132, 254, 254, True, blockchain.blocks[0].header.hash))
         except BusyError:
