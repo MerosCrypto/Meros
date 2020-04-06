@@ -5,15 +5,14 @@ from PythonTests.Classes.Merit.Blockchain import Blockchain
 from PythonTests.Meros.Meros import MessageType
 from PythonTests.Meros.RPC import RPC
 
-#TestError and SuccessError Exceptions.
-from PythonTests.Tests.Errors import TestError, SuccessError
+#TestError Exception.
+from PythonTests.Tests.Errors import TestError
 
 #Sleep standard function.
 from time import sleep
 
-#Socket and select standard libs.
+#Socket standard lib.
 import socket
-import select
 
 #pylint: disable=too-many-statements
 def LANPeersTest(
