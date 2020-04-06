@@ -1,8 +1,5 @@
 #Serialize SendOutput Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../../../Fuzzed
 
@@ -26,10 +23,6 @@ import ../../../../Transactions/CompareTransactions
 import random
 
 suite "SerializeSendOutput":
-    setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
     lowFuzzTest "Serialize and parse.":
         #SendOutputs.
         var

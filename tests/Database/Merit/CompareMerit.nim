@@ -1,5 +1,5 @@
-#Test lib.
-import unittest
+#Fuzzing lib.
+import ../../Fuzzed
 
 #Hash lib.
 import ../../../src/lib/Hash

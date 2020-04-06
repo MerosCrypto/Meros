@@ -1,7 +1,5 @@
 #Serialize Claim Test.
 
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 
@@ -31,9 +29,6 @@ import random
 
 suite "SerializeClaim":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Inputs.
             inputs: seq[FundedInput]

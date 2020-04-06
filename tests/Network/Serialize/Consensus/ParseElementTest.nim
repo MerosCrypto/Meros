@@ -14,8 +14,8 @@ MeritRemoval DD/*
 MeritRemoval GP/*
 ]#
 
-#Test lib.
-import unittest
+#Fuzzing lib.
+import ../../../Fuzzed
 
 #Util lib.
 import ../../../../src/lib/Util
@@ -41,7 +41,7 @@ import ../../../../src/Network/Serialize/Consensus/SerializeMeritRemoval
 import random
 
 suite "ParseElement":
-    test "Serialization.":
+    noFuzzTest "Serialization.":
         var sendDiff: SendDifficulty = newRandomSendDifficulty()
         check(sendDiff.serialize().len == {
             uint8(SEND_DIFFICULTY_PREFIX)

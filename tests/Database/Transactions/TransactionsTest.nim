@@ -1,7 +1,7 @@
 #Transactions Test.
 
-#Test lib.
-import unittest
+#Fuzzing lib.
+import ../../Fuzzed
 
 #Util lib.
 import ../../../src/lib/Util
@@ -51,9 +51,6 @@ import tables
 
 suite "Transactions":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Database.
             db: DB = newTestDatabase()
@@ -349,8 +346,7 @@ suite "Transactions":
                     check(inputs[i].hash == spendable[w][i].hash)
                     check(inputs[i].nonce == spendable[w][i].nonce)
 
-
-    test "Reloaded and reverted Transactions.":
+    noFuzzTest "Reloaded and reverted Transactions.":
         for b in 1 .. 30:
             #Create a random amount of Wallets.
             for _ in 0 ..< rand(2) + 2:

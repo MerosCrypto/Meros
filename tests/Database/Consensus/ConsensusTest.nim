@@ -1,8 +1,5 @@
 #Consensus Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../Fuzzed
 
@@ -40,10 +37,6 @@ import random
 import tables
 
 suite "Consensus":
-    setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
     midFuzzTest "Reloaded malicious table.":
         var
             #Database.
@@ -123,7 +116,7 @@ suite "Consensus":
         #Manually set the RandomX instance to null to make sure it's GC'able.
         merit.blockchain.rx = nil
 
-    test "Reloaded Consensus.":
+    noFuzzTest "Reloaded Consensus.":
         var
             #Database.
             db: DB = newTestDatabase()

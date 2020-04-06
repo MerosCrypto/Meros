@@ -1,8 +1,5 @@
 #Serialize DataDifficulty Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 
@@ -27,9 +24,6 @@ import random
 
 suite "SerializeDataDifficulty":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #SignedDataDifficulty Element.
             dataDiff: SignedDataDifficulty = newRandomDataDifficulty()

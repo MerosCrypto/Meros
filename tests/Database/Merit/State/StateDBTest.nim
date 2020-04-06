@@ -1,7 +1,6 @@
 #State DB Test.
-
-#Test lib.
-import unittest
+#Fuzzing lib.
+import ../../../Fuzzed
 
 #Util lib.
 import ../../../../src/lib/Util
@@ -32,9 +31,6 @@ import random
 
 suite "StateDB":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #Database.
             db: DB = newTestDatabase()
@@ -63,7 +59,7 @@ suite "StateDB":
             #Block we're mining.
             mining: Block
 
-    test "Verify.":
+    noFuzzTest "Verify.":
         #Iterate over 80 'rounds'.
         for r in 1 .. 80:
             #Add the current Node Threshold to thresholds.

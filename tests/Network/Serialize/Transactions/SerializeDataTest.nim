@@ -1,7 +1,5 @@
 #Serialize Data Test.
 
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 
@@ -30,9 +28,6 @@ import random
 
 suite "SerializeData":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Input.
             input: Hash[256]

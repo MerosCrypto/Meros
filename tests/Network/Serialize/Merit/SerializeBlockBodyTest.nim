@@ -1,8 +1,5 @@
 #Serialize BlockBody Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 
@@ -39,9 +36,6 @@ import random
 
 suite "SerializeBlockBody":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Sketch salt.
             sketchSalt: string

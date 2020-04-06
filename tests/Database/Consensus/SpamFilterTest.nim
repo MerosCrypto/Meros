@@ -1,8 +1,5 @@
 #Spam Filter Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../Fuzzed
 
@@ -37,9 +34,6 @@ type VotedDifficultyTest = object
 
 suite "SpamFilter":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #Holder -> Merit.
             merit: Table[uint16, int]
@@ -48,14 +42,14 @@ suite "SpamFilter":
             #SpamFilter.
             filter: SpamFilter = newSpamFilterObj(INITIAL_DIFFICULTY)
 
-    test "Verify the initial difficulty is correct.":
+    noFuzzTest "Verify the initial difficulty is correct.":
         check(filter.difficulty == INITIAL_DIFFICULTY)
 
-    test "Verify adding 0 votes doesn't change the initial difficulty.":
+    noFuzzTest "Verify adding 0 votes doesn't change the initial difficulty.":
         filter.update(0, 49, OTHER_DIFFICULTY)
         check(filter.difficulty == INITIAL_DIFFICULTY)
 
-    test "Add 1 vote and remove it via a decrement.":
+    noFuzzTest "Add 1 vote and remove it via a decrement.":
         filter.update(0, 50, OTHER_DIFFICULTY)
         check(filter.difficulty == OTHER_DIFFICULTY)
         filter.handleBlock(1, 1, 0, 49)
@@ -64,7 +58,7 @@ suite "SpamFilter":
         check(filter.right == 0)
         check(filter.medianPos == -1)
 
-    test "Add 1 vote and remove it via a MeritRemoval.":
+    noFuzzTest "Add 1 vote and remove it via a MeritRemoval.":
         filter.update(0, 50, OTHER_DIFFICULTY)
         check(filter.difficulty == OTHER_DIFFICULTY)
         filter.remove(0, 50)

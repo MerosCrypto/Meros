@@ -1,7 +1,7 @@
 #Wallet Test.
 
-#Test lib.
-import unittest
+#Fuzzing lib.
+import ../Fuzzed
 
 #Util lib.
 import ../../src/lib/Util
@@ -37,16 +37,13 @@ proc verify(
         check(wallet.verify(msg, sig))
 
 suite "Wallet":
-    setup:
-        randomize(int64(getTime()))
-
-    test "New Wallet without password.":
+    noFuzzTest "New Wallet without password.":
         verify(newWallet(""))
 
-    test "New Wallet with password.":
+    noFuzzTest "New Wallet with password.":
         verify(newWallet("password"))
 
-    test "Reloaded Wallet.":
+    noFuzzTest "Reloaded Wallet.":
         var
             wallet = newWallet("password")
             reloaded = newWallet(wallet.mnemonic.sentence, "password")

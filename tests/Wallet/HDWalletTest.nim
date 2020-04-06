@@ -1,7 +1,7 @@
 #HDWallet Test.
 
-#Test lib.
-import unittest
+#Fuzzing lib.
+import ../Fuzzed
 
 #Util lib.
 import ../../src/lib/Util
@@ -46,7 +46,7 @@ suite "HDWallet":
             #Loop variable signifying if newHDWallet raised.
             raised: bool
 
-    test "Each vector.":
+    noFuzzTest "Each vector.":
         for vector in vectors:
             #Extract the path.
             path = @[]

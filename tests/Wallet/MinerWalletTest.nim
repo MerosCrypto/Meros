@@ -1,8 +1,5 @@
 #MinerWallet Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../Fuzzed
 
@@ -14,9 +11,6 @@ import ../../src/Wallet/MinerWallet
 
 #Random standard lib.
 import random
-
-#PrivateKey random.
-randomize(int64(getTime()))
 
 suite "MinerWallet":
     setup:

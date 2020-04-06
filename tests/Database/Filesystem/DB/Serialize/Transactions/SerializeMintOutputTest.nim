@@ -1,8 +1,5 @@
 #Serialize MintOutput Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../../../Fuzzed
 
@@ -23,10 +20,6 @@ import ../../../../Transactions/CompareTransactions
 import random
 
 suite "SerializeMintOutput":
-    setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
     lowFuzzTest "Serialize and parse.":
         var
             output: MintOutput

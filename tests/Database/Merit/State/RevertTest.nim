@@ -1,8 +1,5 @@
 #State Revert Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 
@@ -35,9 +32,6 @@ import random
 
 suite "Revert":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #Database.
             db: DB = newTestDatabase()
@@ -125,7 +119,7 @@ suite "Revert":
             #Copy the State.
             states.add(states[^1])
 
-    test "Reversions.":
+    noFuzzTest "Reversions.":
         var
             copy: State
             reloaded: State

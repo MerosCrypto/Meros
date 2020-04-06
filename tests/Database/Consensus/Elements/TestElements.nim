@@ -1,7 +1,7 @@
 #Elements Testing Functions.
 
-#Test lib.
-import unittest
+#Fuzzing lib.
+import ../../../Fuzzed
 
 #Util lib.
 import ../../../../src/lib/Util

@@ -1,6 +1,3 @@
-#Test lib.
-import unittest
-
 #Fuzzed lib.
 import ../../../Fuzzed
 
@@ -34,9 +31,6 @@ import tables
 
 suite "WalletDB":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Wallet DB.
             wallet: WalletDB

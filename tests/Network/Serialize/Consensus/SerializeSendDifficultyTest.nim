@@ -1,8 +1,5 @@
 #Serialize SendDifficulty Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 
@@ -27,9 +24,6 @@ import random
 
 suite "SerializeSendDiffculty":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #SignedSendDifficulty Element.
             sendDiff: SignedSendDifficulty = newRandomSendDifficulty()

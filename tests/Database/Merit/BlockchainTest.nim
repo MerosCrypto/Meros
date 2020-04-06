@@ -1,7 +1,7 @@
 #Blockchain Test.
 
-#Test lib.
-import unittest
+#Fuzzing lib.
+import ../../Fuzzed
 
 #Errors lib.
 import ../../../src/lib/Errors
@@ -43,11 +43,7 @@ import tables
 const INITIAL_DIFFICULTY: uint64 = uint64(1)
 
 suite "Blockchain":
-    setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
-    test "Reloaded and reverted Blockchain.":
+    noFuzzTest "Reloaded and reverted Blockchain.":
         var
             #Database.
             db: DB = newTestDatabase()

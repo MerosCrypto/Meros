@@ -1,8 +1,5 @@
 #Serialize Block Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 
@@ -43,9 +40,6 @@ var newMiner: bool = true
 
 suite "SerializeBlock":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Last hash.
             last: RandomXHash

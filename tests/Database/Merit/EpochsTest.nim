@@ -1,7 +1,7 @@
 #Epochs Test.
 
-#Test lib.
-import unittest
+#Fuzzing lib.
+import ../../Fuzzed
 
 #Util lib.
 import ../../../src/lib/Util
@@ -36,9 +36,6 @@ import random
 
 suite "Epochs":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #Database.
             db: DB = newTestDatabase()
@@ -54,7 +51,7 @@ suite "Epochs":
             #Rewards.
             rewards: seq[Reward]
 
-    test "Reloaded Epochs.":
+    noFuzzTest "Reloaded Epochs.":
         var
             #Table of a hash to the block it first appeared on.
             first: Table[Hash[256], int] = initTable[Hash[256], int]()
@@ -128,13 +125,13 @@ suite "Epochs":
         #Manually set the RandomX instance to null to make sure it's GC'able.
         blockchain.rx = nil
 
-    test "Empty.":
+    noFuzzTest "Empty.":
         check(epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]()).len == 0)
-
+        
         #Manually set the RandomX instance to null to make sure it's GC'able.
         blockchain.rx = nil
 
-    test "Perfect 1000.":
+    noFuzzTest "Perfect 1000.":
         var
             #Hash.
             hash: Hash[256] = "".pad(32, char(128)).toHash(256)
@@ -213,11 +210,11 @@ suite "Epochs":
         check(rewards[0].score == 334)
         check(rewards[1].score == 333)
         check(rewards[2].score == 333)
-
+        
         #Manually set the RandomX instance to null to make sure it's GC'able.
         blockchain.rx = nil
 
-    test "Single.":
+    noFuzzTest "Single.":
         var
             #Hash.
             hash: Hash[256] = "".pad(32, char(128)).toHash(256)
@@ -271,11 +268,11 @@ suite "Epochs":
         check(rewards[0].nick == 0)
         check(state.holders[0] == miner.publicKey)
         check(rewards[0].score == 1000)
-
+        
         #Manually set the RandomX instance to null to make sure it's GC'able.
         blockchain.rx = nil
-
-    test "Split.":
+        
+    noFuzzTest "Split.":
         var
             #Hash.
             hash: Hash[256] = "".pad(32, char(128)).toHash(256)

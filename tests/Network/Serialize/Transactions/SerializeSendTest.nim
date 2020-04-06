@@ -1,7 +1,5 @@
 #Serialize Send Test.
 
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 
@@ -29,9 +27,6 @@ import random
 
 suite "SerializeSend":
     setup:
-        #Seed Random via the time.
-        randomize(int64(getTime()))
-
         var
             #Hash used to create an input.
             hash: Hash[256]

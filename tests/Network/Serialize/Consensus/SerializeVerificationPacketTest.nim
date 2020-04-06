@@ -1,8 +1,5 @@
 #Serialize Verification Packet Test.
 
-#Test lib.
-import unittest
-
 #Fuzzing lib.
 import ../../../Fuzzed
 
@@ -24,9 +21,6 @@ import random
 
 suite "SerializeVerificationPacket":
     setup:
-        #Seed random.
-        randomize(int64(getTime()))
-
         var
             #SignedVerificationPacket Element.
             packet: SignedVerificationPacket = newRandomVerificationPacket()
