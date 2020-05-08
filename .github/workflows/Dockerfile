@@ -1,4 +1,4 @@
-FROM nimlang/nim:1.0.4 AS builder
+FROM nimlang/nim:1.2.0 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive 
 RUN apt-get update && apt-get install -y \

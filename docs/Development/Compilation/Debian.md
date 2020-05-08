@@ -9,14 +9,14 @@
 - GTK+ 3 and WebKit _(for the GUI)_
 - Python 3.6 and Pip _(for the tests)_
 - choosenim
-- Nim 1.0.4
+- Nim 1.2.0
 
 To install every prerequisite, run:
 
 ```
 sudo apt-get install git gcc g++ make cmake autoconf automake libtool gtk+-3.0 at-spi2-core webkit2gtk-4.0 curl python3 python3-pip
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
-choosenim 1.0.4
+choosenim 1.2.0
 ```
 
 You will have to update your path, as according to choosenim, before running any Nim-related commands.
