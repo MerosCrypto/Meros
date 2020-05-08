@@ -44,7 +44,7 @@ type Peer* = ref object
     sync*: Socket
 
 #Constructor.
-func newPeer*(
+proc newPeer*(
     ip: string,
 ): Peer {.forceCheck: [].} =
     result = Peer(

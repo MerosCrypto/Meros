@@ -22,7 +22,7 @@ import json
 
 type
     #Compile-time Exception used when Meros is being built for an unsupported target.
-    UnsupportedTarget* = object of Exception
+    UnsupportedTarget* = object of Defect
 
     #lib Errors.
     RandomError* = object of CatchableError #Used when the RNG fails.
@@ -30,7 +30,7 @@ type
 
     #Database/common Statuses.
     DataMissing* = object of CatchableError #Used when data is missing. Also used by Network for the same reason.
-    DataExists* = object of CatchableError #Used when trying to add data which was already added.
+    DataExists*  = object of CatchableError #Used when trying to add data which was already added.
 
     #Database/Filesystem Errors.
     DBError*     = LMDBError

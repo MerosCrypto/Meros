@@ -12,21 +12,21 @@ bin = @["Meros"]
 srcDir = "src"
 skipExt = @["nim"]
 
-#Dependencies
-requires "nim >= 1.0.4"
+#Dependencies.
+requires "nim >= 1.2.0"
 requires "https://github.com/MerosCrypto/Argon2 >= 1.1.2"
 requires "https://github.com/MerosCrypto/mc_randomx >= 0.9.4"
-requires "https://github.com/MerosCrypto/mc_bls"
-requires "https://github.com/MerosCrypto/mc_ed25519"
-requires "https://github.com/MerosCrypto/mc_minisketch"
-requires "https://github.com/MerosCrypto/mc_lmdb"
-requires "https://github.com/MerosCrypto/mc_webview"
+requires "https://github.com/MerosCrypto/mc_bls >= 2.0.8"
+requires "https://github.com/MerosCrypto/mc_ed25519 >= 1.0.1"
+requires "https://github.com/MerosCrypto/mc_minisketch >= 0.8.5"
+requires "https://github.com/MerosCrypto/mc_lmdb >= 1.1.0"
+requires "https://github.com/MerosCrypto/mc_webview >= 0.1.1"
 requires "https://github.com/kayabaNerve/ForceCheck >= 1.3.2"
-requires "nimcrypto"
-requires "stint"
-requires "https://github.com/status-im/nim-chronos"
-requires "chronicles"
-requires "normalize"
+requires "nimcrypto >= 0.4.11"
+requires "normalize >= 0.7.1"
+requires "stint >= 0.0.1"
+requires "chronicles >= 0.8.1"
+requires "https://github.com/status-im/nim-chronos >= 2.3.9"
 
 #Procedures.
 proc gatherTestFiles(

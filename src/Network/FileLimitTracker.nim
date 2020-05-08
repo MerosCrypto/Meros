@@ -56,12 +56,15 @@ when PROC_FS or DEV_FS:
     ) {.forceCheck: [].} =
         tracker.socketsSinceLastUpdate = 0
         tracker.current = 0
-        when PROC_FS:
-            for file in walkDir("/proc/self/fd"):
-                inc(tracker.current)
-        when DEV_FS:
-            for file in walkDir("/dev/fd"):
-                inc(tracker.current)
+        try:
+          when PROC_FS:
+              for file in walkDir("/proc/self/fd"):
+                  inc(tracker.current)
+          when DEV_FS:
+              for file in walkDir("/dev/fd"):
+                  inc(tracker.current)
+        except OSError as e:
+          doAssert(false, "Couldn't detect the amount of open files: " & e.msg)
 
 else:
     raise newException(UnsupportedTarget, "Meros cannot build on this system because it doesn't know how to get the amount of opened files.")

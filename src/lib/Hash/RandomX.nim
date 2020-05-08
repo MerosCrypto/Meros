@@ -20,15 +20,6 @@ type
     #Hash type.
     RandomXHash* = HashCommon.Hash[256]
 
-proc newRandomX*(): RandomX {.forceCheck: [].} =
-    result = RandomX(
-        flags: getFlags(),
-        cacheKey: "Initial RandomX Key." #Used by Meros's tests.
-    )
-    result.cache = allocCache(result.flags)
-    result.cache.init(result.cacheKey)
-    result.vm = createVM(result.flags, result.cache, nil)
-
 #Destructor to ensure the pointers are freed.
 proc `=destroy`*(
     rx: var RandomXObj
@@ -37,6 +28,15 @@ proc `=destroy`*(
     rx.cache = nil
     destroy rx.vm
     rx.vm = nil
+
+proc newRandomX*(): RandomX {.forceCheck: [].} =
+    result = RandomX(
+        flags: getFlags(),
+        cacheKey: "Initial RandomX Key." #Used by Meros's tests.
+    )
+    result.cache = allocCache(result.flags)
+    result.cache.init(result.cacheKey)
+    result.vm = createVM(result.flags, result.cache, nil)
 
 #Set the key.
 proc setCacheKey*(
