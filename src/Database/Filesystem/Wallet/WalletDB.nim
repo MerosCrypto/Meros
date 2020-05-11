@@ -161,7 +161,7 @@ proc commit*(
     #This is finalized outside of the singular Transaction as:
     #1) finalizedNonces is an optimation, not a requirement.
     #2) We need to read data we just modified in the Transaction.
-    db.put(FINALIZED_NONCES(), db.finalizedNonces.toBinary)
+    db.put(FINALIZED_NONCES(), db.finalizedNonces.toBinary())
 
 #Constructor.
 proc newWalletDB*(
@@ -227,7 +227,7 @@ proc newWalletDB*(
         if int(input[0]) == 1:
             continue
 
-        result.verified[input[1 ..< 34]] = n
+        result.verified[input[1 ..< input.len]] = n
 
     #Load the Element nonce.
     try:
@@ -312,7 +312,7 @@ proc verifyTransaction*(
     #If we've already verified a Transaction sharing any inputs, raise.
     for input in tx.inputs:
         if db.verified.hasKey(input.toString()):
-            raise newLoggedException(ValueError, "Verified a competing Transaction.")
+            raise newLoggedException(ValueError, "Attempted to verify a competing Transaction.")
 
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]]()
     for input in tx.inputs:

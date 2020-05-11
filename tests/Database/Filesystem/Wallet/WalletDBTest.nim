@@ -117,13 +117,6 @@ suite "WalletDB":
                         epoch[transactions[n].transaction.hash] = @[]
                         transactions[n].finalized = true
 
-                #Update the finalizedTransactions/finalizedNonces variables.
-                for n in finalizedTransactions ..< transactions.len:
-                    if not transactions[n].finalized:
-                        break
-                    inc(finalizedTransactions)
-                    finalizedNonces += transactions[n].transaction.inputs.len
-
                 #Commit the Transactions.
                 wallet.commit(
                     epoch,
@@ -139,16 +132,25 @@ suite "WalletDB":
                             raise newException(IndexError, e.msg)
                 )
 
+                #Update the finalizedTransactions/finalizedNonces variables.
+                while finalizedTransactions < transactions.len:
+                    if not transactions[finalizedTransactions].finalized:
+                        break
+                    finalizedNonces += transactions[finalizedTransactions].transaction.inputs.len
+                    inc(finalizedTransactions)
+                check(finalizedNonces == wallet.finalizedNonces)
+
             #Create a Transaction which competes with randomly selected inputs.
             var
+                fnCache: int = wallet.finalizedNonces
                 amount: int = min(rand(254) + 1, unfinalizedNonces - finalizedNonces)
                 input: tuple[transaction: int, input: Input]
             tx = Transaction()
             #Select a continuous range of inputs.
             if rand(1) == 0:
                 #Grab an unfinalized input.
-                var i: int = max(rand(unfinalizedNonces - finalizedNonces - amount) + finalizedNonces - 1, 0)
                 block grabContinuousInputs:
+                    var i: int = rand(max(high(inputs) - finalizedNonces, 0)) + finalizedNonces
                     for _ in 0 ..< amount:
                         while true:
                             #If we hit the end, break.
@@ -173,6 +175,7 @@ suite "WalletDB":
                         input = inputs[rand(high(inputs) - finalizedNonces) + finalizedNonces]
 
                         #If the input wasn't finalized, use it.
+                        #This happens when there's a gap in finalization.
                         if not transactions[input.transaction].finalized:
                             break
 
@@ -180,19 +183,17 @@ suite "WalletDB":
                     tx.inputs.add(input.input)
 
             #'Verify' it.
-            try:
+            expect ValueError:
                 #Happens when there's no unfinalized nonces.
                 if tx.inputs.len == 0:
                     raise newException(ValueError, "")
-
                 wallet.verifyTransaction(tx)
 
-                #This should have raised.
-                check(false)
-            except ValueError:
-                discard
+            #Clear it for safety.
+            tx = Transaction()
 
             #Check the finalizedNonces field.
+            check(fnCache == wallet.finalizedNonces)
             check(wallet.finalizedNonces == finalizedNonces)
 
             #Reload and compare the Wallet DBs.
