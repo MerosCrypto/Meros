@@ -7,7 +7,7 @@ import random
 #unittest standard lib.
 import unittest
 #Export the suite and check macros.
-export suite, suiteStarted, TestStatus, TestResult, testStarted, checkpoint, check, fail
+export suite, suiteStarted, TestStatus, TestResult, testStarted, checkpoint, check, fail, expect
 
 const TEST_FUZZING_LOW {.intdefine.}: int = 1
 const TEST_FUZZING_MID {.intdefine.}: int = 4

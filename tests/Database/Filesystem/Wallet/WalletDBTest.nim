@@ -26,6 +26,9 @@ import os
 #Random standard lib.
 import random
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables
 
@@ -143,44 +146,50 @@ suite "WalletDB":
             #Create a Transaction which competes with randomly selected inputs.
             var
                 fnCache: int = wallet.finalizedNonces
-                amount: int = min(rand(254) + 1, unfinalizedNonces - finalizedNonces)
+                amount: int = min(rand(254) + 1, ((unfinalizedNonces - finalizedNonces) * 3) div 4)
                 input: tuple[transaction: int, input: Input]
             tx = Transaction()
-            #Select a continuous range of inputs.
-            if rand(1) == 0:
-                #Grab an unfinalized input.
-                block grabContinuousInputs:
-                    var i: int = rand(max(high(inputs) - finalizedNonces, 0)) + finalizedNonces
-                    for _ in 0 ..< amount:
-                        while true:
-                            #If we hit the end, break.
-                            if i == inputs.len:
-                                break grabContinuousInputs
+            if inputs.len != finalizedNonces:
+              #Select a continuous range of inputs.
+              if rand(1) == 0:
+                  #Grab an unfinalized input.
+                  block grabContinuousInputs:
+                      var i: int = rand(high(inputs) - finalizedNonces) + finalizedNonces
+                      for _ in 0 ..< amount:
+                          while true:
+                              #If we hit the end, break.
+                              if i == inputs.len:
+                                  break grabContinuousInputs
 
-                            #Grab the next input.
-                            input = inputs[i]
-                            inc(i)
+                              #Grab the next input.
+                              input = inputs[i]
+                              inc(i)
 
-                            #If the input wasn't finalized, use it.
-                            if not transactions[input.transaction].finalized:
-                                break
+                              #If the input wasn't finalized, use it.
+                              if not transactions[input.transaction].finalized:
+                                  break
 
-                        #Add the input.
-                        tx.inputs.add(input.input)
-            #Select inputs randomly.
-            else:
-                for _ in 0 ..< amount:
-                    while true:
-                        #Grab an unfinalized input.
-                        input = inputs[rand(high(inputs) - finalizedNonces) + finalizedNonces]
+                          #Add the input.
+                          tx.inputs.add(input.input)
+              #Select inputs randomly.
+              else:
+                  for _ in 0 ..< amount:
+                      var used: HashSet[int] = initHashSet[int]()
+                      while true:
+                          #Grab an unfinalized input.
+                          var i: int = rand(high(inputs) - finalizedNonces) + finalizedNonces
+                          if used.contains(i):
+                              continue
+                          used.incl(i)
+                          input = inputs[i]
 
-                        #If the input wasn't finalized, use it.
-                        #This happens when there's a gap in finalization.
-                        if not transactions[input.transaction].finalized:
-                            break
+                          #If the input wasn't finalized, use it.
+                          #This happens when there's a gap in finalization.
+                          if not transactions[input.transaction].finalized:
+                              break
 
-                    #Add the input.
-                    tx.inputs.add(input.input)
+                      #Add the input.
+                      tx.inputs.add(input.input)
 
             #'Verify' it.
             expect ValueError:
