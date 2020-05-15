@@ -1,6 +1,3 @@
-#Chronos external lib.
-import chronos
-
 #OS standard lib.
 import os
 
@@ -12,6 +9,10 @@ import tables
 
 #JSON standard lib.
 import json
+
+#Networking standard libs.
+import asyncdispatch
+import asyncnet
 
 #Argument types.
 const ARGUMENTS: Table[string, seq[char]] = {
