@@ -43,9 +43,10 @@ proc newChainParams(
 
         of "testnet":
             result = ChainParams(
-                GENESIS: "MEROS_DEVELOPER_TESTNET_2",
+                GENESIS: "MEROS_DEVELOPER_TESTNET_4S",
 
-                BLOCK_TIME: 600,
+                #The following is a temporary value for before the mainnet launches.
+                BLOCK_TIME: 120,
                 DEAD_MERIT: 1000,
 
                 BLOCK_DIFFICULTY: 10000,
@@ -53,7 +54,7 @@ proc newChainParams(
                 DATA_DIFFICULTY:  5,
 
                 NETWORK_PROTOCOL: 0,
-                NETWORK_ID: 0,
+                NETWORK_ID: 1,
 
                 SEEDS: @[
                     (ip: "seed1.meroscrypto.io", port: 5132),
