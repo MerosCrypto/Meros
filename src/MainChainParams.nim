@@ -49,7 +49,7 @@ proc newChainParams(
                 BLOCK_TIME: 120,
                 DEAD_MERIT: 1000,
 
-                BLOCK_DIFFICULTY: 10000,
+                BLOCK_DIFFICULTY: 1000,
                 SEND_DIFFICULTY:  3,
                 DATA_DIFFICULTY:  5,
 
