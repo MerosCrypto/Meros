@@ -43,7 +43,7 @@ def SameNonceTest(
             MessageType.SignedDataDifficulty.toByte() +
             removal.se1.signedSerialize()
         ):
-            raise TestError("Meros didn't send us the Merit Removal.")
+            raise TestError("Meros didn't send us the first Data Difficulty.")
 
         #Verify the MeritRemoval.
         if rpc.meros.live.recv() != (

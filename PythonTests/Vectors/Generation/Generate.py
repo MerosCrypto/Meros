@@ -32,6 +32,7 @@ import PythonTests.Vectors.Generation.Consensus.MeritRemoval.Partial
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.Repeat
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.SameElement
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.Multiple
+import PythonTests.Vectors.Generation.Consensus.MeritRemoval.HundredTwenty
 
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.Partial
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.Swap
