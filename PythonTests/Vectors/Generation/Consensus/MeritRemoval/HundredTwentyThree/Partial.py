@@ -29,17 +29,17 @@ blockchain: Blockchain = Blockchain()
 
 #Generate a Block granting the holder Merit.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        bytes(32),
-        1,
-        bytes(4),
-        bytes(32),
-        blsPubKey.serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  BlockHeader(
+    0,
+    blockchain.last(),
+    bytes(32),
+    1,
+    bytes(4),
+    bytes(32),
+    blsPubKey.serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody()
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -50,25 +50,25 @@ print("Generated Hundred Twenty Three Partial Block " + str(len(blockchain.block
 
 #Create conflicting Data Difficulties.
 dataDiffs: List[SignedDataDifficulty] = [
-    SignedDataDifficulty(3, 0),
-    SignedDataDifficulty(4, 0)
+  SignedDataDifficulty(3, 0),
+  SignedDataDifficulty(4, 0)
 ]
 dataDiffs[0].sign(0, blsPrivKey)
 dataDiffs[1].sign(0, blsPrivKey)
 
 #Generate a Block containing the first Data Difficulty.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [dataDiffs[0]]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [dataDiffs[0]], dataDiffs[0].signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], [dataDiffs[0]]),
+    1,
+    bytes(4),
+    bytes(32),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [dataDiffs[0]], dataDiffs[0].signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -82,17 +82,17 @@ partial: PartialMeritRemoval = PartialMeritRemoval(dataDiffs[0], dataDiffs[1])
 
 #Generate a Block containing the partial MeritRemoval.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [partial]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [partial], partial.signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], [partial]),
+    1,
+    bytes(4),
+    bytes(32),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [partial], partial.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -106,17 +106,17 @@ mr: SignedMeritRemoval = SignedMeritRemoval(dataDiffs[0], dataDiffs[1])
 
 #Generate a Block containing the MeritRemoval.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [mr]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [mr], mr.signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], [mr]),
+    1,
+    bytes(4),
+    bytes(32),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [mr], mr.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -126,7 +126,7 @@ blockchain.add(block)
 print("Generated Hundred Twenty Three Partial Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON()
+  "blockchain": blockchain.toJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Partial.json", "w")
 vectors.write(json.dumps(result))

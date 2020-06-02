@@ -15,16 +15,16 @@ const MINT_OUTPUT_LEN*: int = NICKNAME_LEN + MEROS_LEN
 
 #Parse function.
 proc parseMintOutput*(
-    outputStr: string
+  outputStr: string
 ): MintOutput {.forceCheck: [].} =
-    #Key | Amount
-    var outputSeq: seq[string] = outputStr.deserialize(
-        NICKNAME_LEN,
-        MEROS_LEN
-    )
+  #Key | Amount
+  var outputSeq: seq[string] = outputStr.deserialize(
+    NICKNAME_LEN,
+    MEROS_LEN
+  )
 
-    #Create the MintOutput.
-    result = newMintOutput(
-        uint16(outputSeq[0].fromBinary()),
-        uint64(outputSeq[1].fromBinary())
-    )
+  #Create the MintOutput.
+  result = newMintOutput(
+    uint16(outputSeq[0].fromBinary()),
+    uint64(outputSeq[1].fromBinary())
+  )

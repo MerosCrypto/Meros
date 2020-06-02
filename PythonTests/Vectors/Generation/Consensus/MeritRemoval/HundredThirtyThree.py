@@ -47,17 +47,17 @@ e2Chain: Blockchain = Blockchain()
 
 #Generate a Block granting the holder Merit.
 block = Block(
-    BlockHeader(
-        0,
-        e1Chain.last(),
-        bytes(32),
-        1,
-        bytes(4),
-        bytes(32),
-        blsPubKey.serialize(),
-        e1Chain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  BlockHeader(
+    0,
+    e1Chain.last(),
+    bytes(32),
+    1,
+    bytes(4),
+    bytes(32),
+    blsPubKey.serialize(),
+    e1Chain.blocks[-1].header.time + 1200
+  ),
+  BlockBody()
 )
 #Mine it.
 block.mine(blsPrivKey, e1Chain.difficulty())
@@ -72,31 +72,31 @@ datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
 datas.append(Data(datas[0].hash, b"Initial Data."))
 datas.append(Data(datas[0].hash, b"Second Data."))
 for data in datas:
-    data.sign(edPrivKey)
-    data.beat(spamFilter)
+  data.sign(edPrivKey)
+  data.beat(spamFilter)
 
 #Create Verifications for all 3.
 verifs: List[SignedVerification] = []
 for data in datas:
-    verifs.append(SignedVerification(data.hash, 0))
-    verifs[-1].sign(0, blsPrivKey)
+  verifs.append(SignedVerification(data.hash, 0))
+  verifs[-1].sign(0, blsPrivKey)
 
 #Create a MeritRemoval VerificationPacket for the second and third Datas which don't involve our holder.
 packets: List[SignedMeritRemovalVerificationPacket] = [
-    SignedMeritRemovalVerificationPacket(
-        SignedVerificationPacket(verifs[1].hash),
-        [
-            PrivateKey(blake2b(b'\1', digest_size=32).digest()).toPublicKey().serialize()
-        ],
-        PrivateKey(blake2b(b'\1', digest_size=32).digest()).sign(verifs[1].signatureSerialize())
-    ),
-    SignedMeritRemovalVerificationPacket(
-        SignedVerificationPacket(verifs[1].hash),
-        [
-            PrivateKey(blake2b(b'\1', digest_size=32).digest()).toPublicKey().serialize()
-        ],
-        PrivateKey(blake2b(b'\1', digest_size=32).digest()).sign(verifs[1].signatureSerialize())
-    )
+  SignedMeritRemovalVerificationPacket(
+    SignedVerificationPacket(verifs[1].hash),
+    [
+      PrivateKey(blake2b(b'\1', digest_size=32).digest()).toPublicKey().serialize()
+    ],
+    PrivateKey(blake2b(b'\1', digest_size=32).digest()).sign(verifs[1].signatureSerialize())
+  ),
+  SignedMeritRemovalVerificationPacket(
+    SignedVerificationPacket(verifs[1].hash),
+    [
+      PrivateKey(blake2b(b'\1', digest_size=32).digest()).toPublicKey().serialize()
+    ],
+    PrivateKey(blake2b(b'\1', digest_size=32).digest()).sign(verifs[1].signatureSerialize())
+  )
 ]
 
 #Create a MeritRemoval out of the conflicting Verifications.
@@ -105,42 +105,42 @@ e2MR: SignedMeritRemoval = SignedMeritRemoval(packets[1], verifs[2], 0)
 
 #Generate a Block containing the MeritRemoval for each chain.
 block = Block(
-    BlockHeader(
-        0,
-        e1Chain.last(),
-        BlockHeader.createContents([], [e1MR]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        e1Chain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [e1MR], e1MR.signature)
+  BlockHeader(
+    0,
+    e1Chain.last(),
+    BlockHeader.createContents([], [e1MR]),
+    1,
+    bytes(4),
+    bytes(32),
+    0,
+    e1Chain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [e1MR], e1MR.signature)
 )
 block.mine(blsPrivKey, e1Chain.difficulty())
 e1Chain.add(block)
 print("Generated Hundred Twenty Three Packet Block 1 " + str(len(e1Chain.blocks)) + ".")
 
 block = Block(
-    BlockHeader(
-        0,
-        e2Chain.last(),
-        BlockHeader.createContents([], [e2MR]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        e2Chain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [e2MR], e2MR.signature)
+  BlockHeader(
+    0,
+    e2Chain.last(),
+    BlockHeader.createContents([], [e2MR]),
+    1,
+    bytes(4),
+    bytes(32),
+    0,
+    e2Chain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [e2MR], e2MR.signature)
 )
 block.mine(blsPrivKey, e2Chain.difficulty())
 e2Chain.add(block)
 print("Generated Hundred Twenty Three Packet Block 2 " + str(len(e2Chain.blocks)) + ".")
 
 result: Dict[str, Any] = {
-    "blockchains": [e1Chain.toJSON(), e2Chain.toJSON()],
-    "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()]
+  "blockchains": [e1Chain.toJSON(), e2Chain.toJSON()],
+  "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()]
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/HundredThirtyThree.json", "w")
 vectors.write(json.dumps(result))

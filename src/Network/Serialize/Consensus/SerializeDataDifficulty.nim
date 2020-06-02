@@ -16,30 +16,30 @@ export SerializeElement
 
 #Serialize a DataDifficulty.
 method serialize*(
-    dataDiff: DataDifficulty
+  dataDiff: DataDifficulty
 ): string {.inline, forceCheck: [].} =
-    dataDiff.holder.toBinary(NICKNAME_LEN) &
-    dataDiff.nonce.toBinary(INT_LEN) &
-    dataDiff.difficulty.toBinary(INT_LEN)
+  dataDiff.holder.toBinary(NICKNAME_LEN) &
+  dataDiff.nonce.toBinary(INT_LEN) &
+  dataDiff.difficulty.toBinary(INT_LEN)
 
 #Serialize a DataDifficulty for signing or a MeritRemoval.
 method serializeWithoutHolder*(
-    dataDiff: DataDifficulty
+  dataDiff: DataDifficulty
 ): string {.inline, forceCheck: [].} =
-    char(DATA_DIFFICULTY_PREFIX) &
-    dataDiff.nonce.toBinary(INT_LEN) &
-    dataDiff.difficulty.toBinary(INT_LEN)
+  char(DATA_DIFFICULTY_PREFIX) &
+  dataDiff.nonce.toBinary(INT_LEN) &
+  dataDiff.difficulty.toBinary(INT_LEN)
 
 #Serialize a DataDifficulty for inclusion in a BlockHeader's contents Merkle.
 method serializeContents*(
-    dataDiff: DataDifficulty
+  dataDiff: DataDifficulty
 ): string {.inline, forceCheck: [].} =
-    char(DATA_DIFFICULTY_PREFIX) &
-    dataDiff.serialize()
+  char(DATA_DIFFICULTY_PREFIX) &
+  dataDiff.serialize()
 
 #Serialize a Signed DataDifficulty.
 method signedSerialize*(
-    dataDiff: SignedDataDifficulty
+  dataDiff: SignedDataDifficulty
 ): string {.inline, forceCheck: [].} =
-    dataDiff.serialize() &
-    dataDiff.signature.serialize()
+  dataDiff.serialize() &
+  dataDiff.signature.serialize()

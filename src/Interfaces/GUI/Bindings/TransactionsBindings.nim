@@ -6,6 +6,6 @@ import ../objects/GUIObj
 
 #Add the Transactions bindings to the GUI.
 func addTo*(
-    gui: GUI
+  gui: GUI
 ) {.forceCheck: [].} =
-    discard
+  discard

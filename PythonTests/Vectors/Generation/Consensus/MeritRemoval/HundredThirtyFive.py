@@ -46,17 +46,17 @@ blockchain: Blockchain = Blockchain()
 
 #Generate a Block granting the holder Merit.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        bytes(32),
-        1,
-        bytes(4),
-        bytes(32),
-        blsPubKey.serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  BlockHeader(
+    0,
+    blockchain.last(),
+    bytes(32),
+    1,
+    bytes(4),
+    bytes(32),
+    blsPubKey.serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody()
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -70,64 +70,64 @@ datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
 datas.append(Data(datas[0].hash, b"Initial Data."))
 datas.append(Data(datas[0].hash, b"Second Data."))
 for data in datas:
-    data.sign(edPrivKey)
-    data.beat(spamFilter)
+  data.sign(edPrivKey)
+  data.beat(spamFilter)
 
 #Create Verifications for all 3.
 verifs: List[SignedVerification] = []
 for data in datas:
-    verifs.append(SignedVerification(data.hash, 0))
-    verifs[-1].sign(0, blsPrivKey)
+  verifs.append(SignedVerification(data.hash, 0))
+  verifs[-1].sign(0, blsPrivKey)
 
 #Create a MeritRemoval out of the conflicting Verifications.
 mr: SignedMeritRemoval = SignedMeritRemoval(verifs[1], verifs[2])
 
 #Create a MeritRemoval with random keys.
 packeted: SignedMeritRemoval = SignedMeritRemoval(
-    SignedMeritRemovalVerificationPacket(
-        SignedVerificationPacket(verifs[1].hash),
-        [
-            blsPubKey.serialize(),
-            PrivateKey(blake2b(b'\1', digest_size=32).digest()).toPublicKey().serialize(),
-            PrivateKey(blake2b(b'\2', digest_size=32).digest()).toPublicKey().serialize()
-        ],
-        Signature.aggregate([
-            blsPrivKey.sign(verifs[1].signatureSerialize()),
-            PrivateKey(blake2b(b'\1', digest_size=32).digest()).sign(verifs[1].signatureSerialize()),
-            PrivateKey(blake2b(b'\2', digest_size=32).digest()).sign(verifs[1].signatureSerialize())
-        ])
-    ),
-    SignedMeritRemovalVerificationPacket(
-        SignedVerificationPacket(verifs[2].hash),
-        [
-            blsPubKey.serialize(),
-            PrivateKey(blake2b(b'\3', digest_size=32).digest()).toPublicKey().serialize(),
-            PrivateKey(blake2b(b'\4', digest_size=32).digest()).toPublicKey().serialize()
-        ],
-        Signature.aggregate(
-            [
-                blsPrivKey.sign(verifs[2].signatureSerialize()),
-                PrivateKey(blake2b(b'\3', digest_size=32).digest()).sign(verifs[2].signatureSerialize()),
-                PrivateKey(blake2b(b'\4', digest_size=32).digest()).sign(verifs[2].signatureSerialize())
-            ]
-        )
-    ),
-    0
+  SignedMeritRemovalVerificationPacket(
+    SignedVerificationPacket(verifs[1].hash),
+    [
+      blsPubKey.serialize(),
+      PrivateKey(blake2b(b'\1', digest_size=32).digest()).toPublicKey().serialize(),
+      PrivateKey(blake2b(b'\2', digest_size=32).digest()).toPublicKey().serialize()
+    ],
+    Signature.aggregate([
+      blsPrivKey.sign(verifs[1].signatureSerialize()),
+      PrivateKey(blake2b(b'\1', digest_size=32).digest()).sign(verifs[1].signatureSerialize()),
+      PrivateKey(blake2b(b'\2', digest_size=32).digest()).sign(verifs[1].signatureSerialize())
+    ])
+  ),
+  SignedMeritRemovalVerificationPacket(
+    SignedVerificationPacket(verifs[2].hash),
+    [
+      blsPubKey.serialize(),
+      PrivateKey(blake2b(b'\3', digest_size=32).digest()).toPublicKey().serialize(),
+      PrivateKey(blake2b(b'\4', digest_size=32).digest()).toPublicKey().serialize()
+    ],
+    Signature.aggregate(
+      [
+        blsPrivKey.sign(verifs[2].signatureSerialize()),
+        PrivateKey(blake2b(b'\3', digest_size=32).digest()).sign(verifs[2].signatureSerialize()),
+        PrivateKey(blake2b(b'\4', digest_size=32).digest()).sign(verifs[2].signatureSerialize())
+      ]
+    )
+  ),
+  0
 )
 
 #Generate a Block containing the modified MeritRemoval.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [packeted]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [packeted], packeted.signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], [packeted]),
+    1,
+    bytes(4),
+    bytes(32),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [packeted], packeted.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -137,9 +137,9 @@ blockchain.add(block)
 print("Generated Hundred Thirty Five Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON(),
-    "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()],
-    "removal": mr.toSignedJSON()
+  "blockchain": blockchain.toJSON(),
+  "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()],
+  "removal": mr.toSignedJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/HundredThirtyFive.json", "w")
 vectors.write(json.dumps(result))

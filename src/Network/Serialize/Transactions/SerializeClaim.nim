@@ -17,20 +17,20 @@ export SerializeTransaction
 
 #Serialization functions.
 method serializeHash*(
-    claim: Claim
+  claim: Claim
 ): string {.inline, forceCheck: [].} =
-    "\1" &
-    claim.signature.serialize()
+  "\1" &
+  claim.signature.serialize()
 
 method serialize*(
-    claim: Claim
+  claim: Claim
 ): string {.inline, forceCheck: [].} =
-    #Serialize the inputs.
-    result = $char(claim.inputs.len)
-    for input in claim.inputs:
-        result &= input.hash.toString() & char(cast[FundedInput](input).nonce)
+  #Serialize the inputs.
+  result = $char(claim.inputs.len)
+  for input in claim.inputs:
+    result &= input.hash.toString() & char(cast[FundedInput](input).nonce)
 
-    #Serialize the output and signature.
-    result &=
-        cast[SendOutput](claim.outputs[0]).key.toString() &
-        claim.signature.serialize()
+  #Serialize the output and signature.
+  result &=
+    cast[SendOutput](claim.outputs[0]).key.toString() &
+    claim.signature.serialize()

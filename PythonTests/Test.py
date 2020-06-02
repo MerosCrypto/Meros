@@ -85,61 +85,61 @@ ress: List[str] = []
 
 #Tests.
 tests: List[Callable[[RPC], None]] = [
-    ChainAdvancementTest,
-    DifficultyTest,
-    StateTest,
-    HundredTwentyFourTest,
-    DepthOneTest,
-    LongerChainMoreWorkTest,
-    ShorterChainMoreWorkTest,
-    DelayedMeritHolderTest,
+  ChainAdvancementTest,
+  DifficultyTest,
+  StateTest,
+  HundredTwentyFourTest,
+  DepthOneTest,
+  LongerChainMoreWorkTest,
+  ShorterChainMoreWorkTest,
+  DelayedMeritHolderTest,
 
-    EightyEightTest,
-    TElementTest,
+  EightyEightTest,
+  TElementTest,
 
-    DataTest,
-    AggregatedClaimTest,
-    SameInputTest,
-    CompetingFinalizedTest,
-    FiftyTest,
-    PruneUnaddableTest,
-    HundredFortySevenTest,
+  DataTest,
+  AggregatedClaimTest,
+  SameInputTest,
+  CompetingFinalizedTest,
+  FiftyTest,
+  PruneUnaddableTest,
+  HundredFortySevenTest,
 
-    VParsableTest,
-    VUnknownTest,
-    VCompetingTest,
-    HundredTwoTest,
-    HundredFortyTwoTest,
-    HundredFiftyFiveTest,
+  VParsableTest,
+  VUnknownTest,
+  VCompetingTest,
+  HundredTwoTest,
+  HundredFortyTwoTest,
+  HundredFiftyFiveTest,
 
-    SendDifficultyTest,
-    DataDifficultyTest,
+  SendDifficultyTest,
+  DataDifficultyTest,
 
-    SameNonceTest,
-    VerifyCompetingTest,
-    InvalidCompetingTest,
-    PartialTest,
-    MultipleTest,
-    PendingActionsTest,
-    RepeatTest,
-    SameElementTest,
-    HundredTwentyTest,
+  SameNonceTest,
+  VerifyCompetingTest,
+  InvalidCompetingTest,
+  PartialTest,
+  MultipleTest,
+  PendingActionsTest,
+  RepeatTest,
+  SameElementTest,
+  HundredTwentyTest,
 
-    HTTPartialTest,
-    HTTSwapTest,
-    HTTPacketTest,
+  HTTPartialTest,
+  HTTSwapTest,
+  HTTPacketTest,
 
-    HundredThirtyThreeTest,
-    HundredThirtyFiveTest,
+  HundredThirtyThreeTest,
+  HundredThirtyFiveTest,
 
-    HundredSixSignedElementsTest,
-    HundredSixBlockElementsTest,
-    HundredSixMeritRemovalsTest,
+  HundredSixSignedElementsTest,
+  HundredSixBlockElementsTest,
+  HundredSixMeritRemovalsTest,
 
-    LANPeersTest,
-    ULimitTest,
-    BusyTest,
-    HundredTwentyFiveTest
+  LANPeersTest,
+  ULimitTest,
+  BusyTest,
+  HundredTwentyFiveTest
 ]
 
 #Tests to run.
@@ -147,72 +147,72 @@ tests: List[Callable[[RPC], None]] = [
 testsToRun: List[str] = argv[1:]
 #Else, run all.
 if not testsToRun:
-    for test in tests:
-        testsToRun.append(test.__name__)
+  for test in tests:
+    testsToRun.append(test.__name__)
 
 #Remove invalid tests.
 for t in range(len(testsToRun)):
-    found: bool = False
-    for test in tests:
-        #Enable specifying tests over the CLI without the "Test" suffix.
-        if (test.__name__ == testsToRun[t]) or (test.__name__ == testsToRun[t] + "Test"):
-            if testsToRun[t][-4:] != "Test":
-                testsToRun[t] += "Test"
+  found: bool = False
+  for test in tests:
+    #Enable specifying tests over the CLI without the "Test" suffix.
+    if (test.__name__ == testsToRun[t]) or (test.__name__ == testsToRun[t] + "Test"):
+      if testsToRun[t][-4:] != "Test":
+        testsToRun[t] += "Test"
 
-            found = True
-            break
+      found = True
+      break
 
-    if not found:
-        ress.append("\033[0;31mCouldn't find " + testsToRun[t] + ".")
+  if not found:
+    ress.append("\033[0;31mCouldn't find " + testsToRun[t] + ".")
 
 #Delete the PythonTests data directory.
 try:
-    shutil.rmtree("./data/PythonTests")
+  shutil.rmtree("./data/PythonTests")
 except FileNotFoundError:
-    pass
+  pass
 
 #Run every test.
 for test in tests:
-    if not testsToRun:
-        break
-    if test.__name__ not in testsToRun:
-        continue
-    testsToRun.remove(test.__name__)
+  if not testsToRun:
+    break
+  if test.__name__ not in testsToRun:
+    continue
+  testsToRun.remove(test.__name__)
 
-    print("\033[0;37mRunning " + test.__name__ + ".")
+  print("\033[0;37mRunning " + test.__name__ + ".")
 
-    #Message to display on a Node crash.
-    crash: str = "\033[5;31m" + test.__name__ + " caused the node to crash!\033[0;31m"
+  #Message to display on a Node crash.
+  crash: str = "\033[5;31m" + test.__name__ + " caused the node to crash!\033[0;31m"
 
-    #Meros instance.
-    meros: Meros = Meros(test.__name__, port, port + 1)
-    sleep(5)
+  #Meros instance.
+  meros: Meros = Meros(test.__name__, port, port + 1)
+  sleep(5)
 
-    rpc: RPC = RPC(meros)
+  rpc: RPC = RPC(meros)
+  try:
+    test(rpc)
+    raise SuccessError()
+  except SuccessError as e:
+    ress.append("\033[0;32m" + test.__name__ + " succeeded.")
+  except EmptyError as e:
+    ress.append("\033[0;33m" + test.__name__ + " is empty.")
+  except NodeError as e:
+    ress.append(crash)
+  except TestError as e:
+    ress.append("\033[0;31m" + test.__name__ + " failed: " + str(e))
+  except Exception as e:
+    ress.append("\033[0;31m" + test.__name__ + " is invalid.")
+    ress.append(format_exc().rstrip())
+  finally:
     try:
-        test(rpc)
-        raise SuccessError()
-    except SuccessError as e:
-        ress.append("\033[0;32m" + test.__name__ + " succeeded.")
-    except EmptyError as e:
-        ress.append("\033[0;33m" + test.__name__ + " is empty.")
-    except NodeError as e:
+      rpc.quit()
+      meros.quit()
+    except NodeError:
+      if ress[-1] != crash:
         ress.append(crash)
-    except TestError as e:
-        ress.append("\033[0;31m" + test.__name__ + " failed: " + str(e))
-    except Exception as e:
-        ress.append("\033[0;31m" + test.__name__ + " is invalid.")
-        ress.append(format_exc().rstrip())
-    finally:
-        try:
-            rpc.quit()
-            meros.quit()
-        except NodeError:
-            if ress[-1] != crash:
-                ress.append(crash)
 
-        print("\033[0;37m" + ("-" * shutil.get_terminal_size().columns))
+    print("\033[0;37m" + ("-" * shutil.get_terminal_size().columns))
 
 for res in ress:
-    print(res)
+  print(res)
 print("\033[0;37m", end="")

@@ -53,7 +53,7 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Add 1 Blank Block.
 for i in range(1):
-    merit.add(Block.fromJSON(blankBlocks[i]))
+  merit.add(Block.fromJSON(blankBlocks[i]))
 
 #Create the Data and a successor.
 first: Data = Data(bytes(32), edPubKey.to_bytes())
@@ -74,47 +74,47 @@ secondVerif: SignedVerification = SignedVerification(second.hash)
 secondVerif.sign(0, blsPrivKey)
 
 packets: List[VerificationPacket] = [
-    VerificationPacket(first.hash, [0]),
-    VerificationPacket(second.hash, [0]),
+  VerificationPacket(first.hash, [0]),
+  VerificationPacket(second.hash, [0]),
 ]
 
 #Generate another 6 Blocks.
 #Next block should have the packets.
 block: Block = Block(
-    BlockHeader(
-        0,
-        merit.blockchain.last(),
-        BlockHeader.createContents(packets),
-        1,
-        bytes(4),
-        BlockHeader.createSketchCheck(bytes(4), packets),
-        0,
-        merit.blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody(packets, [], Signature.aggregate([firstVerif.signature, secondVerif.signature]))
+  BlockHeader(
+    0,
+    merit.blockchain.last(),
+    BlockHeader.createContents(packets),
+    1,
+    bytes(4),
+    BlockHeader.createSketchCheck(bytes(4), packets),
+    0,
+    merit.blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody(packets, [], Signature.aggregate([firstVerif.signature, secondVerif.signature]))
 )
 for _ in range(6):
-    #Mine it.
-    block.mine(blsPrivKey, merit.blockchain.difficulty())
+  #Mine it.
+  block.mine(blsPrivKey, merit.blockchain.difficulty())
 
-    #Add it.
-    merit.add(block)
-    print("Generated Competing Finalized Block " + str(len(merit.blockchain.blocks) - 1) + ".")
+  #Add it.
+  merit.add(block)
+  print("Generated Competing Finalized Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
-    #Create the next Block.
-    block = Block(
-        BlockHeader(
-            0,
-            merit.blockchain.last(),
-            bytes(32),
-            1,
-            bytes(4),
-            bytes(32),
-            0,
-            merit.blockchain.blocks[-1].header.time + 1200
-        ),
-        BlockBody()
-    )
+  #Create the next Block.
+  block = Block(
+    BlockHeader(
+      0,
+      merit.blockchain.last(),
+      bytes(32),
+      1,
+      bytes(4),
+      bytes(32),
+      0,
+      merit.blockchain.blocks[-1].header.time + 1200
+    ),
+    BlockBody()
+  )
 
 #Create a Data competing with the now-finalized second Data.
 competitor: Data = Data(first.hash, bytes(2))
@@ -128,25 +128,25 @@ competitorVerif.sign(0, blsPrivKey)
 
 #Mine one more Block.
 block = Block(
-    BlockHeader(
-        0,
-        merit.blockchain.last(),
-        BlockHeader.createContents([VerificationPacket(competitor.hash, [0])]),
-        1,
-        bytes(4),
-        BlockHeader.createSketchCheck(bytes(4), [VerificationPacket(competitor.hash, [0])]),
-        0,
-        merit.blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([VerificationPacket(competitor.hash, [0])], [], competitorVerif.signature)
+  BlockHeader(
+    0,
+    merit.blockchain.last(),
+    BlockHeader.createContents([VerificationPacket(competitor.hash, [0])]),
+    1,
+    bytes(4),
+    BlockHeader.createSketchCheck(bytes(4), [VerificationPacket(competitor.hash, [0])]),
+    0,
+    merit.blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([VerificationPacket(competitor.hash, [0])], [], competitorVerif.signature)
 )
 block.mine(blsPrivKey, merit.blockchain.difficulty())
 merit.add(block)
 print("Generated Competing Finalized Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": merit.blockchain.toJSON(),
-    "transactions": transactions.toJSON()
+  "blockchain": merit.blockchain.toJSON(),
+  "transactions": transactions.toJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Transactions/CompetingFinalized.json", "w")
 vectors.write(json.dumps(result))

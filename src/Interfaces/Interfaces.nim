@@ -4,5 +4,5 @@ export RPC
 
 #GUI.
 when not defined(nogui):
-    import GUI/GUI
-    export GUI
+  import GUI/GUI
+  export GUI

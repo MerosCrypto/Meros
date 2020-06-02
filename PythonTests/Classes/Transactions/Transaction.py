@@ -8,18 +8,18 @@ from abc import ABC, abstractmethod
 
 #Transaction root class.
 class Transaction(
-    ABC
+  ABC
 ):
-    hash: bytes
+  hash: bytes
 
-    @abstractmethod
-    def serialize(
-        self
-    ) -> bytes:
-        pass
+  @abstractmethod
+  def serialize(
+    self
+  ) -> bytes:
+    pass
 
-    @abstractmethod
-    def toJSON(
-        self
-    ) -> Dict[str, Any]:
-        pass
+  @abstractmethod
+  def toJSON(
+    self
+  ) -> Dict[str, Any]:
+    pass

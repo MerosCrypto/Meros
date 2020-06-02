@@ -26,35 +26,35 @@ import ../../../../Transactions/CompareTransactions
 import random
 
 suite "SerializeMint":
-    midFuzzTest "Serialize and parse.":
-        var
-            #Mint.
-            mint: Mint
-            #Reloaded Mint.
-            reloaded: Mint
+  midFuzzTest "Serialize and parse.":
+    var
+      #Mint.
+      mint: Mint
+      #Reloaded Mint.
+      reloaded: Mint
 
-            #Hash.
-            hash: Hash[256]
-            #Outputs.
-            outputs: seq[MintOutput]
+      #Hash.
+      hash: Hash[256]
+      #Outputs.
+      outputs: seq[MintOutput]
 
-        #Randomize the hash.
-        for b in 0 ..< hash.data.len:
-            hash.data[b] = uint8(rand(255))
+    #Randomize the hash.
+    for b in 0 ..< hash.data.len:
+      hash.data[b] = uint8(rand(255))
 
-        #Randomize the outputs.
-        outputs = newSeq[MintOutput](rand(99) + 1)
-        for o in 0 ..< outputs.len:
-            outputs[o] = newMintOutput(uint16(rand(65535)), uint64(rand(high(int32))))
+    #Randomize the outputs.
+    outputs = newSeq[MintOutput](rand(99) + 1)
+    for o in 0 ..< outputs.len:
+      outputs[o] = newMintOutput(uint16(rand(65535)), uint64(rand(high(int32))))
 
-        #Create the Mint.
-        mint = newMint(hash, outputs)
+    #Create the Mint.
+    mint = newMint(hash, outputs)
 
-        #Serialize it and parse it back.
-        reloaded = hash.parseMint(mint.serialize())
+    #Serialize it and parse it back.
+    reloaded = hash.parseMint(mint.serialize())
 
-        #Compare the Mints.
-        compare(mint, reloaded)
+    #Compare the Mints.
+    compare(mint, reloaded)
 
-        #Test the serialized versions.
-        check(mint.serialize() == reloaded.serialize())
+    #Test the serialized versions.
+    check(mint.serialize() == reloaded.serialize())

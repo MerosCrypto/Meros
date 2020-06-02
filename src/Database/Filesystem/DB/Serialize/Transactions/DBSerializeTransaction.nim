@@ -12,14 +12,14 @@ import ../../../../../Network/Serialize/Transactions/SerializeData
 
 #Serialize the TransactionObj.
 proc serialize*(
-    tx: Transaction
+  tx: Transaction
 ): string {.forceCheck: [].} =
-    case tx:
-        of Mint as mint:
-            result = '\0' & mint.serialize()
-        of Claim as claim:
-            result = '\1' & claim.serialize()
-        of Send as send:
-            result = '\2' & send.serialize()
-        of Data as data:
-            result = '\3' & data.serialize()
+  case tx:
+    of Mint as mint:
+      result = '\0' & mint.serialize()
+    of Claim as claim:
+      result = '\1' & claim.serialize()
+    of Send as send:
+      result = '\2' & send.serialize()
+    of Data as data:
+      result = '\3' & data.serialize()

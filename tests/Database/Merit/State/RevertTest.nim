@@ -31,127 +31,127 @@ import ../CompareMerit
 import random
 
 suite "Revert":
-    setup:
-        var
-            #Database.
-            db: DB = newTestDatabase()
-            #Blockchain.
-            blockchain: Blockchain = newBlockchain(
-                db,
-                "STATE_TEST",
-                1,
-                uint64(1)
+  setup:
+    var
+      #Database.
+      db: DB = newTestDatabase()
+      #Blockchain.
+      blockchain: Blockchain = newBlockchain(
+        db,
+        "STATE_TEST",
+        1,
+        uint64(1)
+      )
+      #State.
+      states: seq[State] = @[]
+
+      #Miners.
+      miners: seq[MinerWallet] = @[]
+      #Miners we can remove Merit from.
+      removable: seq[MinerWallet]
+      #Selected miner to remove Merit from/for the next Block.
+      miner: int
+
+      #Elements we're adding to the Block.
+      elements: seq[BlockElement]
+      #Block we're mining.
+      mining: Block
+
+    #Create the initial state.
+    states.add(
+      newState(
+        db,
+        7,
+        blockchain
+      )
+    )
+
+    #Iterate over 20 'rounds'.
+    for _ in 1 .. 20:
+      #Remove Merit from a random amount of Merit Holders every few Blocks.
+      if rand(3) == 0:
+        removable = miners
+        for _ in 0 .. min(rand(2), high(miners)):
+          miner = rand(high(removable))
+          elements.add(
+            newRandomMeritRemoval(
+              states[^1].reverseLookup(removable[miner].publicKey)
             )
-            #State.
-            states: seq[State] = @[]
+          )
+          removable.del(miner)
 
-            #Miners.
-            miners: seq[MinerWallet] = @[]
-            #Miners we can remove Merit from.
-            removable: seq[MinerWallet]
-            #Selected miner to remove Merit from/for the next Block.
-            miner: int
+      #Decide if this is a nickname or new miner Block.
+      if (miners.len == 0) or (rand(2) == 0):
+        #New miner.
+        miner = miners.len
+        miners.add(newMinerWallet())
 
-            #Elements we're adding to the Block.
-            elements: seq[BlockElement]
-            #Block we're mining.
-            mining: Block
+        #Create the Block with the new miner.
+        mining = newBlankBlock(
+          rx = blockchain.rx,
+          last = blockchain.tail.header.hash,
+          miner = miners[miner],
+          elements = elements
+        )
+      else:
+        #Grab a random miner.
+        miner = rand(high(miners))
 
-        #Create the initial state.
-        states.add(
-            newState(
-                db,
-                7,
-                blockchain
-            )
+        #Create the Block with the existing miner.
+        mining = newBlankBlock(
+          rx = blockchain.rx,
+          last = blockchain.tail.header.hash,
+          nick = uint16(miner),
+          miner = miners[miner],
+          elements = elements
         )
 
-        #Iterate over 20 'rounds'.
-        for _ in 1 .. 20:
-            #Remove Merit from a random amount of Merit Holders every few Blocks.
-            if rand(3) == 0:
-                removable = miners
-                for _ in 0 .. min(rand(2), high(miners)):
-                    miner = rand(high(removable))
-                    elements.add(
-                        newRandomMeritRemoval(
-                            states[^1].reverseLookup(removable[miner].publicKey)
-                        )
-                    )
-                    removable.del(miner)
+      #Add it to the Blockchain and latest State.
+      blockchain.processBlock(mining)
+      discard states[^1].processBlock(blockchain)
 
-            #Decide if this is a nickname or new miner Block.
-            if (miners.len == 0) or (rand(2) == 0):
-                #New miner.
-                miner = miners.len
-                miners.add(newMinerWallet())
+      #Commit the DB.
+      db.commit(blockchain.height)
 
-                #Create the Block with the new miner.
-                mining = newBlankBlock(
-                    rx = blockchain.rx,
-                    last = blockchain.tail.header.hash,
-                    miner = miners[miner],
-                    elements = elements
-                )
-            else:
-                #Grab a random miner.
-                miner = rand(high(miners))
+      #Clear the Elements.
+      elements = @[]
 
-                #Create the Block with the existing miner.
-                mining = newBlankBlock(
-                    rx = blockchain.rx,
-                    last = blockchain.tail.header.hash,
-                    nick = uint16(miner),
-                    miner = miners[miner],
-                    elements = elements
-                )
+      #Copy the State.
+      states.add(states[^1])
 
-            #Add it to the Blockchain and latest State.
-            blockchain.processBlock(mining)
-            discard states[^1].processBlock(blockchain)
+  noFuzzTest "Reversions.":
+    var
+      copy: State
+      reloaded: State
+    for s in 1 ..< states.len:
+      var revertTo: int = rand(s - 1) + 1
+      copy = states[s]
+      copy.revert(blockchain, states[revertTo].processedBlocks)
+      compare(copy, states[revertTo])
 
-            #Commit the DB.
-            db.commit(blockchain.height)
+      reloaded = newState(db, 7, blockchain)
+      compare(states[^1], reloaded)
 
-            #Clear the Elements.
-            elements = @[]
+    #Manually set the RandomX instance to null to make sure it's GC'able.
+    blockchain.rx = nil
 
-            #Copy the State.
-            states.add(states[^1])
+  lowFuzzTest "Chained reversions.":
+    var
+      copy: State
+      reloaded: State
+      revertedAtOnce: State
 
-    noFuzzTest "Reversions.":
-        var
-            copy: State
-            reloaded: State
-        for s in 1 ..< states.len:
-            var revertTo: int = rand(s - 1) + 1
-            copy = states[s]
-            copy.revert(blockchain, states[revertTo].processedBlocks)
-            compare(copy, states[revertTo])
+    copy = states[^(rand(3) + 1)]
+    copy.revert(blockchain, copy.processedBlocks - (rand(3) + 1))
+    copy.revert(blockchain, copy.processedBlocks - (rand(3) + 1))
+    copy.revert(blockchain, copy.processedBlocks - (rand(3) + 1))
 
-            reloaded = newState(db, 7, blockchain)
-            compare(states[^1], reloaded)
+    revertedAtOnce = states[^1]
+    revertedAtOnce.revert(blockchain, copy.processedBlocks)
+    compare(copy, revertedAtOnce)
 
-        #Manually set the RandomX instance to null to make sure it's GC'able.
-        blockchain.rx = nil
+    reloaded = newState(db, 7, blockchain)
+    compare(states[^1], reloaded)
 
-    lowFuzzTest "Chained reversions.":
-        var
-            copy: State
-            reloaded: State
-            revertedAtOnce: State
-
-        copy = states[^(rand(3) + 1)]
-        copy.revert(blockchain, copy.processedBlocks - (rand(3) + 1))
-        copy.revert(blockchain, copy.processedBlocks - (rand(3) + 1))
-        copy.revert(blockchain, copy.processedBlocks - (rand(3) + 1))
-
-        revertedAtOnce = states[^1]
-        revertedAtOnce.revert(blockchain, copy.processedBlocks)
-        compare(copy, revertedAtOnce)
-
-        reloaded = newState(db, 7, blockchain)
-        compare(states[^1], reloaded)
-
-        #Manually set the RandomX instance to null to make sure it's GC'able.
-        blockchain.rx = nil
+    #Manually set the RandomX instance to null to make sure it's GC'able.
+    blockchain.rx = nil

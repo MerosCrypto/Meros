@@ -15,86 +15,86 @@ import sets
 import tables
 
 type
-    TransactionsDB* = ref object
-        cache*: Table[string, string]
-        deleted*: HashSet[string]
-        unmentioned*: HashSet[Hash[256]]
+  TransactionsDB* = ref object
+    cache*: Table[string, string]
+    deleted*: HashSet[string]
+    unmentioned*: HashSet[Hash[256]]
 
-    ConsensusDB* = ref object
-        cache*: Table[string, string]
-        deleted*: HashSet[string]
-        malicious*: set[uint16]
-        unmentioned*: HashSet[Hash[256]]
+  ConsensusDB* = ref object
+    cache*: Table[string, string]
+    deleted*: HashSet[string]
+    malicious*: set[uint16]
+    unmentioned*: HashSet[Hash[256]]
 
-    MeritDB* = ref object
-        cache*: Table[string, string]
-        deleted*: HashSet[string]
-        removals*: Table[uint16, int]
-        when defined(merosTests):
-            used*: HashSet[string]
+  MeritDB* = ref object
+    cache*: Table[string, string]
+    deleted*: HashSet[string]
+    removals*: Table[uint16, int]
+    when defined(merosTests):
+      used*: HashSet[string]
 
-    DB* = ref object
-        lmdb*: LMDB
-        transactions*: TransactionsDB
-        consensus*: ConsensusDB
-        merit*: MeritDB
+  DB* = ref object
+    lmdb*: LMDB
+    transactions*: TransactionsDB
+    consensus*: ConsensusDB
+    merit*: MeritDB
 
 #Constructors.
 proc newTransactionsDB(): TransactionsDB {.inline, forceCheck: [].} =
-    TransactionsDB(
-        cache: initTable[string, string](),
-        deleted: initHashSet[string](),
-        unmentioned: initHashSet[Hash[256]]()
-    )
+  TransactionsDB(
+    cache: initTable[string, string](),
+    deleted: initHashSet[string](),
+    unmentioned: initHashSet[Hash[256]]()
+  )
 
 proc newConsensusDB(): ConsensusDB {.inline, forceCheck: [].} =
-    ConsensusDB(
-        cache: initTable[string, string](),
-        deleted: initHashSet[string](),
-        malicious: {},
-        unmentioned: initHashSet[Hash[256]]()
-    )
+  ConsensusDB(
+    cache: initTable[string, string](),
+    deleted: initHashSet[string](),
+    malicious: {},
+    unmentioned: initHashSet[Hash[256]]()
+  )
 
 proc newMeritDB(): MeritDB {.inline, forceCheck: [].} =
-    when not defined(merosTests):
-        MeritDB(
-            cache: initTable[string, string](),
-            deleted: initHashSet[string](),
-            removals: initTable[uint16, int]()
-        )
-    else:
-        MeritDB(
-            cache: initTable[string, string](),
-            deleted: initHashSet[string](),
-            removals: initTable[uint16, int](),
-            used: initHashSet[string]()
-        )
+  when not defined(merosTests):
+    MeritDB(
+      cache: initTable[string, string](),
+      deleted: initHashSet[string](),
+      removals: initTable[uint16, int]()
+    )
+  else:
+    MeritDB(
+      cache: initTable[string, string](),
+      deleted: initHashSet[string](),
+      removals: initTable[uint16, int](),
+      used: initHashSet[string]()
+    )
 
 proc newDB*(
-    path: string,
-    size: int64
+  path: string,
+  size: int64
 ): DB {.forceCheck: [
-    DBError
+  DBError
 ].} =
-    try:
-        result = DB(
-            lmdb: newLMDB(path, size, 3),
-            transactions: newTransactionsDB(),
-            consensus: newConsensusDB(),
-            merit: newMeritDB()
-        )
-        result.lmdb.open("transactions")
-        result.lmdb.open("consensus")
-        result.lmdb.open("merit")
-    except Exception as e:
-        raise newLoggedException(DBError, "Couldn't open the DB: " & e.msg)
+  try:
+    result = DB(
+      lmdb: newLMDB(path, size, 3),
+      transactions: newTransactionsDB(),
+      consensus: newConsensusDB(),
+      merit: newMeritDB()
+    )
+    result.lmdb.open("transactions")
+    result.lmdb.open("consensus")
+    result.lmdb.open("merit")
+  except Exception as e:
+    raise newLoggedException(DBError, "Couldn't open the DB: " & e.msg)
 
 proc close*(
-    db: DB
+  db: DB
 ) {.forceCheck: [
-    DBError
+  DBError
 ].} =
-    try:
-        db.lmdb.close()
-    except Exception as e:
-        raise newLoggedException(DBError, "Couldn't close the DB: " & e.msg)
+  try:
+    db.lmdb.close()
+  except Exception as e:
+    raise newLoggedException(DBError, "Couldn't close the DB: " & e.msg)

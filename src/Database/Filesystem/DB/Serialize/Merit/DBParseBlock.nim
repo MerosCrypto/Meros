@@ -27,102 +27,102 @@ import ../../../../../Network/Serialize/Consensus/ParseBlockElement
 
 #Parse a Block.
 proc parseBlock*(
-    blockStr: string,
-    interimHash: string,
-    hash: Hash[256]
+  blockStr: string,
+  interimHash: string,
+  hash: Hash[256]
 ): Block {.forceCheck: [
-    ValueError
+  ValueError
 ].} =
-    #Header | Body
-    var
-        header: BlockHeader
-        bodyStr: string
+  #Header | Body
+  var
+    header: BlockHeader
+    bodyStr: string
 
-    #Parse the header.
+  #Parse the header.
+  try:
+    header = blockStr.parseBlockHeader(interimHash, hash)
+  except ValueError as e:
+    raise e
+
+  #Grab the body.
+  bodyStr = blockStr.substr(
+    BLOCK_HEADER_DATA_LEN +
+    (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +
+    INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
+  )
+
+  #Packets Contents | Packets Length | Packets | Amount of Elements | Elements | Aggregate Signature
+  var
+    packetsContents: Hash[256]
+    packetsLen: int = bodyStr[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary()
+    packetsStart: int = HASH_LEN + INT_LEN
+
+    packets: seq[VerificationPacket] = newSeq[VerificationPacket](packetsLen)
+    i: int
+
+    elementsLen: int
+    pbeResult: tuple[
+      element: BlockElement,
+      len: int
+    ]
+    elements: seq[BlockElement] = @[]
+
+    aggregate: BLSSignature
+
+  try:
+    packetsContents = bodyStr[0 ..< HASH_LEN].toHash(256)
+  except ValueError as e:
+    panic("Failed to create a 32-byte hash out of a 32-byte value: " & e.msg)
+
+  i = packetsStart
+  if bodyStr.len < i + NICKNAME_LEN:
+    raise newLoggedException(ValueError, "DB parseBlock not handed enough data to get the amount of holders in the next VerificationPacket.")
+
+  var holders: seq[uint16]
+  for p in 0 ..< packetsLen:
+    holders = newSeq[uint16](bodyStr[i ..< i + NICKNAME_LEN].fromBinary())
+    i += NICKNAME_LEN
+
+    #The holders is represented by a NICKNAME_LEN. This uses an INT_LEN so the last packet checks the elements length.
+    if bodyStr.len < i + (holders.len * NICKNAME_LEN) + HASH_LEN + INT_LEN:
+      raise newLoggedException(ValueError, "DB parseBlock not handed enough data to get the holders in this VerificationPacket, its hash, and the amount of holders in the next VerificationPacket.")
+
+    for h in 0 ..< holders.len:
+      holders[h] = uint16(bodyStr[i ..< i + NICKNAME_LEN].fromBinary())
+      i += NICKNAME_LEN
+
     try:
-        header = blockStr.parseBlockHeader(interimHash, hash)
+      packets[p] = newVerificationPacketObj(bodyStr[i ..< i + HASH_LEN].toHash(256))
+      i += HASH_LEN
     except ValueError as e:
-        raise e
+      raise e
+    packets[p].holders = holders
 
-    #Grab the body.
-    bodyStr = blockStr.substr(
-        BLOCK_HEADER_DATA_LEN +
-        (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +
-        INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
-    )
-
-    #Packets Contents | Packets Length | Packets | Amount of Elements | Elements | Aggregate Signature
-    var
-        packetsContents: Hash[256]
-        packetsLen: int = bodyStr[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary()
-        packetsStart: int = HASH_LEN + INT_LEN
-
-        packets: seq[VerificationPacket] = newSeq[VerificationPacket](packetsLen)
-        i: int
-
-        elementsLen: int
-        pbeResult: tuple[
-            element: BlockElement,
-            len: int
-        ]
-        elements: seq[BlockElement] = @[]
-
-        aggregate: BLSSignature
-
+  elementsLen = bodyStr[i ..< i + INT_LEN].fromBinary()
+  i += INT_LEN
+  for e in 0 ..< elementsLen:
     try:
-        packetsContents = bodyStr[0 ..< HASH_LEN].toHash(256)
+      pbeResult = bodyStr.parseBlockElement(i)
     except ValueError as e:
-        panic("Failed to create a 32-byte hash out of a 32-byte value: " & e.msg)
+      raise e
+    i += pbeResult.len
+    elements.add(pbeResult.element)
 
-    i = packetsStart
-    if bodyStr.len < i + NICKNAME_LEN:
-        raise newLoggedException(ValueError, "DB parseBlock not handed enough data to get the amount of holders in the next VerificationPacket.")
+  if bodyStr.len < i + BLS_SIGNATURE_LEN:
+    raise newLoggedException(ValueError, "DB parseBlock not handed enough data to get the aggregate signature.")
 
-    var holders: seq[uint16]
-    for p in 0 ..< packetsLen:
-        holders = newSeq[uint16](bodyStr[i ..< i + NICKNAME_LEN].fromBinary())
-        i += NICKNAME_LEN
+  try:
+    aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
+  except BLSError:
+    raise newLoggedException(ValueError, "Invalid aggregate signature.")
 
-        #The holders is represented by a NICKNAME_LEN. This uses an INT_LEN so the last packet checks the elements length.
-        if bodyStr.len < i + (holders.len * NICKNAME_LEN) + HASH_LEN + INT_LEN:
-            raise newLoggedException(ValueError, "DB parseBlock not handed enough data to get the holders in this VerificationPacket, its hash, and the amount of holders in the next VerificationPacket.")
-
-        for h in 0 ..< holders.len:
-            holders[h] = uint16(bodyStr[i ..< i + NICKNAME_LEN].fromBinary())
-            i += NICKNAME_LEN
-
-        try:
-            packets[p] = newVerificationPacketObj(bodyStr[i ..< i + HASH_LEN].toHash(256))
-            i += HASH_LEN
-        except ValueError as e:
-            raise e
-        packets[p].holders = holders
-
-    elementsLen = bodyStr[i ..< i + INT_LEN].fromBinary()
-    i += INT_LEN
-    for e in 0 ..< elementsLen:
-        try:
-            pbeResult = bodyStr.parseBlockElement(i)
-        except ValueError as e:
-            raise e
-        i += pbeResult.len
-        elements.add(pbeResult.element)
-
-    if bodyStr.len < i + BLS_SIGNATURE_LEN:
-        raise newLoggedException(ValueError, "DB parseBlock not handed enough data to get the aggregate signature.")
-
-    try:
-        aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
-    except BLSError:
-        raise newLoggedException(ValueError, "Invalid aggregate signature.")
-
-    #Create the Block Object.
-    result = newBlockObj(
-        header,
-        newBlockBodyObj(
-            packetsContents,
-            packets,
-            elements,
-            aggregate
-        )
+  #Create the Block Object.
+  result = newBlockObj(
+    header,
+    newBlockBodyObj(
+      packetsContents,
+      packets,
+      elements,
+      aggregate
     )
+  )

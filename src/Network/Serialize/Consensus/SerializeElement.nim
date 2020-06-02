@@ -6,21 +6,21 @@ import ../../../Database/Consensus/Elements/objects/ElementObj
 
 #Base serialize functions.
 method serialize*(
-    element: Element
+  element: Element
 ): string {.base, forceCheck: [].} =
-    panic("Element serialize method called.")
+  panic("Element serialize method called.")
 
 method serializeWithoutHolder*(
-    element: Element
+  element: Element
 ): string {.base, forceCheck: [].} =
-    panic("Element serializeWithoutHolder method called.")
+  panic("Element serializeWithoutHolder method called.")
 
 method serializeContents*(
-    element: Element
+  element: Element
 ): string {.base, forceCheck: [].} =
-    panic("Element serializeContents method called.")
+  panic("Element serializeContents method called.")
 
 method signedSerialize*(
-    element: Element
+  element: Element
 ): string {.base, forceCheck:[].} =
-    panic("Element signedSerialize method called.")
+  panic("Element signedSerialize method called.")

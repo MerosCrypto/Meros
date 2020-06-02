@@ -7,8 +7,8 @@ import MeritRemovalObj
 
 #SignedElement typeclass.
 type SignedElement* =
-    SignedVerification or
-    SignedVerificationPacket or
-    SignedSendDifficulty or
-    SignedDataDifficulty or
-    SignedMeritRemoval
+  SignedVerification or
+  SignedVerificationPacket or
+  SignedSendDifficulty or
+  SignedDataDifficulty or
+  SignedMeritRemoval

@@ -16,29 +16,29 @@ from PythonTests.Meros.Liver import Liver
 import json
 
 def StateTest(
-    rpc: RPC
+  rpc: RPC
 ) -> None:
-    #Blocks.
-    file: IO[Any] = open("PythonTests/Vectors/Merit/StateBlocks.json", "r")
-    blocks: List[Dict[str, Any]] = json.loads(file.read())
-    file.close()
+  #Blocks.
+  file: IO[Any] = open("PythonTests/Vectors/Merit/StateBlocks.json", "r")
+  blocks: List[Dict[str, Any]] = json.loads(file.read())
+  file.close()
 
-    #Blockchain.
-    blockchain: Blockchain = Blockchain.fromJSON(blocks)
-    #State.
-    state: State = State()
+  #Blockchain.
+  blockchain: Blockchain = Blockchain.fromJSON(blocks)
+  #State.
+  state: State = State()
 
-    def checkState(
-        block: int
-    ) -> None:
-        state.add(blockchain, block)
+  def checkState(
+    block: int
+  ) -> None:
+    state.add(blockchain, block)
 
-        for miner in state.unlocked:
-            if rpc.call("merit", "getMerit", [miner]) != {
-                "unlocked": True,
-                "malicious": False,
-                "merit": state.unlocked[miner]
-            }:
-                raise TestError("Merit doesn't match.")
+    for miner in state.unlocked:
+      if rpc.call("merit", "getMerit", [miner]) != {
+        "unlocked": True,
+        "malicious": False,
+        "merit": state.unlocked[miner]
+      }:
+        raise TestError("Merit doesn't match.")
 
-    Liver(rpc, blocks, everyBlock=checkState).live()
+  Liver(rpc, blocks, everyBlock=checkState).live()

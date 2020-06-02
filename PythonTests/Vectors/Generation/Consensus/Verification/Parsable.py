@@ -63,17 +63,17 @@ packets: List[VerificationPacket] = [VerificationPacket(data.hash, [0])]
 
 #Generate another Block.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents(packets),
-        1,
-        bytes(4),
-        BlockHeader.createSketchCheck(bytes(4), packets),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody(packets, [], sv.signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents(packets),
+    1,
+    bytes(4),
+    BlockHeader.createSketchCheck(bytes(4), packets),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody(packets, [], sv.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -83,8 +83,8 @@ blockchain.add(block)
 print("Generated Parsable Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON(),
-    "data":       data.toJSON()
+  "blockchain": blockchain.toJSON(),
+  "data":     data.toJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/Verification/Parsable.json", "w")
 vectors.write(json.dumps(result))

@@ -45,17 +45,17 @@ edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #Generate a Block granting the holder Merit.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        bytes(32),
-        1,
-        bytes(4),
-        bytes(32),
-        blsPubKey.serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  BlockHeader(
+    0,
+    blockchain.last(),
+    bytes(32),
+    1,
+    bytes(4),
+    bytes(32),
+    blsPubKey.serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody()
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -83,9 +83,9 @@ verif.sign(0, blsPrivKey)
 
 #Create a MeritRemovalVerificationPacket verifying the same Transaction as the Verification.
 packet: SignedMeritRemovalVerificationPacket = SignedMeritRemovalVerificationPacket(
-    SignedVerificationPacket(data.hash),
-    [blsPubKey.serialize()],
-    verif.signature
+  SignedVerificationPacket(data.hash),
+  [blsPubKey.serialize()],
+  verif.signature
 )
 
 #Create the three MeritRemovals.
@@ -94,13 +94,13 @@ dataDiffMR: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiff)
 verifMR: SignedMeritRemoval = SignedMeritRemoval(verif, packet)
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON(),
-    "removals": [
-        sendDiffMR.toSignedJSON(),
-        dataDiffMR.toSignedJSON(),
-        verifMR.toSignedJSON()
-    ],
-    "data": data.toJSON()
+  "blockchain": blockchain.toJSON(),
+  "removals": [
+    sendDiffMR.toSignedJSON(),
+    dataDiffMR.toSignedJSON(),
+    verifMR.toSignedJSON()
+  ],
+  "data": data.toJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/SameElement.json", "w")
 vectors.write(json.dumps(result))

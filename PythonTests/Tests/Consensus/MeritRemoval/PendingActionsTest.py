@@ -7,6 +7,6 @@ from PythonTests.Tests.Errors import EmptyError
 from PythonTests.Meros.RPC import RPC
 
 def PendingActionsTest(
-    rpc: RPC
+  rpc: RPC
 ) -> None:
-    raise EmptyError()
+  raise EmptyError()

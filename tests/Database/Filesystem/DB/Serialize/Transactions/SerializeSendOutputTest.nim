@@ -23,23 +23,23 @@ import ../../../../Transactions/CompareTransactions
 import random
 
 suite "SerializeSendOutput":
-    lowFuzzTest "Serialize and parse.":
-        #SendOutputs.
-        var
-            output: SendOutput
-            reloaded: SendOutput
+  lowFuzzTest "Serialize and parse.":
+    #SendOutputs.
+    var
+      output: SendOutput
+      reloaded: SendOutput
 
-        #Create the SendOutput.
-        output = newSendOutput(
-            newWallet("").publicKey,
-            uint64(rand(int32.high))
-        )
+    #Create the SendOutput.
+    output = newSendOutput(
+      newWallet("").publicKey,
+      uint64(rand(int32.high))
+    )
 
-        #Serialize it and parse it back.
-        reloaded = output.serialize().parseSendOutput()
+    #Serialize it and parse it back.
+    reloaded = output.serialize().parseSendOutput()
 
-        #Compare the SendOutputs.
-        compare(output, reloaded)
+    #Compare the SendOutputs.
+    compare(output, reloaded)
 
-        #Test the serialized versions.
-        check(output.serialize() == reloaded.serialize())
+    #Test the serialized versions.
+    check(output.serialize() == reloaded.serialize())

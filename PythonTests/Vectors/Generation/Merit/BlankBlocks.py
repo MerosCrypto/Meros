@@ -24,42 +24,42 @@ privKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 
 #Create the Block.
 block: Block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        bytes(32),
-        1,
-        bytes(4),
-        bytes(32),
-        privKey.toPublicKey().serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  BlockHeader(
+    0,
+    blockchain.last(),
+    bytes(32),
+    1,
+    bytes(4),
+    bytes(32),
+    privKey.toPublicKey().serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody()
 )
 
 #Generate Blocks.
 for i in range(1, 26):
-    #Mine the Block.
-    block.mine(privKey, blockchain.difficulty())
+  #Mine the Block.
+  block.mine(privKey, blockchain.difficulty())
 
-    #Add it locally.
-    blockchain.add(block)
-    print("Generated Blank Block " + str(i) + ".")
+  #Add it locally.
+  blockchain.add(block)
+  print("Generated Blank Block " + str(i) + ".")
 
-    #Create the next Block.
-    block = Block(
-        BlockHeader(
-            0,
-            blockchain.last(),
-            bytes(32),
-            1,
-            bytes(4),
-            bytes(32),
-            0,
-            blockchain.blocks[-1].header.time + 1200
-        ),
-        BlockBody()
-    )
+  #Create the next Block.
+  block = Block(
+    BlockHeader(
+      0,
+      blockchain.last(),
+      bytes(32),
+      1,
+      bytes(4),
+      bytes(32),
+      0,
+      blockchain.blocks[-1].header.time + 1200
+    ),
+    BlockBody()
+  )
 
 vectors: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "w")
 vectors.write(json.dumps(blockchain.toJSON()))

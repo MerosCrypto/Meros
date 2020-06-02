@@ -40,36 +40,36 @@ import hashes
 type Blake256Hash* = Blake2_256Hash
 
 template Blake64*(
-    input: string
+  input: string
 ): uint64 = Blake2_64(input)
 
 template Blake256*(
-    input: string
+  input: string
 ): Blake256Hash = Blake2_256(input)
 
 template toBlake256Hash*(
-    input: string
+  input: string
 ): Blake256Hash = toBlake2_256Hash(input)
 
 proc hash*[L](
-    hash: HashCommon.Hash[L]
+  hash: HashCommon.Hash[L]
 ): hashes.Hash {.raises: [].} =
-    for b in hash.data:
-        result = result !& int(b)
-    result = !$ result
+  for b in hash.data:
+    result = result !& int(b)
+  result = !$ result
 
 #Check if a hash overflows when multiplied by a factor.
 proc overflows*(
-    hash: HashCommon.Hash[256],
-    factor: uint32 or uint64
+  hash: HashCommon.Hash[256],
+  factor: uint32 or uint64
 ): bool {.raises: [].} =
-    var original: StUInt[512]
-    original.initFromBytesBE(hash.data)
+  var original: StUInt[512]
+  original.initFromBytesBE(hash.data)
 
-    var product: array[64, byte] = (original * stuint(factor, 512)).toByteArrayBE()
-    for b in 0 ..< 32:
-        if product[b] != 0:
-            return true
+  var product: array[64, byte] = (original * stuint(factor, 512)).toByteArrayBE()
+  for b in 0 ..< 32:
+    if product[b] != 0:
+      return true
 
 #These are stupid.
 #These aren't debugging code.

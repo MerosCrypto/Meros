@@ -14,106 +14,106 @@ from collections import deque
 
 #Epochs class.
 class Epochs:
-    #Constructor.
-    def __init__(
-        self
-    ) -> None:
-        self.epochs: Deque[Dict[bytes, List[int]]] = deque([{}] * 5)
-        self.mint: int = 0
+  #Constructor.
+  def __init__(
+    self
+  ) -> None:
+    self.epochs: Deque[Dict[bytes, List[int]]] = deque([{}] * 5)
+    self.mint: int = 0
 
-    #Turn scores into rewards.
-    @staticmethod
-    def reward(
-        blockHash: bytes,
-        scores: List[Tuple[int, int]]
-    ) -> Optional[Mint]:
-        outputs: List[Tuple[int, int]] = []
-        for score in scores:
-            if score[1] == 0:
-                break
-            outputs.append((score[0], score[1] * 50))
+  #Turn scores into rewards.
+  @staticmethod
+  def reward(
+    blockHash: bytes,
+    scores: List[Tuple[int, int]]
+  ) -> Optional[Mint]:
+    outputs: List[Tuple[int, int]] = []
+    for score in scores:
+      if score[1] == 0:
+        break
+      outputs.append((score[0], score[1] * 50))
 
-        return Mint(blockHash, outputs)
+    return Mint(blockHash, outputs)
 
-    #Score an Epoch and generate rewards.
-    @staticmethod
-    def score(
-        state: State,
-        blockHash: bytes,
-        epoch: Dict[bytes, List[int]]
-    ) -> Optional[Mint]:
-        #Grab the verified Transactions.
-        verified: List[bytes] = []
-        for tx in epoch:
-            merit: int = 0
-            for holder in epoch[tx]:
-                merit += state.unlocked[holder]
-            if merit >= state.merit // 2 + 1:
-                verified.append(tx)
+  #Score an Epoch and generate rewards.
+  @staticmethod
+  def score(
+    state: State,
+    blockHash: bytes,
+    epoch: Dict[bytes, List[int]]
+  ) -> Optional[Mint]:
+    #Grab the verified Transactions.
+    verified: List[bytes] = []
+    for tx in epoch:
+      merit: int = 0
+      for holder in epoch[tx]:
+        merit += state.unlocked[holder]
+      if merit >= state.merit // 2 + 1:
+        verified.append(tx)
 
-        if not verified:
-            return None
+    if not verified:
+      return None
 
-        #Assign each Merit Holder 1 point per verified transaction.
-        scores: Dict[int, int] = {}
-        for tx in verified:
-            for holder in epoch[tx]:
-                if not holder in scores:
-                    scores[holder] = 0
-                scores[holder] += 1
+    #Assign each Merit Holder 1 point per verified transaction.
+    scores: Dict[int, int] = {}
+    for tx in verified:
+      for holder in epoch[tx]:
+        if not holder in scores:
+          scores[holder] = 0
+        scores[holder] += 1
 
-        #Multiply each Merit Holder's score by their weight.
-        total: int = 0
-        tupleScores: List[Tuple[int, int]] = []
-        for holder in scores:
-            score: int = scores[holder] * state.unlocked[holder]
-            total += score
-            tupleScores.append((holder, score))
+    #Multiply each Merit Holder's score by their weight.
+    total: int = 0
+    tupleScores: List[Tuple[int, int]] = []
+    for holder in scores:
+      score: int = scores[holder] * state.unlocked[holder]
+      total += score
+      tupleScores.append((holder, score))
 
-        #Sort the scores and remove trailing scores.
-        tupleScores.sort(key=lambda tup: (-tup[1], tup[0]))
-        for i in range(100, len(tupleScores)):
-            del tupleScores[i]
+    #Sort the scores and remove trailing scores.
+    tupleScores.sort(key=lambda tup: (-tup[1], tup[0]))
+    for i in range(100, len(tupleScores)):
+      del tupleScores[i]
 
-        #Normalize each score to 1000.
-        for i in range(len(tupleScores)):
-            tupleScores[i] = (tupleScores[i][0], tupleScores[i][1] * 1000 // total)
+    #Normalize each score to 1000.
+    for i in range(len(tupleScores)):
+      tupleScores[i] = (tupleScores[i][0], tupleScores[i][1] * 1000 // total)
 
-        #If we don't have a perfect 1000, fix that.
-        total = 0
-        for tupleScore in tupleScores:
-            total += tupleScore[1]
-        tupleScores[0] = (tupleScores[0][0], tupleScores[0][1] + (1000 - total))
+    #If we don't have a perfect 1000, fix that.
+    total = 0
+    for tupleScore in tupleScores:
+      total += tupleScore[1]
+    tupleScores[0] = (tupleScores[0][0], tupleScores[0][1] + (1000 - total))
 
-        #Create Mints.
-        return Epochs.reward(blockHash, tupleScores)
+    #Create Mints.
+    return Epochs.reward(blockHash, tupleScores)
 
-    #Shift a Block.
-    def shift(
-        self,
-        state: State,
-        blockchain: Blockchain,
-        b: int
-    ) -> Optional[Mint]:
-        #Grab the Block.
-        block: Block = blockchain.blocks[b]
+  #Shift a Block.
+  def shift(
+    self,
+    state: State,
+    blockchain: Blockchain,
+    b: int
+  ) -> Optional[Mint]:
+    #Grab the Block.
+    block: Block = blockchain.blocks[b]
 
-        #Construct the new Epoch.
-        epoch: Dict[bytes, List[int]] = {}
-        for packet in block.body.packets:
-            found: bool = False
-            for e in range(len(self.epochs)):
-                if packet.hash in self.epochs[e]:
-                    found = True
-                    self.epochs[e][packet.hash] += packet.holders
+    #Construct the new Epoch.
+    epoch: Dict[bytes, List[int]] = {}
+    for packet in block.body.packets:
+      found: bool = False
+      for e in range(len(self.epochs)):
+        if packet.hash in self.epochs[e]:
+          found = True
+          self.epochs[e][packet.hash] += packet.holders
 
-            if not found:
-                if packet.hash not in epoch:
-                    epoch[packet.hash] = []
-                epoch[packet.hash] += packet.holders
+      if not found:
+        if packet.hash not in epoch:
+          epoch[packet.hash] = []
+        epoch[packet.hash] += packet.holders
 
-        #Shift on the Epoch.
-        self.epochs.append(epoch)
-        epoch = self.epochs.popleft()
+    #Shift on the Epoch.
+    self.epochs.append(epoch)
+    epoch = self.epochs.popleft()
 
-        return Epochs.score(state, block.header.hash, epoch)
+    return Epochs.score(state, block.header.hash, epoch)

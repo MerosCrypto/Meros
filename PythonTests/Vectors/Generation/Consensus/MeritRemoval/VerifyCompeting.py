@@ -46,17 +46,17 @@ blockchain: Blockchain = Blockchain()
 
 #Generate a Block granting the holder Merit.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        bytes(32),
-        1,
-        bytes(4),
-        bytes(32),
-        blsPubKey.serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  BlockHeader(
+    0,
+    blockchain.last(),
+    bytes(32),
+    1,
+    bytes(4),
+    bytes(32),
+    blsPubKey.serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody()
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -70,44 +70,44 @@ datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
 datas.append(Data(datas[0].hash, b"Initial Data."))
 datas.append(Data(datas[0].hash, b"Second Data."))
 for data in datas:
-    data.sign(edPrivKey)
-    data.beat(spamFilter)
+  data.sign(edPrivKey)
+  data.beat(spamFilter)
 
 #Create Verifications for all 3.
 verifs: List[SignedVerification] = []
 packets: List[VerificationPacket] = []
 for data in datas:
-    verifs.append(SignedVerification(data.hash, 0))
-    verifs[-1].sign(0, blsPrivKey)
-    packets.append(VerificationPacket(data.hash, [0]))
+  verifs.append(SignedVerification(data.hash, 0))
+  verifs[-1].sign(0, blsPrivKey)
+  packets.append(VerificationPacket(data.hash, [0]))
 
 #Create a MeritRemoval out of the conflicting Verifications.
 mr: SignedMeritRemoval = SignedMeritRemoval(verifs[1], verifs[2])
 
 #Generate a Block containing the MeritRemoval.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents(packets, [mr]),
-        1,
-        bytes(4),
-        BlockHeader.createSketchCheck(bytes(4), packets),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody(
-        packets,
-        [mr],
-        Signature.aggregate(
-            [
-                verifs[0].signature,
-                verifs[1].signature,
-                verifs[2].signature,
-                mr.signature
-            ]
-        )
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents(packets, [mr]),
+    1,
+    bytes(4),
+    BlockHeader.createSketchCheck(bytes(4), packets),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody(
+    packets,
+    [mr],
+    Signature.aggregate(
+      [
+        verifs[0].signature,
+        verifs[1].signature,
+        verifs[2].signature,
+        mr.signature
+      ]
     )
+  )
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -117,10 +117,10 @@ blockchain.add(block)
 print("Generated Verify Competing Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON(),
-    "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()],
-    "verification": verifs[0].toSignedJSON(),
-    "removal": mr.toSignedJSON()
+  "blockchain": blockchain.toJSON(),
+  "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()],
+  "verification": verifs[0].toSignedJSON(),
+  "removal": mr.toSignedJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/VerifyCompeting.json", "w")
 vectors.write(json.dumps(result))

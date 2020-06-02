@@ -6,6 +6,6 @@ import ../../../..//Transactions/objects/TransactionObj
 
 #Base serialization function.
 method serialize*(
-    output: Output
+  output: Output
 ): string {.base, forceCheck: [].} =
-    panic("Output serialize method called.")
+  panic("Output serialize method called.")

@@ -15,12 +15,12 @@ from PythonTests.Meros.Syncer import Syncer
 import json
 
 def FiftyTest(
-    rpc: RPC
+  rpc: RPC
 ) -> None:
-    file: IO[Any] = open("PythonTests/Vectors/Transactions/Fifty.json", "r")
-    vectors: Dict[str, Any] = json.loads(file.read())
-    file.close()
+  file: IO[Any] = open("PythonTests/Vectors/Transactions/Fifty.json", "r")
+  vectors: Dict[str, Any] = json.loads(file.read())
+  file.close()
 
-    #Create and execute a Liver/Syncer.
-    Liver(rpc, vectors["blockchain"], Transactions.fromJSON(vectors["transactions"])).live()
-    Syncer(rpc, vectors["blockchain"], Transactions.fromJSON(vectors["transactions"])).sync()
+  #Create and execute a Liver/Syncer.
+  Liver(rpc, vectors["blockchain"], Transactions.fromJSON(vectors["transactions"])).live()
+  Syncer(rpc, vectors["blockchain"], Transactions.fromJSON(vectors["transactions"])).sync()

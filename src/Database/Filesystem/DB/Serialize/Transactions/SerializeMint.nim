@@ -15,8 +15,8 @@ import SerializeMintOutput
 
 #Serialization function.
 proc serialize*(
-    mint: Mint
+  mint: Mint
 ): string {.inline, forceCheck: [].} =
-    result = mint.outputs.len.toBinary(INT_LEN)
-    for output in mint.outputs:
-        result &= cast[MintOutput](output).serialize()
+  result = mint.outputs.len.toBinary(INT_LEN)
+  for output in mint.outputs:
+    result &= cast[MintOutput](output).serialize()

@@ -23,19 +23,19 @@ import ../../../Database/Consensus/CompareConsensus
 import random
 
 suite "SerializeSendDiffculty":
-    setup:
-        var
-            #SignedSendDifficulty Element.
-            sendDiff: SignedSendDifficulty = newRandomSendDifficulty()
-            #Reloaded SendDifficulty Element.
-            reloadedSD: SendDifficulty = sendDiff.serialize().parseSendDifficulty()
-            #Reloaded SignedSendDifficulty Element.
-            reloadedSSD: SignedSendDifficulty = sendDiff.signedSerialize().parseSignedSendDifficulty()
+  setup:
+    var
+      #SignedSendDifficulty Element.
+      sendDiff: SignedSendDifficulty = newRandomSendDifficulty()
+      #Reloaded SendDifficulty Element.
+      reloadedSD: SendDifficulty = sendDiff.serialize().parseSendDifficulty()
+      #Reloaded SignedSendDifficulty Element.
+      reloadedSSD: SignedSendDifficulty = sendDiff.signedSerialize().parseSignedSendDifficulty()
 
-    lowFuzzTest "Compare the Elements/serializations.":
-        compare(sendDiff, reloadedSD)
-        compare(sendDiff, reloadedSSD)
-        check(sendDiff.signature == reloadedSSD.signature)
+  lowFuzzTest "Compare the Elements/serializations.":
+    compare(sendDiff, reloadedSD)
+    compare(sendDiff, reloadedSSD)
+    check(sendDiff.signature == reloadedSSD.signature)
 
-        check(sendDiff.serialize() == reloadedSD.serialize())
-        check(sendDiff.signedSerialize() == reloadedSSD.signedSerialize())
+    check(sendDiff.serialize() == reloadedSD.serialize())
+    check(sendDiff.signedSerialize() == reloadedSSD.signedSerialize())

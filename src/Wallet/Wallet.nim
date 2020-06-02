@@ -10,60 +10,60 @@ import Mnemonic
 export Mnemonic.Mnemonic, `$`
 
 type Wallet* = ref object
-    mnemonic*: Mnemonic
-    hd*: HDWallet
-    external*: HDWallet
-    internal*: HDWallet
+  mnemonic*: Mnemonic
+  hd*: HDWallet
+  external*: HDWallet
+  internal*: HDWallet
 
 #Constructors.
 proc newWallet*(
-    password: string
+  password: string
 ): Wallet {.forceCheck: [].} =
-    result = Wallet()
-    try:
-        result.mnemonic = newMnemonic()
-        result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
+  result = Wallet()
+  try:
+    result.mnemonic = newMnemonic()
+    result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
 
-        #Guarantee account 0 is usable.
-        discard result.hd[0]
-        result.external = result.hd[0].derive(0)
-        result.internal = result.hd[0].derive(1)
-    except ValueError:
-        result = newWallet(password)
+    #Guarantee account 0 is usable.
+    discard result.hd[0]
+    result.external = result.hd[0].derive(0)
+    result.internal = result.hd[0].derive(1)
+  except ValueError:
+    result = newWallet(password)
 
 proc newWallet*(
-    mnemonic: string,
-    password: string
+  mnemonic: string,
+  password: string
 ): Wallet {.forceCheck: [
-    ValueError
+  ValueError
 ].} =
-    result = Wallet()
-    try:
-        result.mnemonic = newMnemonic(mnemonic)
-        result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
-        result.external = result.hd[0].derive(0)
-        result.internal = result.hd[0].derive(1)
-    except ValueError as e:
-        raise e
+  result = Wallet()
+  try:
+    result.mnemonic = newMnemonic(mnemonic)
+    result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
+    result.external = result.hd[0].derive(0)
+    result.internal = result.hd[0].derive(1)
+  except ValueError as e:
+    raise e
 
 #Converter.
 converter toHDWallet*(
-    wallet: Wallet
+  wallet: Wallet
 ): HDWallet {.forceCheck: [].} =
-    wallet.hd
+  wallet.hd
 
 #Getters.
 proc privateKey*(
-    wallet: Wallet
+  wallet: Wallet
 ): EdPrivateKey {.forceCheck: [].} =
-    wallet.hd.privateKey
+  wallet.hd.privateKey
 
 proc publicKey*(
-    wallet: Wallet
+  wallet: Wallet
 ): EdPublicKey {.forceCheck: [].} =
-    wallet.hd.publicKey
+  wallet.hd.publicKey
 
 proc address*(
-    wallet: Wallet
+  wallet: Wallet
 ): string {.forceCheck: [].} =
-    wallet.hd.address
+  wallet.hd.address

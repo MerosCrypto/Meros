@@ -28,39 +28,39 @@ import ../../../Database/Transactions/CompareTransactions
 import random
 
 suite "SerializeClaim":
-    setup:
-        var
-            #Inputs.
-            inputs: seq[FundedInput]
-            #Input Hash.
-            inputHash: Hash[256]
-            #Claim.
-            claim: Claim
-            #Reloaded Claim.
-            reloaded: Claim
-            #Wallet.
-            wallet: Wallet = newWallet("")
+  setup:
+    var
+      #Inputs.
+      inputs: seq[FundedInput]
+      #Input Hash.
+      inputHash: Hash[256]
+      #Claim.
+      claim: Claim
+      #Reloaded Claim.
+      reloaded: Claim
+      #Wallet.
+      wallet: Wallet = newWallet("")
 
-    midFuzzTest "Serialize and parse.":
-        #Create inputs.
-        inputs = newSeq[FundedInput](rand(254) + 1)
-        for i in 0 ..< inputs.len:
-            for b in 0 ..< inputHash.data.len:
-                inputHash.data[b] = uint8(rand(255))
-            inputs[i] = newFundedInput(inputHash, rand(255))
+  midFuzzTest "Serialize and parse.":
+    #Create inputs.
+    inputs = newSeq[FundedInput](rand(254) + 1)
+    for i in 0 ..< inputs.len:
+      for b in 0 ..< inputHash.data.len:
+        inputHash.data[b] = uint8(rand(255))
+      inputs[i] = newFundedInput(inputHash, rand(255))
 
-        #Create the Claim.
-        claim = newClaim(inputs, wallet.next(last = uint32(rand(200) * 1000)).publicKey)
+    #Create the Claim.
+    claim = newClaim(inputs, wallet.next(last = uint32(rand(200) * 1000)).publicKey)
 
-        #The Meros protocol requires this signature be produced by the aggregate of every unique MinerWallet paid via the Mints.
-        #Serialization/Parsing doesn't care at all.
-        newMinerWallet().sign(claim)
+    #The Meros protocol requires this signature be produced by the aggregate of every unique MinerWallet paid via the Mints.
+    #Serialization/Parsing doesn't care at all.
+    newMinerWallet().sign(claim)
 
-        #Serialize it and parse it back.
-        reloaded = claim.serialize().parseClaim()
+    #Serialize it and parse it back.
+    reloaded = claim.serialize().parseClaim()
 
-        #Compare the Claims.
-        compare(claim, reloaded)
+    #Compare the Claims.
+    compare(claim, reloaded)
 
-        #Test the serialized versions.
-        check(claim.serialize() == reloaded.serialize())
+    #Test the serialized versions.
+    check(claim.serialize() == reloaded.serialize())

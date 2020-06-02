@@ -23,19 +23,19 @@ import ../../../Database/Consensus/CompareConsensus
 import random
 
 suite "SerializeMeritRemoval":
-    setup:
-        var
-            #SignedMeritRemoval Element.
-            mr: SignedMeritRemoval = newRandomMeritRemoval()
-            #Reloaded MeritRemoval Element.
-            reloadedMR: MeritRemoval = mr.serialize().parseMeritRemoval()
-            #Reloaded SignedMeritRemoval Element.
-            reloadedSMR: SignedMeritRemoval = mr.signedSerialize().parseSignedMeritRemoval()
+  setup:
+    var
+      #SignedMeritRemoval Element.
+      mr: SignedMeritRemoval = newRandomMeritRemoval()
+      #Reloaded MeritRemoval Element.
+      reloadedMR: MeritRemoval = mr.serialize().parseMeritRemoval()
+      #Reloaded SignedMeritRemoval Element.
+      reloadedSMR: SignedMeritRemoval = mr.signedSerialize().parseSignedMeritRemoval()
 
-    highFuzzTest "Compare the Elements/serializations.":
-        compare(mr, reloadedMR)
-        compare(mr, reloadedSMR)
-        check(mr.signature == reloadedSMR.signature)
+  highFuzzTest "Compare the Elements/serializations.":
+    compare(mr, reloadedMR)
+    compare(mr, reloadedSMR)
+    check(mr.signature == reloadedSMR.signature)
 
-        check(mr.serialize() == reloadedMR.serialize())
-        check(mr.signedSerialize() == reloadedSMR.signedSerialize())
+    check(mr.serialize() == reloadedMR.serialize())
+    check(mr.signedSerialize() == reloadedSMR.signedSerialize())

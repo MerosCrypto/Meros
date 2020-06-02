@@ -39,92 +39,92 @@ import random
 var newMiner: bool = true
 
 suite "SerializeBlock":
-    setup:
-        var
-            #Last hash.
-            last: RandomXHash
-            #Packets.
-            packets: seq[VerificationPacket] = @[]
-            #Elements.
-            elements: seq[BlockElement] = @[]
-            #Block.
-            newBlock: Block
-            #Reloaded Block.
-            reloaded: SketchyBlock
-            #Sketch Result.
-            sketchResult: SketchResult
+  setup:
+    var
+      #Last hash.
+      last: RandomXHash
+      #Packets.
+      packets: seq[VerificationPacket] = @[]
+      #Elements.
+      elements: seq[BlockElement] = @[]
+      #Block.
+      newBlock: Block
+      #Reloaded Block.
+      reloaded: SketchyBlock
+      #Sketch Result.
+      sketchResult: SketchResult
 
-    highFuzzTest "Serialize and parse.":
-        #Randomize the last hash.
-        for b in 0 ..< 32:
-            last.data[b] = uint8(rand(255))
+  highFuzzTest "Serialize and parse.":
+    #Randomize the last hash.
+    for b in 0 ..< 32:
+      last.data[b] = uint8(rand(255))
 
-        #Randomize the packets.
-        for _ in 0 ..< rand(300):
-            packets.add(newRandomVerificationPacket())
+    #Randomize the packets.
+    for _ in 0 ..< rand(300):
+      packets.add(newRandomVerificationPacket())
 
-        #Randomize the elements.
-        for _ in 0 ..< rand(300):
-            elements.add(newRandomBlockElement())
+    #Randomize the elements.
+    for _ in 0 ..< rand(300):
+      elements.add(newRandomBlockElement())
 
-        while true:
-            if newMiner:
-                newBlock = newBlankBlock(
-                    getRandomX(),
-                    uint32(rand(4096)),
-                    last,
-                    uint16(rand(50000)),
-                    char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
-                    newMinerWallet(),
-                    packets,
-                    elements,
-                    newMinerWallet().sign($rand(4096)),
-                    uint32(rand(high(int32))),
-                    uint32(rand(high(int32)))
-                )
-            else:
-                newBlock = newBlankBlock(
-                    getRandomX(),
-                    uint32(rand(4096)),
-                    last,
-                    uint16(rand(50000)),
-                    char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
-                    uint16(rand(high(int16))),
-                    newMinerWallet(),
-                    packets,
-                    elements,
-                    newMinerWallet().sign($rand(4096)),
-                    uint32(rand(high(int32))),
-                    uint32(rand(high(int32)))
-                )
-
-            #Verify the sketch doesn't have a collision.
-            if newSketcher(packets).collides(newBlock.header.sketchSalt):
-                continue
-            break
-
-        #Serialize it and parse it back.
-        reloaded = getRandomX().parseBlock(newBlock.serialize())
-
-        #Create the Sketch and extract its elements.
-        sketchResult = newSketcher(packets).merge(
-            reloaded.sketch,
-            reloaded.capacity,
-            0,
-            reloaded.data.header.sketchSalt
+    while true:
+      if newMiner:
+        newBlock = newBlankBlock(
+          getRandomX(),
+          uint32(rand(4096)),
+          last,
+          uint16(rand(50000)),
+          char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+          newMinerWallet(),
+          packets,
+          elements,
+          newMinerWallet().sign($rand(4096)),
+          uint32(rand(high(int32))),
+          uint32(rand(high(int32)))
         )
-        check(sketchResult.missing.len == 0)
-        reloaded.data.body.packets = sketchResult.packets
+      else:
+        newBlock = newBlankBlock(
+          getRandomX(),
+          uint32(rand(4096)),
+          last,
+          uint16(rand(50000)),
+          char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+          uint16(rand(high(int16))),
+          newMinerWallet(),
+          packets,
+          elements,
+          newMinerWallet().sign($rand(4096)),
+          uint32(rand(high(int32))),
+          uint32(rand(high(int32)))
+        )
 
-        #Test the serialized versions.
-        check(newBlock.serialize() == reloaded.data.serialize())
+      #Verify the sketch doesn't have a collision.
+      if newSketcher(packets).collides(newBlock.header.sketchSalt):
+        continue
+      break
 
-        #Compare the Blocks.
-        compare(newBlock, reloaded.data)
+    #Serialize it and parse it back.
+    reloaded = getRandomX().parseBlock(newBlock.serialize())
 
-        #Clear the packets and elements.
-        packets = @[]
-        elements = @[]
+    #Create the Sketch and extract its elements.
+    sketchResult = newSketcher(packets).merge(
+      reloaded.sketch,
+      reloaded.capacity,
+      0,
+      reloaded.data.header.sketchSalt
+    )
+    check(sketchResult.missing.len == 0)
+    reloaded.data.body.packets = sketchResult.packets
 
-        #Flip the newMiner bool.
-        newMiner = not newMiner
+    #Test the serialized versions.
+    check(newBlock.serialize() == reloaded.data.serialize())
+
+    #Compare the Blocks.
+    compare(newBlock, reloaded.data)
+
+    #Clear the packets and elements.
+    packets = @[]
+    elements = @[]
+
+    #Flip the newMiner bool.
+    newMiner = not newMiner

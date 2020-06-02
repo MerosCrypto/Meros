@@ -28,39 +28,39 @@ from time import sleep
 from hashlib import blake2b
 
 def HundredSixSignedElementsTest(
-    rpc: RPC
+  rpc: RPC
 ) -> None:
-    #Blockchain. Solely used to get the genesis Block hash.
-    blockchain: Blockchain = Blockchain()
+  #Blockchain. Solely used to get the genesis Block hash.
+  blockchain: Blockchain = Blockchain()
 
-    #BLS Key.
-    blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
-    sig: Signature = blsPrivKey.sign(bytes())
+  #BLS Key.
+  blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
+  sig: Signature = blsPrivKey.sign(bytes())
 
-    #Create a Data.
-    #This is required so the Verification isn't terminated early for having an unknown hash.
-    data: bytes = bytes.fromhex(rpc.call("personal", "data", ["AA"]))
+  #Create a Data.
+  #This is required so the Verification isn't terminated early for having an unknown hash.
+  data: bytes = bytes.fromhex(rpc.call("personal", "data", ["AA"]))
 
-    #Create a signed Verification, SendDifficulty, and DataDifficulty.
-    elements: List[SignedElement] = [
-        SignedVerification(data, 1, sig),
-        SignedSendDifficulty(0, 0, 1, sig),
-        SignedDataDifficulty(0, 0, 1, sig)
-    ]
+  #Create a signed Verification, SendDifficulty, and DataDifficulty.
+  elements: List[SignedElement] = [
+    SignedVerification(data, 1, sig),
+    SignedSendDifficulty(0, 0, 1, sig),
+    SignedDataDifficulty(0, 0, 1, sig)
+  ]
 
-    for elem in elements:
-        #Handshake with the node.
-        rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
+  for elem in elements:
+    #Handshake with the node.
+    rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
 
-        #Send the Element.
-        rpc.meros.signedElement(elem)
+    #Send the Element.
+    rpc.meros.signedElement(elem)
 
-        #Sleep for thirty seconds to make sure Meros realizes our connection is dead.
-        sleep(30)
+    #Sleep for thirty seconds to make sure Meros realizes our connection is dead.
+    sleep(30)
 
-        #Verify the node didn't crash.
-        try:
-            if rpc.call("merit", "getHeight") != 1:
-                raise Exception()
-        except Exception:
-            raise TestError("Node crashed after being sent a malformed Element.")
+    #Verify the node didn't crash.
+    try:
+      if rpc.call("merit", "getHeight") != 1:
+        raise Exception()
+    except Exception:
+      raise TestError("Node crashed after being sent a malformed Element.")

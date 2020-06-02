@@ -19,27 +19,27 @@ import json
 const vectorsFile: string = staticRead("Vectors" / "Mnemonic.json")
 
 suite "Mnemonic":
-    setup:
-        var
-            #Mnemonic objects.
-            mnemonic: Mnemonic
-            reloaded: Mnemonic
+  setup:
+    var
+      #Mnemonic objects.
+      mnemonic: Mnemonic
+      reloaded: Mnemonic
 
-            #Test vectors.
-            vectors: JSONNode = parseJSON(vectorsFile)
+      #Test vectors.
+      vectors: JSONNode = parseJSON(vectorsFile)
 
-    noFuzzTest "Each vector.":
-        for vector in vectors["english"]:
-            mnemonic = newMnemonic(vector[1].getStr())
-            check(mnemonic.entropy.toHex().toLower() == vector[0].getStr())
-            check(mnemonic.unlock("TREZOR").toHex().toLower() == vector[2].getStr())
+  noFuzzTest "Each vector.":
+    for vector in vectors["english"]:
+      mnemonic = newMnemonic(vector[1].getStr())
+      check(mnemonic.entropy.toHex().toLower() == vector[0].getStr())
+      check(mnemonic.unlock("TREZOR").toHex().toLower() == vector[2].getStr())
 
-    midFuzzTest "Generated Mnemonics.":
-        mnemonic = newMnemonic()
-        reloaded = newMnemonic(mnemonic.sentence)
+  midFuzzTest "Generated Mnemonics.":
+    mnemonic = newMnemonic()
+    reloaded = newMnemonic(mnemonic.sentence)
 
-        check(mnemonic.entropy == reloaded.entropy)
-        check(mnemonic.checksum == reloaded.checksum)
-        check(mnemonic.sentence == reloaded.sentence)
+    check(mnemonic.entropy == reloaded.entropy)
+    check(mnemonic.checksum == reloaded.checksum)
+    check(mnemonic.sentence == reloaded.sentence)
 
-        check(mnemonic.unlock("password") == reloaded.unlock("password"))
+    check(mnemonic.unlock("password") == reloaded.unlock("password"))

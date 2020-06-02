@@ -1,23 +1,23 @@
 class SigningKey:
-    def __init__(
-        self,
-        seed: bytes
-    ) -> None:
-        ...
+  def __init__(
+    self,
+    seed: bytes
+  ) -> None:
+    ...
 
-    def sign(
-        self,
-        msg: bytes
-    ) -> bytes:
-        ...
+  def sign(
+    self,
+    msg: bytes
+  ) -> bytes:
+    ...
 
-    def get_verifying_key(
-        self
-    ) -> VerifyingKey:
-        ...
+  def get_verifying_key(
+    self
+  ) -> VerifyingKey:
+    ...
 
 class VerifyingKey:
-    def to_bytes(
-        self
-    ) -> bytes:
-        ...
+  def to_bytes(
+    self
+  ) -> bytes:
+    ...

@@ -29,17 +29,17 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Generate a Block granting the holder Merit.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        bytes(32),
-        1,
-        bytes(4),
-        bytes(32),
-        blsPubKey.serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  BlockHeader(
+    0,
+    blockchain.last(),
+    bytes(32),
+    1,
+    bytes(4),
+    bytes(32),
+    blsPubKey.serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody()
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -61,17 +61,17 @@ mr1: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiffConflicting)
 
 #Generate a Block containing the MeritRemoval.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [mr1]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [mr1], mr1.signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], [mr1]),
+    1,
+    bytes(4),
+    bytes(32),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [mr1], mr1.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -91,17 +91,17 @@ mr2: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiffConflicting)
 
 #Generate a Block containing the second MeritRemoval.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [mr2]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [mr2], mr2.signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], [mr2]),
+    1,
+    bytes(4),
+    bytes(32),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [mr2], mr2.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -111,8 +111,8 @@ blockchain.add(block)
 print("Generated Multiple Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON(),
-    "removals": [mr1.toSignedJSON(), mr2.toSignedJSON()]
+  "blockchain": blockchain.toJSON(),
+  "removals": [mr1.toSignedJSON(), mr2.toSignedJSON()]
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Multiple.json", "w")
 vectors.write(json.dumps(result))

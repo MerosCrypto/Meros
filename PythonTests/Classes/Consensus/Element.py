@@ -11,43 +11,43 @@ from abc import ABC, abstractmethod
 
 #Element class
 class Element(
-    ABC
+  ABC
 ):
-    prefix: bytes
-    holder: int
+  prefix: bytes
+  holder: int
 
-    @abstractmethod
-    def signatureSerialize(
-        self
-    ) -> bytes:
-        pass
+  @abstractmethod
+  def signatureSerialize(
+    self
+  ) -> bytes:
+    pass
 
-    @abstractmethod
-    def serialize(
-        self
-    ) -> bytes:
-        pass
+  @abstractmethod
+  def serialize(
+    self
+  ) -> bytes:
+    pass
 
-    @abstractmethod
-    def toJSON(
-        self
-    ) -> Dict[str, Any]:
-        pass
+  @abstractmethod
+  def toJSON(
+    self
+  ) -> Dict[str, Any]:
+    pass
 
 #SignedElement class.
 class SignedElement(
-    ABC
+  ABC
 ):
-    signature: Signature
+  signature: Signature
 
-    @abstractmethod
-    def signedSerialize(
-        self
-    ) -> bytes:
-        pass
+  @abstractmethod
+  def signedSerialize(
+    self
+  ) -> bytes:
+    pass
 
-    @abstractmethod
-    def toSignedJSON(
-        self
-    ) -> Dict[str, Any]:
-        pass
+  @abstractmethod
+  def toSignedJSON(
+    self
+  ) -> Dict[str, Any]:
+    pass

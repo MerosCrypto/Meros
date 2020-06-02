@@ -10,12 +10,12 @@ from PythonTests.Meros.Syncer import Syncer
 import json
 
 def ChainAdvancementTest(
-    rpc: RPC
+  rpc: RPC
 ) -> None:
-    file: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "r")
-    blocks: List[Dict[str, Any]] = json.loads(file.read())
-    file.close()
+  file: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "r")
+  blocks: List[Dict[str, Any]] = json.loads(file.read())
+  file.close()
 
-    #Create and execute a Liver/Syncer.
-    Liver(rpc, blocks).live()
-    Syncer(rpc, blocks).sync()
+  #Create and execute a Liver/Syncer.
+  Liver(rpc, blocks).live()
+  Syncer(rpc, blocks).sync()

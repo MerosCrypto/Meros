@@ -64,40 +64,40 @@ confidence=
 #We use the opposite import order as PEP8.
 disable=wrong-import-order,
 
-        #We have our own formatting rules.
-        bad-continuation,
+    #We have our own formatting rules.
+    bad-continuation,
 
-        #We don't use docstrings. Anyone is welcome to make a PR for this.
-        missing-docstring,
+    #We don't use docstrings. Anyone is welcome to make a PR for this.
+    missing-docstring,
 
-        #Triggered on imports.
-        duplicate-code,
+    #Triggered on imports.
+    duplicate-code,
 
-        #Too many false positives.
-        dangerous-default-value,
+    #Too many false positives.
+    dangerous-default-value,
 
-        #Too many false positives.
-        consider-using-enumerate,
+    #Too many false positives.
+    consider-using-enumerate,
 
-        #Our constructors take in a lot of data.
-        too-many-function-args,
-        too-many-arguments,
+    #Our constructors take in a lot of data.
+    too-many-function-args,
+    too-many-arguments,
 
-        #We have many message types.
-        #There's no value in calling a bunch of different functions to handle a subset of messages (at least, for now).
-        too-many-branches,
+    #We have many message types.
+    #There's no value in calling a bunch of different functions to handle a subset of messages (at least, for now).
+    too-many-branches,
 
-        #Just because an else isn't needed, doesn't mean it shouldn't be used if logical.
-        no-else-break,
-        no-else-continue,
+    #Just because an else isn't needed, doesn't mean it shouldn't be used if logical.
+    no-else-break,
+    no-else-continue,
 
-        #We only care about 4 Errors:
-        #- EmptyError (test is empty)
-        #- NodeError (node broke)
-        #- TestError (test didn't pass)
-        #- Exception (test broke)
-        #To catch Exception, you need a broad except.
-        broad-except
+    #We only care about 4 Errors:
+    #- EmptyError (test is empty)
+    #- NodeError (node broke)
+    #- TestError (test didn't pass)
+    #- Exception (test broke)
+    #To catch Exception, you need a broad except.
+    broad-except
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -267,11 +267,11 @@ attr-rgx=^[_]*[a-z]+[A-Za-z0-9]*
 
 # Bad variable names which should always be refused, separated by a comma.
 bad-names=foo,
-          bar,
-          baz,
-          toto,
-          tutu,
-          tata
+      bar,
+      baz,
+      toto,
+      tutu,
+      tata
 
 # Naming style matching correct class attribute names.
 class-attribute-naming-style=camelCase
@@ -308,11 +308,11 @@ function-rgx=^[_]*[a-z]+[A-Za-z0-9]*|[A-Za-z0-9]*Test$
 
 # Good variable names which should always be accepted, separated by a comma.
 good-names=i,
-           j,
-           k,
-           ex,
-           Run,
-           _
+       j,
+       k,
+       ex,
+       Run,
+       _
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
@@ -367,11 +367,11 @@ expected-line-ending-format=
 ignore-long-lines=
 
 # Number of spaces of indent required inside a hanging or continued line.
-indent-after-paren=4
+indent-after-paren=2
 
-# String used as indentation unit. This is usually "    " (4 spaces) or "\t" (1
+# String used as indentation unit. This is usually "  " (4 spaces) or "\t" (1
 # tab).
-indent-string='    '
+indent-string='  '
 
 # Maximum number of characters on a single line.
 max-line-length=80
@@ -406,7 +406,7 @@ allow-global-unused-variables=yes
 # List of strings which can identify a callback function by name. A callback
 # name must start or end with one of those strings.
 #callbacks=cb_,
-#          _cb
+#      _cb
 
 # A regular expression matching the name of dummy variables (i.e. expected to
 # not be used).
@@ -428,24 +428,24 @@ redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
 
 # List of note tags to take in consideration, separated by a comma.
 notes=FIXME,
-      XXX,
-      TODO
+    XXX,
+    TODO
 
 
 [CLASSES]
 
 # List of method names used to declare (i.e. assign) instance attributes.
 defining-attr-methods=__init__,
-                      __new__,
-                      setUp
+            __new__,
+            setUp
 
 # List of member names, which should be excluded from the protected access
 # warning.
 exclude-protected=_asdict,
-                  _fields,
-                  _replace,
-                  _source,
-                  _make
+          _fields,
+          _replace,
+          _source,
+          _make
 
 # List of valid names for the first argument in a class method.
 valid-classmethod-first-arg=cls
@@ -525,4 +525,4 @@ known-third-party=enchant
 # Exceptions that will emit a warning when being caught. Defaults to
 # "BaseException, Exception".
 overgeneral-exceptions=BaseException,
-                       Exception
+             Exception

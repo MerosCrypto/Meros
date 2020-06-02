@@ -20,74 +20,74 @@ import ../../Network/Serialize/Transactions/SerializeClaim
 
 #Create a new Claim.
 proc newClaim*(
-    inputs: varargs[FundedInput],
-    output: EdPublicKey
+  inputs: varargs[FundedInput],
+  output: EdPublicKey
 ): Claim {.forceCheck: [
-    ValueError
+  ValueError
 ].} =
-    #Verify the inputs length.
-    if inputs.len < 1 or 255 < inputs.len:
-        raise newLoggedException(ValueError, "Claim has too little or too many inputs.")
+  #Verify the inputs length.
+  if inputs.len < 1 or 255 < inputs.len:
+    raise newLoggedException(ValueError, "Claim has too little or too many inputs.")
 
-    #Create the result.
-    result = newClaimObj(
-        inputs,
-        output
-    )
+  #Create the result.
+  result = newClaimObj(
+    inputs,
+    output
+  )
 
 #Sign a Claim.
 proc sign*(
-    wallet: MinerWallet,
-    claim: Claim
+  wallet: MinerWallet,
+  claim: Claim
 ) {.forceCheck: [].} =
-    #Create a seq of signatures.
-    var
-        #Final signature.
-        signature: BLSSignature
-        #Signature of each input.
-        signatures: seq[BLSSignature] = newSeq[BLSSignature](claim.inputs.len)
+  #Create a seq of signatures.
+  var
+    #Final signature.
+    signature: BLSSignature
+    #Signature of each input.
+    signatures: seq[BLSSignature] = newSeq[BLSSignature](claim.inputs.len)
 
-    #Sign every input.
-    for i in 0 ..< signatures.len:
-        signatures[i] = wallet.sign(
-            "\1" &
-            claim.inputs[i].hash.toString() &
-            char(cast[FundedInput](claim.inputs[i]).nonce) &
-            cast[SendOutput](claim.outputs[0]).key.toString()
-        )
+  #Sign every input.
+  for i in 0 ..< signatures.len:
+    signatures[i] = wallet.sign(
+      "\1" &
+      claim.inputs[i].hash.toString() &
+      char(cast[FundedInput](claim.inputs[i]).nonce) &
+      cast[SendOutput](claim.outputs[0]).key.toString()
+    )
 
-    #Aggregate the input signatures.
-    signature = signatures.aggregate()
+  #Aggregate the input signatures.
+  signature = signatures.aggregate()
 
-    #Set the signature and hash the Claim.
-    claim.signature = signature
-    claim.hash = Blake256(claim.serializeHash())
+  #Set the signature and hash the Claim.
+  claim.signature = signature
+  claim.hash = Blake256(claim.serializeHash())
 
 #Verify a Claim.
 proc verify*(
-    claim: Claim,
-    claimers: seq[BLSPublicKey]
+  claim: Claim,
+  claimers: seq[BLSPublicKey]
 ): bool {.forceCheck: [].} =
-    #Create a seq of AggregationInfos.
-    var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](claim.inputs.len)
+  #Create a seq of AggregationInfos.
+  var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](claim.inputs.len)
 
-    #Create each AggregationInfo.
-    for i in 0 ..< claim.inputs.len:
-        try:
-            agInfos[i] = newBLSAggregationInfo(
-                claimers[i],
-                (
-                    "\1" &
-                    claim.inputs[i].hash.toString() &
-                    char(cast[FundedInput](claim.inputs[i]).nonce) &
-                    cast[SendOutput](claim.outputs[0]).key.toString()
-                )
-            )
-        except BLSError as e:
-            panic("Infinite BLS Public Key entered the system: " & e.msg)
-
-    #Verify the signature.
+  #Create each AggregationInfo.
+  for i in 0 ..< claim.inputs.len:
     try:
-        result = claim.signature.verify(agInfos.aggregate())
+      agInfos[i] = newBLSAggregationInfo(
+        claimers[i],
+        (
+          "\1" &
+          claim.inputs[i].hash.toString() &
+          char(cast[FundedInput](claim.inputs[i]).nonce) &
+          cast[SendOutput](claim.outputs[0]).key.toString()
+        )
+      )
     except BLSError as e:
-        panic("Couldn't verify a signature: " & e.msg)
+      panic("Infinite BLS Public Key entered the system: " & e.msg)
+
+  #Verify the signature.
+  try:
+    result = claim.signature.verify(agInfos.aggregate())
+  except BLSError as e:
+    panic("Couldn't verify a signature: " & e.msg)

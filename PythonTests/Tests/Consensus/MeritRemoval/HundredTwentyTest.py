@@ -24,52 +24,52 @@ from PythonTests.Tests.Consensus.Verify import verifyMeritRemoval
 import json
 
 def HundredTwentyTest(
-    rpc: RPC
+  rpc: RPC
 ) -> None:
-    file: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/HundredTwenty.json", "r")
-    vectors: Dict[str, Any] = json.loads(file.read())
-    file.close()
+  file: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/HundredTwenty.json", "r")
+  vectors: Dict[str, Any] = json.loads(file.read())
+  file.close()
 
-    #DataDifficulty for the mempool.
-    #pylint: disable=no-member
-    mempoolDataDiff: SignedDataDifficulty = SignedDataDifficulty.fromSignedJSON(vectors["mempoolDataDiff"])
-    #DataDifficulty for the Blockchain.
-    #pylint: disable=no-member
-    blockchainDataDiff: DataDifficulty = DataDifficulty.fromJSON(vectors["blockchainDataDiff"])
+  #DataDifficulty for the mempool.
+  #pylint: disable=no-member
+  mempoolDataDiff: SignedDataDifficulty = SignedDataDifficulty.fromSignedJSON(vectors["mempoolDataDiff"])
+  #DataDifficulty for the Blockchain.
+  #pylint: disable=no-member
+  blockchainDataDiff: DataDifficulty = DataDifficulty.fromJSON(vectors["blockchainDataDiff"])
 
-    def sendDataDifficulty() -> None:
-        #Send the Data Difficulty for the mempool.
-        rpc.meros.signedElement(mempoolDataDiff)
+  def sendDataDifficulty() -> None:
+    #Send the Data Difficulty for the mempool.
+    rpc.meros.signedElement(mempoolDataDiff)
 
-        #Verify its sent back.
-        if rpc.meros.live.recv() != (
-            MessageType.SignedDataDifficulty.toByte() +
-            mempoolDataDiff.signedSerialize()
-        ):
-            raise TestError("Meros didn't send us the mempool Data Difficulty.")
+    #Verify its sent back.
+    if rpc.meros.live.recv() != (
+      MessageType.SignedDataDifficulty.toByte() +
+      mempoolDataDiff.signedSerialize()
+    ):
+      raise TestError("Meros didn't send us the mempool Data Difficulty.")
 
-    def receiveMeritRemoval() -> None:
-        #We should receive a MeritRemoval, which is partial.
-        #The unsigned Element should be the Block's DataDifficulty.
-        #The signed Element should be the mempool's DataDifficulty.
-        if rpc.meros.live.recv() != (
-            MessageType.SignedMeritRemoval.toByte() +
-            PartialMeritRemoval(
-                blockchainDataDiff,
-                mempoolDataDiff,
-                0
-            ).signedSerialize()
-        ):
-            raise TestError("Meros didn't create the partial Merit Removal.")
+  def receiveMeritRemoval() -> None:
+    #We should receive a MeritRemoval, which is partial.
+    #The unsigned Element should be the Block's DataDifficulty.
+    #The signed Element should be the mempool's DataDifficulty.
+    if rpc.meros.live.recv() != (
+      MessageType.SignedMeritRemoval.toByte() +
+      PartialMeritRemoval(
+        blockchainDataDiff,
+        mempoolDataDiff,
+        0
+      ).signedSerialize()
+    ):
+      raise TestError("Meros didn't create the partial Merit Removal.")
 
-        #Verify Meros didn't just broadcast it, yet also added it.
-        verifyMeritRemoval(rpc, 1, 1, 0, False)
+    #Verify Meros didn't just broadcast it, yet also added it.
+    verifyMeritRemoval(rpc, 1, 1, 0, False)
 
-    Liver(
-        rpc,
-        vectors["blockchain"],
-        callbacks={
-            1: sendDataDifficulty,
-            2: receiveMeritRemoval
-        }
-    ).live()
+  Liver(
+    rpc,
+    vectors["blockchain"],
+    callbacks={
+      1: sendDataDifficulty,
+      2: receiveMeritRemoval
+    }
+  ).live()

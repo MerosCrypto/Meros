@@ -96,8 +96,8 @@ There will be one input per mint hash, each to be signed by the BLS Private Key 
 
 `getSendTemplate` replies with a template for remotely signing a Send. It takes in two arguments:
 - Outputs (array of objects, each as follows):
-    - `address` (string)
-    - `amount`  (string)
+  - `address` (string)
+  - `amount`  (string)
 - Include Watch Only (bool): Optional, defaults to true.
 
 The result is an object, as follows:

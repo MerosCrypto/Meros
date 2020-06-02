@@ -29,17 +29,17 @@ blockchain: Blockchain = Blockchain()
 
 #Generate a Block granting the holder Merit.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        bytes(32),
-        1,
-        bytes(4),
-        bytes(32),
-        blsPubKey.serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  BlockHeader(
+    0,
+    blockchain.last(),
+    bytes(32),
+    1,
+    bytes(4),
+    bytes(32),
+    blsPubKey.serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody()
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -50,8 +50,8 @@ print("Generated Hundred Twenty Three Swap Block " + str(len(blockchain.blocks))
 
 #Create conflicting Data Difficulties.
 dataDiffs: List[SignedDataDifficulty] = [
-    SignedDataDifficulty(3, 0),
-    SignedDataDifficulty(4, 0)
+  SignedDataDifficulty(3, 0),
+  SignedDataDifficulty(4, 0)
 ]
 dataDiffs[0].sign(0, blsPrivKey)
 dataDiffs[1].sign(0, blsPrivKey)
@@ -61,17 +61,17 @@ mr: SignedMeritRemoval = SignedMeritRemoval(dataDiffs[0], dataDiffs[1])
 
 #Generate a Block containing the MeritRemoval.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [mr]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [mr], mr.signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], [mr]),
+    1,
+    bytes(4),
+    bytes(32),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [mr], mr.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -85,17 +85,17 @@ swapped: SignedMeritRemoval = SignedMeritRemoval(dataDiffs[1], dataDiffs[0])
 
 #Generate a Block containing the swapped MeritRemoval.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [swapped]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [swapped], swapped.signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], [swapped]),
+    1,
+    bytes(4),
+    bytes(32),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [swapped], swapped.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -105,7 +105,7 @@ blockchain.add(block)
 print("Generated Hundred Twenty Three Swap Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON()
+  "blockchain": blockchain.toJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Swap.json", "w")
 vectors.write(json.dumps(result))

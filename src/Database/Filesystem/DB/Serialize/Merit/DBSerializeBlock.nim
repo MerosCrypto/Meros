@@ -23,18 +23,18 @@ import ../../../../../Network/Serialize/Consensus/SerializeMeritRemoval
 
 #Serialize a Block.
 proc serialize*(
-    blockArg: Block
+  blockArg: Block
 ): string {.forceCheck: [].} =
-    result =
-        blockArg.header.serialize() &
-        blockArg.body.packetsContents.toString() &
-        blockArg.body.packets.len.toBinary(INT_LEN)
+  result =
+    blockArg.header.serialize() &
+    blockArg.body.packetsContents.toString() &
+    blockArg.body.packets.len.toBinary(INT_LEN)
 
-    for packet in blockArg.body.packets:
-        result &= packet.serialize()
+  for packet in blockArg.body.packets:
+    result &= packet.serialize()
 
-    result &= blockArg.body.elements.len.toBinary(INT_LEN)
-    for elem in blockArg.body.elements:
-        result &= elem.serializeContents()
+  result &= blockArg.body.elements.len.toBinary(INT_LEN)
+  for elem in blockArg.body.elements:
+    result &= elem.serializeContents()
 
-    result &= blockArg.body.aggregate.serialize()
+  result &= blockArg.body.aggregate.serialize()

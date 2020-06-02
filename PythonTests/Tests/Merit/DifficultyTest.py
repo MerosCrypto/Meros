@@ -15,20 +15,20 @@ from PythonTests.Meros.Liver import Liver
 import json
 
 def DifficultyTest(
-    rpc: RPC
+  rpc: RPC
 ) -> None:
-    #Blocks.
-    file: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "r")
-    blocks: List[Dict[str, Any]] = json.loads(file.read())
-    file.close()
+  #Blocks.
+  file: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "r")
+  blocks: List[Dict[str, Any]] = json.loads(file.read())
+  file.close()
 
-    #Blockchain.
-    blockchain: Blockchain = Blockchain.fromJSON(blocks)
+  #Blockchain.
+  blockchain: Blockchain = Blockchain.fromJSON(blocks)
 
-    def checkDifficulty(
-        block: int
-    ) -> None:
-        if int(rpc.call("merit", "getDifficulty"), 16) != blockchain.difficulties[block]:
-            raise TestError("Difficulty doesn't match.")
+  def checkDifficulty(
+    block: int
+  ) -> None:
+    if int(rpc.call("merit", "getDifficulty"), 16) != blockchain.difficulties[block]:
+      raise TestError("Difficulty doesn't match.")
 
-    Liver(rpc, blocks, everyBlock=checkDifficulty).live()
+  Liver(rpc, blocks, everyBlock=checkDifficulty).live()

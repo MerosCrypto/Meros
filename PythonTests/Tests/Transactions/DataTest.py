@@ -22,27 +22,27 @@ privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 pubKey: ed25519.VerifyingKey = privKey.get_verifying_key()
 
 def DataTest(
-    rpc: RPC
+  rpc: RPC
 ) -> None:
-    #Get the genesis hash.
-    genesis: bytes = Blockchain().blocks[0].header.hash
+  #Get the genesis hash.
+  genesis: bytes = Blockchain().blocks[0].header.hash
 
-    #Create the Spam Filter.
-    spamFilter: SpamFilter = SpamFilter(5)
+  #Create the Spam Filter.
+  spamFilter: SpamFilter = SpamFilter(5)
 
-    #Create the Data.
-    data: Data = Data(bytes(32), pubKey.to_bytes())
-    data.sign(privKey)
-    data.beat(spamFilter)
+  #Create the Data.
+  data: Data = Data(bytes(32), pubKey.to_bytes())
+  data.sign(privKey)
+  data.beat(spamFilter)
 
-    #Handshake with the node.
-    rpc.meros.liveConnect(genesis)
+  #Handshake with the node.
+  rpc.meros.liveConnect(genesis)
 
-    #Send the Data.
-    rpc.meros.liveTransaction(data)
+  #Send the Data.
+  rpc.meros.liveTransaction(data)
 
-    #Sleep for 100 milliseconds.
-    sleep(0.1)
+  #Sleep for 100 milliseconds.
+  sleep(0.1)
 
-    #Verify the Data.
-    verifyTransaction(rpc, data)
+  #Verify the Data.
+  verifyTransaction(rpc, data)

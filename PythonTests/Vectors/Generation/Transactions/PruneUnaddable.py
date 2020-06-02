@@ -45,17 +45,17 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Generate a Block granting the holder Merit.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        bytes(32),
-        1,
-        bytes(4),
-        bytes(32),
-        blsPubKey.serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  BlockHeader(
+    0,
+    blockchain.last(),
+    bytes(32),
+    1,
+    bytes(4),
+    bytes(32),
+    blsPubKey.serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody()
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -75,9 +75,9 @@ verifs[0].sign(0, blsPrivKey)
 
 #Create two competing Datas yet only verify the first.
 for d in range(2):
-    datas.append(Data(datas[0].hash, d.to_bytes(1, "big")))
-    datas[1 + d].sign(edPrivKey)
-    datas[1 + d].beat(dataFilter)
+  datas.append(Data(datas[0].hash, d.to_bytes(1, "big")))
+  datas[1 + d].sign(edPrivKey)
+  datas[1 + d].beat(dataFilter)
 
 verifs.append(SignedVerification(datas[1].hash))
 verifs[1].sign(0, blsPrivKey)
@@ -93,52 +93,52 @@ descendantVerif.sign(0, blsPrivKey)
 
 #Convert the Verifications to packets.
 packets: List[VerificationPacket] = [
-    VerificationPacket(verifs[0].hash, [0]),
-    VerificationPacket(verifs[1].hash, [0])
+  VerificationPacket(verifs[0].hash, [0]),
+  VerificationPacket(verifs[1].hash, [0])
 ]
 
 #Generate another 6 Blocks.
 #Next block should have the packets.
 block: Block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents(packets),
-        1,
-        bytes(4),
-        BlockHeader.createSketchCheck(bytes(4), packets),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody(packets, [], Signature.aggregate([verifs[0].signature, verifs[1].signature]))
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents(packets),
+    1,
+    bytes(4),
+    BlockHeader.createSketchCheck(bytes(4), packets),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody(packets, [], Signature.aggregate([verifs[0].signature, verifs[1].signature]))
 )
 for _ in range(6):
-    #Mine it.
-    block.mine(blsPrivKey, blockchain.difficulty())
+  #Mine it.
+  block.mine(blsPrivKey, blockchain.difficulty())
 
-    #Add it.
-    blockchain.add(block)
-    print("Generated Prune Unaddable Block " + str(len(blockchain.blocks)) + ".")
+  #Add it.
+  blockchain.add(block)
+  print("Generated Prune Unaddable Block " + str(len(blockchain.blocks)) + ".")
 
-    #Create the next Block.
-    block = Block(
-        BlockHeader(
-            0,
-            blockchain.last(),
-            bytes(32),
-            1,
-            bytes(4),
-            bytes(32),
-            0,
-            blockchain.blocks[-1].header.time + 1200
-        ),
-        BlockBody()
-    )
+  #Create the next Block.
+  block = Block(
+    BlockHeader(
+      0,
+      blockchain.last(),
+      bytes(32),
+      1,
+      bytes(4),
+      bytes(32),
+      0,
+      blockchain.blocks[-1].header.time + 1200
+    ),
+    BlockBody()
+  )
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON(),
-    "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON(), datas[3].toJSON()],
-    "verification": descendantVerif.toSignedJSON()
+  "blockchain": blockchain.toJSON(),
+  "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON(), datas[3].toJSON()],
+  "verification": descendantVerif.toSignedJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Transactions/PruneUnaddable.json", "w")
 vectors.write(json.dumps(result))

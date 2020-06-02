@@ -12,125 +12,125 @@ import strutils
 
 #Type aliases.
 type
-    BLSPrivateKey* = PrivateKey
-    BLSPublicKey* = PublicKey
-    BLSSignature* = Signature
-    BLSAggregationInfo* = AggregationInfo
+  BLSPrivateKey* = PrivateKey
+  BLSPublicKey* = PublicKey
+  BLSSignature* = Signature
+  BLSAggregationInfo* = AggregationInfo
 
 #Export the G1 and G2 lengths.
 export G1_LEN, G2_LEN
 
 #Constructors.
 proc newBLSPrivateKey*(
-    key: string
+  key: string
 ): BLSPrivateKey {.forceCheck: [
-    BLSError
+  BLSError
 ].} =
-    try:
-        result = newPrivateKey(key)
-    except BLSError as e:
-        raise e
+  try:
+    result = newPrivateKey(key)
+  except BLSError as e:
+    raise e
 
 proc newBLSPublicKey*(
-    key: string = char(0b11000000) & newString(95)
+  key: string = char(0b11000000) & newString(95)
 ): BLSPublicKey {.forceCheck: [
-    BLSError
+  BLSError
 ].} =
-    try:
-        result = newPublicKey(key)
-    except BLSError as e:
-        raise e
+  try:
+    result = newPublicKey(key)
+  except BLSError as e:
+    raise e
 
 proc newBLSSignature*(
-    sig: string = char(0b11000000) & newString(47)
+  sig: string = char(0b11000000) & newString(47)
 ): BLSSignature {.forceCheck: [
-    BLSError
+  BLSError
 ].} =
-    try:
-        result = newSignature(sig)
-    except BLSError as e:
-        raise e
+  try:
+    result = newSignature(sig)
+  except BLSError as e:
+    raise e
 
 proc newBLSAggregationInfo*(
-    key: BLSPublicKey,
-    msg: string
+  key: BLSPublicKey,
+  msg: string
 ): BLSAggregationInfo {.forceCheck: [
-    BLSError
+  BLSError
 ].} =
-    try:
-        result = newAggregationInfo(key, msg)
-    except BLSError as e:
-        raise e
+  try:
+    result = newAggregationInfo(key, msg)
+  except BLSError as e:
+    raise e
 
 proc newBLSAggregationInfo*(
-    keys: seq[BLSPublicKey],
-    msg: string
+  keys: seq[BLSPublicKey],
+  msg: string
 ): BLSAggregationInfo {.forceCheck: [
-    BLSError
+  BLSError
 ].} =
-    try:
-        result = newAggregationInfo(keys, msg)
-    except BLSError as e:
-        raise e
+  try:
+    result = newAggregationInfo(keys, msg)
+  except BLSError as e:
+    raise e
 
 #Export member functions.
 export toPublicKey, sign, verify, aggregate, serialize, isInf
 
 #Equality functions.
 proc `==`*(
-    x: BLSPrivateKey,
-    y: BLSPrivateKey
+  x: BLSPrivateKey,
+  y: BLSPrivateKey
 ): bool {.inline, forceCheck: [].} =
-    x.serialize() == y.serialize()
+  x.serialize() == y.serialize()
 
 proc `==`*(
-    x: BLSPublicKey,
-    y: BLSPublicKey
+  x: BLSPublicKey,
+  y: BLSPublicKey
 ): bool {.inline, forceCheck: [].} =
-    x.serialize() == y.serialize()
+  x.serialize() == y.serialize()
 
 proc `==`*(
-    x: BLSSignature,
-    y: BLSSignature
+  x: BLSSignature,
+  y: BLSSignature
 ): bool {.inline, forceCheck: [].} =
-    x.serialize() == y.serialize()
+  x.serialize() == y.serialize()
 
 proc `!=`*(
-    x: BLSPrivateKey,
-    y: BLSPrivateKey
+  x: BLSPrivateKey,
+  y: BLSPrivateKey
 ): bool {.inline, forceCheck: [].} =
-    not (x.serialize() == y.serialize())
+  not (x.serialize() == y.serialize())
 
 proc `!=`*(
-    x: BLSPublicKey,
-    y: BLSPublicKey
+  x: BLSPublicKey,
+  y: BLSPublicKey
 ): bool {.inline, forceCheck: [].} =
-    not (x.serialize() == y.serialize())
+  not (x.serialize() == y.serialize())
 
 proc `!=`*(
-    x: BLSSignature,
-    y: BLSSignature
+  x: BLSSignature,
+  y: BLSSignature
 ): bool {.inline, forceCheck: [].} =
-    not (x.serialize() == y.serialize())
+  not (x.serialize() == y.serialize())
 
 #Stringify functions.
 proc `$`*(
-    key: BLSPrivateKey
+  key: BLSPrivateKey
 ): string {.inline, forceCheck: [].} =
-    key.serialize().toHex()
+  key.serialize().toHex()
 
 proc `$`*(
-    key: BLSPublicKey
+  key: BLSPublicKey
 ): string {.inline, forceCheck: [].} =
-    key.serialize().toHex()
+  key.serialize().toHex()
 
 proc `$`*(
-    sig: Signature
+  sig: Signature
 ): string {.inline, forceCheck: [].} =
-    sig.serialize().toHex()
+  sig.serialize().toHex()
 
 #BLSPublicKey -> Hash so it can be used as an index in an Table.
 proc hash*(
-    key: BLSPublicKey
+  key: BLSPublicKey
 ): Hash {.inline, forceCheck: [].} =
-    hash(key.serialize())
+  hash(key.serialize())

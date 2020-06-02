@@ -59,17 +59,17 @@ transactions.add(data)
 
 #Generate the VerificationPacket Block.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([VerificationPacket(data.hash, [1])]),
-        1,
-        bytes(4),
-        BlockHeader.createSketchCheck(bytes(4), [VerificationPacket(data.hash, [1])]),
-        blsPrivKey.toPublicKey().serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([VerificationPacket(data.hash, [1])], [], blsPrivKey.sign(b""))
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([VerificationPacket(data.hash, [1])]),
+    1,
+    bytes(4),
+    BlockHeader.createSketchCheck(bytes(4), [VerificationPacket(data.hash, [1])]),
+    blsPrivKey.toPublicKey().serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([VerificationPacket(data.hash, [1])], [], blsPrivKey.sign(b""))
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -82,17 +82,17 @@ print("Generated Hundred Six Block Elements VerificationPacket Block.")
 elements: List[Element] = []
 elements.append(SendDifficulty(0, 0, 1))
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], elements),
-        1,
-        bytes(4),
-        BlockHeader.createSketchCheck(bytes(4), []),
-        blsPrivKey.toPublicKey().serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], elements, blsPrivKey.sign(b""))
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], elements),
+    1,
+    bytes(4),
+    BlockHeader.createSketchCheck(bytes(4), []),
+    blsPrivKey.toPublicKey().serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], elements, blsPrivKey.sign(b""))
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -105,17 +105,17 @@ print("Generated Hundred Six Block Elements SendDifficulty Block.")
 elements = []
 elements.append(DataDifficulty(0, 0, 1))
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], elements),
-        1,
-        bytes(4),
-        BlockHeader.createSketchCheck(bytes(4), []),
-        blsPrivKey.toPublicKey().serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], elements, blsPrivKey.sign(b""))
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], elements),
+    1,
+    bytes(4),
+    BlockHeader.createSketchCheck(bytes(4), []),
+    blsPrivKey.toPublicKey().serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], elements, blsPrivKey.sign(b""))
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -125,8 +125,8 @@ blocks.append(block.toJSON())
 print("Generated Hundred Six Block Elements DataDifficulty Block.")
 
 result: Dict[str, Any] = {
-    "blocks": blocks,
-    "transactions": transactions.toJSON()
+  "blocks": blocks,
+  "transactions": transactions.toJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/HundredSix/BlockElements.json", "w")
 vectors.write(json.dumps(result))

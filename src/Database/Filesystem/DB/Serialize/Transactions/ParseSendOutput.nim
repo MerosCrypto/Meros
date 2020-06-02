@@ -15,21 +15,21 @@ import ../../../../../Network/Serialize/SerializeCommon
 
 #Parse function.
 proc parseSendOutput*(
-    outputStr: string
+  outputStr: string
 ): SendOutput {.forceCheck: [
-    ValueError
+  ValueError
 ].} =
-    #Key | Amount
-    var outputSeq: seq[string] = outputStr.deserialize(
-        ED_PUBLIC_KEY_LEN,
-        MEROS_LEN
-    )
+  #Key | Amount
+  var outputSeq: seq[string] = outputStr.deserialize(
+    ED_PUBLIC_KEY_LEN,
+    MEROS_LEN
+  )
 
-    #Create the SendOutput.
-    try:
-        result = newSendOutput(
-            newEdPublicKey(outputSeq[0]),
-            uint64(outputSeq[1].fromBinary())
-        )
-    except ValueError as e:
-        raise e
+  #Create the SendOutput.
+  try:
+    result = newSendOutput(
+      newEdPublicKey(outputSeq[0]),
+      uint64(outputSeq[1].fromBinary())
+    )
+  except ValueError as e:
+    raise e

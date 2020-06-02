@@ -24,53 +24,53 @@ import ../Consensus/ParseBlockElement
 
 #Parse a BlockBody.
 proc parseBlockBody*(
-    bodyStr: string
+  bodyStr: string
 ): SketchyBlockBody {.forceCheck: [
-    ValueError
+  ValueError
 ].} =
-    #Packets Contents | Capacity | Sketch | Amount of Elements | Elements | Aggregate Signature
-    result.capacity = bodyStr[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary()
-    var
-        sketchLen: int = result.capacity * SKETCH_HASH_LEN
-        sketchStart: int = HASH_LEN + INT_LEN
-        elementsStart: int = sketchStart + sketchLen
+  #Packets Contents | Capacity | Sketch | Amount of Elements | Elements | Aggregate Signature
+  result.capacity = bodyStr[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary()
+  var
+    sketchLen: int = result.capacity * SKETCH_HASH_LEN
+    sketchStart: int = HASH_LEN + INT_LEN
+    elementsStart: int = sketchStart + sketchLen
 
-        pbeResult: tuple[
-            element: BlockElement,
-            len: int
-        ]
-        i: int = elementsStart + INT_LEN
-        elements: seq[BlockElement] = @[]
+    pbeResult: tuple[
+      element: BlockElement,
+      len: int
+    ]
+    i: int = elementsStart + INT_LEN
+    elements: seq[BlockElement] = @[]
 
-        aggregate: BLSSignature
+    aggregate: BLSSignature
 
-    if bodyStr.len < i:
-        raise newLoggedException(ValueError, "parseBlockBody not handed enough data to get the amount of Sketches/Elements.")
+  if bodyStr.len < i:
+    raise newLoggedException(ValueError, "parseBlockBody not handed enough data to get the amount of Sketches/Elements.")
 
-    result.sketch = bodyStr[sketchStart ..< elementsStart]
+  result.sketch = bodyStr[sketchStart ..< elementsStart]
 
-    for e in 0 ..< bodyStr[elementsStart ..< i].fromBinary():
-        try:
-            pbeResult = bodyStr.parseBlockElement(i)
-        except ValueError as e:
-            raise e
-        i += pbeResult.len
-        elements.add(pbeResult.element)
-
-    if bodyStr.len < i + BLS_SIGNATURE_LEN:
-        raise newLoggedException(ValueError, "parseBlockBody not handed enough data to get the aggregate signature.")
-
+  for e in 0 ..< bodyStr[elementsStart ..< i].fromBinary():
     try:
-        aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
-    except BLSError:
-        raise newLoggedException(ValueError, "Invalid aggregate signature.")
-
-    try:
-        result.data = newBlockBodyObj(
-            bodyStr[0 ..< HASH_LEN].toHash(256),
-            @[],
-            elements,
-            aggregate
-        )
+      pbeResult = bodyStr.parseBlockElement(i)
     except ValueError as e:
-        panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+      raise e
+    i += pbeResult.len
+    elements.add(pbeResult.element)
+
+  if bodyStr.len < i + BLS_SIGNATURE_LEN:
+    raise newLoggedException(ValueError, "parseBlockBody not handed enough data to get the aggregate signature.")
+
+  try:
+    aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
+  except BLSError:
+    raise newLoggedException(ValueError, "Invalid aggregate signature.")
+
+  try:
+    result.data = newBlockBodyObj(
+      bodyStr[0 ..< HASH_LEN].toHash(256),
+      @[],
+      elements,
+      aggregate
+    )
+  except ValueError as e:
+    panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)

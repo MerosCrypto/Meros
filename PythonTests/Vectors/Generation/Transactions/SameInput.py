@@ -55,11 +55,11 @@ claim: bytes = blockchain.blocks[-1].body.packets[0].hash
 
 #Create a Send spending it twice.
 send: Send = Send(
-    [(claim, 0), (claim, 0)],
-    [(
-        edPubKey.to_bytes(),
-        Claim.fromTransaction(transactions.txs[claim]).amount * 2
-    )]
+  [(claim, 0), (claim, 0)],
+  [(
+    edPubKey.to_bytes(),
+    Claim.fromTransaction(transactions.txs[claim]).amount * 2
+  )]
 )
 send.sign(edPrivKey)
 send.beat(sendFilter)
@@ -72,17 +72,17 @@ packet: VerificationPacket = VerificationPacket(send.hash, [0])
 
 #Add a Block verifying it.
 block: Block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([packet]),
-        1,
-        bytes(4),
-        BlockHeader.createSketchCheck(bytes(4), [packet]),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([packet], [], sv.signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([packet]),
+    1,
+    bytes(4),
+    BlockHeader.createSketchCheck(bytes(4), [packet]),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([packet], [], sv.signature)
 )
 
 #Mine the Block.
@@ -94,8 +94,8 @@ print("Generated Same Input Block " + str(len(blockchain.blocks) - 1) + ".")
 
 #Save the vector.
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON(),
-    "transactions": transactions.toJSON()
+  "blockchain": blockchain.toJSON(),
+  "transactions": transactions.toJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Transactions/SameInput.json", "w")
 vectors.write(json.dumps(result))

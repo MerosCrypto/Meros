@@ -23,15 +23,15 @@ import ../../../Database/Consensus/CompareConsensus
 import random
 
 suite "SerializeVerification":
-    setup:
-        var
-            #SignedVerification Element.
-            verif: SignedVerification = newRandomVerification()
-            #Reloaded SignedVerification Element.
-            reloadedSV: SignedVerification = verif.signedSerialize().parseSignedVerification()
+  setup:
+    var
+      #SignedVerification Element.
+      verif: SignedVerification = newRandomVerification()
+      #Reloaded SignedVerification Element.
+      reloadedSV: SignedVerification = verif.signedSerialize().parseSignedVerification()
 
-    lowFuzzTest "Compare the Elements/serializations.":
-        compare(verif, reloadedSV)
-        check(verif.signature == reloadedSV.signature)
+  lowFuzzTest "Compare the Elements/serializations.":
+    compare(verif, reloadedSV)
+    check(verif.signature == reloadedSV.signature)
 
-        check(verif.signedSerialize() == reloadedSV.signedSerialize())
+    check(verif.signedSerialize() == reloadedSV.signedSerialize())

@@ -14,52 +14,52 @@ from ctypes import cdll, Structure, POINTER, c_int
 #pylint: disable=invalid-name
 MilagroPairing: Any
 if os.name == "nt":
-    MilagroPairing = cdll.LoadLibrary("PythonTests/Libs/incubator-milagro-crypto-c/build/lib/amcl_pairing_BLS381")
+  MilagroPairing = cdll.LoadLibrary("PythonTests/Libs/incubator-milagro-crypto-c/build/lib/amcl_pairing_BLS381")
 else:
-    MilagroPairing = cdll.LoadLibrary("PythonTests/Libs/incubator-milagro-crypto-c/build/lib/libamcl_pairing_BLS381.so")
+  MilagroPairing = cdll.LoadLibrary("PythonTests/Libs/incubator-milagro-crypto-c/build/lib/libamcl_pairing_BLS381.so")
 
 #pylint: disable=too-few-public-methods,unneeded-multiline-expansion
 class FP2Obj(
-    Structure
+  Structure
 ):
-    _fields_: List[Tuple[str, Type[Any]]] = [
-        ("a", FP1Obj),
-        ("b", FP1Obj)
-    ]
+  _fields_: List[Tuple[str, Type[Any]]] = [
+    ("a", FP1Obj),
+    ("b", FP1Obj)
+  ]
 FP2: Any = POINTER(FP2Obj)
 
 #pylint: disable=too-few-public-methods
 class FP4Obj(
-    Structure
+  Structure
 ):
-    _fields_: List[Tuple[str, Type[Any]]] = [
-        ("a", FP2Obj),
-        ("b", FP2Obj),
-        ("c", FP2Obj)
-    ]
+  _fields_: List[Tuple[str, Type[Any]]] = [
+    ("a", FP2Obj),
+    ("b", FP2Obj),
+    ("c", FP2Obj)
+  ]
 FP4: Any = POINTER(FP4Obj)
 
 #pylint: disable=too-few-public-methods
 class FP12Obj(
-    Structure
+  Structure
 ):
-    _fields_: List[Tuple[str, Type[Any]]] = [
-        ("a", FP4Obj),
-        ("b", FP4Obj),
-        ("c", FP4Obj),
-        ("type", c_int)
-    ]
+  _fields_: List[Tuple[str, Type[Any]]] = [
+    ("a", FP4Obj),
+    ("b", FP4Obj),
+    ("c", FP4Obj),
+    ("type", c_int)
+  ]
 FP12: Any = POINTER(FP12Obj)
 
 #pylint: disable=too-few-public-methods
 class G2Obj(
-    Structure
+  Structure
 ):
-    _fields_: List[Tuple[str, Type[Any]]] = [
-        ("x", FP2Obj),
-        ("y", FP2Obj),
-        ("z", FP2Obj)
-    ]
+  _fields_: List[Tuple[str, Type[Any]]] = [
+    ("x", FP2Obj),
+    ("y", FP2Obj),
+    ("z", FP2Obj)
+  ]
 G2: Any = POINTER(G2Obj)
 
 #Define the function types.

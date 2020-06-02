@@ -23,19 +23,19 @@ import ../../../Database/Consensus/CompareConsensus
 import random
 
 suite "SerializeDataDifficulty":
-    setup:
-        var
-            #SignedDataDifficulty Element.
-            dataDiff: SignedDataDifficulty = newRandomDataDifficulty()
-            #Reloaded DataDifficulty Element.
-            reloadedDD: DataDifficulty = dataDiff.serialize().parseDataDifficulty()
-            #Reloaded SignedDataDifficulty Element.
-            reloadedSDD: SignedDataDifficulty = dataDiff.signedSerialize().parseSignedDataDifficulty()
+  setup:
+    var
+      #SignedDataDifficulty Element.
+      dataDiff: SignedDataDifficulty = newRandomDataDifficulty()
+      #Reloaded DataDifficulty Element.
+      reloadedDD: DataDifficulty = dataDiff.serialize().parseDataDifficulty()
+      #Reloaded SignedDataDifficulty Element.
+      reloadedSDD: SignedDataDifficulty = dataDiff.signedSerialize().parseSignedDataDifficulty()
 
-    lowFuzzTest "Compare the Elements/serializations.":
-        compare(dataDiff, reloadedDD)
-        compare(dataDiff, reloadedSDD)
-        check(dataDiff.signature == reloadedSDD.signature)
+  lowFuzzTest "Compare the Elements/serializations.":
+    compare(dataDiff, reloadedDD)
+    compare(dataDiff, reloadedSDD)
+    check(dataDiff.signature == reloadedSDD.signature)
 
-        check(dataDiff.serialize() == reloadedDD.serialize())
-        check(dataDiff.signedSerialize() == reloadedSDD.signedSerialize())
+    check(dataDiff.serialize() == reloadedDD.serialize())
+    check(dataDiff.signedSerialize() == reloadedSDD.signedSerialize())

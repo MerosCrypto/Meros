@@ -42,17 +42,17 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Generate a Block granting the holder Merit.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        bytes(32),
-        1,
-        bytes(4),
-        bytes(32),
-        blsPubKey.serialize(),
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  BlockHeader(
+    0,
+    blockchain.last(),
+    bytes(32),
+    1,
+    bytes(4),
+    bytes(32),
+    blsPubKey.serialize(),
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody()
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -81,17 +81,17 @@ mr: SignedMeritRemoval = SignedMeritRemoval(verif, competingVerif)
 
 #Generate a Block containing the MeritRemoval.
 block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [mr]),
-        1,
-        bytes(4),
-        BlockHeader.createSketchCheck(bytes(4), []),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [mr], mr.signature)
+  BlockHeader(
+    0,
+    blockchain.last(),
+    BlockHeader.createContents([], [mr]),
+    1,
+    bytes(4),
+    BlockHeader.createSketchCheck(bytes(4), []),
+    0,
+    blockchain.blocks[-1].header.time + 1200
+  ),
+  BlockBody([], [mr], mr.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -101,9 +101,9 @@ blockchain.add(block)
 print("Generated Invalid Competing Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON(),
-    "transactions": transactions.toJSON(),
-    "removal": mr.toSignedJSON()
+  "blockchain": blockchain.toJSON(),
+  "transactions": transactions.toJSON(),
+  "removal": mr.toSignedJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/InvalidCompeting.json", "w")
 vectors.write(json.dumps(result))

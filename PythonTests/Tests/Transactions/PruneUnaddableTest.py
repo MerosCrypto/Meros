@@ -20,47 +20,47 @@ from PythonTests.Tests.Errors import TestError
 import json
 
 def PruneUnaddableTest(
-    rpc: RPC
+  rpc: RPC
 ) -> None:
-    file: IO[Any] = open("PythonTests/Vectors/Transactions/PruneUnaddable.json", "r")
-    vectors: Dict[str, Any] = json.loads(file.read())
-    file.close()
+  file: IO[Any] = open("PythonTests/Vectors/Transactions/PruneUnaddable.json", "r")
+  vectors: Dict[str, Any] = json.loads(file.read())
+  file.close()
 
-    pruned: bytes = Data.fromJSON(vectors["datas"][2]).hash
-    prunedDescendant: bytes = Data.fromJSON(vectors["datas"][3]).hash
+  pruned: bytes = Data.fromJSON(vectors["datas"][2]).hash
+  prunedDescendant: bytes = Data.fromJSON(vectors["datas"][3]).hash
 
-    def sendDatas() -> None:
-        for data in vectors["datas"]:
-            if rpc.meros.liveTransaction(Data.fromJSON(data)) != rpc.meros.live.recv():
-                raise TestError("Meros didn't send back the Data.")
+  def sendDatas() -> None:
+    for data in vectors["datas"]:
+      if rpc.meros.liveTransaction(Data.fromJSON(data)) != rpc.meros.live.recv():
+        raise TestError("Meros didn't send back the Data.")
 
-        #Send the beaten Data's descendant's verification.
-        if rpc.meros.signedElement(SignedVerification.fromSignedJSON(vectors["verification"])) != rpc.meros.live.recv():
-            raise TestError("Meros didn't send back the SignedVerification.")
+    #Send the beaten Data's descendant's verification.
+    if rpc.meros.signedElement(SignedVerification.fromSignedJSON(vectors["verification"])) != rpc.meros.live.recv():
+      raise TestError("Meros didn't send back the SignedVerification.")
 
-    def verifyAdded() -> None:
-        rpc.call("transactions", "getTransaction", [pruned.hex()])
-        rpc.call("consensus", "getStatus", [pruned.hex()])
+  def verifyAdded() -> None:
+    rpc.call("transactions", "getTransaction", [pruned.hex()])
+    rpc.call("consensus", "getStatus", [pruned.hex()])
 
-    def verifyPruned() -> None:
-        try:
-            rpc.call("transactions", "getTransaction", [pruned.hex()])
-            rpc.call("transactions", "getTransaction", [prunedDescendant.hex()])
-            rpc.call("consensus", "getStatus", [pruned.hex()])
-            rpc.call("consensus", "getStatus", [prunedDescendant.hex()])
-            raise Exception()
-        except TestError:
-            pass
-        except Exception:
-            raise TestError("Meros didn't prune the Transaction.")
+  def verifyPruned() -> None:
+    try:
+      rpc.call("transactions", "getTransaction", [pruned.hex()])
+      rpc.call("transactions", "getTransaction", [prunedDescendant.hex()])
+      rpc.call("consensus", "getStatus", [pruned.hex()])
+      rpc.call("consensus", "getStatus", [prunedDescendant.hex()])
+      raise Exception()
+    except TestError:
+      pass
+    except Exception:
+      raise TestError("Meros didn't prune the Transaction.")
 
-    #Create and execute a Liver.
-    Liver(
-        rpc,
-        vectors["blockchain"],
-        callbacks={
-            1: sendDatas,
-            2: verifyAdded,
-            8: verifyPruned
-        }
-    ).live()
+  #Create and execute a Liver.
+  Liver(
+    rpc,
+    vectors["blockchain"],
+    callbacks={
+      1: sendDatas,
+      2: verifyAdded,
+      8: verifyPruned
+    }
+  ).live()

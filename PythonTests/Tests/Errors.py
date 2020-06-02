@@ -2,24 +2,24 @@
 
 #EmptyError Exception. Used when a test is empty.
 class EmptyError(
-    Exception
+  Exception
 ):
-    pass
+  pass
 
 #NodeError Exception. Used when the node fails.
 class NodeError(
-    Exception
+  Exception
 ):
-    pass
+  pass
 
 #SuccessError Exception. Used when a test succeeds yet needs to cut execution short.
 class SuccessError(
-    Exception
+  Exception
 ):
-    pass
+  pass
 
 #TestError Exception. Used when a test fails.
 class TestError(
-    Exception
+  Exception
 ):
-    pass
+  pass

@@ -11,9 +11,9 @@ from ctypes import cdll, Structure, POINTER, c_char_p, c_int64, c_int32, c_int
 #pylint: disable=invalid-name
 MilagroCurve: Any
 if os.name == "nt":
-    MilagroCurve = cdll.LoadLibrary("PythonTests/Libs/incubator-milagro-crypto-c/build/lib/amcl_curve_BLS381")
+  MilagroCurve = cdll.LoadLibrary("PythonTests/Libs/incubator-milagro-crypto-c/build/lib/amcl_curve_BLS381")
 else:
-    MilagroCurve = cdll.LoadLibrary("PythonTests/Libs/incubator-milagro-crypto-c/build/lib/libamcl_curve_BLS381.so")
+  MilagroCurve = cdll.LoadLibrary("PythonTests/Libs/incubator-milagro-crypto-c/build/lib/libamcl_curve_BLS381.so")
 
 #Define the structures.
 Big384 = c_int64 * 7   #type: Any
@@ -21,34 +21,34 @@ DBig384 = c_int64 * 14 #type: Any
 
 #pylint: disable=too-few-public-methods
 class OctetObj(
-    Structure
+  Structure
 ):
-    _fields_: List[Tuple[str, Type[Any]]] = [
-        ("len", c_int),
-        ("max", c_int),
-        ("val", c_char_p)
-    ]
+  _fields_: List[Tuple[str, Type[Any]]] = [
+    ("len", c_int),
+    ("max", c_int),
+    ("val", c_char_p)
+  ]
 Octet: Any = POINTER(OctetObj)
 
 #pylint: disable=too-few-public-methods,unneeded-multiline-expansion
 class FP1Obj(
-    Structure
+  Structure
 ):
-    _fields_: List[Tuple[str, Type[Any]]] = [
-        ("g", Big384),
-        ("XES", c_int32)
-    ]
+  _fields_: List[Tuple[str, Type[Any]]] = [
+    ("g", Big384),
+    ("XES", c_int32)
+  ]
 FP1: Any = POINTER(FP1Obj)
 
 #pylint: disable=too-few-public-methods
 class G1Obj(
-    Structure
+  Structure
 ):
-    _fields_: List[Tuple[str, Type[Any]]] = [
-        ("x", FP1Obj),
-        ("y", FP1Obj),
-        ("z", FP1Obj)
-    ]
+  _fields_: List[Tuple[str, Type[Any]]] = [
+    ("x", FP1Obj),
+    ("y", FP1Obj),
+    ("z", FP1Obj)
+  ]
 G1: Any = POINTER(G1Obj)
 
 #Define the function types.

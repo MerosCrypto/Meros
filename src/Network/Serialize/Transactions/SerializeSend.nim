@@ -19,36 +19,36 @@ export SerializeTransaction
 
 #Serialization functions.
 method serializeHash*(
-    send: Send
+  send: Send
 ): string {.forceCheck: [].} =
-    result = "\2" & char(send.inputs.len)
-    for input in send.inputs:
-        result &=
-            input.hash.toString() &
-            cast[FundedInput](input).nonce.toBinary(BYTE_LEN)
-    result &= char(send.outputs.len)
-    for output in send.outputs:
-        result &=
-            cast[SendOutput](output).key.toString() &
-            output.amount.toBinary(MEROS_LEN)
+  result = "\2" & char(send.inputs.len)
+  for input in send.inputs:
+    result &=
+      input.hash.toString() &
+      cast[FundedInput](input).nonce.toBinary(BYTE_LEN)
+  result &= char(send.outputs.len)
+  for output in send.outputs:
+    result &=
+      cast[SendOutput](output).key.toString() &
+      output.amount.toBinary(MEROS_LEN)
 
 method serialize*(
-    send: Send
+  send: Send
 ): string {.inline, forceCheck: [].} =
-    #Serialize the inputs.
-    result = $char(send.inputs.len)
-    for input in send.inputs:
-        result &=
-            input.hash.toString() &
-            char(cast[FundedInput](input).nonce)
-
-    #Serialize the outputs.
-    result &= char(send.outputs.len)
-    for output in send.outputs:
-        result &=
-            cast[SendOutput](output).key.toString() &
-            output.amount.toBinary(MEROS_LEN)
-
+  #Serialize the inputs.
+  result = $char(send.inputs.len)
+  for input in send.inputs:
     result &=
-        send.signature.toString() &
-        send.proof.toBinary(INT_LEN)
+      input.hash.toString() &
+      char(cast[FundedInput](input).nonce)
+
+  #Serialize the outputs.
+  result &= char(send.outputs.len)
+  for output in send.outputs:
+    result &=
+      cast[SendOutput](output).key.toString() &
+      output.amount.toBinary(MEROS_LEN)
+
+  result &=
+    send.signature.toString() &
+    send.proof.toBinary(INT_LEN)

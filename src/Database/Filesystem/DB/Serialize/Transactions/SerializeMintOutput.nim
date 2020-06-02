@@ -16,7 +16,7 @@ import ../../../../../Network/Serialize/SerializeCommon
 
 #Serialization function.
 method serialize*(
-    output: MintOutput
+  output: MintOutput
 ): string {.inline, forceCheck: [].} =
-    output.key.toBinary(NICKNAME_LEN) &
-    output.amount.toBinary(MEROS_LEN)
+  output.key.toBinary(NICKNAME_LEN) &
+  output.amount.toBinary(MEROS_LEN)

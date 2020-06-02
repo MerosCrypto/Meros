@@ -13,10 +13,10 @@ import ../../../Network/Serialize/Consensus/SerializeSendDifficulty
 
 #Sign a SendDifficulty.
 proc sign*(
-    miner: MinerWallet,
-    sendDiff: SignedSendDifficulty
+  miner: MinerWallet,
+  sendDiff: SignedSendDifficulty
 ) {.forceCheck: [].} =
-    #Set the holder.
-    sendDiff.holder = miner.nick
-    #Sign the difficulty of the SendDifficulty.
-    sendDiff.signature = miner.sign(sendDiff.serializeWithoutHolder())
+  #Set the holder.
+  sendDiff.holder = miner.nick
+  #Sign the difficulty of the SendDifficulty.
+  sendDiff.signature = miner.sign(sendDiff.serializeWithoutHolder())

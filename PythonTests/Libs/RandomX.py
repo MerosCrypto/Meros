@@ -3,7 +3,7 @@ from typing import Any
 
 #CTypes.
 from ctypes import cdll, c_int, c_char, \
-                   Array, c_char_p, c_void_p, create_string_buffer, byref
+           Array, c_char_p, c_void_p, create_string_buffer, byref
 
 #OS standard lib.
 import os
@@ -12,9 +12,9 @@ import os
 #pylint: disable=invalid-name
 RandomXLib: Any
 if os.name == "nt":
-    RandomXLib = cdll.LoadLibrary("PythonTests/Libs/mc_randomx/RandomX/build/randomx")
+  RandomXLib = cdll.LoadLibrary("PythonTests/Libs/mc_randomx/RandomX/build/randomx")
 else:
-    RandomXLib = cdll.LoadLibrary("PythonTests/Libs/mc_randomx/RandomX/build/librandomx.so")
+  RandomXLib = cdll.LoadLibrary("PythonTests/Libs/mc_randomx/RandomX/build/librandomx.so")
 
 #Define the function types.
 RandomXLib.randomx_get_flags.randomx_get_flags = None
@@ -41,18 +41,18 @@ RandomXLib.randomx_init_cache(cache, None, 0)
 vm: c_void_p = RandomXLib.randomx_create_vm(flags, cache, None)
 
 def setRandomXKey(
-    key: bytes
+  key: bytes
 ) -> None:
-    RandomXLib.randomx_init_cache(cache, c_char_p(key), c_int(len(key)))
-    RandomXLib.randomx_vm_set_cache(vm, cache)
+  RandomXLib.randomx_init_cache(cache, c_char_p(key), c_int(len(key)))
+  RandomXLib.randomx_vm_set_cache(vm, cache)
 
 def RandomX(
-    data: bytes
+  data: bytes
 ) -> bytes:
-    hashResult: Array[c_char] = create_string_buffer(32)
-    RandomXLib.randomx_calculate_hash(vm, c_char_p(data), c_int(len(data)), byref(hashResult))
+  hashResult: Array[c_char] = create_string_buffer(32)
+  RandomXLib.randomx_calculate_hash(vm, c_char_p(data), c_int(len(data)), byref(hashResult))
 
-    result: bytes = bytes()
-    for b in hashResult:
-        result += b
-    return result
+  result: bytes = bytes()
+  for b in hashResult:
+    result += b
+  return result

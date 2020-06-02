@@ -1,21 +1,21 @@
 {
-    "pythonVersion": "3.6",
+  "pythonVersion": "3.6",
 
-    "typingsPath": "Stubs",
-    "strict": [
-        "Classes",
-        "Meros",
-        "Pylint",
-        "Stubs",
-        "Tests",
-        "Vectors"
-    ],
-    "ignore": [
-        "Vectors/Generation/Generate.py"
-    ],
+  "typingsPath": "Stubs",
+  "strict": [
+    "Classes",
+    "Meros",
+    "Pylint",
+    "Stubs",
+    "Tests",
+    "Vectors"
+  ],
+  "ignore": [
+    "Vectors/Generation/Generate.py"
+  ],
 
-    "executionEnvironments": [{
-        "root": "../",
-        "pythonVersion": "3.6"
-    }]
+  "executionEnvironments": [{
+    "root": "../",
+    "pythonVersion": "3.6"
+  }]
 }

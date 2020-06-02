@@ -20,13 +20,13 @@ import ../../../Database/Consensus/CompareConsensus
 import random
 
 suite "SerializeVerificationPacket":
-    setup:
-        var
-            #SignedVerificationPacket Element.
-            packet: SignedVerificationPacket = newRandomVerificationPacket()
-            #Reloaded VerificationPacket Element.
-            reloaded: VerificationPacket = packet.serialize().parseVerificationPacket()
+  setup:
+    var
+      #SignedVerificationPacket Element.
+      packet: SignedVerificationPacket = newRandomVerificationPacket()
+      #Reloaded VerificationPacket Element.
+      reloaded: VerificationPacket = packet.serialize().parseVerificationPacket()
 
-    midFuzzTest "Compare the Elements/serializations.":
-        compare(packet, reloaded)
-        check(packet.serialize() == reloaded.serialize())
+  midFuzzTest "Compare the Elements/serializations.":
+    compare(packet, reloaded)
+    check(packet.serialize() == reloaded.serialize())

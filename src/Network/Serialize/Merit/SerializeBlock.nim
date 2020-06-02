@@ -10,13 +10,13 @@ import SerializeBlockBody
 
 #Serialize a Block.
 proc serialize*(
-    blockArg: Block
+  blockArg: Block
 ): string {.forceCheck: [
-    ValueError
+  ValueError
 ].} =
-    try:
-        result =
-            blockArg.header.serialize() &
-            blockArg.body.serialize(blockArg.header.sketchSalt)
-    except ValueError as e:
-        raise e
+  try:
+    result =
+      blockArg.header.serialize() &
+      blockArg.body.serialize(blockArg.header.sketchSalt)
+  except ValueError as e:
+    raise e

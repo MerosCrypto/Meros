@@ -19,7 +19,7 @@ import ../../../../../Network/Serialize/SerializeCommon
 
 #Serialization function.
 method serialize*(
-    output: SendOutput
+  output: SendOutput
 ): string {.inline, forceCheck: [].} =
-    output.key.toString() &
-    output.amount.toBinary(MEROS_LEN)
+  output.key.toString() &
+  output.amount.toBinary(MEROS_LEN)
