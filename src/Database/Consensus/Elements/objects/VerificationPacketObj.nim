@@ -1,16 +1,9 @@
-#Errors lib.
 import ../../../../lib/Errors
-
-#Hash lib.
 import ../../../../lib/Hash
-
-#MinerWallet lib.
 import ../../../../Wallet/MinerWallet
 
-#Element object.
 import ElementObj
 
-#VerificationPacket objects.
 type
   VerificationPacket* = ref object of Element
     holders*: seq[uint16]
@@ -23,7 +16,6 @@ type
   SignedVerificationPacket* = ref object of VerificationPacket
     signature*: BLSSignature
 
-#Constructors.
 func newVerificationPacketObj*(
   hash: Hash[256]
 ): VerificationPacket {.inline, forceCheck: [].} =

@@ -1,24 +1,15 @@
-#Errors lib.
-import ../../lib/Errors
+import sets
+import tables
 
-#MinerWallet lib.
+import ../../lib/Errors
 import ../../Wallet/MinerWallet
 
-#Verificstion and Verification Packet lib.
 import Elements/Verification
 import Elements/VerificationPacket
 
-#Transaction Status object.
 import objects/TransactionStatusObj
 export TransactionStatusObj
 
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
-
-#Add a Verification.
 proc add*(
   status: TransactionStatus,
   verif: SignedVerification
@@ -42,8 +33,7 @@ proc add*(
   #Cache the signature.
   status.signatures[verif.holder] = verif.signature
 
-#Add a VerificationPacket.
-#This is used to add a VerificationPacket from a Block.
+#Add a VerificationPacket. Used when a Block is added.
 proc add*(
   status: TransactionStatus,
   archived: VerificationPacket

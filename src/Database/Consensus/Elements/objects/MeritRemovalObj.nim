@@ -1,17 +1,10 @@
-#Errors lib.
 import ../../../../lib/objects/ErrorsObjs
-
-#Hash object.
 import ../../../../lib/Hash/objects/HashObj
-
-#MinerWallet lib.
 import ../../../../Wallet/MinerWallet
 
-#Element objects.
 import ElementObj
 export ElementObj
 
-#MeritRemoval objects.
 type
   MeritRemoval* = ref object of BlockElement
     partial*: bool
@@ -22,7 +15,6 @@ type
   SignedMeritRemoval* = ref object of MeritRemoval
     signature*: BLSSignature
 
-#Constructors.
 func newMeritRemovalObj*(
   nick: uint16,
   partial: bool,

@@ -16,6 +16,7 @@ type
   #- GasDifficulty
   #- MeritRemoval
   #The holder field is defined here, not in Element, as VerificationPackets have multiple holders.
+  #Verifications provide their own holder field.
   BlockElement* = ref object of Element
     #Creator's nickname.
     holder*: uint16

@@ -1,14 +1,9 @@
-#Errors lib.
 import ../../../../lib/Errors
-
-#MinerWallet lib.
 import ../../../../Wallet/MinerWallet
 
-#Element object.
 import ElementObj
 export ElementObj
 
-#SendDifficulty objects.
 type
   SendDifficulty* = ref object of BlockElement
     nonce*: int
@@ -17,7 +12,6 @@ type
   SignedSendDifficulty* = ref object of SendDifficulty
     signature*: BLSSignature
 
-#Constructors.
 func newSendDifficultyObj*(
   nonce: int,
   difficulty: uint32

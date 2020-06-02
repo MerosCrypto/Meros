@@ -1,24 +1,15 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
-import ../../../Wallet/MinerWallet
-
-#Verification Packet object.
-import ../Elements/objects/VerificationPacketObj
-
-#Sets standard lib.
 import sets
-
-#Tables standard lib.
 import tables
 
-#Transaction Status.
+import ../../../lib/Errors
+import ../../../lib/Hash
+import ../../../Wallet/MinerWallet
+
+import ../Elements/objects/VerificationPacketObj
+
 type TransactionStatus* = ref object
   #Block number that the Transaction's Epoch ends in.
+  #Predicted until mentioned, and even then not finalized due to competing Transactions.
   epoch*: int
 
   #Whether or not the Transaction has competitors.
@@ -49,7 +40,6 @@ type TransactionStatus* = ref object
   #The final Merit tally. -1 if the Transaction is still in Epochs.
   merit*: int
 
-#Constructor.
 proc newTransactionStatusObj*(
   hash: Hash[256],
   epoch: int

@@ -1,26 +1,23 @@
-#Errors lib.
 import ../../../lib/Errors
-
-#Hash lib.
 import ../../../lib/Hash
-
-#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#VerificationPacket lib.
 import VerificationPacket as VerificationPacketFile
 
-#MeritRemoval object.
 import objects/MeritRemovalObj
 export MeritRemovalObj
 
-#Serialization libs.
+#The serialization of the elements used in the Merit Removal is used to generate a hash.
 import ../../../Network/Serialize/SerializeCommon
 import ../../../Network/Serialize/Consensus/SerializeVerification
 import ../../../Network/Serialize/Consensus/SerializeVerificationPacket
 import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
 
-#Calculate the MeritRemoval's reason.
+#Calculate a hash representing the reason for a MeritRemoval.
+#By making sure every Merit Removal
+# - No matter what the sub-element is packeted with.
+# - No matter the order of the sub-elements.
+#has an unique hash, we prevent Merit Removals being spammed for the same person, each 'valid'.
 proc calculateMeritRemovalReason*(
   holder: uint16,
   element1: Element,
@@ -51,7 +48,6 @@ proc calculateMeritRemovalReason*(
 
   result = Blake256(holder.toBinary(NICKNAME_LEN) & e1.toString() & e2.toString())
 
-#Constructor wrappers.
 proc newMeritRemoval*(
   nick: uint16,
   partial: bool,
@@ -100,7 +96,7 @@ proc newSignedMeritRemoval*(
     signature
   )
 
-#Calculate the MeritRemoval's Merkle leaf hash.
+#Calculate the MeritRemoval's Merkle leaf hash (used for inclusion in a Block).
 proc merkle*(
   mr: MeritRemoval
 ): Hash[256] {.forceCheck: [].} =

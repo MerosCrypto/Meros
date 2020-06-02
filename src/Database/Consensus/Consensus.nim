@@ -1,61 +1,41 @@
-#Errors.
+import sets
+import tables
+
 import ../../lib/Errors
-
-#Hash lib.
 import ../../lib/Hash
-
-#MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#GlobalFunctionBox object.
 import ../../objects/GlobalFunctionBoxObj
 
-#Consensus DB lib.
-import ../Filesystem/DB/ConsensusDB
-
-#Input toString function.
+#Used to create a key out of a Transaction.
+#Literally no value in writing a new implementation.
 from ../Filesystem/DB/TransactionsDB import toString
-
-#Transactions lib.
 import ../Transactions/Transactions
 
-#Block, Blockchain and Epoch objects.
 import ../Merit/objects/BlockObj
 import ../Merit/objects/BlockchainObj
 import ../Merit/objects/EpochsObj
-
-#State lib.
 import ../Merit/State
 
-#SpamFilter object.
 import objects/SpamFilterObj
 export SpamFilterObj
 
-#Element libs.
 import Elements/Elements
 export Elements
 
-#TransactionStatus lib.
 import TransactionStatus as TransactionStatusFile
 export TransactionStatusFile
 
-#Consensus object.
+import ../Filesystem/DB/ConsensusDB
+
 import objects/ConsensusObj
 export ConsensusObj
 
-#Serialize libs.
 import ../../Network/Serialize/Consensus/SerializeElement
 import ../../Network/Serialize/Consensus/SerializeVerification
 import ../../Network/Serialize/Consensus/SerializeSendDifficulty
 import ../../Network/Serialize/Consensus/SerializeDataDifficulty
 
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
-
-#Constructor wrapper.
 proc newConsensus*(
   functions: GlobalFunctionBox,
   db: DB,
@@ -66,6 +46,7 @@ proc newConsensus*(
   newConsensusObj(functions, db, state, sendDiff, dataDiff)
 
 #Add a Merit Removal's Transaction.
+#Used in order to prove a Merit Removal's validity, even if the Transaction is no longer valid on the DAG's tree.
 proc addMeritRemovalTransaction*(
   consensus: Consensus,
   tx: Transaction
@@ -85,6 +66,8 @@ proc getMeritRemovalTransaction*(
     raise newLoggedException(IndexError, e.msg)
 
 #Verify a MeritRemoval's validity.
+#Checks not only that the Elements are unique, competing, and legitimate,
+#But also that we have yet to add this MeritRemoval.
 proc verify*(
   consensus: Consensus,
   mr: MeritRemoval,
@@ -231,7 +214,7 @@ proc flag*(
   if not consensus.malicious.hasKey(removal.holder):
     consensus.malicious[removal.holder] = @[]
 
-  #Return the MeritRemoval if it's already flagged.
+  #Return if the MeritRemoval was already flagged.
   try:
     for mr in consensus.malicious[removal.holder]:
       if removal.reason == mr.reason:
@@ -301,12 +284,12 @@ proc flag*(
 proc getArchivedNonce*(
   consensus: Consensus,
   holder: uint16
-): int {.inline, forceCheck: [].} =
+): int {.forceCheck: [].} =
   try:
     result = consensus.archived[holder]
   except KeyError:
     #This causes Blocks with invalid holders to get rejected for having an invalid nonce.
-    #We shouldn't need it due to other checks, and this removes the neccessity to add try/catches to the entire chain.
+    #We shouldn't need it due to other checks, but this removes the neccessity to add try/catches to the entire chain.
     result = -2
 
 #Register a Transaction.
@@ -608,7 +591,8 @@ proc add*(
                 consensus.signatures[dataDiff.holder][dataDiff.nonce - consensus.archived[dataDiff.holder] - 1],
                 dataDiff.signature
               ].aggregate()
-            , state.holders
+            ,
+            state.holders
           )
         )
       except KeyError as e:
@@ -793,7 +777,7 @@ proc archive*(
     #Make sure the hash is included in unmentioned.
     consensus.db.addUnmentioned(hash)
 
-  #Update the signature/nonces of every holder.
+  #Update the signature/nonces of the specified holder.
   proc updateSignatureAndNonce(
     consensus: var Consensus,
     holder: uint16,
@@ -890,7 +874,7 @@ proc revert*(
   transactions: Transactions,
   height: int
 ) {.forceCheck: [].} =
-  discard """
+  #[
   We need to find the oldest Element nonce we're reverting past.
   We need to delete all Elements from that nonce (inclusive) to the tip.
   If we delete an Element at the tip which wasn't archived, we also need to delete its signature.
@@ -904,7 +888,7 @@ proc revert*(
 
   We need to prune statuses of Transactions which are about to be pruned.
   We need to make sure to preserve a copy of Transactions in VC MRs which are about to be pruned, if the MRs are still in the malicious cache.
-  """
+  ]#
 
   var
     aboutToBePruned: HashSet[Hash[256]]
@@ -1043,7 +1027,7 @@ proc postRevert*(
   state: State,
   transactions: Transactions
 ) {.forceCheck: [].} =
-  discard """
+  #[
   We need to add statuses of Transactions which are back in the Transactions cache to the Consensus cache.
   This requires recalculating their Epoch.
   We need to remove Verifications we no longer have the signatures for from every status in the cache.
@@ -1051,7 +1035,7 @@ proc postRevert*(
   We need to revert close. We can do this by rebuilding it, however inefficient it is.
 
   We need to revert unmentioned. We can do this by rebuilding it, however inefficient it is.
-  """
+  ]#
 
   var revertedStatuses: TableRef[Hash[256], TransactionStatus] = newTable[Hash[256], TransactionStatus]()
   for hash in consensus.cachedTransactions:
@@ -1067,9 +1051,11 @@ proc postRevert*(
       except IndexError as e:
         panic("Transaction in the cache doesn't have a status: " & e.msg)
 
-  #Iterate over the last 5 blocks and find out:
-  #- When Transactions were mentioned.
-  #- What holders have archived Verifications.
+  #[
+  Iterate over the last 5 blocks and find out:
+  - When Transactions were mentioned.
+  - What holders have archived Verifications.
+  ]#
   var
     mentioned: Table[Hash[256], int] = initTable[Hash[256], int]()
     holders: Table[Hash[256], HashSet[uint16]] = initTable[Hash[256], HashSet[uint16]]()

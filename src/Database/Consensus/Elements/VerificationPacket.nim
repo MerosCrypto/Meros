@@ -1,17 +1,14 @@
-#Errors lib.
 import ../../../lib/Errors
-
-#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Verification lib.
 import Verification
 
-#VerificationPacket object.
 import objects/VerificationPacketObj
 export VerificationPacketObj
 
 #Convert a VerificationPacket to a MeritRemovalVerificationPacket.
+#VerificationPackets use the holder's nickname.
+#MRVPs use the holder's keys. That's why this requires the lookup
 proc toMeritRemovalVerificationPacket*(
   packet: VerificationPacket,
   lookup: seq[BLSPublicKey]
@@ -20,14 +17,12 @@ proc toMeritRemovalVerificationPacket*(
   for holder in packet.holders:
     result.holders.add(lookup[holder])
 
-#Add a Verification to a VerificationPacket.
 proc add*(
   packet: VerificationPacket,
   verif: Verification
 ) {.forceCheck: [].} =
   packet.holders.add(verif.holder)
 
-#Add a SignedVerification to a SignedVerificationPacket.
 proc add*(
   packet: SignedVerificationPacket,
   verif: SignedVerification

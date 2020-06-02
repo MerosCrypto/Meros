@@ -1,51 +1,36 @@
-#Errors.
+import macros
+import algorithm
+
 import ../../../lib/Errors
-
-#Hash lib.
 import ../../../lib/Hash
-
-#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Element and Signed Element objects.
-import objects/ElementObj
-import objects/SignedElementObj
-export ElementObj
-export SignedElementObj
+import objects/[ElementObj, SignedElementObj]
+export ElementObj, SignedElementObj
 
-#Element sub-type libs.
 import Verification as VerificationFile
 import VerificationPacket as VerificationPacketFile
 import SendDifficulty as SendDifficultyFile
 import DataDifficulty as DataDifficultyFile
 import MeritRemoval as MeritRemovalFile
 
-export VerificationFile
-export VerificationPacketFile
-export SendDifficultyFile
-export DataDifficultyFile
+export VerificationFile, VerificationPacketFile
+export SendDifficultyFile, DataDifficultyFile
 export MeritRemovalFile
 
-#Algorithm standard lib.
-import algorithm
-
-#Macros standard lib.
-import macros
-
-#Custom Element case statement.
+#Enable creating a case statement out of an Element.
+#Quality of development life.
 macro match*(
   e: Element
 ): untyped =
-  #Create the result.
   result = newTree(nnkIfStmt)
 
   var
     #Extract the Element symbol.
     symbol: NimNode = e[0]
-    #Branch.
     branch: NimNode
 
-  #Iterate over every branch.
+  #Iterate over every branch in the case.
   for i in 1 ..< e.len:
     branch = e[i]
     case branch.kind:
@@ -73,7 +58,7 @@ macro match*(
           )
         )
 
-        #Add the branch.
+        #Add the branch to the returned if statement.
         result.add(
           newTree(
             nnkElifBranch,

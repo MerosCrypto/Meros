@@ -1,11 +1,16 @@
-#Errors lib.
-import ../../../lib/Errors
+#[
+As a note about the algorithms used in this file:
+This was originally done with a LinkedList algorithm.
+Not only was it harder to write, it was slower than the seq algorithm.
+That said, this may be optimal as a binary tree.
+That said, this is an extremely low priority.
+]#
 
-#Tables standard lib.
 import tables
 
+import ../../../lib/Errors
+
 type
-  #VotedDifficulty object.
   VotedDifficulty* = ref object
     when defined(merosTests):
       difficulty*: uint32
@@ -14,7 +19,6 @@ type
       difficulty: uint32
       votes: int
 
-  #SpamFilter object.
   SpamFilter* = object
     when defined(merosTests):
       #Median difficulty.
@@ -36,10 +40,9 @@ type
 
     #Initial difficulty.
     initialDifficulty*: uint32
-    #Current median difficulty.
+    #Current difficulty.
     difficulty*: uint32
 
-#Constructors.
 func newVotedDifficulty(
   difficulty: uint32,
   votes: int
@@ -64,7 +67,8 @@ func newSpamFilterObj*(
     difficulty: difficulty
   )
 
-#Access the median element.
+#This function shouldn't be needed due to .difficulty.
+#If it is needed to calculate the new median, it shouldn't be exported.
 func median*(
   filter: SpamFilter
 ): VotedDifficulty {.inline, forceCheck: [].} =
@@ -83,6 +87,7 @@ func nextMedian*(
   filter.difficulties[filter.medianPos + 1]
 
 #Remove a difficulty.
+#Used explicitly when a MeritRemoval occurs.
 func remove(
   filter: var SpamFilter,
   difficulty: VotedDifficulty
@@ -92,9 +97,9 @@ func remove(
     if difficulty == filter.difficulties[d]:
       break
     inc(d)
-
   filter.difficulties.delete(d)
 
+  #Update the median accordingly.
   if d < filter.medianPos:
     dec(filter.medianPos)
   elif filter.medianPos == d:
@@ -119,7 +124,6 @@ func recalculate(
   if filter.votes.len == 0:
     return
 
-  #Make sure median is accurate.
   while filter.left > filter.right:
     if filter.right + filter.median.votes < filter.left:
       filter.left -= filter.prevMedian.votes
@@ -127,7 +131,6 @@ func recalculate(
       filter.medianPos -= 1
     else:
       break
-
   while filter.right > filter.left:
     if filter.left + filter.median.votes <= filter.right:
       filter.left += filter.median.votes
@@ -159,6 +162,7 @@ proc handleBlock*(
 
     filter.recalculate()
 
+#Same as above, yet supporting Merit dying over time.
 proc handleBlock*(
   filter: var SpamFilter,
   incd: uint16,
@@ -237,8 +241,6 @@ proc update*(
 ) {.forceCheck: [].} =
   #Calculate the holder's votes.
   var votes: int = merit div 50
-
-  #Return if the holder doesn't have votes.
   if votes == 0:
     return
 

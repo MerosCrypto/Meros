@@ -1,69 +1,49 @@
-#Errors lib.
+import sets
+import tables
+
 import ../../../lib/Errors
-
-#Hash lib.
 import ../../../lib/Hash
-
-#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#GlobalFunctionBox object.
 import ../../../objects/GlobalFunctionBoxObj
 
-#Consensus DB lib.
-import ../../Filesystem/DB/ConsensusDB
-
-#Transaction object.
 import ../../Transactions/Transaction
 
-#State lib.
 import ../../Merit/State
 
-#Element libs.
 import ../Elements/Elements
-
-#TransactionStatus object.
 import TransactionStatusObj
 export TransactionStatusObj
 
-#SpamFilter object.
 import SpamFilterObj
 
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
-
-#Consensus object.
 type Consensus* = object
-  #Global Functions.
   functions*: GlobalFunctionBox
-  #DB.
   db*: DB
 
-  #Filters.
   filters*: tuple[send: SpamFilter, data: SpamFilter]
-  #Nickname -> MeritRemoval(s).
+  #Cache of every malicious Merit Removal which has yet to be archived.
   malicious*: Table[uint16, seq[SignedMeritRemoval]]
 
   #Statuses of Transactions not yet out of Epochs.
+  #Exported so the tests can test equality of this table.
+  #That said, it shouldn't be required to export for the actual node.
   when defined(merosTests):
     statuses*: Table[Hash[256], TransactionStatus]
   else:
     statuses: Table[Hash[256], TransactionStatus]
+
   #Statuses which are close to becoming verified.
-  #Every Transaction in this Table is checked when new Blocks are added to see if they crossed the threshold.
+  #Every Transaction in this set is checked when new Blocks are added to see if they crossed the threshold.
   close*: HashSet[Hash[256]]
   #Transactions which haven't been mentioned in Epochs.
   unmentioned*: HashSet[Hash[256]]
 
-  #Signatures of unarchived elements.
+  #Cache of signatures of unarchived elements.
   signatures*: Table[uint16, seq[BLSSignature]]
-  #Archived nonces.
+  #Archived nonces. Used to verify Block validity.
   archived*: Table[uint16, int]
 
-#Consensus constructor.
 proc newConsensusObj*(
   functions: GlobalFunctionBox,
   db: DB,
@@ -71,7 +51,6 @@ proc newConsensusObj*(
   sendDiff: uint32,
   dataDiff: uint32
 ): Consensus {.forceCheck: [].} =
-  #Create the Consensus object.
   result = Consensus(
     functions: functions,
     db: db,
@@ -83,6 +62,7 @@ proc newConsensusObj*(
     malicious: db.loadMaliciousProofs(),
 
     statuses: initTable[Hash[256], TransactionStatus](),
+
     close: initHashSet[Hash[256]](),
     unmentioned: db.loadUnmentioned(),
 
@@ -94,8 +74,10 @@ proc newConsensusObj*(
     try:
       result.filters.send.update(uint16(h), state[uint16(h), state.processedBlocks], result.db.loadSendDifficulty(uint16(h)))
     except DBReadError:
+      #Happens when the holder never set a SendDifficulty.
       discard
 
+    #In a different block in case they set a data difficulty but not a send difficulty.
     try:
       result.filters.data.update(uint16(h), state[uint16(h), state.processedBlocks], result.db.loadDataDifficulty(uint16(h)))
     except DBReadError:
@@ -158,7 +140,6 @@ proc newConsensusObj*(
     except DBReadError as e:
       panic("Transaction not yet mentioned on the Blockchain doesn't have a status: " & e.msg)
 
-#Set a Transaction as unmentioned.
 proc setUnmentioned*(
   consensus: var Consensus,
   hash: Hash[256]
@@ -166,7 +147,18 @@ proc setUnmentioned*(
   consensus.unmentioned.incl(hash)
   consensus.db.addUnmentioned(hash)
 
-#Set a Transaction's status.
+#[]
+Save back a Transaction's Status.
+I honestly forget why this is needed.
+Since we only commit to the database at the end of every block, and the table should be updated with refs...
+We should be able to use those two properties and just save them all back at once on block addition.
+My only two guesses are:
+1) A transaction system. We making changes to a status and then discard them on error.
+2) We only want to save back statuses that have been changed.
+If I had to guess, I'd assume its the second.
+That said, we should be able to use a HashSet and remove this boiler place.
+-- kayabaNerve
+]#
 proc setStatus*(
   consensus: var Consensus,
   hash: Hash[256],
@@ -182,13 +174,13 @@ iterator cachedTransactions*(
   for hash in consensus.statuses.keys:
     yield hash
 
-#Get a Transaction's status.
 proc getStatus*(
   consensus: Consensus,
   hash: Hash[256]
 ): TransactionStatus {.forceCheck: [
   IndexError
 ].} =
+  #Check the cache before loading from the database.
   if consensus.statuses.hasKey(hash):
     try:
       return consensus.statuses[hash]
@@ -200,7 +192,12 @@ proc getStatus*(
   except DBReadError:
     raise newLoggedException(IndexError, "Transaction doesn't have a status.")
 
-#Increment a Status's Epoch.
+#[
+Increment a Status's Epoch.
+This happens when a Transaction isn't archived despite being in the mempool.
+Only once its mentioned does its epoch get firmly set.
+Even then, it's not too firm if conflicting transactions appear.
+]#
 proc incEpoch*(
   consensus: var Consensus,
   hash: Hash[256]
@@ -223,7 +220,14 @@ proc calculateMeritSingle(
   status: TransactionStatus,
   threshold: int
 ) {.forceCheck: [].} =
-  #If the Transaction is already verified, or it needs to default, or it's impossible to verify, return.
+  #[
+  If the Transaction is:
+  - Already verified
+  - Impossible to verify as a conflicting transaction won
+  - Conflicting, and therefore needing to default
+  Return. The only point in calculating this Merit is to verify when it gets enough Verifications.
+  #So if it shouldn't be verified...
+  ]#
   if status.verified or status.beaten or (status.competing and status.merit == -1):
     return
 
@@ -238,17 +242,20 @@ proc calculateMeritSingle(
 
   #Check if the Transaction crossed its threshold.
   if merit >= threshold:
-    #Make sure all parents are verified.
+    #This alone isn't enough. We also need to make sure all parents are verified.
     try:
-      for input in tx.inputs:
-        if (tx of Data) and (cast[Data](tx).isFirstData):
-          break
-
-        if (
-          (not (consensus.functions.transactions.getTransaction(input.hash) of Mint)) and
-          (not consensus.getStatus(input.hash).verified)
-        ):
-          return
+      #[
+      Claims claim Mints which are always verified.
+      This will change, as according to the protocol, they're supposed to have a delay.
+      That said, if we only add it post-delay, we don't need to track verified or not overall, so this code can remain.
+      Datas have an input yet no parent.
+      ]#
+      if (tx of Claim) or ((tx of Data) and (cast[Data](tx).isFirstData)):
+        break
+      else:
+        for input in tx.inputs:
+          if not consensus.getStatus(input.hash).verified:
+            return
     except IndexError as e:
       panic("Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
 
@@ -259,7 +266,13 @@ proc calculateMeritSingle(
   elif merit >= state.nodeThresholdAt(status.epoch) - 6:
     consensus.close.incl(tx.hash)
 
-#Calculate a Transaction's Merit. If it's verified, also check every descendant.
+#[
+Calculate a Transaction's Merit. If it's verified, also check every descendant.
+We don't update every Transaction in their tree order (and can't, depending on the tree).
+This causes transactions to have 'unverified' parents, who become verified after we've already checked this child.
+That's why we iterate over descendants.
+We use a queue and the above calculateMeritSingle to avoid recursion.
+]#
 proc calculateMerit*(
   consensus: var Consensus,
   state: State,
@@ -268,13 +281,22 @@ proc calculateMerit*(
   statusesOverride: TableRef[Hash[256], TransactionStatus] = nil
 ) {.forceCheck: [].} =
   var
+    #Create the queue.
     children: seq[Hash[256]] = @[hash]
     child: Hash[256]
     tx: Transaction
+
+    #[
+    Initial status.
+    This seems like a pointless optimization.
+    It is technically faster, probably, but it bloats the function signature.
+    That said, it is legitimate. It's used when we pre-calculate the status's Merit.
+    ]#
     status: TransactionStatus = statusArg
     wasVerified: bool
     threshold: int
 
+  #Iterate over said queue.
   while children.len != 0:
     child = children.pop()
     try:
@@ -290,11 +312,17 @@ proc calculateMerit*(
       panic("Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
     wasVerified = status.verified
 
-    #Grab the node threshold.
-    threshold = state.nodeThresholdAt(status.epoch)
-    #If we're finalizing the Transaction, use the protocol threshold.
+
+    #[
+    If we're finalizing the Transaction, use the protocol threshold.
+    This will change in the future.
+    The protocol 'threshold' is whatever transaction has the most Merit out of all that spend an input.
+    ]#
     if status.merit != -1:
       threshold = state.protocolThresholdAt(state.processedBlocks)
+    #Grab the node's threshold.
+    else:
+      threshold = state.nodeThresholdAt(status.epoch)
 
     consensus.calculateMeritSingle(
       state,
@@ -303,6 +331,7 @@ proc calculateMerit*(
       threshold
     )
 
+    #If it only just become verified, iterate over its children.
     if (not wasVerified) and (status.verified):
       try:
         for o in 0 ..< max(tx.outputs.len, 1):
@@ -310,7 +339,14 @@ proc calculateMerit*(
       except IndexError as e:
         panic("Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
-#Unverify a Transaction.
+#[
+Unverify a Transaction.
+This happens when a transaction dips under the threshold.
+I believe its the protocol 'threshold' of 50.1%, and not the node threshold.
+This generally would happen due to a MeritRemoval yet can theoretically happen due to epoch incrementing.
+That said, this file is being annotated in a branch, and I haven't worked on it in weeks.
+-- kayabaNerve
+]#
 proc unverify*(
   consensus: var Consensus,
   hash: Hash[256],
@@ -318,6 +354,8 @@ proc unverify*(
   statusesOverride: TableRef[Hash[256], TransactionStatus] = nil
 ) {.forceCheck: [].} =
   var
+    #Create a queue so we can unverify all children.
+    #Matches the above calculateMerit function.
     children: seq[Hash[256]] = @[hash]
     child: Hash[256]
     tx: Transaction
@@ -337,21 +375,25 @@ proc unverify*(
     except IndexError:
       panic("Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
 
-    #If this child was verified, unverify it and grab children.
-    #Children of Transactions which aren't verified can't be verified and therefore can be skipped.
-    if childStatus.verified:
-      logWarn "Unverified Transaction", tx = child
-      childStatus.verified = false
-      consensus.db.save(child, childStatus)
+    #If this child wasn't verified, move on. None of its children are verified.
+    if not childStatus.verified:
+      continue
 
-      try:
-        for o in 0 ..< max(tx.outputs.len, 1):
-          children &= consensus.functions.transactions.getSpenders(newFundedInput(child, o))
-      except IndexError as e:
-        panic("Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
+    #Since this child was verified, unverify it and grab its children.
+    logWarn "Unverified Transaction", tx = child
+    childStatus.verified = false
+    consensus.db.save(child, childStatus)
 
-      #Notify the Transactions DAG about the unverification.
-      consensus.functions.transactions.unverify(child)
+    try:
+      #I have no idea why this max is needed.
+      #-- kayabaNerve
+      for o in 0 ..< max(tx.outputs.len, 1):
+        children &= consensus.functions.transactions.getSpenders(newFundedInput(child, o))
+    except IndexError as e:
+      panic("Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
+
+    #Notify the Transactions DAG about the unverification.
+    consensus.functions.transactions.unverify(child)
 
 #Finalize a TransactionStatus.
 proc finalize*(
@@ -372,20 +414,28 @@ proc finalize*(
   #Calculate the final Merit tally.
   status.merit = 0
   for holder in status.holders:
+    #Only include holders on the Blockchain.
+    #This also allows holders marked as malicious, if their removal has yet to be archived.
     if status.pending.contains(holder):
       status.holders.excl(holder)
       continue
     status.merit += state[holder, status.epoch]
 
-  #Make sure verified Transaction's Merit is above the node protocol threshold.
+  #[
+  If this Transaction was marked as verified, make sure it beats the protocol threshold.
+  As mentioned above, this is invalid.
+  The Transaction with the most Merit out of associated Transactions (Transactions which spend the same inputs) is verified.
+  If it's not actually verified, correct this.
+  ]#
   if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):
     #If it's now unverified, unverify the tree.
     consensus.unverify(hash, status)
-  #If it wasn't verified, check if it actually was.
+  #If it wasn't verified, run calculateMerit.
   elif not status.verified:
     consensus.calculateMerit(state, hash, status)
 
   #Check if the Transaction was beaten, if it's not already marked as beaten.
+  #This happens when it wasn't verified, or for now, when no Transaction hits 50.1%.
   if (not status.beaten) and (not status.verified):
     for input in tx.inputs:
       var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
@@ -394,15 +444,26 @@ proc finalize*(
           if consensus.getStatus(spender).verified:
             consensus.functions.transactions.beat(hash)
             status.beaten = true
+
+            #[
+            I am pretty sure we should mark all descendants as beaten here, yet we don't.
+            This seems like a missing case, which is very problematic.
+            As we do completely prune the tree below, under certain circumstances,
+            #we only have to mark descendants as beaten if it's not pruned.
+            That means, that while we should mark all descendants as beaten,
+            #we should technically do it a bit south of here.
+            -- kayabaNerve
+            ]#
         except IndexError as e:
           panic("Couldn't get the Status of a competing Transaction: " & e.msg)
 
   #If the status was beaten and has no archived holders, prune it and its descendants.
+  #There's no value in keeping it around.
   if status.beaten and (status.holders.len - status.pending.len == 0):
     var
       #Discover the tree.
       tree: seq[Hash[256]] = consensus.functions.transactions.discoverTree(hash)
-      #Create a set of pruned Transactions as the tree will have duplicates.
+      #Create a set of pruned Transactions as the tree can easily have duplicates.
       pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
 
     #Prune the tree.
@@ -414,12 +475,15 @@ proc finalize*(
       #Remove the Transaction from RAM.
       consensus.statuses.del(tree[h])
       consensus.unmentioned.excl(tree[h])
+      #Removes from the DB's copy of unmentioned.
       consensus.db.mention(tree[h])
       consensus.close.excl(tree[h])
 
       #Remove the Transaction from the Database.
       consensus.db.prune(tree[h])
       consensus.functions.transactions.prune(tree[h])
+
+    #Return so we don't save the status.
     return
 
   #Save the status.
@@ -428,7 +492,13 @@ proc finalize*(
   consensus.db.save(hash, status)
   consensus.statuses.del(hash)
 
-#Delete a TransactionStatus.
+#[
+Delete a TransactionStatus.
+This delete code doesn't match the delete code in the above function.
+One of these is likely invalid, depending on where they're called.
+This MUST be fixed if that's the case.
+-- kayabaNerve
+]#
 proc delete*(
   consensus: var Consensus,
   hash: Hash[256]
@@ -439,6 +509,7 @@ proc delete*(
   consensus.db.delete(hash)
 
 #Get all pending Verification Packets/Elements, as well as the aggregate signature.
+#Used to create a Block template.
 proc getPending*(
   consensus: Consensus
 ): tuple[
@@ -481,10 +552,16 @@ proc getPending*(
     except IndexError as e:
       panic("Couldn't get a Transaction which has a packet: " & e.msg)
 
+    #[
+    We can't mention a Transaction unless we its parent is already mentioned.
+    That said, we should be to also mention its parent in the same Block.
+    We also won't have a child TX without its parents.
+    This code should be pointless, and actually detrimental to the speed of the network.
+    In fact, the entire included variable should be.
+    -- kayabaNerve
+    ]#
     block checkPredecessors:
-      if tx of Claim:
-        break checkPredecessors
-      if (tx of Data) and (tx.inputs[0].hash == Hash[256]()):
+      if (tx of Claim) or ((tx of Data) and (cast[Data](tx).isFirstData)):
         break checkPredecessors
 
       for input in tx.inputs:
