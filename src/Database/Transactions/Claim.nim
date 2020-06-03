@@ -1,24 +1,12 @@
-#Errors lib.
-import ../../lib/Errors
+import ../../lib/[Errors, Hash]
 
-#Hash lib.
-import ../../lib/Hash
+import ../../Wallet/[Wallet, MinerWallet]
 
-#Wallet libs.
-import ../../Wallet/Wallet
-import ../../Wallet/MinerWallet
-
-#Mint object.
-import objects/MintObj
-
-#Claim object.
-import objects/ClaimObj
+import objects/[MintObj, ClaimObj]
 export ClaimObj
 
-#Serialization lib.
 import ../../Network/Serialize/Transactions/SerializeClaim
 
-#Create a new Claim.
 proc newClaim*(
   inputs: varargs[FundedInput],
   output: EdPublicKey
@@ -29,23 +17,14 @@ proc newClaim*(
   if inputs.len < 1 or 255 < inputs.len:
     raise newLoggedException(ValueError, "Claim has too little or too many inputs.")
 
-  #Create the result.
-  result = newClaimObj(
-    inputs,
-    output
-  )
+  result = newClaimObj(inputs, output)
 
-#Sign a Claim.
 proc sign*(
   wallet: MinerWallet,
   claim: Claim
 ) {.forceCheck: [].} =
   #Create a seq of signatures.
-  var
-    #Final signature.
-    signature: BLSSignature
-    #Signature of each input.
-    signatures: seq[BLSSignature] = newSeq[BLSSignature](claim.inputs.len)
+  var signatures: seq[BLSSignature] = newSeq[BLSSignature](claim.inputs.len)
 
   #Sign every input.
   for i in 0 ..< signatures.len:
@@ -57,10 +36,9 @@ proc sign*(
     )
 
   #Aggregate the input signatures.
-  signature = signatures.aggregate()
+  claim.signature = signatures.aggregate()
 
-  #Set the signature and hash the Claim.
-  claim.signature = signature
+  #Hash the Claim.
   claim.hash = Blake256(claim.serializeHash())
 
 #Verify a Claim.
@@ -68,7 +46,6 @@ proc verify*(
   claim: Claim,
   claimers: seq[BLSPublicKey]
 ): bool {.forceCheck: [].} =
-  #Create a seq of AggregationInfos.
   var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](claim.inputs.len)
 
   #Create each AggregationInfo.
@@ -86,7 +63,6 @@ proc verify*(
     except BLSError as e:
       panic("Infinite BLS Public Key entered the system: " & e.msg)
 
-  #Verify the signature.
   try:
     result = claim.signature.verify(agInfos.aggregate())
   except BLSError as e:

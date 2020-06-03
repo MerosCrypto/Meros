@@ -1,34 +1,20 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet lib.
-import ../../../Wallet/Wallet
-
-#VerificationPacket object.
-import ../../Consensus/Elements/objects/VerificationPacketObj
-
-#Blockchain lib.
-import ../../Merit/Blockchain
-
-#Transactions DB lib.
-import ../../Filesystem/DB/TransactionsDB
-
-#Transaction lib.
-import ../Transaction as TransactionFile
-
-#Sets standard lib.
 import sets
-
-#Tables standard library.
 import tables
 
+import ../../../lib/[Errors, Hash]
+import ../../../Wallet/Wallet
+
+import ../../Filesystem/DB/TransactionsDB
+
+import ../../Consensus/Elements/objects/VerificationPacketObj
+
+import ../../Merit/Blockchain
+
+import ../Transaction as TransactionFile
+
 type Transactions* = object
-  #DB Function Box.
   db: DB
-  #Transactions which have yet to leave Epochs.
+  #Cache of transactions which have yet to leave Epochs.
   transactions*: Table[Hash[256], Transaction]
 
 #Get a Data's sender.
@@ -51,7 +37,6 @@ proc getSender*(
     except DBReadError:
       raise newLoggedException(DataMissing, "Couldn't find the Data's input which was not its sender.")
 
-#Add a Transaction to the DAG.
 proc add*(
   transactions: var Transactions,
   tx: Transaction,
@@ -109,12 +94,10 @@ proc `[]`*(
   except DBReadError:
     raise newLoggedException(IndexError, "Hash doesn't map to any Transaction.")
 
-#Transactions constructor.
 proc newTransactionsObj*(
   db: DB,
   blockchain: Blockchain
 ): Transactions {.forceCheck: [].} =
-  #Create the object.
   result = Transactions(
     db: db,
     transactions: initTable[Hash[256], Transaction]()

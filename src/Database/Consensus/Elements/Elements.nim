@@ -18,7 +18,7 @@ export SendDifficultyFile, DataDifficultyFile
 export MeritRemovalFile
 
 #Enable creating a case statement out of an Element.
-#Quality of development life.
+#Quality of development life feature.
 macro match*(
   e: Element
 ): untyped =

@@ -1,40 +1,30 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/Wallet
 
 type
-  #Transaction input types.
   Input* = ref object of RootObj
     hash*: Hash[256]
-  #FundedInput, which also includes a nonce.
+
+  #FundedInput, which includes a nonce specifying the output to use the funds of.
   FundedInput* = ref object of Input
     nonce*: int
 
-  #Transaction output types.
   Output* = ref object of RootObj
     amount*: uint64
+
   #MintOutput, which sends to a MeritHolder nickname.
   MintOutput* = ref object of Output
     key*: uint16
-  #SendOutput, which sends to an EdPublicKey. This also used by Claim.
+
+  #SendOutput, which sends to an EdPublicKey. This is also used by Claim.
   SendOutput* = ref object of Output
     key*: EdPublicKey
 
-  #Transaction object.
   Transaction* = ref object of RootObj
-    #Input transactions.
     inputs*: seq[Input]
-    #Outputs,
     outputs*: seq[Output]
-    #Hash.
     hash*: Hash[256]
 
-#Input/Output constructors.
 func newInput*(
   hash: Hash[256]
 ): Input {.inline, forceCheck: [].} =
@@ -93,7 +83,4 @@ func newSendOutput*(
       for b in 0 ..< 32:
         key.data[b] = cuchar(addy.data[b])
 
-      result = newSendOutput(
-        key,
-        amount
-      )
+      result = newSendOutput(key, amount)

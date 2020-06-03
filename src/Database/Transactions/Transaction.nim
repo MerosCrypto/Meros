@@ -1,28 +1,18 @@
-#Transactions sub-type libs.
-import Mint
-import Claim
-import Send
-import Data
-
-export Mint
-export Claim
-export Send
-export Data
-
-#Macros standard lib.
 import macros
 
-#Custom Transaction case statement.
+import Mint, Claim, Send, Data
+export Mint, Claim, Send, Data
+
+#Enable creating a case statement out of an Element.
+#Quality of development life feature.
 macro match*(
   tx: Transaction
 ): untyped =
-  #Create the result.
   result = newTree(nnkIfStmt)
 
   var
     #Extract the Element symbol.
     symbol: NimNode = tx[0]
-    #Branch.
     branch: NimNode
     #Covers every Transaction type.
     hasElse: bool = false

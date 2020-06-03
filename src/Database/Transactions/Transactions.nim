@@ -1,51 +1,29 @@
-#Errors lib.
-import ../../lib/Errors
+import sets
+import tables
 
-#Hash lib.
-import ../../lib/Hash
+import ../../lib/[Errors, Hash]
+import ../../Wallet/[Wallet, MinerWallet]
 
-#Wallet libs.
-import ../../Wallet/Wallet
-import ../../Wallet/MinerWallet
+import ../Merit/[Block, Blockchain, Epochs]
 
-#Block, Blockchain, and Epochs libs.
-import ../Merit/Block
-import ../Merit/Blockchain
-import ../Merit/Epochs
-
-#Transactions DB lib.
 import ../Filesystem/DB/Serialize/Transactions/DBSerializeTransaction
 import ../Filesystem/DB/TransactionsDB
 
-#Transaction lib.
 import Transaction
 export Transaction
 
-#Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
 export getUTXOs, loadSpenders, verify, unverify, beat, prune
 when defined(merosTests):
   export getSender
 
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
-
-#Horrific stub function while working on the lint branch.
-proc toString*(x: Input): string {.inline, forceCheck: [].} =
-  x.serialize()
-
-#Constructor.
 proc newTransactions*(
   db: DB,
   blockchain: Blockchain
 ): Transactions {.inline, forceCheck: [].} =
   newTransactionsObj(db, blockchain)
 
-#Add a Claim.
 proc add*(
   transactions: var Transactions,
   claim: Claim,
@@ -66,11 +44,10 @@ proc add*(
     discard
 
   var
-    #Claimers.
     claimers: seq[BLSPublicKey] = newSeq[BLSPublicKey]()
 
-    #Table of spent inputs.
-    inputTable: HashSet[string] = initHashSet[string]()
+    #Set of spent inputs.
+    inputSet: HashSet[string] = initHashSet[string]()
     #Output loop variable.
     output: MintOutput
     #Key loop variable.
@@ -80,9 +57,9 @@ proc add*(
 
   #Add the amount the inputs provide. Also verify no inputs are spent multiple times.
   for input in claim.inputs:
-    if inputTable.contains(input.toString()):
+    if inputSet.contains(input.serialize()):
       raise newLoggedException(ValueError, "Claim spends the same input twice.")
-    inputTable.incl(input.toString())
+    inputSet.incl(input.serialize())
 
     try:
       if not (transactions[input.hash] of Mint):
@@ -116,7 +93,6 @@ proc add*(
   except ValueError as e:
     raise e
 
-#Add a Send.
 proc add*(
   transactions: var Transactions,
   send: Send
@@ -142,8 +118,8 @@ proc add*(
     #Sender.
     senders: seq[EdPublicKey] = newSeq[EdPublicKey](1)
 
-    #Table of spent inputs.
-    inputTable: HashSet[string] = initHashSet[string]()
+    #Set of spent inputs.
+    inputSet: HashSet[string] = initHashSet[string]()
     #Spent output loop variable.
     spent: SendOutput
     #Amount this transaction is processing.
@@ -157,9 +133,9 @@ proc add*(
 
   #Add the amount the inputs provide. Also verify no inputs are spent multiple times.
   for input in send.inputs:
-    if inputTable.contains(input.toString()):
+    if inputSet.contains(input.serialize()):
       raise newLoggedException(ValueError, "Send spends the same input twice.")
-    inputTable.incl(input.toString())
+    inputSet.incl(input.serialize())
 
     try:
       if (
@@ -244,15 +220,16 @@ proc mint*(
   hash: Hash[256],
   rewards: seq[Reward]
 ) {.forceCheck: [].} =
-  #Create the outputs.
-  #The used Meri quantity is the score * 50.
-  #Once we add a proper rewards curve, this will change.
-  #This is just a value which works for testing.
+  #[
+  reate the outputs.
+  The used Meri quantity is the score * 50.
+  Once we add a proper rewards curve, this will change.
+  This is just a value which works for testing.
+  ]#
   var outputs: seq[MintOutput] = newSeq[MintOutput](rewards.len)
   for r in 0 ..< rewards.len:
     outputs[r] = newMintOutput(rewards[r].nick, rewards[r].score * 50)
 
-  #Create the Mint.
   var mint: Mint = newMint(hash, outputs)
 
   #Add it to Transactions.
@@ -261,7 +238,12 @@ proc mint*(
   except ValueError as e:
     panic("Adding a Mint raised a ValueError: " & e.msg)
 
-  #Verify it.
+  #[
+  Verify it.
+  I'm not sure this is needed. Any Mint should be assumed as verified already.
+  We should look into this.
+  -- kayabaNerve
+  ]#
   transactions.verify(mint.hash)
 
 #Mark every Transaction as mentioned and remove every hash in this Epoch from the cache/RAM.
@@ -277,6 +259,8 @@ proc archive*(
     transactions.del(hash)
 
 #Discover a Transaction tree.
+#Provides an ordered tree, filled with duplicates.
+#This is so the children can be pruned before the parents.
 proc discoverTree*(
   transactions: Transactions,
   hash: Hash[256]
@@ -286,19 +270,18 @@ proc discoverTree*(
     queue: seq[Hash[256]] = @[hash]
     current: Hash[256]
   while queue.len != 0:
-    #Grab the latest descendant.
     current = queue.pop()
 
     try:
-      #Iterate over the Transaction's outputs.
       for o in 0 ..< max(transactions[current].outputs.len, 1):
-        #Add every spender of each output to the queue.
         var spenders: seq[Hash[256]] = transactions.loadSpenders(newFundedInput(current, o))
         result &= spenders
         queue &= spenders
     except IndexError as e:
       panic("Couldn't discover a Transaction in a tree: " & e.msg)
 
+#Does the same as above, yet isn't ordered and doesn't have duplicates.
+#The above function isn't used, when possible, as it's incredibly slow on larger trees.
 proc discoverUnorderedTree*(
   transactions: Transactions,
   hash: Hash[256],
@@ -309,14 +292,11 @@ proc discoverUnorderedTree*(
     queue: seq[Hash[256]] = @[hash]
     current: Hash[256]
   while queue.len != 0:
-    #Grab the latest descendant.
     current = queue.pop()
     result.incl(current)
 
     try:
-      #Iterate over the Transaction's outputs.
       for o in 0 ..< max(transactions[current].outputs.len, 1):
-        #Add every spender of each output to the queue.
         for spender in transactions.loadSpenders(newFundedInput(current, o)):
           if not result.contains(spender):
             queue.add(spender)
@@ -341,8 +321,10 @@ proc revert*(
     except IndexError as e:
       panic("Failed to get a Block we're reverting past: " & e.msg)
 
+    #Make sure the Block created a Mint.
+    #It won't in the case there are no verifications.
+    #This should never happen in practice, yet is a potential edge case.
     try:
-      #Make sure the Block created a Mint.
       discard transactions[mint]
     except IndexError:
       continue
@@ -353,7 +335,8 @@ proc revert*(
       #Create a set of pruned Transactions as the tree will have duplicates.
       pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
 
-    #Prune the tree.
+    #Prune the tree, from the children to the parents.
+    #This guarantees the relevant input/output data is available.
     for h in countdown(tree.len - 1, 0):
       if pruned.contains(tree[h]):
         continue
