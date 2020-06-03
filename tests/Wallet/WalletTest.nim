@@ -19,7 +19,7 @@ proc verify(
   #Test recreating the Public Key.
   check(newEdPublicKey(wallet.publicKey.serialize()).serialize() ==
     wallet.publicKey.serialize())
-  check($newEdPublicKey($wallet.publicKey) == $wallet.publicKey)
+  check($newEdPublicKey(parseHexStr($wallet.publicKey)) == $wallet.publicKey)
 
   #Create messages.
   var

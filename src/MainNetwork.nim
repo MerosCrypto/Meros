@@ -6,7 +6,6 @@ proc mainNetwork(
   functions: GlobalFunctionBox,
   network: ref Network
 ) {.forceCheck: [].} =
-  #Create the Network..
   network[] = newNetwork(
     params.NETWORK_PROTOCOL,
     params.NETWORK_ID,
@@ -14,15 +13,12 @@ proc mainNetwork(
     functions
   )
 
-  #Start listening, if we're supposed to.
   if config.server:
     try:
       asyncCheck network[].listen()
     except Exception:
       discard
 
-  #Handle network events.
-  #Connect to another node.
   functions.network.connect = proc (
     ip: string,
     port: int
@@ -32,11 +28,9 @@ proc mainNetwork(
     except Exception as e:
       panic("Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
 
-  #Get the peers we're connected to.
   functions.network.getPeers = proc (): seq[Peer] {.forceCheck: [].} =
     network.peers.getPeers(network.peers.len)
 
-  #Broadcast a message.
   functions.network.broadcast = proc (
     msgType: MessageType,
     msg: string
@@ -51,7 +45,7 @@ proc mainNetwork(
     except Exception as e:
       panic("Network.broadcast threw an Exception despite not naturally throwing any: " & e.msg)
 
-  #Look for new peers if we don't have enough already.
+  #Look for new peers every few minutes if we don't have enough already.
   var requestPeersTimer: TimerCallback = nil
   proc requestPeersRegularly(
     data: pointer = nil

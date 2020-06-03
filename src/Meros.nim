@@ -1,5 +1,5 @@
 #[
-The Main files are an "include chain". They include each other sequentially, in the following orders:
+The Main files are an "include chain". They include each other sequentially, in the following order:
   MainImports
   MainChainParams
   MainDatabase
@@ -18,7 +18,7 @@ IDEs can't, and shouldn't, detect that an external file includes that file, and 
 #Include the last file in the chain.
 include MainInterfaces
 
-#Config.
+#Create the configuration.
 let globalConfig: Config = newConfig()
 
 #Start the logger.
@@ -26,41 +26,30 @@ if not (addr defaultChroniclesStream.output).open(globalConfig.dataDir / globalC
   echo "Couldn't open the log file."
   quit(0)
 
-#Enable running main on a thread since the GUI must always run on the main thread.
+#Enable running main on a thread since the GUI needs to run on the main thread under some OSs.
 proc main() {.thread.} =
   var
-    #Config. Reloaded to enforce heap isolation.
+    #Reload the Config due to the threading rules.
     config: Config = newConfig()
-
-    #Chain Parames.
     params: ChainParams = newChainParams(config.network)
 
-    #DB.
     database: DB
-    #WalletDB.
     wallet: WalletDB
 
-    #Function Box.
     functions: GlobalFunctionBox = newGlobalFunctionBox()
 
-    #Consensus.
     consensus: ref Consensus = new(Consensus)
-
-    #Merit.
     #Merit is already a ref object. That said, we need to assign to it, and `var ref`s are illegal.
     merit: ref Merit = new(ref Merit)
     blockLock: ref Lock = new(Lock)
     innerBlockLock: ref Lock = new(Lock)
     lockedBlock: ref Hash[256] = new(Hash[256])
 
-    #Transactions.
     transactions: ref Transactions = new(Transactions)
 
-    #Network.
-    #Same as Merit.
+    #Network is also already a ref object. Same case as Merit.
     network: ref Network = new(ref Network)
 
-    #RPC.
     rpc: RPC
 
   #Function to safely shut down all elements of the node.
@@ -92,6 +81,7 @@ proc main() {.thread.} =
   initLock(blockLock[])
   initLock(innerBlockLock[])
 
+  #Spawn everything.
   mainDatabase(config, database, wallet)
   mainMerit(params, database, wallet, functions, merit, consensus, transactions, network, blockLock, innerBlockLock, lockedBlock)
   mainConsensus(params, database, functions, merit[], consensus, transactions, network)
@@ -102,16 +92,15 @@ proc main() {.thread.} =
 
   runForever()
 
-#If we weren't compiled with a GUI...
+#If we weren't compiled with a GUI, directly run main.
 when defined(nogui):
-  #Run main.
   main()
-#If we were...
+#We were compiled with a GUI.
 else:
-  #If it's disabled...
+  #The GUI is disabled by the config.
   if not globalConfig.gui:
     main()
-  #If it's enabled...
+  #Spawn the GUI.
   else:
     #Spawn main on a thread.
     spawn main()

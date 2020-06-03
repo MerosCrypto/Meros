@@ -1,6 +1,6 @@
 import hashes
 
-import StInt as StIntFile
+import stint
 
 import Hash/[HashCommon, Blake2, SHA2, Argon, RandomX]
 export HashCommon, Blake2, SHA2, Argon, RandomX

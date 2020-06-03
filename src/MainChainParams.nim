@@ -7,10 +7,9 @@ include MainImports
 const
   #DB constants.
   MAX_DB_SIZE: int64 = 107374182400 #Max DB size.
-  DB_VERSION: int = 0         #DB Version.
+  DB_VERSION: int = 0               #DB Version.
 
 type ChainParams = object
-  #Genesis.
   GENESIS: string
 
   #Target Block Time in seconds.
@@ -25,12 +24,9 @@ type ChainParams = object
   #Initial Data Difficulty.
   DATA_DIFFICULTY: uint32
 
-  #Protocol version.
   NETWORK_PROTOCOL: int
-  #Network ID.
   NETWORK_ID: int
 
-  #Seed servers.
   SEEDS: seq[tuple[ip: string, port: int]]
 
 proc newChainParams(

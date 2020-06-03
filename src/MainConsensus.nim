@@ -73,20 +73,17 @@ proc mainConsensus(
   functions.consensus.getDataDifficulty = proc (): uint32 {.forceCheck: [].} =
     consensus.filters.data.difficulty
 
-  #Provide access to if a holder is malicious.
   functions.consensus.isMalicious = proc (
     nick: uint16
   ): bool {.forceCheck: [].} =
     consensus.malicious.hasKey(nick)
 
-  #Provides access to a holder's nonce.
   functions.consensus.getArchivedNonce = proc (
     holder: uint16
   ): int {.forceCheck: [].} =
     consensus[].getArchivedNonce(holder)
 
-  #Get if a hash has an archived packet or not.
-  #Any hash with holder(s) that isn't unmentioned has an archived packet.
+  #Returns true if the hash isn't recognized.
   functions.consensus.hasArchivedPacket = proc (
     hash: Hash[256]
   ): bool {.forceCheck: [
@@ -100,7 +97,6 @@ proc mainConsensus(
 
     return (status.holders.len != 0) and (not consensus.unmentioned.contains(hash))
 
-  #Get a Transaction's status.
   functions.consensus.getStatus = proc (
     hash: Hash[256]
   ): TransactionStatus {.forceCheck: [
@@ -129,17 +125,14 @@ proc mainConsensus(
 
     result = (cast[seq[VerificationPacket]](pending.packets), pending.elements, pending.aggregate)
 
-  #Handle SignedVerifications.
   functions.consensus.addSignedVerification = proc (
     verif: SignedVerification
   ) {.forceCheck: [
     ValueError,
     DataExists
   ].} =
-    #Print that we're adding the SignedVerification.
     logInfo "New Verification", holder = verif.holder, hash = verif.hash
 
-    #Add the SignedVerification to the Consensus DAG.
     var mr: bool
     try:
       consensus[].add(merit.state, verif)
@@ -176,41 +169,28 @@ proc mainConsensus(
       verif.signedSerialize()
     )
 
-  #Handle VerificationPackets.
   functions.consensus.addVerificationPacket = proc (
     packet: VerificationPacket
   ) {.forceCheck: [].} =
-    #Print that we're adding the VerificationPacket.
     logInfo "New Verification Packet from Block", hash = packet.hash, holders = packet.holders
-
-    #Add the Verification to the Consensus DAG.
     consensus[].add(merit.state, packet)
-
     logInfo "Added Verification Packet from Block", hash = packet.hash, holders = packet.holders
 
-  #Handle SendDifficulties.
   functions.consensus.addSendDifficulty = proc (
     sendDiff: SendDifficulty
   ) {.forceCheck: [].} =
-    #Print that we're adding the SendDifficulty.
     logInfo "New Send Difficulty from Block", holder = sendDiff.holder, difficulty = sendDiff.difficulty
-
-    #Add the SendDifficulty to the Consensus DAG.
     consensus[].add(merit.state, sendDiff)
-
     logInfo "Added Send Difficulty from Block", holder = sendDiff.holder, difficulty = sendDiff.difficulty
 
-  #Handle SignedSendDifficulties.
   functions.consensus.addSignedSendDifficulty = proc (
     sendDiff: SignedSendDifficulty
   ) {.forceCheck: [
     ValueError,
     DataExists
   ].} =
-    #Print that we're adding the SendDifficulty.
     logInfo "New Send Difficulty", holder = sendDiff.holder, difficulty = sendDiff.difficulty
 
-    #Add the SendDifficulty.
     var mr: bool
     try:
       consensus[].add(merit.state, sendDiff)
@@ -244,29 +224,21 @@ proc mainConsensus(
       sendDiff.signedSerialize()
     )
 
-  #Handle DataDifficulties.
   functions.consensus.addDataDifficulty = proc (
     dataDiff: DataDifficulty
   ) {.forceCheck: [].} =
-    #Print that we're adding the DataDifficulty.
     logInfo "New Data Difficulty from Block", holder = dataDiff.holder, difficulty = dataDiff.difficulty
-
-    #Add the DataDifficulty to the Consensus DAG.
     consensus[].add(merit.state, dataDiff)
-
     logInfo "Added Data Difficulty from Block", holder = dataDiff.holder, difficulty = dataDiff.difficulty
 
-  #Handle SignedDataDifficulties.
   functions.consensus.addSignedDataDifficulty = proc (
     dataDiff: SignedDataDifficulty
   ) {.forceCheck: [
     ValueError,
     DataExists
   ].} =
-    #Print that we're adding the DataDifficulty.
     logInfo "New Data Difficulty", holder = dataDiff.holder, difficulty = dataDiff.difficulty
 
-    #Add the DataDifficulty.
     var mr: bool = false
     try:
       consensus[].add(merit.state, dataDiff)
@@ -300,7 +272,6 @@ proc mainConsensus(
       dataDiff.signedSerialize()
     )
 
-  #Verify an unsigned MeritRemoval.
   functions.consensus.verifyUnsignedMeritRemoval = proc (
     mr: MeritRemoval
   ): Future[void] {.forceCheck: [
@@ -331,14 +302,12 @@ proc mainConsensus(
         panic("Merit Holder confirmed to be in malicious doesn't have an entry in malicious.")
       raise e
 
-  #Handle SignedMeritRemovals.
   functions.consensus.addSignedMeritRemoval = proc (
     mr: SignedMeritRemoval
   ): Future[void] {.forceCheck: [
     ValueError,
     DataExists
   ], async.} =
-    #Print that we're adding the MeritRemoval.
     logInfo "New Merit Removal", holder = mr.holder, reason = mr.reason
 
     try:
@@ -348,7 +317,6 @@ proc mainConsensus(
     except Exception as e:
       panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    #Add the MeritRemoval.
     try:
       consensus[].add(merit.blockchain, merit.state, mr)
     except ValueError as e:

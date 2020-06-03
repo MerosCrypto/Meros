@@ -1,5 +1,6 @@
 import math
-import StInt
+
+import stint
 
 import ../lib/[Errors, Util, Hash]
 

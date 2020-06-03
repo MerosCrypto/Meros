@@ -5,15 +5,12 @@ proc mainPersonal(
   functions: GlobalFunctionBox,
   transactions: ref Transactions
 ) {.forceCheck: [].} =
-  #Get the MinerWallet.
   functions.personal.getMinerWallet = proc (): MinerWallet {.forceCheck: [].} =
     wallet.miner
 
-  #Get the Wallet.
   functions.personal.getWallet = proc (): Wallet {.forceCheck: [].} =
     wallet.wallet
 
-  #Set the Wallet's Mnemonic.
   functions.personal.setMnemonic = proc (
     mnemonic: string,
     password: string
@@ -25,7 +22,6 @@ proc mainPersonal(
     except ValueError as e:
       raise e
 
-  #Create a Send Transaction.
   functions.personal.send = proc (
     destination: string,
     amountStr: string
@@ -38,11 +34,8 @@ proc mainPersonal(
       child: HDWallet
       #Spendable UTXOs.
       utxos: seq[FundedInput]
-      #Amount in.
       amountIn: uint64
-      #Amount out.
       amountOut: uint64
-      #Send we'll end up creating.
       send: Send
 
     #Grab a child.
@@ -100,16 +93,11 @@ proc mainPersonal(
         )
       )
 
-    #Create the Send.
     send = newSend(
       utxos,
       outputs
     )
-
-    #Sign the Send.
     child.sign(send)
-
-    #Mine the Send.
     send.mine(functions.consensus.getSendDifficulty())
 
     #Add the Send.
@@ -120,10 +108,8 @@ proc mainPersonal(
     except DataExists as e:
       panic("Created a Send which already existed: " & e.msg)
 
-    #Retun the hash.
     result = send.hash
 
-  #Create a Data Transaction.
   functions.personal.data = proc (
     dataStr: string
   ): Hash[256] {.forceCheck: [
@@ -137,7 +123,6 @@ proc mainPersonal(
       tip: Hash[256]
       #Whether or not we need to create the intial data.
       initial: bool = false
-      #Data.
       data: Data
 
     #Grab a child.
@@ -165,13 +150,9 @@ proc mainPersonal(
       except ValueError as e:
         panic("Couldn't create the initial Data: " & e.msg)
 
-      #Sign it.
       child.sign(data)
-
-      #Mine it.
       data.mine(functions.consensus.getDataDifficulty())
 
-      #Add it.
       try:
         functions.transactions.addData(data)
       except ValueError as e:
@@ -197,17 +178,12 @@ proc mainPersonal(
     except IndexError as e:
       raise newLoggedException(ValueError, "Creating a Data which competed with a previous Data thanks to missing Datas: " & e.msg)
 
-
-    #Create the Data.
     try:
       data = newData(tip, dataStr)
     except ValueError as e:
       raise e
 
-    #Sign the Data.
     child.sign(data)
-
-    #Mine the Data.
     data.mine(functions.consensus.getDataDifficulty())
 
     #Add the Data.
@@ -221,5 +197,4 @@ proc mainPersonal(
     #Save the new Data tip.
     wallet.saveDataTip(data.hash)
 
-    #Return the hash.
     result = data.hash

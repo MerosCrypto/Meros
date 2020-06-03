@@ -15,18 +15,14 @@ proc mainRPC(
   functions: GlobalFunctionBox,
   rpc: var RPC
 ) {.forceCheck: [].} =
-  #Create the RPC.
   rpc = newRPC(functions, addr toRPC, addr toGUI)
 
   try:
-    #Start the RPC.
     asyncCheck rpc.start()
-    #Start listening.
     asyncCheck rpc.listen(config)
   except Exception as e:
     panic("Couldn't start the RPC: " & e.msg)
 
 when not defined(nogui):
   proc mainGUI() {.forceCheck: [].} =
-    #Create the GUI.
     newGUI(addr fromMain, addr toRPC, addr toGUI, 800, 500)
