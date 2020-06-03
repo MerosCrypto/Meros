@@ -1,32 +1,17 @@
-#Errors standard lib.
-import ../../lib/Errors
+import sets
 
-#Hash lib.
-import ../../lib/Hash
-
-#BlockHeader object.
-import ../../Database/Merit/objects/BlockHeaderObj
-
-#Elements lib.
-import ../../Database/Consensus/Elements/Elements
-
-#Transaction lib.
-import ../../Database/Transactions/Transaction as TransactionFile
-
-#Message object.
-import MessageObj
-
-#SketchyBlock object.
-import SketchyBlockObj
-
-#SerializeCommon standard lib.
-import ../Serialize/SerializeCommon
-
-#Chronos external lib.
 import chronos
 
-#Sets standard lib.
-import sets
+import ../../lib/[Errors, Hash]
+
+import ../../Database/Merit/objects/BlockHeaderObj
+import ../../Database/Consensus/Elements/Elements
+import ../../Database/Transactions/Transaction as TransactionFile
+
+import MessageObj
+import SketchyBlockObj
+
+import ../Serialize/SerializeCommon
 
 type
   SyncRequest* = ref object of RootObj

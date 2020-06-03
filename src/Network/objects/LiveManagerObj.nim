@@ -1,79 +1,46 @@
-#Errors lib.
-import ../../lib/Errors
-
-#Util lib.
-import ../../lib/Util
-
-#Hash lib.
-import ../../lib/Hash
-
-#BlockHeader object.
-import ../../Database/Merit/objects/BlockHeaderObj
-
-#Elements lib.
-import ../../Database/Consensus/Elements/Elements
-
-#Transaction lib.
-import ../../Database/Transactions/Transaction
-
-#GlobalFunctionBox object.
-import ../../objects/GlobalFunctionBoxObj
-
-#Message object.
-import MessageObj
-
-#Socket object.
-import SocketObj
-
-#Peer lib.
-import ../Peer as PeerFile
-
-#SerializeCommon lib.
-import ../Serialize/SerializeCommon
-
-#Parse libs.
-import ../Serialize/Merit/ParseBlockHeader
-
-import ../Serialize/Consensus/ParseVerification
-import ../Serialize/Consensus/ParseSendDifficulty
-import ../Serialize/Consensus/ParseDataDifficulty
-import ../Serialize/Consensus/ParseMeritRemoval
-
-import ../Serialize/Transactions/ParseClaim
-import ../Serialize/Transactions/ParseSend
-import ../Serialize/Transactions/ParseData
-
-#Chronos external lib.
-import chronos
-
-#Tables standard lib.
 import tables
 
-#LiveManager object.
+import chronos
+
+import ../../lib/[Errors, Util, Hash]
+
+import ../../objects/GlobalFunctionBoxObj
+
+import ../../Database/Merit/objects/BlockHeaderObj
+import ../../Database/Consensus/Elements/Elements
+import ../../Database/Transactions/Transaction
+
+import MessageObj
+import SocketObj
+import ../Peer as PeerFile
+
+import ../Serialize/SerializeCommon
+import ../Serialize/Merit/ParseBlockHeader
+import ../Serialize/Consensus/[
+  ParseVerification,
+  ParseSendDifficulty,
+  ParseDataDifficulty,
+  ParseMeritRemoval
+]
+import ../Serialize/Transactions/[ParseClaim, ParseSend, ParseData]
+
 type LiveManager* = ref object
-  #Protocol version.
   protocol*: int
-  #Network ID.
   network*: int
-  #Services byte.
   services*: char
-  #Server port.
   port*: int
 
-  #Table of every Peer.
   peers: TableRef[int, Peer]
 
-  #Global Function Box.
   functions*: GlobalFunctionBox
 
-#Constructor.
 func newLiveManager*(
   protocol: int,
   network: int,
   port: int,
   peers: TableRef[int, Peer],
   functions: GlobalFunctionBox
-): LiveManager {.forceCheck: [].} =
+): LiveManager {.inline, forceCheck: [].} =
   LiveManager(
     protocol: protocol,
     network: network,
@@ -84,14 +51,12 @@ func newLiveManager*(
     functions: functions
   )
 
-#Update the services byte.
 func updateServices*(
   manager: LiveManager,
-  service: uint8
-) {.forceCheck: [].} =
-  manager.services = char(uint8(manager.services) or service)
+  service: byte
+) {.inline, forceCheck: [].} =
+  manager.services = char(byte(manager.services) or service)
 
-#Handle a new connection.
 proc handle*(
   manager: LiveManager,
   peer: Peer,
@@ -152,7 +117,7 @@ proc handle*(
     return
 
   if (
-    ((uint8(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE) and
+    ((byte(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE) and
     (not tAddy.isLoopback()) and
     (not tAddy.isLinkLocal()) and
     (not tAddy.isSiteLocal())

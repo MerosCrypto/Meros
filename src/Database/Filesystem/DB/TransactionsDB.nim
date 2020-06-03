@@ -1,5 +1,4 @@
-import sets
-import tables
+import sets, tables
 
 import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/Wallet
@@ -55,7 +54,7 @@ template DATA_SENDER(
 template SPENDABLE(
   key: EdPublicKey
 ): string =
-  key.toString() & "$p"
+  key.serialize() & "$p"
 
 template BEATEN_TRANSACTION(
   hash: Hash[256]
@@ -163,7 +162,7 @@ proc saveDataSender*(
   data: Data,
   sender: EdPublicKey
 ) {.forceCheck: [].} =
-  db.put(DATA_SENDER(data.hash), sender.toString())
+  db.put(DATA_SENDER(data.hash), sender.serialize())
 
 proc loadUnmentioned*(
   db: DB

@@ -1,23 +1,9 @@
-#Errors lib.
-import ../lib/Errors
-
-#Util lib.
-import ../lib/Util
-
-#Hash lib.
-import ../lib/Hash
-
-#Math standard lib.
 import math
+import sequtils, strutils
 
-#String utils standard lib.
-import strutils
-
-#Seq utils standard lib.
-import sequtils
-
-#Unicode Normalize lib.
 import normalize
+
+import ../lib/[Errors, Util, Hash]
 
 #Word List.
 const
@@ -29,7 +15,6 @@ type Mnemonic* = object
    checksum*: string
    sentence*: string
 
-#Create a Mnemonic from RNG.
 proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
   #Create the entropy.
   result.entropy = newString(32)
@@ -70,7 +55,6 @@ proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
     bit += 11
   result.sentence = result.sentence[ 0 ..< result.sentence.len - 1]
 
-#Create a Mnemonic from a sentence.
 proc newMnemonic*(
   sentence: string
 ): Mnemonic  {.forceCheck: [
@@ -116,7 +100,7 @@ proc newMnemonic*(
 
     #Add the bits we can fit into the existing byte.
     decoded[currentByte] = char(
-      uint8(decoded[currentByte]) + uint8(word shr (11 - bitsLeft))
+      byte(decoded[currentByte]) + byte(word shr (11 - bitsLeft))
     )
 
     #Set bitsLeft to the bits left in the word.
@@ -183,7 +167,6 @@ proc unlock*(
 ): string {.inline, forceCheck: [].} =
   PDKDF2_HMAC_SHA2_512(mnemonic.sentence.toNFKD(), ("mnemonic" & password.toNFKD())).serialize()
 
-#Stringify a mnemonic.
 func `$`*(
   mnemonic: Mnemonic
 ): string {.inline, forceCheck: [].} =

@@ -1,24 +1,13 @@
-#Errors lib.
-import ../../../lib/Errors
+import algorithm
 
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
-#VerificationPacket object.
 import ../../../Database/Consensus/Elements/objects/VerificationPacketObj
 
-#Common serialization functions.
 import ../SerializeCommon
-
-#SerializeElement method.
 import SerializeElement
 export SerializeElement
-
-#Algorithm standard lib.
-import algorithm
 
 #Serialize a VerificationPacket.
 method serialize*(

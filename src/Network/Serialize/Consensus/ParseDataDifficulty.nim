@@ -1,16 +1,10 @@
-#Errors lib.
 import ../../../lib/Errors
-
-#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#DataDifficulty object.
 import ../../../Database/Consensus/Elements/objects/DataDifficultyObj
 
-#Serialize/Deserialize functions.
 import ../SerializeCommon
 
-#Parse a DataDifficulty.
 proc parseDataDifficulty*(
   dataDiffStr: string
 ): DataDifficulty {.forceCheck: [].} =
@@ -31,7 +25,6 @@ proc parseDataDifficulty*(
   except ValueError as e:
     panic("Failed to parse a 32-byte hash: " & e.msg)
 
-#Parse a Signed DataDifficulty.
 proc parseSignedDataDifficulty*(
   dataDiffStr: string
 ): SignedDataDifficulty {.forceCheck: [

@@ -1,21 +1,12 @@
-#Errors lib.
-import ../../../lib/Errors
+import ../../../lib/[Errors, Hash]
 
-#Hash lib.
-import ../../../lib/Hash
-
-#BlockHeader lib.
 import ../../../Database/Merit/BlockHeader
 
-#SketchyBlock object.
 import ../../objects/SketchyBlockObj
 
-#Deserialize/parse functions.
 import ../SerializeCommon
-import ParseBlockHeader
-import ParseBlockBody
+import ParseBlockHeader, ParseBlockBody
 
-#Parse a Block.
 proc parseBlock*(
   rx: RandomX,
   blockStr: string
@@ -38,7 +29,4 @@ proc parseBlock*(
     raise e
 
   #Create the SketchyBlock.
-  result = newSketchyBlockObj(
-    header,
-    body
-  )
+  result = newSketchyBlockObj(header, body)

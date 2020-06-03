@@ -1,5 +1,4 @@
-import sets
-import tables
+import sets, tables
 
 import mc_lmdb
 export put, get, delete

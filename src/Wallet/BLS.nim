@@ -1,26 +1,23 @@
-#Errors objects.
-import ../lib/objects/ErrorObjs
-
-#BLS Nimble package.
-import mc_bls
-
-#Hashes standard lib.
 import hashes
-
-#String utils standard lib.
 import strutils
 
-#Type aliases.
+import mc_bls
+export G1_LEN, G2_LEN, toPublicKey, sign, verify, aggregate, serialize, isInf
+
+import ../lib/objects/ErrorObjs
+
+#[
+Type aliases for mc_bls.
+mc_bls solely calls keys, keys.
+As Meros also uses Ed25519, there's a requirement to distinguish.
+Hence the BLS/Ed prefixed.
+]#
 type
   BLSPrivateKey* = PrivateKey
   BLSPublicKey* = PublicKey
   BLSSignature* = Signature
   BLSAggregationInfo* = AggregationInfo
 
-#Export the G1 and G2 lengths.
-export G1_LEN, G2_LEN
-
-#Constructors.
 proc newBLSPrivateKey*(
   key: string
 ): BLSPrivateKey {.forceCheck: [
@@ -73,10 +70,6 @@ proc newBLSAggregationInfo*(
   except BLSError as e:
     raise e
 
-#Export member functions.
-export toPublicKey, sign, verify, aggregate, serialize, isInf
-
-#Equality functions.
 proc `==`*(
   x: BLSPrivateKey,
   y: BLSPrivateKey
@@ -113,7 +106,6 @@ proc `!=`*(
 ): bool {.inline, forceCheck: [].} =
   not (x.serialize() == y.serialize())
 
-#Stringify functions.
 proc `$`*(
   key: BLSPrivateKey
 ): string {.inline, forceCheck: [].} =

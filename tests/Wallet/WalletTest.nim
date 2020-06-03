@@ -17,8 +17,8 @@ proc verify(
   wallet: Wallet
 ) =
   #Test recreating the Public Key.
-  check(newEdPublicKey(wallet.publicKey.toString()).toString() ==
-    wallet.publicKey.toString())
+  check(newEdPublicKey(wallet.publicKey.serialize()).serialize() ==
+    wallet.publicKey.serialize())
   check($newEdPublicKey($wallet.publicKey) == $wallet.publicKey)
 
   #Create messages.

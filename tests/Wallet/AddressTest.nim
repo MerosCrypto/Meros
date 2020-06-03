@@ -27,4 +27,4 @@ suite "Address":
 
     #Verify it decodes properly.
     check(wallet.address.getEncodedData().addyType == AddressType.PublicKey)
-    check(wallet.publicKey.toString() == cast[string](wallet.address.getEncodedData().data))
+    check(wallet.publicKey.serialize() == cast[string](wallet.address.getEncodedData().data))

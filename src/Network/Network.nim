@@ -1,58 +1,21 @@
-#Errors lib.
-import ../lib/Errors
-
-#Util lib.
-import ../lib/Util
-
-#Block object.
-import ../Database/Merit/objects/BlockObj
-
-#Elements lib.
-import ../Database/Consensus/Elements/Elements
-
-#Message object.
-import objects/MessageObj
-export MessageObj
-
-#SketchyBlock object.
-import objects/SketchyBlockObj
-export SketchyBlockObj
-
-#SerializeCommon lib.
-import Serialize/SerializeCommon
-
-#Socket object.
-import objects/SocketObj
-
-#FileLimitTracker lib.
-import FileLimitTracker
-
-#Peer lib.
-import Peer
-export Peer
-
-#LiveManager object.
-import objects/LiveManagerObj
-
-#SyncManager lib.
-import SyncManager
-export SyncManager
-
-#Network object.
-import objects/NetworkObj
-export NetworkObj
-
-#Chronos external lib.
-import chronos
-
-#Math standard lib.
 import math
-
-#Table standard lib.
+import strutils
 import tables
 
-#String utils standard lib.
-import strutils
+import chronos
+
+import ../lib/[Errors, Util]
+
+import ../Database/Merit/objects/BlockObj
+import ../Database/Consensus/Elements/Elements
+
+import objects/[MessageObj, SocketObj, SketchyBlockObj, LiveManagerObj, NetworkObj]
+export MessageObj, SketchyBlockObj, NetworkObj
+
+import FileLimitTracker, Peer, SyncManager
+export Peer, SyncManager
+
+import Serialize/SerializeCommon
 
 #Verify the validity of an address.
 #If the address isn't IPv4, it's invalid (unfortunately).
@@ -137,7 +100,6 @@ proc isOurPublicIP(
   except TransportOSError:
     result = true
 
-#Connect to a new Peer.
 proc connect*(
   network: Network,
   address: string,
@@ -274,7 +236,7 @@ proc handle(
       for peer in peers:
         busy.message &= peer.ip[0 ..< IP_LEN] & peer.port.toBinary(PORT_LEN)
       try:
-        await socket.send(busy.toString())
+        await socket.send(busy.serialize())
       except Exception:
         discard
       socket.safeClose("We are busy.")
@@ -309,7 +271,7 @@ proc handle(
 
     #Lock the IP, passing the type of the Handshake.
     #Since up to two client connections can exist, it's fine if there's already one, as long as they're of different types.
-    var lock: uint8 = if handshake.content == MessageType.Handshake: LIVE_IP_LOCK else: SYNC_IP_LOCK
+    var lock: byte = if handshake.content == MessageType.Handshake: LIVE_IP_LOCK else: SYNC_IP_LOCK
     try:
       if not await network.lockIP(address, lock):
         socket.safeClose("Already handling a socket of this type from this IP.")
@@ -427,7 +389,6 @@ proc listen*(
   except Exception as e:
     panic("Couldn't join the server with this async function: " & e.msg)
 
-#Broadcast a message to our Network.
 proc broadcast*(
   network: Network,
   msg: Message

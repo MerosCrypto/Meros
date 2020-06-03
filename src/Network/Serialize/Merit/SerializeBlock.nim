@@ -1,14 +1,9 @@
-#Errors lib.
 import ../../../lib/Errors
 
-#Block lib.
 import ../../../Database/Merit/Block
 
-#Serialize functions.
-import SerializeBlockHeader
-import SerializeBlockBody
+import SerializeBlockHeader, SerializeBlockBody
 
-#Serialize a Block.
 proc serialize*(
   blockArg: Block
 ): string {.forceCheck: [

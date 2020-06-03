@@ -1,19 +1,10 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
-#BlockHeader object.
 import ../../../Database/Merit/objects/BlockHeaderObj
 
-#Common serialization functions.
 import ../SerializeCommon
 
-#Serialize a Block Header.
 proc serializeTemplate*(
   header: BlockHeader
 ): string {.inline, forceCheck: [].} =

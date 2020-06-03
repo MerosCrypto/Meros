@@ -11,5 +11,5 @@ export SerializeOutput
 method serialize*(
   output: SendOutput
 ): string {.inline, forceCheck: [].} =
-  output.key.toString() &
+  output.key.serialize() &
   output.amount.toBinary(MEROS_LEN)

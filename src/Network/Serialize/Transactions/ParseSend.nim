@@ -1,19 +1,10 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/Wallet
 
-#Send object.
 import ../../../Database/Transactions/objects/SendObj
 
-#Common serialization functions.
 import ../SerializeCommon
 
-#Parse function.
 proc parseSend*(
   sendStr: string,
   diff: uint32

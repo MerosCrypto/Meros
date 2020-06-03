@@ -1,47 +1,28 @@
-#[
-This is a replacement for the previously used EventEmitters (mc_events).
-It's type safe, and serves the same purpose, yet provides an even better API.
-That said, we lose the library format, and instead have this.
-This is annoying, but we no longer have to specify the type when we call events, so we break even.
-]#
+import locks
 
-#Errors lib.
-import ../lib/Errors
+import chronos
 
-#Hash lib.
-import ../lib/Hash
-
-#Sketcher lib.
-import ../lib/Sketcher
-
-#MinerWallet and Wallet libs.
-import ../Wallet/MinerWallet
+import ../lib/[Errors, Hash, Sketcher]
+import ../Wallet/[MinerWallet, Wallet]
 import ../Wallet/Wallet
 
-#Element lib and TransactionStatus object.
+import ../Database/Merit/objects/[BlockHeaderObj, BlockObj]
+
 import ../Database/Consensus/objects/TransactionStatusObj
 import ../Database/Consensus/Elements/Elements
 
-#BlockHeader and Block objects.
-import ../Database/Merit/objects/BlockHeaderObj
-import ../Database/Merit/objects/BlockObj
+import ../Database/Transactions/objects/[
+  TransactionObj,
+  ClaimObj,
+  SendObj,
+  DataObj
+]
 
-#Transaction objects.
-import ../Database/Transactions/objects/TransactionObj
-import ../Database/Transactions/objects/ClaimObj
-import ../Database/Transactions/objects/SendObj
-import ../Database/Transactions/objects/DataObj
-
-#Network objects.
-import ../Network/objects/MessageObj
-import ../Network/objects/PeerObj
-import ../Network/objects/SketchyBlockObj
-
-#Chronos external lib.
-import chronos
-
-#Locks standard lib.
-import locks
+import ../Network/objects/[
+  MessageObj,
+  PeerObj,
+  SketchyBlockObj
+]
 
 type
   SystemFunctionBox* = ref object
@@ -319,20 +300,19 @@ type
     ) {.gcsafe, raises: [].}
 
   GlobalFunctionBox* = ref object
-    system*:     SystemFunctionBox
+    system*:       SystemFunctionBox
     transactions*: TransactionsFunctionBox
-    consensus*:  ConsensusFunctionBox
-    merit*:    MeritFunctionBox
-    personal*:   PersonalFunctionBox
-    network*:    NetworkFunctionBox
+    consensus*:    ConsensusFunctionBox
+    merit*:        MeritFunctionBox
+    personal*:     PersonalFunctionBox
+    network*:      NetworkFunctionBox
 
-#Constructor.
 func newGlobalFunctionBox*(): GlobalFunctionBox {.forceCheck: [].} =
   GlobalFunctionBox(
-    system:     SystemFunctionBox(),
+    system:       SystemFunctionBox(),
     transactions: TransactionsFunctionBox(),
-    consensus:  ConsensusFunctionBox(),
-    merit:    MeritFunctionBox(),
-    personal:   PersonalFunctionBox(),
-    network:    NetworkFunctionBox()
+    consensus:    ConsensusFunctionBox(),
+    merit:        MeritFunctionBox(),
+    personal:     PersonalFunctionBox(),
+    network:      NetworkFunctionBox()
   )

@@ -1,31 +1,18 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Sketcher lib.
-import ../../../lib/Sketcher
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Hash, Sketcher]
 import ../../../Wallet/MinerWallet
 
-#Element libs.
 import ../../../Database/Consensus/Elements/Elements
-
-#BlockBody object.
 import ../../../Database/Merit/objects/BlockBodyObj
 
-#Serialize/Deserialize functions.
 import ../SerializeCommon
 
-#Serialize Element libs.
-import ../Consensus/SerializeVerification
-import ../Consensus/SerializeSendDifficulty
-import ../Consensus/SerializeDataDifficulty
-import ../Consensus/SerializeMeritRemoval
+import ../Consensus/[
+  SerializeVerification,
+  SerializeSendDifficulty,
+  SerializeDataDifficulty,
+  SerializeMeritRemoval
+]
 
-#Serialize a Block.
 proc serialize*(
   body: BlockBody,
   sketchSalt: string,

@@ -1,28 +1,12 @@
-#Errors lib.
-import ../lib/Errors
-
-#Util lib.
-import ../lib/Util
-
-#Hash lib.
-import ../lib/Hash
-
-#SerializeCommon lib.
-import ../Network/Serialize/SerializeCommon
-
-#Ed25519 lib.
-import Ed25519
-export Ed25519
-
-#Address lib.
-import Address
-export Address
-
-#StInt lib.
+import math
 import StInt
 
-#Math standard lib.
-import math
+import ../lib/[Errors, Util, Hash]
+
+import Ed25519, Address
+export Ed25519, Address
+
+import ../Network/Serialize/SerializeCommon
 
 const
   #BIP 44 Coin Type.
@@ -30,25 +14,18 @@ const
   #Ed25519's l value.
   l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
 
-#HDWallet.
 type HDWallet* = object
-  #Chain Code.
   chainCode*: Hash[256]
-  #Private Key.
   privateKey*: EdPrivateKey
-  #Public Key.
   publicKey*: EdPublicKey
-  #Address.
   address*: string
 
-#Sign a message via a Wallet.
 func sign*(
   wallet: HDWallet,
   msg: string
 ): EdSignature {.inline, forceCheck: [].} =
   wallet.privateKey.sign(wallet.publicKey, msg)
 
-#Verify a signature via a Wallet.
 func verify*(
   wallet: HDWallet,
   msg: string,
@@ -56,7 +33,6 @@ func verify*(
 ): bool {.inline, forceCheck: [].} =
   wallet.publicKey.verify(msg, sig)
 
-#Constructors.
 proc newHDWallet*(
   secretArg: string
 ): HDWallet {.forceCheck: [
@@ -81,11 +57,11 @@ proc newHDWallet*(
 
   #Create the Private Key.
   privateKey.data = cast[array[64, cuchar]](SHA2_512(secret).data)
-  if (uint8(privateKey.data[31]) and 0b00100000) != 0:
+  if (byte(privateKey.data[31]) and 0b00100000) != 0:
     raise newLoggedException(ValueError, "Secret generated an invalid private key.")
-  privateKey.data[0]  = cuchar(uint8(privateKey.data[0])  and (not uint8(0b00000111)))
-  privateKey.data[31] = cuchar(uint8(privateKey.data[31]) and (not uint8(0b10000000)))
-  privateKey.data[31] = cuchar(uint8(privateKey.data[31]) or       0b01000000)
+  privateKey.data[0]  = cuchar(byte(privateKey.data[0])  and (not byte(0b00000111)))
+  privateKey.data[31] = cuchar(byte(privateKey.data[31]) and (not byte(0b10000000)))
+  privateKey.data[31] = cuchar(byte(privateKey.data[31]) or       0b01000000)
 
   #Create the Public Key.
   publicKey = privateKey.toPublicKey()
@@ -94,7 +70,7 @@ proc newHDWallet*(
     #Set the Wallet fields.
     privateKey: privateKey,
     publicKey: publicKey,
-    address: newAddress(AddressType.PublicKey, publicKey.toString()),
+    address: newAddress(AddressType.PublicKey, publicKey.serialize()),
 
     #Create the chain code.
     chainCode: SHA2_256('\1' & secret)
@@ -110,18 +86,18 @@ proc derive*(
   var
     #Parent properties, serieslized in little endian.
     pChainCode: string = wallet.chainCode.serialize()
-    pPrivateKey: string = wallet.privateKey.toString()
-    pPrivateKeyL: array[32, uint8]
-    pPrivateKeyR: array[32, uint8]
-    pPublicKey: string = wallet.publicKey.toString()
+    pPrivateKey: string = wallet.privateKey.serialize()
+    pPrivateKeyL: array[32, byte]
+    pPrivateKeyR: array[32, byte]
+    pPublicKey: string = wallet.publicKey.serialize()
 
     #Child index, in little endian.
     child: string = childArg.toBinary(INT_LEN).reverse()
     #Is this a Hardened derivation?
     hardened: bool = childArg >= (uint32(2) ^ 31)
   for i in 0 ..< 32:
-    pPrivateKeyL[31 - i] = uint8(pPrivateKey[i])
-    pPrivateKeyR[31 - i] = uint8(pPrivateKey[32 + i])
+    pPrivateKeyL[31 - i] = byte(pPrivateKey[i])
+    pPrivateKeyR[31 - i] = byte(pPrivateKey[32 + i])
 
   #Calculate Z and the Chaincode.
   var
@@ -139,8 +115,8 @@ proc derive*(
 
   var
     #Z left and right.
-    zL: array[32, uint8]
-    zR: array[32, uint8]
+    zL: array[32, byte]
+    zR: array[32, byte]
     #Key left and right.
     kL: StUInt[256]
     kR: StUInt[256]
@@ -161,8 +137,8 @@ proc derive*(
 
   #Set the PrivateKey.
   var
-    tempL: array[32, uint8] = kL.toByteArrayBE()
-    tempR: array[32, uint8] = kR.toByteArrayBE()
+    tempL: array[32, byte] = kL.toByteArrayBE()
+    tempR: array[32, byte] = kR.toByteArrayBE()
     privateKey: EdPrivateKey
   for i in 0 ..< 32:
     privateKey.data[31 - i] = cuchar(tempL[i])
@@ -175,7 +151,7 @@ proc derive*(
     #Set the Wallet fields.
     privateKey: privateKey,
     publicKey: publicKey,
-    address: newAddress(AddressType.PublicKey, publicKey.toString()),
+    address: newAddress(AddressType.PublicKey, publicKey.serialize()),
 
     #Set the chain code.
     chainCode: chainCode

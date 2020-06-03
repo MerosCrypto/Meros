@@ -161,7 +161,7 @@ proc mainPersonal(
     if initial:
       #Create the initial Data.
       try:
-        data = newData(Hash[256](), child.publicKey.toString())
+        data = newData(Hash[256](), child.publicKey.serialize())
       except ValueError as e:
         panic("Couldn't create the initial Data: " & e.msg)
 

@@ -1,31 +1,15 @@
-#Errors lib.
-import ../lib/Errors
+import locks
+import tables
 
-#Util lib.
-import ../lib/Util
-
-#Serialization common lib.
-import Serialize/SerializeCommon
-
-#Network objects.
-import objects/SocketObj
-import objects/MessageObj
-import objects/PeerObj
-
-#Export the Peer object.
-export PeerObj
-
-#Element serialize lib. Implements getLength.
-import Serialize/Consensus/ParseElement
-
-#Chronos external lib.
 import chronos
 
-#Locks standard lib.
-import locks
+import ../lib/[Errors, Util]
 
-#Tables lib.
-import tables
+import objects/[SocketObj, MessageObj, PeerObj]
+export PeerObj
+
+import Serialize/SerializeCommon
+import Serialize/Consensus/ParseElement
 
 const MESSAGE_LENGTH_LIMIT {.intdefine.} = 8388608
 
@@ -38,7 +22,7 @@ proc sendLive*(
   SocketError
 ], async.} =
   try:
-    await peer.live.send(msg.toString())
+    await peer.live.send(msg.serialize())
   except SocketError as e:
     peer.live.safeClose(e.msg)
     if not noRaise:
@@ -55,7 +39,7 @@ proc sendSync*(
   SocketError
 ], async.} =
   try:
-    await peer.sync.send(msg.toString())
+    await peer.sync.send(msg.serialize())
   except SocketError as e:
     peer.sync.safeClose(e.msg)
     if not noRaise:
@@ -85,7 +69,6 @@ proc syncRequest*(
 
   release(peer.syncLock)
 
-#Receive a message.
 proc recv*(
   id: int,
   socket: SocketObj.Socket,
@@ -164,7 +147,7 @@ proc recv*(
           try:
             if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
               len = {
-                uint8(VERIFICATION_PACKET_PREFIX)
+                byte(VERIFICATION_PACKET_PREFIX)
               }.getLength(msg[elemI])
               size += len
 
@@ -237,7 +220,7 @@ proc recv*(
                 try:
                   if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
                     len = {
-                      uint8(VERIFICATION_PACKET_PREFIX)
+                      byte(VERIFICATION_PACKET_PREFIX)
                     }.getLength(msg[elemI])
                     size += len
 

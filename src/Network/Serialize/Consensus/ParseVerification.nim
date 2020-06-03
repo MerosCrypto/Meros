@@ -1,19 +1,10 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
-#Verification object.
 import ../../../Database/Consensus/Elements/objects/VerificationObj
 
-#Serialize/Deserialize functions.
 import ../SerializeCommon
 
-#Parse a Verification.
 proc parseVerification*(
   verifStr: string
 ): Verification {.forceCheck: [
@@ -34,7 +25,6 @@ proc parseVerification*(
   except ValueError as e:
     raise e
 
-#Parse a Signed Verification.
 proc parseSignedVerification*(
   verifStr: string
 ): SignedVerification {.forceCheck: [

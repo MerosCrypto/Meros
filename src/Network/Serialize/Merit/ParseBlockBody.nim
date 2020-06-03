@@ -1,28 +1,14 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
-#Element libs.
 import ../../../Database/Consensus/Elements/Elements
-
-#BlockBody object.
 import ../../../Database/Merit/objects/BlockBodyObj
 
-#SketchyBlock object.
 import ../../objects/SketchyBlockObj
 
-#Deserialize/parse functions.
 import ../SerializeCommon
-
-#Parse BlockElement lib.
 import ../Consensus/ParseBlockElement
 
-#Parse a BlockBody.
 proc parseBlockBody*(
   bodyStr: string
 ): SketchyBlockBody {.forceCheck: [

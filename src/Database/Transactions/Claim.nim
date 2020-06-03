@@ -32,7 +32,7 @@ proc sign*(
       "\1" &
       claim.inputs[i].hash.serialize() &
       char(cast[FundedInput](claim.inputs[i]).nonce) &
-      cast[SendOutput](claim.outputs[0]).key.toString()
+      cast[SendOutput](claim.outputs[0]).key.serialize()
     )
 
   #Aggregate the input signatures.
@@ -57,7 +57,7 @@ proc verify*(
           "\1" &
           claim.inputs[i].hash.serialize() &
           char(cast[FundedInput](claim.inputs[i]).nonce) &
-          cast[SendOutput](claim.outputs[0]).key.toString()
+          cast[SendOutput](claim.outputs[0]).key.serialize()
         )
       )
     except BLSError as e:

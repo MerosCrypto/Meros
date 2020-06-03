@@ -1,19 +1,17 @@
-#Errors lib.
 import ../../../lib/Errors
 
-#Serialization constants.
 import ../SerializeCommon
 
 #Get the length of the upcoming Block/MeritRemoval Element.
 proc getLength*(
-  possibilities: set[uint8],
+  possibilities: set[byte],
   prefix: char,
   holders: int = 0,
   actual: int = 255
 ): int {.forceCheck: [
   ValueError
 ].} =
-  if not (uint8(prefix) in possibilities):
+  if not (byte(prefix) in possibilities):
     raise newLoggedException(ValueError, "Parsing an Element that isn't a valid Element for this data.")
 
   case int(prefix):

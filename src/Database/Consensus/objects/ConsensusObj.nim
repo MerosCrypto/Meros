@@ -1,5 +1,4 @@
-import sets
-import tables
+import sets, tables
 
 import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet

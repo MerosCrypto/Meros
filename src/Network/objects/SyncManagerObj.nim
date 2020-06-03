@@ -1,102 +1,67 @@
-#Errors lib.
-import ../../lib/Errors
+import algorithm
+import sets, tables
 
-#Util lib.
-import ../../lib/Util
-
-#Hash and Merkle libs.
-import ../../lib/Hash
-import ../../lib/Merkle
-
-#Sketcher lib.
-import ../../lib/Sketcher
-
-#Block lib.
-import ../../Database/Merit/Block
-
-#Elements lib.
-import ../../Database/Consensus/Elements/Elements
-
-#Transaction lib.
-import ../../Database/Transactions/Transaction as TransactionFile
-
-#GlobalFunctionBox object.
-import ../../objects/GlobalFunctionBoxObj
-
-#Message object.
-import MessageObj
-
-#SyncRequest object.
-import SyncRequestObj
-
-#SketchyBlock object.
-import SketchyBlockObj
-
-#Socket object.
-import SocketObj
-
-#Peer lib.
-import ../Peer as PeerFile
-
-#Serialization libs.
-import ../Serialize/SerializeCommon
-
-import ../Serialize/Merit/SerializeBlockHeader
-import ../Serialize/Merit/SerializeBlockBody
-
-import ../Serialize/Consensus/SerializeVerification
-import ../Serialize/Consensus/SerializeSendDifficulty
-import ../Serialize/Consensus/SerializeDataDifficulty
-import ../Serialize/Consensus/SerializeMeritRemoval
-
-import ../Serialize/Transactions/SerializeClaim
-import ../Serialize/Transactions/SerializeSend
-import ../Serialize/Transactions/SerializeData
-
-import ../Serialize/Merit/ParseBlockHeader
-import ../Serialize/Merit/ParseBlockBody
-
-import ../Serialize/Consensus/ParseVerificationPacket
-
-import ../Serialize/Transactions/ParseClaim
-import ../Serialize/Transactions/ParseSend
-import ../Serialize/Transactions/ParseData
-
-#Chronos external lib.
 import chronos
 
-#Algorithm standard lib.
-import algorithm
+import ../../lib/[Errors, Util, Hash, Merkle, Sketcher]
 
-#Sets standard lib.
-import sets
+import ../../objects/GlobalFunctionBoxObj
 
-#Tables standard lib.
-import tables
+import ../../Database/Merit/Block
+import ../../Database/Consensus/Elements/Elements
+import ../../Database/Transactions/Transaction as TransactionFile
 
-#SyncManager object.
+import MessageObj
+import SocketObj
+import SyncRequestObj
+import SketchyBlockObj
+
+import ../Peer as PeerFile
+
+import ../Serialize/SerializeCommon
+
+import ../Serialize/Merit/[
+  SerializeBlockHeader,
+  SerializeBlockBody,
+  ParseBlockHeader,
+  ParseBlockBody
+]
+
+import ../Serialize/Consensus/[
+  SerializeVerification,
+  SerializeSendDifficulty,
+  SerializeDataDifficulty,
+  SerializeMeritRemoval,
+  ParseVerificationPacket
+]
+
+import ../Serialize/Transactions/[
+  SerializeClaim,
+  SerializeSend,
+  SerializeData,
+  ParseClaim,
+  ParseSend,
+  ParseData
+]
+
 type SyncManager* = ref object
-  #Protocol version.
+  functions*: GlobalFunctionBox
+
   protocol: int
-  #Network ID.
   network: int
-  #Services byte.
+
+  #Our services byte.
   services: char
-  #Server port.
+  #Our server port, if we have one.
   port: int
 
+  peers*: TableRef[int, Peer]
+
+  #Current Requests.
+  requests*: Table[int, SyncRequest]
   #Next usable Request ID.
   id*: int
 
-  #Table of every Peer.
-  peers*: TableRef[int, Peer]
-  #Ongoing Requests.
-  requests*: Table[int, SyncRequest]
-
-  #Global Function Box.
-  functions*: GlobalFunctionBox
-
-#Constructor.
 func newSyncManager*(
   protocol: int,
   network: int,
@@ -105,26 +70,26 @@ func newSyncManager*(
   functions: GlobalFunctionBox
 ): SyncManager {.forceCheck: [].} =
   SyncManager(
+    functions: functions,
+
     protocol: protocol,
     network: network,
+
     port: port,
 
-    id: 0,
-
     peers: peers,
-    requests: initTable[int, SyncRequest](),
 
-    functions: functions
+    requests: initTable[int, SyncRequest](),
+    id: 0
   )
 
-#Update the services byte.
 func updateServices*(
   manager: SyncManager,
-  service: uint8
-) {.forceCheck: [].} =
-  manager.services = char(uint8(manager.services) or service)
+  service: byte
+) {.inline, forceCheck: [].} =
+  manager.services = char(byte(manager.services) or service)
 
-#Handle a SyncRequest Response.
+#Handle a SyncRequest's Response.
 proc handleResponse[SyncRequestType, ResultType, CheckType](
   manager: SyncManager,
   peer: Peer,
@@ -274,7 +239,7 @@ proc handle*(
     return
 
   if (
-    ((uint8(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE) and
+    ((byte(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE) and
     (not tAddy.isLoopback()) and
     (not tAddy.isLinkLocal()) and
     (not tAddy.isSiteLocal())

@@ -1,23 +1,13 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/Wallet
 
-#Data object.
 import ../../../Database/Transactions/objects/DataObj
 
-#Common serialization functions.
 import ../SerializeCommon
 
-#SerializeTransaction method.
 import SerializeTransaction
 export SerializeTransaction
 
-#Serialization functions.
 method serializeHash*(
   data: Data
 ): string {.inline, forceCheck: [].} =
@@ -31,5 +21,5 @@ method serialize*(
   data.inputs[0].hash.serialize() &
   char(data.data.len - 1) &
   data.data &
-  data.signature.toString() &
+  data.signature.serialize() &
   data.proof.toBinary(INT_LEN)

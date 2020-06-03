@@ -1,107 +1,100 @@
-#Errors lib.
-import ../../lib/Errors
+import locks
+import tables
 
-#Util lib.
-import ../../lib/Util
+import chronos
 
-#Hash lib.
-import ../../lib/Hash
+import ../../lib/[Errors, Util, Hash]
 
-#GlobalFunctionBox object.
 import ../../objects/GlobalFunctionBoxObj
 
-#Message object.
 import MessageObj
-
-#Socket object.
 import SocketObj
 
-#Manager objects.
 import LiveManagerObj
 import SyncManagerObj
 
-#FileLimitTracker lib.
 import ../FileLimitTracker
 
-#Peer library.
 import ../Peer as PeerFile
 
-#SerializeCommon lib.
 import ../Serialize/SerializeCommon
 
-#Chronos external lib.
-import chronos
-
-#Locks standard lib.
-import locks
-
-#Tables standard lib.
-import tables
-
-#IP lock masks.
+#Masks used to lock an IP while we modify it.
 const
-  CLIENT_IP_LOCK: uint8 = 1
-  LIVE_IP_LOCK*: uint8 = 2
-  SYNC_IP_LOCK*: uint8 = 4
+  CLIENT_IP_LOCK: byte = 0b1
+  LIVE_IP_LOCK*: byte = 0b10
+  SYNC_IP_LOCK*: byte = 0b100
 
-#Network object.
 type Network* = ref object
-  #File limit tracker. Used to ensure we don't hit ulimit.
-  fileTracker*: FileLimitTracker
-
-  #Lock for the IP masks.
-  ipLock: Lock
-  #IP masks.Explores science fiction + corporations ruling the world
-  masks: Table[string, uint8]
-
-  #Used to provide each Peer an unique ID.
-  count*: int
-  #Table of every Peer.
-  peers*: TableRef[int, Peer]
-  #IDs of every Peer.
-  ids*: seq[int]
-  #Set of the IPs of our peers who have Live sockets.
-  live*: Table[string, int]
-  #Set of the IPs of our peers who have Sync sockets.
-  sync*: Table[string, int]
-
-  #Last local peer.
-  #We support unlimited connections from 127.0.0.1.
-  #That said, we still attempt to link live/sync sockets.
-  #This is how.
-  lastLocalPeer*: Peer
-
-  #Server.
-  server*: StreamServer
-
-  #Live Manager.
-  liveManager*: LiveManager
-  #Sync Manager.
-  syncManager*: SyncManager
-
-  #Global Function Box.
   functions*: GlobalFunctionBox
 
-#Constructor.
+  #[
+  File limit tracker. Used to ensure we don't trigger ulimit, causing undefined behavior.
+  It shouldn't actually be undefined; just behavior we don't account for and handle.
+  This causes undefined behavior in the node.
+  Also allows us to refer clients to other peers when we're near our limit.
+  ]#
+  fileTracker*: FileLimitTracker
+
+  #[
+  Lock for the IP masks.
+  This is required before the byte locks are modified.
+  Then when the byte locks are modified, safe modification of the Peers is possible.
+  ]#
+  ipLock: Lock
+  masks: Table[string, byte]
+
+  #Used to provide each Peer an unique ID.
+  #peers.len wouldn't work due to peers disconnecting over time.
+  count*: int
+
+  peers*: TableRef[int, Peer]
+
+  #[
+  Dedicated seq exists, instead of using peers.items or a HashSet, so we can mutate the ID list as we iterate.
+  We could use peers.items, combined with a queue to delete after the fact, as that may be cleaner.
+  ]#
+  ids*: seq[int]
+
+  #Tables pointing from an IP to the peer ID. Exists for both live and sync.
+  live*: Table[string, int]
+  sync*: Table[string, int]
+
+  #[
+  Last local peer.
+  We support unlimited connections from 127.0.0.1.
+  That said, we still attempt to link live/sync sockets.
+  This is an imperfect solution which allows that.
+  When a new Sync socket is added, if this Peer is missing the Live socket, they're linked.
+  The same applies when a Live socket is added.
+  ]#
+  lastLocalPeer*: Peer
+
+  server*: StreamServer
+
+  liveManager*: LiveManager
+  syncManager*: SyncManager
+
 proc newNetwork*(
   protocol: int,
   networkID: int,
   port: int,
   functions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
+  #This is set to network, instead of result, so the functions defined inside this function have access.
   var network: Network = Network(
+    functions: functions,
+
     fileTracker: newFileLimitTracker(),
 
-    masks: initTable[string, uint8](),
+    masks: initTable[string, byte](),
 
     #Starts at 1 because the local node is 0.
     count: 1,
     peers: newTable[int, Peer](),
     ids: @[],
     live: initTable[string, int](),
-    sync: initTable[string, int](),
-
-    functions: functions
+    sync: initTable[string, int]()
   )
   initLock(network.ipLocK)
 
@@ -120,6 +113,7 @@ proc newNetwork*(
     functions
   )
 
+  #Set result to network so it's returned.
   result = network
 
   #Add a repeating timer to remove inactive Peers.
@@ -216,12 +210,13 @@ proc newNetwork*(
       panic("Setting a timer to update the amount of open files failed: " & e.msg)
   updateFileTracker()
 
+#Lock an IP so we can modify its Peer.
 proc lockIP*(
   network: Network,
   ip: string,
-  mask: uint8 = CLIENT_IP_LOCK
+  mask: byte = CLIENT_IP_LOCK
 ): Future[bool] {.forceCheck: [], async.} =
-  #Acquire the IP lock.
+  #Acquire the IP lock so we can edit the locks in the first place.
   while true:
     if tryAcquire(network.ipLock):
       break
@@ -239,7 +234,7 @@ proc lockIP*(
   elif mask == CLIENT_IP_LOCK:
     result = false
   else:
-    var currMask: uint8
+    var currMask: byte
     try:
       currMask = network.masks[ip]
     except KeyError as e:
@@ -262,7 +257,7 @@ proc lockIP*(
 proc unlockIP*(
   network: Network,
   ip: string,
-  mask: uint8 = CLIENT_IP_LOCK
+  mask: byte = CLIENT_IP_LOCK
 ) {.forceCheck: [], async.} =
   #Acquire the IP lock.
   while true:
@@ -275,7 +270,7 @@ proc unlockIP*(
       panic("Failed to complete an async sleep: " & e.msg)
 
   #Remove the bitmask.
-  var newMask: uint8
+  var newMask: byte
   try:
     newMask = network.masks[ip] and (not mask)
   except KeyError as e:
@@ -290,7 +285,6 @@ proc unlockIP*(
   #Release the IP lock.
   release(network.ipLock)
 
-#Add a peer.
 proc add*(
   network: Network,
   peer: Peer
@@ -304,7 +298,6 @@ proc add*(
   if peer.ip.len == 6:
     network.lastLocalPeer = peer
 
-#Disconnect a peer.
 proc disconnect*(
   network: Network,
   peer: Peer
@@ -321,7 +314,7 @@ proc disconnect*(
       network.ids.del(p)
       break
 
-#Disconnects every Peer.
+#Disconnect every Peer.
 proc shutdown*(
   network: Network
 ) {.forceCheck: [].} =

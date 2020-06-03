@@ -1,14 +1,6 @@
-#Errors lib.
+import sequtils, strutils
+
 import ../lib/Errors
-
-#Util lib (used for parseHexInt).
-import ../lib/Util
-
-#Seq utils standard lib.
-import sequtils
-
-#String utils standard lib.
-import strutils
 
 #Human readable data.
 const ADDRESS_HRP {.strdefine.}: string = "mr"
@@ -38,12 +30,12 @@ const BCH_VALUES: array[5, uint32] = [
 ]
 
 #AddressType enum.
+#Right now, there's only PublicKey, yet in the future, there may PublicKeyHash/Stealth.
 type AddressType* = enum
   PublicKey
 
 #Address object. Specifically stores a decoded address.
 type Address* = object
-  #Type is unfortunately a key word.
   addyType*: AddressType
   data*: seq[byte]
 
@@ -59,7 +51,6 @@ func polymod(
     for i in 0 ..< 5:
       if ((b shr i) and 1) == 1:
         result = result xor BCH_VALUES[i]
-
 
 #Generates a BCH code.
 func generateBCH(
@@ -130,31 +121,29 @@ func newAddress*(
 func isValidAddress*(
   address: string
 ): bool {.forceCheck: [].} =
-  #Return true if there's no issue.
-  result = true
+  if (
+    #Check the prefix.
+    (address.substr(0, ADDRESS_HRP.len).toLower() != ADDRESS_HRP & "1") or
+    #Check the length.
+    (address.len < ADDRESS_HRP.len + 6) or (90 < address.len) or
+    #Make sure it's all upper case or all lower case.
+    (address.toLower() != address) and (address.toUpper() != address)
+  ):
+    return false
 
-  #Check for the prefix.
-  if address.substr(0, ADDRESS_HRP.len).toLower() != ADDRESS_HRP & "1":
-    return false
-  #Check the length.
-  if (address.len < ADDRESS_HRP.len + 6) or (90 < address.len):
-    return false
-  #Make sure it's all in one case.
-  if (address.toLower() != address) and (address.toUpper() != address):
-    return false
   #Check to make sure it's a valid Base32 number.
   for c in address.substr(ADDRESS_HRP.len + 1, address.len).toLower():
-    #If the character is not in the character set...
     if CHARACTERS.find(c) == -1:
       return false
+
   #Check the BCH code.
   var
     dataStr: string = address.substr(ADDRESS_HRP.len + 1, address.len).toLower()
     data: seq[byte] = @[]
   for c in dataStr:
     data.add(byte(CHARACTERS.find(c)))
-  if not verifyBCH(data):
-    return false
+
+  return verifyBCH(data)
 
 #Get the data encoded in an address.
 proc getEncodedData*(

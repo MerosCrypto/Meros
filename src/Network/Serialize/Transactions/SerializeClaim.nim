@@ -1,21 +1,13 @@
-#Errors lib.
-import ../../../lib/Errors
+import ../../../lib/[Errors, Hash]
 
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet libs.
-import ../../../Wallet/Wallet
+import ../../../Wallet/[Wallet, MinerWallet]
 import ../../../Wallet/MinerWallet
 
-#Claim object.
 import ../../../Database/Transactions/objects/ClaimObj
 
-#SerializeTransaction method.
 import SerializeTransaction
 export SerializeTransaction
 
-#Serialization functions.
 method serializeHash*(
   claim: Claim
 ): string {.inline, forceCheck: [].} =
@@ -32,5 +24,5 @@ method serialize*(
 
   #Serialize the output and signature.
   result &=
-    cast[SendOutput](claim.outputs[0]).key.toString() &
+    cast[SendOutput](claim.outputs[0]).key.serialize() &
     claim.signature.serialize()

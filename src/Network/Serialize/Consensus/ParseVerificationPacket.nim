@@ -1,19 +1,10 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
-#VerificationPacket object.
 import ../../../Database/Consensus/Elements/objects/VerificationPacketObj
 
-#Serialize/Deserialize functions.
 import ../SerializeCommon
 
-#Parse a VerificationPacket.
 proc parseVerificationPacket*(
   packet: string
 ): VerificationPacket {.forceCheck: [

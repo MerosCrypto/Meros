@@ -1,11 +1,9 @@
 #This library returns the max amount of open files, as well as how many files we have open.
 #It's under Network/ because its only used to determine if we've hit our max peer count.
 
-#Errors lib.
-import ../lib/Errors
-
-#OS standard lib.
 import os
+
+import ../lib/Errors
 
 const
   #Amount of files to reserve. Any Peer that fits into this buffer will be sent Busy and disconnected.

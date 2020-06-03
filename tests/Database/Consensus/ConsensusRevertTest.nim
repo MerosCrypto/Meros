@@ -782,7 +782,7 @@ suite "ConsensusRevert":
             try:
               discard dataTips[wallets[w].publicKey]
             except KeyError:
-              data = newData(Hash[256](), wallets[w].publicKey.toString())
+              data = newData(Hash[256](), wallets[w].publicKey.serialize())
               wallets[w].sign(data)
               data.mine(uint32(0))
               add(data)

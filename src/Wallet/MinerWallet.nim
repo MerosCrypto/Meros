@@ -1,25 +1,16 @@
-#Errors objects.
 import ../lib/objects/ErrorObjs
 
-#Util lib.
 from ../lib/Util import randomFill
 
-#BLS lib.
 import BLS
 export BLS
 
-#Miner object.
 type MinerWallet* = object
-  #Initiated.
   initiated*: bool
-  #Private Key.
   privateKey*: BLSPrivateKey
-  #Public Key.
   publicKey*: BLSPublicKey
-  #Nickname.
   nick*: uint16
 
-#Constructors.
 proc newMinerWallet*(
   privKey: string
 ): MinerWallet {.forceCheck: [
@@ -51,7 +42,6 @@ proc newMinerWallet*(): MinerWallet {.forceCheck: [
   except BLSError as e:
     raise e
 
-#Sign a message via a MinerWallet.
 proc sign*(
   miner: MinerWallet,
   msg: string

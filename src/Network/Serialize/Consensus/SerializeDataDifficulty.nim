@@ -1,16 +1,9 @@
-#Errors lib.
 import ../../../lib/Errors
-
-#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#DataDifficulty object.
 import ../../../Database/Consensus/Elements/objects/DataDifficultyObj
 
-#Common serialization functions.
 import ../SerializeCommon
-
-#SerializeElement method.
 import SerializeElement
 export SerializeElement
 

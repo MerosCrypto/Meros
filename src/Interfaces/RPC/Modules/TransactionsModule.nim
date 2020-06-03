@@ -141,9 +141,7 @@ proc module*(
           of AddressType.PublicKey:
             try:
               utxos = functions.transactions.getUTXOs(
-                newEdPublicKey(
-                  cast[string](decodedAddy.data)
-                )
+                newEdPublicKey(cast[string](decodedAddy.data))
               )
             except ValueError:
               raise newLoggedException(ParamError, "")

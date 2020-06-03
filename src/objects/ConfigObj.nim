@@ -6,23 +6,12 @@ Finally, there are CLI options.
 CLI options will override options from the settings file which will override the default paramters.
 ]#
 
-#Errors lib.
-import ../lib/Errors
-
-#Utils lib.
-import ../lib/Util
-
-#OS standard lib.
 import os
-
-#String utils standard lib.
 import strutils
-
-#Tables standard lib.
 import tables
-
-#JSON standard lib.
 import json
+
+import ../lib/[Errors, Util]
 
 const
   #Help test.
@@ -32,15 +21,15 @@ Parameters can be specified over the CLI or via a JSON file, named
 `settings.json`, placed in the data directory.
 
 OPTIONS:
-  -h,  --help             Prints this help.
+  -h,  --help                       Prints this help.
   -d,  --data-dir  <DATA_DIRECTORY> Directory to store data in.
-  -l,  --log-file  <LOG_FILE>     File to save the log to.
-     --db    <DB_NAME>    Name for the database file.
-  -n,  --network   <NETWORK>    Network to connect to.
-  -ns, --no-server          Don't accept incoming connections.
-  -t,  --tcp-port  <PORT>       Port to listen for connections on.
-  -r,  --rpc-port  <PORT>       Port the RPC should listen on.
-  -ng, --no-gui           Don't start the GUI."""
+  -l,  --log-file  <LOG_FILE>       File to save the log to.
+  --db             <DB_NAME>        Name for the database file.
+  -n,  --network   <NETWORK>        Network to connect to.
+  -ns, --no-server                  Don't accept incoming connections.
+  -t,  --tcp-port  <PORT>           Port to listen for connections on.
+  -r,  --rpc-port  <PORT>           Port the RPC should listen on.
+  -ng, --no-gui                     Don't start the GUI."""
 
   #Table of which long parameter a short parameter represents.
   shortParams: Table[string, string] = {
@@ -58,23 +47,19 @@ OPTIONS:
   longParams: Table[string, int] = {
     "data-dir":  1,
     "log-file":  1,
-    "db":    1,
+    "db":        1,
     "network":   1,
     "no-server": 0,
     "tcp-port":  1,
     "rpc-port":  1,
-    "no-gui":  0
+    "no-gui":    0
   }.toTable()
 
 type Config* = object
-  #Data Directory.
   dataDir*: string
-  #Log file.
   logFile*: string
-  #DB Path.
   db*: string
 
-  #Network we're connecting to.
   network*: string
 
   #Listening for Meros connections or not.
@@ -84,7 +69,11 @@ type Config* = object
   #Port for the RPC to listen on.
   rpcPort*: int
 
-  #Spawn a GUI or not.
+  #[
+  Spawn a GUI or not.
+  There's a compile time switch to not import any GUI code.
+  This allows a machine with no desktop environment to compile Meros, and nullifies this flag.
+  ]#
   gui*: bool
 
 #Returns the key if it exists and matches the passed type.
@@ -105,7 +94,6 @@ proc get(
       doAssert(false, "Couldn't get a JSON field despite confirming it exists: " & e.msg)
   raise newException(IndexError, "Key is not present in this JSON.")
 
-#Constructor.
 proc newConfig*(): Config {.forceCheck: [].} =
   #Create the config with the default options.
   result = Config(

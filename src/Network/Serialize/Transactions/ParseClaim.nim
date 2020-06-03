@@ -1,20 +1,10 @@
-#Errors lib.
-import ../../../lib/Errors
+import ../../../lib/[Errors, Hash]
+import ../../../Wallet/[Wallet, MinerWallet]
 
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet libs.
-import ../../../Wallet/Wallet
-import ../../../Wallet/MinerWallet
-
-#Claim object.
 import ../../../Database/Transactions/objects/ClaimObj
 
-#Common serialization functions.
 import ../SerializeCommon
 
-#Parse function.
 proc parseClaim*(
   claimStr: string
 ): Claim {.forceCheck: [

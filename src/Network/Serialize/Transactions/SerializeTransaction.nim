@@ -1,10 +1,7 @@
-#Errors lib.
 import ../../../lib/Errors
 
-#Transaction object.
 import ../../../Database/Transactions/objects/TransactionObj
 
-#Base serialize functions.
 method serializeHash*(
   tx: Transaction
 ): string {.base, forceCheck: [].} =

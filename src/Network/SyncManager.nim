@@ -1,62 +1,24 @@
-#Errors lib.
-import ../lib/Errors
+import algorithm
+import strutils
+import sets, tables
 
-#Util lib.
-import ../lib/Util
-
-#Hash lib.
-import ../lib/Hash
-
-#Sketcher lib.
-import ../lib/Sketcher
-
-#Block lib.
-import ../Database/Merit/Block as BlockFile
-
-#State lib.
-import ../Database/Merit/State
-
-#Elements lib.
-import ../Database/Consensus/Elements/Elements
-
-#TransactionStatus lib.
-import ../Database/Consensus/TransactionStatus
-
-#Transactions lib.
-import ../Database/Transactions/Transactions
-
-#Message object.
-import objects/MessageObj
-
-#SketchyBlock object.
-import objects/SketchyBlockObj
-export SketchyBlock
-
-#Peer lib.
-import Peer
-export Peer
-
-#SyncRequest object.
-import objects/SyncRequestObj
-
-#SyncManager object.
-import objects/SyncManagerObj
-export SyncManagerObj
-
-#Chronos external lib.
 import chronos
 
-#Algorithm standard lib.
-import algorithm
+import ../lib/[Errors, Util, Hash, Sketcher]
 
-#Sets standard lib.
-import sets
+import ../Database/Merit/Block as BlockFile
+import ../Database/Merit/State
 
-#Table standard lib.
-import tables
+import ../Database/Consensus/Elements/Elements
+import ../Database/Consensus/TransactionStatus
 
-#String utils standard lib.
-import strutils
+import ../Database/Transactions/Transactions
+
+import objects/[MessageObj, SketchyBlockObj, SyncRequestObj, SyncManagerObj]
+export SketchyBlock, SyncManagerObj
+
+import Peer
+export Peer
 
 #Custom future which includes a set timeout.
 type SyncFuture[T] = ref object
@@ -67,7 +29,7 @@ type SyncFuture[T] = ref object
   timeout: int
 
 proc newSyncFuture[T](
-  manager: SyncManagerObj.SyncManager, #Fixes a resolution bug in Nim.
+  manager: SyncManagerObj.SyncManager,
   id: int,
   future: Future[T],
   timeout: int
@@ -122,7 +84,6 @@ proc syncAwait*[T](
   except ValueError as e:
     panic("Couldn't read the value of a completed future: " & e.msg)
 
-#Sync a missing Transaction.
 proc syncTransaction*(
   manager: SyncManager,
   hash: Hash[256]
@@ -152,7 +113,6 @@ proc syncTransaction*(
     except Exception as e:
       panic("Couldn't send a TransactionRequest to a Peer: " & e.msg)
 
-#Sync missing Verification Packets.
 proc syncVerificationPackets*(
   manager: SyncManager,
   hash: Hash[256],
@@ -184,7 +144,6 @@ proc syncVerificationPackets*(
     except Exception as e:
       panic("Couldn't send a SketchHashSyncRequests to a Peer: " & e.msg)
 
-#Sync missing Sketch Hashes.
 proc syncSketchHashes*(
   manager: SyncManager,
   hash: Hash[256],
@@ -550,7 +509,6 @@ proc sync*(
 
     hasElem.incl(elem.holder)
 
-#Sync a missing BlockBody.
 proc syncBlockBody*(
   manager: SyncManager,
   hash: Hash[256],
@@ -581,7 +539,6 @@ proc syncBlockBody*(
     except Exception as e:
       panic("Couldn't send a BlockBodySyncRequest to a Peer: " & e.msg)
 
-#Sync a missing BlockHeader.
 proc syncBlockHeader*(
   manager: SyncManager,
   hash: Hash[256]
@@ -643,7 +600,6 @@ proc syncBlockList*(
     except Exception as e:
       panic("Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)
 
-#Sync peers.
 proc syncPeers*(
   manager: SyncManager,
   seeds: seq[tuple[ip: string, port: int]]

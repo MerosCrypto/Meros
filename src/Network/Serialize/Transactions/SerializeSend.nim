@@ -1,23 +1,13 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/Wallet
 
-#Send object.
 import ../../../Database/Transactions/objects/SendObj
 
-#Common serialization functions.
 import ../SerializeCommon
 
-#SerializeTransaction method.
 import SerializeTransaction
 export SerializeTransaction
 
-#Serialization functions.
 method serializeHash*(
   send: Send
 ): string {.forceCheck: [].} =
@@ -29,7 +19,7 @@ method serializeHash*(
   result &= char(send.outputs.len)
   for output in send.outputs:
     result &=
-      cast[SendOutput](output).key.toString() &
+      cast[SendOutput](output).key.serialize() &
       output.amount.toBinary(MEROS_LEN)
 
 method serialize*(
@@ -46,9 +36,9 @@ method serialize*(
   result &= char(send.outputs.len)
   for output in send.outputs:
     result &=
-      cast[SendOutput](output).key.toString() &
+      cast[SendOutput](output).key.serialize() &
       output.amount.toBinary(MEROS_LEN)
 
   result &=
-    send.signature.toString() &
+    send.signature.serialize() &
     send.proof.toBinary(INT_LEN)

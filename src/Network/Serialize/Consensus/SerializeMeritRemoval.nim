@@ -1,21 +1,11 @@
-#Errors lib.
 import ../../../lib/Errors
-
-#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#MeritRemoval object.
 import ../../../Database/Consensus/Elements/objects/MeritRemovalObj
 
-#Common serialization functions.
 import ../SerializeCommon
-
-#SerializeElement method.
-import SerializeElement
+import SerializeElement, SerializeVerification
 export SerializeElement
-
-#Serialize Elements methods.
-import SerializeVerification
 
 #Serialize a MeritRemoval.
 method serialize*(

@@ -1,11 +1,9 @@
-#Errors lib.
 import ../../lib/Errors
 
-#BlockHeader/Block libs.
-import ../../Database/Merit/BlockHeader
+import ../../Database/Merit/[BlockHeader, Block]
 import ../../Database/Merit/Block
 
-#Type for partial BlockBody/Block data and the matching sketches.
+#Types for partial BlockBody/Block data combined with the matching sketches.
 type
   SketchyBlockBody* = object
     data*: BlockBody

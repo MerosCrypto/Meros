@@ -1,9 +1,7 @@
-#Errors lib.
-import ../../lib/Errors
-
-#Chronos external lib.
 import chronos
 export TransportAddress
+
+import ../../lib/Errors
 
 type Socket* = ref object
   stream: StreamTransport

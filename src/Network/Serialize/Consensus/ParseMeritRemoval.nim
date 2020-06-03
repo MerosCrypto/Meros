@@ -1,23 +1,14 @@
-#Errors lib.
 import ../../../lib/Errors
-
-#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#MeritRemoval lib.
 import ../../../Database/Consensus/Elements/MeritRemoval
 
-#Serialize/Deserialize functions.
 import ../SerializeCommon
 
-#Parse Element libs.
-import ParseElement
-import ParseVerification
-import ParseVerificationPacket
-import ParseSendDifficulty
-import ParseDataDifficulty
+import ParseElement, ParseVerification, ParseVerificationPacket
+import ParseSendDifficulty, ParseDataDifficulty
 
-#Parse an Element in a MeritRemoval.
+#Parse an Element out of a MeritRemoval.
 proc parseMeritRemovalElement(
   data: string,
   i: int,
@@ -32,7 +23,7 @@ proc parseMeritRemovalElement(
     result.len = 0
     if int(data[i]) == VERIFICATION_PACKET_PREFIX:
       result.len = {
-        uint8(VERIFICATION_PACKET_PREFIX)
+        byte(VERIFICATION_PACKET_PREFIX)
       }.getLength(data[i])
 
     result.len += MERIT_REMOVAL_ELEMENT_SET.getLength(

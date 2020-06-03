@@ -8,7 +8,6 @@ import ../../../Database/Consensus/Consensus
 
 import ../objects/RPCObj
 
-
 proc module*(
   functions: GlobalFunctionBox
 ): RPCFunctions {.forceCheck: [].} =

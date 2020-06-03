@@ -1,19 +1,10 @@
-#Errors lib.
 import ../../../lib/Errors
 
-#Element object.
 import ../../../Database/Consensus/Elements/objects/ElementObj
 
-#Serialize/Deserialize functions.
 import ../SerializeCommon
+import ParseElement, ParseSendDifficulty, ParseDataDifficulty, ParseMeritRemoval
 
-#Parse Element libs.
-import ParseElement
-import ParseSendDifficulty
-import ParseDataDifficulty
-import ParseMeritRemoval
-
-#Parse a BlockElement.
 proc parseBlockElement*(
   data: string,
   i: int
@@ -33,7 +24,7 @@ proc parseBlockElement*(
           holders: int = 0
         if int(data[i + result.len]) == VERIFICATION_PACKET_PREFIX:
           holdersLen = {
-            uint8(VERIFICATION_PACKET_PREFIX)
+            byte(VERIFICATION_PACKET_PREFIX)
           }.getLength(data[i + result.len])
           holders = data[i + result.len + 1 .. i + result.len + holdersLen].fromBinary()
 

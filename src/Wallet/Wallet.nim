@@ -1,13 +1,7 @@
-#Errors lib.
 import ../lib/Errors
 
-#HDWallet lib,.
-import HDWallet
-export HDWallet
-
-#mnemonic lib.
-import Mnemonic
-export Mnemonic.Mnemonic, `$`
+import Mnemonic, HDWallet
+export Mnemonic.Mnemonic, `$`, HDWallet
 
 type Wallet* = ref object
   mnemonic*: Mnemonic
@@ -15,7 +9,6 @@ type Wallet* = ref object
   external*: HDWallet
   internal*: HDWallet
 
-#Constructors.
 proc newWallet*(
   password: string
 ): Wallet {.forceCheck: [].} =
@@ -46,13 +39,11 @@ proc newWallet*(
   except ValueError as e:
     raise e
 
-#Converter.
 converter toHDWallet*(
   wallet: Wallet
 ): HDWallet {.forceCheck: [].} =
   wallet.hd
 
-#Getters.
 proc privateKey*(
   wallet: Wallet
 ): EdPrivateKey {.forceCheck: [].} =
