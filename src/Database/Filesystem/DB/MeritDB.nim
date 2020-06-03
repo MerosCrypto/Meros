@@ -1,44 +1,22 @@
-#Errors lib.
-import ../../../lib/Errors
+import sets
+import tables
 
-#Util lib.
-import ../../../lib/Util
+import stint
 
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
 
-#Elements lib.
 import ../../Consensus/Elements/Elements
 
-#BlockHeader and Block objects.
-import ../../Merit/objects/BlockHeaderObj
-import ../../Merit/objects/BlockObj
+import ../../Merit/objects/[BlockHeaderObj, BlockObj]
 
-#Serialization libs.
 import ../../../Network/Serialize/SerializeCommon
 
-import Serialize/Merit/DBSerializeBlock
+import Serialize/Merit/[DBSerializeBlock, DBParseBlockHeader, DBParseBlock]
 
-import Serialize/Merit/DBParseBlockHeader
-import Serialize/Merit/DBParseBlock
-
-#DB object.
 import objects/DBObj
 export DBObj
 
-#StInt external lib.
-import stint
-
-#Tables standard lib.
-import tables
-
-#Sets standard lib.
-import sets
-
-#Key generators.
 template RANDOMX_KEY(): string =
   "r"
 
@@ -119,7 +97,6 @@ template HOLDER_REMOVALS(
 ): string =
   nick.toBinary(NICKNAME_LEN) & "r"
 
-#Put/Get/Commit for the Merit DB.
 proc put(
   db: DB,
   key: string,
@@ -197,7 +174,6 @@ proc commit*(
 
   db.merit.cache = initTable[string, string]()
 
-#Save functions.
 proc saveUpcomingKey*(
   db: DB,
   key: string
@@ -291,7 +267,6 @@ proc remove*(
     discard
   db.put(HOLDER_REMOVALS(nick), removals & blockNum.toBinary(INT_LEN))
 
-#Load functions.
 proc loadUpcomingKey*(
   db: DB
 ): string {.forceCheck: [
@@ -476,7 +451,6 @@ proc loadHolderRemovals*(
   for i in countup(0, removals.len - 1, 4):
     result.add(removals[i ..< i + 4].fromBinary())
 
-#Check if a Block exists.
 proc hasBlock*(
   db: DB,
   hash: Hash[256]
@@ -487,13 +461,11 @@ proc hasBlock*(
   except DBReadError:
     return false
 
-#Delete the upcoming key.
 proc deleteUpcomingKey*(
   db: DB
 ) {.forceCheck: [].} =
   db.del(UPCOMING_RANDOMX_KEY())
 
-#Delete a Block.
 proc deleteBlock*(
   db: DB,
   nonce: int,

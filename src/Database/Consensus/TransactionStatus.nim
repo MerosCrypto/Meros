@@ -4,8 +4,7 @@ import tables
 import ../../lib/Errors
 import ../../Wallet/MinerWallet
 
-import Elements/Verification
-import Elements/VerificationPacket
+import Elements/[Verification, VerificationPacket]
 
 import objects/TransactionStatusObj
 export TransactionStatusObj

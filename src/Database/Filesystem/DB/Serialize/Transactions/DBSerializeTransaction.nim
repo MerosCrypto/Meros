@@ -1,16 +1,24 @@
-#Errors lib.
-import ../../../../../lib/Errors
+import ../../../../../lib/[Errors, Hash]
 
-#Transaction objects.
-import ../../../..//Transactions/Transaction
+import ../../../../Transactions/Transaction
 
-#Serialization libs.
 import SerializeMint
-import ../../../../../Network/Serialize/Transactions/SerializeClaim
-import ../../../../../Network/Serialize/Transactions/SerializeSend
-import ../../../../../Network/Serialize/Transactions/SerializeData
+import ../../../../../Network/Serialize/Transactions/[
+  SerializeClaim,
+  SerializeSend,
+  SerializeData
+]
 
-#Serialize the TransactionObj.
+#Helper function to convert an input to a string.
+func serialize*(
+  input: Input
+): string {.forceCheck: [].} =
+  result = input.hash.toString()
+  if input of FundedInput:
+    result &= char(cast[FundedInput](input).nonce)
+  else:
+    result &= char(0)
+
 proc serialize*(
   tx: Transaction
 ): string {.forceCheck: [].} =

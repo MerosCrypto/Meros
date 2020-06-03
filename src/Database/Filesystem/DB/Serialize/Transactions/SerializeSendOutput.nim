@@ -1,23 +1,13 @@
-#Errors lib.
-import ../../../../../lib/Errors
-
-#Util lib.
-import ../../../../../lib/Util
-
-#Wallet lib.
+import ../../../../../lib/[Errors, Util]
 import ../../../../../Wallet/Wallet
 
-#SendOutput object.
-import ../../../..//Transactions/objects/TransactionObj
+import ../../../../Transactions/objects/TransactionObj
 
-#SerializeOutput method.
+import ../../../../../Network/Serialize/SerializeCommon
+
 import SerializeOutput
 export SerializeOutput
 
-#Common serialization functions.
-import ../../../../../Network/Serialize/SerializeCommon
-
-#Serialization function.
 method serialize*(
   output: SendOutput
 ): string {.inline, forceCheck: [].} =

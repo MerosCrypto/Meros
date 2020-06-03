@@ -1,16 +1,10 @@
-#Errors lib.
-import ../../lib/Errors
-
-#Util lib.
-import ../../lib/Util
-
-#StInt external lib.
-import stint
-
-#Algorithm standard lib.
 import algorithm
 
-#Calculate the window length.
+import stint
+
+import ../../lib/[Errors, Util]
+import algorithm
+
 proc calculateWindowLength*(
   height: int
 ): int {.forceCheck: [].} =
@@ -33,7 +27,6 @@ proc calculateWindowLength*(
   else:
     result = 72
 
-#Calculate the next difficulty.
 proc calculateNextDifficulty*(
   blockTime: StUInt[128],
   windowLength: int,
@@ -44,9 +37,7 @@ proc calculateNextDifficulty*(
     return difficultiesArg[0]
 
   var
-    #Difficulties.
     difficulties: seq[uint64]
-    #Median difficulty.
     median: uint64
 
   #Grab the difficulties.
@@ -55,7 +46,7 @@ proc calculateNextDifficulty*(
 
   #Sort the difficulties.
   difficulties.sort()
-  #Grab the meddian difficulty.
+  #Grab the median difficulty.
   median = difficulties[windowLength div 2]
   #Remove outlying difficulties.
   for _ in 0 ..< windowLength div 10:

@@ -1,47 +1,22 @@
-#Errors lib.
-import ../../lib/Errors
+import sets
+import tables
 
-#Util lib.
-import ../../lib/Util
+import stint
 
-#Hash lib.
-import ../../lib/Hash
-
-#MinerWallet lib.
+import ../../lib/[Errors, Util, Hash]
 import ../../Wallet/MinerWallet
 
-#VerificationPacket and MeritRemoval objects.
-import ../Consensus/Elements/objects/VerificationPacketObj
-import ../Consensus/Elements/objects/MeritRemovalObj
+import ../Consensus/Elements/objects/[VerificationPacketObj, MeritRemovalObj]
 
-#Element Serialization lib.
 import ../../Network/Serialize/Consensus/SerializeElement
 
-#Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
-#Difficulty, Block Header, and Block libs.
-import Difficulty
-import BlockHeader
-import Block
+import Difficulty, BlockHeader, Block, State
 
-#State lib.
-import State
-
-#Blockchain object.
 import objects/BlockchainObj
 export BlockchainObj
 
-#StInt external lib.
-import stint
-
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
-
-#Create a new Blockchain.
 proc newBlockchain*(
   db: DB,
   genesis: string,
@@ -55,7 +30,8 @@ proc newBlockchain*(
     initialDifficulty
   )
 
-#Test a BlockHeader.
+#Verify a Block Header.
+#Takes in so many arguments so we don't have to create a fake chain with all this info when we test forks.
 proc testBlockHeader*(
   miners: Table[BLSPublicKey, uint16],
   lookup: seq[BLSPublicKey],
@@ -65,15 +41,14 @@ proc testBlockHeader*(
 ) {.forceCheck: [
   ValueError
 ].} =
-  #Check the difficulty.
   if header.hash.overflows(difficulty):
     raise newLoggedException(ValueError, "Block doesn't beat the difficulty.")
 
-  #Check the version.
   if header.version != 0:
     raise newLoggedException(ValueError, "BlockHeader has an invalid version.")
 
-  #Check significant.
+  #This hardcoded magic number breaks this check on chains other than mainnet.
+  #We need to calculate this based off the fixed block reward of 50 and defined amount of dead blocks.
   if (header.significant == 0) or (header.significant > uint16(26280)):
     raise newLoggedException(ValueError, "Invalid significant.")
 
@@ -96,25 +71,21 @@ proc testBlockHeader*(
 
     key = lookup[header.minerNick]
 
-  #Check the time.
   if (header.time <= previous.time) or (header.time > getTime() + 30):
     raise newLoggedException(ValueError, "Block has an invalid time.")
 
-  #Check the signature.
   try:
     if not header.signature.verify(newBLSAggregationInfo(key, header.interimHash)):
       raise newLoggedException(ValueError, "Block has an invalid signature.")
   except BLSError as e:
     panic("Failed to verify a BlockHeader's signature: " & e.msg)
 
-#Adds a Block to the Blockchain.
 proc processBlock*(
   blockchain: var Blockchain,
   newBlock: Block
 ) {.forceCheck: [].} =
   logDebug "Blockchain processing Block", hash = newBlock.header.hash
 
-  #Add the Block.
   blockchain.add(newBlock)
 
   #Calculate the next difficulty.
@@ -126,12 +97,14 @@ proc processBlock*(
       time = blockchain.tail.header.time - blockchain[blockchain.height - windowLength].header.time
     except IndexError as e:
       panic("Couldn't get Block " & $(blockchain.height - windowLength) & " when the height is " & $blockchain.height & ": " & e.msg)
+
   blockchain.difficulties.add(calculateNextDifficulty(
     blockchain.blockTime,
     windowLength,
     blockchain.difficulties,
     time
   ))
+
   blockchain.db.save(newBlock.header.hash, blockchain.difficulties[^1])
   if blockchain.difficulties.len > 72:
     blockchain.difficulties.delete(0)
@@ -146,7 +119,6 @@ proc revert*(
   state: var State,
   height: int
 ) {.forceCheck: [].} =
-  #Revert the State.
   state.revert(blockchain, height)
 
   #Miners we changed the Merit of.
@@ -171,6 +143,7 @@ proc revert*(
     except IndexError as e:
       panic("Couldn't grab the Block we're reverting past: " & e.msg)
 
+    #If this Block killed Merit, restore it.
     if b > state.deadBlocks:
       var deadBlock: Block
       try:

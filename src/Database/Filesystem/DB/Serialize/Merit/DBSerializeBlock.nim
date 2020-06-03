@@ -1,27 +1,18 @@
-#Errors lib.
-import ../../../../../lib/Errors
-
-#Util lib.
-import ../../../../../lib/Util
-
-#Hash lib.
-import ../../../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../../../lib/[Errors, Util, Hash]
 import ../../../../../Wallet/MinerWallet
 
-#Block lib.
 import ../../../../Merit/Block
 
-#Serialization libs.
 import ../../../../../Network/Serialize/SerializeCommon
+
+import ../../../../../Network/Serialize/Consensus/[
+  SerializeVerification,
+  SerializeVerificationPacket,
+  SerializeMeritRemoval
+]
+
 import ../../../../../Network/Serialize/Merit/SerializeBlockHeader
 
-import ../../../../../Network/Serialize/Consensus/SerializeVerification
-import ../../../../../Network/Serialize/Consensus/SerializeVerificationPacket
-import ../../../../../Network/Serialize/Consensus/SerializeMeritRemoval
-
-#Serialize a Block.
 proc serialize*(
   blockArg: Block
 ): string {.forceCheck: [].} =

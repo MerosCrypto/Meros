@@ -1,47 +1,23 @@
-#Errors lib.
-import ../../../lib/Errors
+import sets
+import tables
 
-#Util lib.
-import ../../../lib/Util
-
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
 
-#Transaction object.
 import ../../Transactions/objects/TransactionObj
 
-#Elements lib.
 import ../../Consensus/Elements/Elements
-
-#TransactionStatus object.
 import ../../Consensus/objects/TransactionStatusObj
 
-#Serialization libs.
 import ../../../Network/Serialize/SerializeCommon
+import ../../../Network/Serialize/Consensus/[SerializeMeritRemoval, ParseMeritRemoval]
 
-import Serialize/Transactions/DBSerializeTransaction
-import Serialize/Transactions/ParseTransaction
+import Serialize/Transactions/[DBSerializeTransaction, ParseTransaction]
+import Serialize/Consensus/[SerializeTransactionStatus, ParseTransactionStatus]
 
-import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
-import ../../../Network/Serialize/Consensus/ParseMeritRemoval
-
-import Serialize/Consensus/SerializeTransactionStatus
-import Serialize/Consensus/ParseTransactionStatus
-
-#DB object.
 import objects/DBObj
 export DBObj
 
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
-
-#Key generators.
 template STATUS(
   hash: Hash[256]
 ): string =
@@ -121,7 +97,6 @@ template MERIT_REMOVAL_NONCES(
 ): string =
   holder.toBinary(NICKNAME_LEN) & "n"
 
-#Put/Get/Del/Commit for the Consensus DB.
 proc put(
   db: DB,
   key: string,
@@ -191,7 +166,6 @@ proc commit*(
 
   db.consensus.cache = initTable[string, string]()
 
-#Save functions.
 proc save*(
   db: DB,
   hash: Hash[256],
@@ -319,7 +293,6 @@ proc saveMeritRemovalNonce*(
 
   db.put(MERIT_REMOVAL_NONCES(holder), existing & nonce.toBinary(INT_LEN))
 
-#Load functions.
 proc load*(
   db: DB,
   hash: Hash[256]
@@ -530,7 +503,6 @@ proc deleteSignature*(
 ) {.inline, forceCheck: [].} =
   db.del(SIGNATURE(holder, nonce))
 
-#Delete a holder's current Send Difficulty.
 proc deleteSendDifficulty*(
   db: DB,
   holder: uint16
@@ -538,7 +510,6 @@ proc deleteSendDifficulty*(
   db.del(HOLDER_SEND_DIFFICULTY(holder))
   db.del(SEND_DIFFICULTY_NONCE(holder))
 
-#Delete a holder's current Data Difficulty.
 proc deleteDataDifficulty*(
   db: DB,
   holder: uint16
@@ -546,7 +517,6 @@ proc deleteDataDifficulty*(
   db.del(HOLDER_DATA_DIFFICULTY(holder))
   db.del(DATA_DIFFICULTY_NONCE(holder))
 
-#Delete a malicious proof for a holder.
 proc deleteMaliciousProof*(
   db: DB,
   mr: MeritRemoval
@@ -579,7 +549,6 @@ proc deleteMaliciousProof*(
   #If we did find it, we moved the last proof to its place.
   db.del(HOLDER_MALICIOUS_PROOF(mr.holder, proofs))
 
-#Deletes a MeritRemoval.
 proc deleteMeritRemoval*(
   db: DB,
   mr: MeritRemoval
@@ -615,7 +584,6 @@ proc deleteMeritRemoval*(
 
     db.put(MERIT_REMOVAL_NONCES(mr.holder), existing)
 
-#Check if a MeritRemoval exists.
 proc hasMeritRemoval*(
   db: DB,
   removal: MeritRemoval

@@ -1,35 +1,18 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Util lib.
-import ../../../lib/Util
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet libs.
-import ../../../Wallet/MinerWallet
-import ../../../Wallet/Wallet
-
-#Transaction object.
-import ../../Transactions/objects/TransactionObj
-
-#Epoch object.
-import ../../Merit/objects/EpochsObj
-
-#SerializeCommon lib.
-import ../../../Network/Serialize/SerializeCommon
-
-#Input toString function.
-from ../DB/TransactionsDB import toString
-
-#DB lib.
-import mc_lmdb
-
-#Tables standard lib.
 import tables
 
-#Key generators.
+import mc_lmdb
+
+import ../../../lib/[Errors, Util, Hash]
+import ../../../Wallet/[MinerWallet, Wallet]
+
+import ../../Transactions/objects/TransactionObj
+
+import ../../Merit/objects/EpochsObj
+
+import ../../../Network/Serialize/SerializeCommon
+
+import ../DB/Serialize/Transactions/DBSerializeTransaction
+
 template MNEMONIC(): string =
   "w"
 
@@ -59,7 +42,6 @@ template ELEMENT_NONCE(): string =
 template USING_ELEMENT_NONCE(): string =
   "u"
 
-#WalletDB.
 type WalletDB* = ref object
   lmdb: LMDB
 
@@ -79,7 +61,6 @@ type WalletDB* = ref object
 
     elementNonce: int
 
-#Put/Get/Delete/Commit for the Wallet DB.
 proc put(
   db: WalletDB,
   key: string,
@@ -163,7 +144,6 @@ proc commit*(
   #2) We need to read data we just modified in the Transaction.
   db.put(FINALIZED_NONCES(), db.finalizedNonces.toBinary())
 
-#Constructor.
 proc newWalletDB*(
   path: string,
   size: int64
@@ -241,7 +221,6 @@ proc newWalletDB*(
   except DBReadError:
     discard
 
-#Close the DB.
 proc close*(
   db: WalletDB
 ) {.forceCheck: [
@@ -270,7 +249,7 @@ proc setWallet*(
 
   db.put(MNEMONIC(), $db.wallet.mnemonic)
 
-#Set the miner's nick.
+#Set our miner's nick.
 proc setMinerNick*(
   db: WalletDB,
   nick: uint16
@@ -280,14 +259,12 @@ proc setMinerNick*(
   db.put(MINER_KEY(), db.miner.privateKey.serialize())
   db.put(MINER_NICK(), nick.toBinary())
 
-#Save our latest Data tip.
 proc saveDataTip*(
   db: WalletDB,
   hash: Hash[256]
 ) {.forceCheck: [].} =
   db.put(DATA_TIP(), hash.toString())
 
-#Load our latest Data tip.
 proc loadDataTip*(
   db: WalletDB
 ): Hash[256] {.forceCheck: [
@@ -340,7 +317,6 @@ proc getNonce*(
   inc(db.elementNonce)
   db.put(ELEMENT_NONCE(), db.elementNonce.toBinary())
 
-#Mark the nonce as used.
 proc useNonce*(
   db: WalletDB
 ) {.forceCheck: [].} =

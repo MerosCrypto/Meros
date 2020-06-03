@@ -1,5 +1,4 @@
-import ../../../../lib/Errors
-import ../../../../lib/Hash
+import ../../../../lib/[Errors, Hash]
 import ../../../../Wallet/MinerWallet
 
 import ElementObj

@@ -1,3 +1,5 @@
+import deques
+
 #Fuzzed lib.
 import ../../../Fuzzed
 

@@ -1,41 +1,22 @@
-#Errors lib.
-import ../../lib/Errors
+import algorithm
 
-#Util lib.
-import ../../lib/Util
-
-#Hash and Merkle libs.
-import ../../lib/Hash
-import ../../lib/Merkle
-
-#Sketcher lib.
-import ../../lib/Sketcher
-
-#MinerWallet lib.
+import ../../lib/[Errors, Util, Hash, Merkle, Sketcher]
 import ../../Wallet/MinerWallet
 
-#Element libs.
 import ../Consensus/Elements/Elements
 
-#BlockHeader object.
 import objects/BlockHeaderObj
 export BlockHeaderObj
 
-#SerializeCommon lib.
 import ../../Network/Serialize/SerializeCommon
-
-#Element Serialization libs.
-import ../../Network/Serialize/Consensus/SerializeVerification
-import ../../Network/Serialize/Consensus/SerializeSendDifficulty
-import ../../Network/Serialize/Consensus/SerializeDataDifficulty
-import ../../Network/Serialize/Consensus/SerializeVerificationPacket
-import ../../Network/Serialize/Consensus/SerializeMeritRemoval
-
-#BlockHeader Serialization lib.
+import ../../Network/Serialize/Consensus/[
+  SerializeVerification,
+  SerializeVerificationPacket,
+  SerializeSendDifficulty,
+  SerializeDataDifficulty,
+  SerializeMeritRemoval
+]
 import ../../Network/Serialize/Merit/SerializeBlockHeader
-
-#Algorithm standard lib.
-import algorithm
 
 #Sign and hash the header.
 proc hash*(
@@ -110,7 +91,6 @@ proc newContents*(
       contents: Blake256(packetsMerkle.hash.toString() & elementsMerkle.hash.toString())
     )
 
-#Constructor.
 proc newBlockHeader*(
   version: uint32,
   last: RandomXHash,

@@ -1,25 +1,13 @@
-#Errors lib.
-import ../../../../../lib/Errors
-
-#Util lib.
-import ../../../../../lib/Util
-
-#MinerWallet lib.
-import ../../../../../Wallet/MinerWallet
-
-#TransactionStatus object.
-import ../../../../Consensus/objects/TransactionStatusObj
-
-#Common serialization functions.
-import ../../../../../Network/Serialize/SerializeCommon
-
-#Sets standard lib.
 import sets
-
-#Table standard lib.
 import tables
 
-#Serialization function.
+import ../../../../../lib/[Errors, Util]
+import ../../../../../Wallet/MinerWallet
+
+import ../../../../Consensus/objects/TransactionStatusObj
+
+import ../../../../../Network/Serialize/SerializeCommon
+
 proc serialize*(
   status: TransactionStatus
 ): string {.forceCheck: [].} =

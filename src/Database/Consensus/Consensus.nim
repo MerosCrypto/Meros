@@ -1,20 +1,17 @@
 import sets
 import tables
 
-import ../../lib/Errors
-import ../../lib/Hash
+import ../../lib/[Errors, Hash]
 import ../../Wallet/MinerWallet
 
 import ../../objects/GlobalFunctionBoxObj
 
 #Used to create a key out of a Transaction.
 #Literally no value in writing a new implementation.
-from ../Filesystem/DB/TransactionsDB import toString
+from ../Filesystem/DB/Serialize/Transactions/DBSerializeTransaction import serialize
 import ../Transactions/Transactions
 
-import ../Merit/objects/BlockObj
-import ../Merit/objects/BlockchainObj
-import ../Merit/objects/EpochsObj
+import ../Merit/objects/[BlockObj, BlockchainObj, EpochsObj]
 import ../Merit/State
 
 import objects/SpamFilterObj
@@ -31,10 +28,12 @@ import ../Filesystem/DB/ConsensusDB
 import objects/ConsensusObj
 export ConsensusObj
 
-import ../../Network/Serialize/Consensus/SerializeElement
-import ../../Network/Serialize/Consensus/SerializeVerification
-import ../../Network/Serialize/Consensus/SerializeSendDifficulty
-import ../../Network/Serialize/Consensus/SerializeDataDifficulty
+import ../../Network/Serialize/Consensus/[
+  SerializeElement,
+  SerializeVerification,
+  SerializeSendDifficulty,
+  SerializeDataDifficulty
+]
 
 proc newConsensus*(
   functions: GlobalFunctionBox,
@@ -106,7 +105,7 @@ proc verify*(
         raise newLoggedException(ValueError, "Unknown Transaction verified in first Element.")
 
     for input in tx.inputs:
-      inputs.incl(input.toString())
+      inputs.incl(input.serialize())
 
     var secondHash: Hash[256]
     case mr.element2:
@@ -137,7 +136,7 @@ proc verify*(
         raise newLoggedException(ValueError, "Unknown Transaction verified in second Element.")
 
     for input in tx.inputs:
-      if inputs.contains(input.toString()):
+      if inputs.contains(input.serialize()):
         return
     raise newLoggedException(ValueError, "Transactions don't compete.")
 

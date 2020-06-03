@@ -1,18 +1,10 @@
-#Errors lib.
-import ../../../../lib/Errors
+import sets
+import tables
 
-#Hash lib.
-import ../../../../lib/Hash
-
-#DB lib.
 import mc_lmdb
 export put, get, delete
 
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
+import ../../../../lib/[Errors, Hash]
 
 type
   TransactionsDB* = ref object
@@ -39,7 +31,6 @@ type
     consensus*: ConsensusDB
     merit*: MeritDB
 
-#Constructors.
 proc newTransactionsDB(): TransactionsDB {.inline, forceCheck: [].} =
   TransactionsDB(
     cache: initTable[string, string](),

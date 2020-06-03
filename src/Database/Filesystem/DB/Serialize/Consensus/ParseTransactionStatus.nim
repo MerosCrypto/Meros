@@ -1,32 +1,16 @@
-#Errors lib.
-import ../../../../../lib/Errors
+import sets
+import tables
 
-#Util lib.
-import ../../../../../lib/Util
-
-#Hash lib.
-import ../../../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../../../lib/[Errors, Util, Hash]
 import ../../../../../Wallet/MinerWallet
 
-#VerificationPacket and TransactionStatus objects.
 import ../../../../Consensus/Elements/objects/VerificationPacketObj
 import ../../../../Consensus/objects/TransactionStatusObj
 
-#Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
 
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
-
-#Start of the holders in a TransactionStatus.
 const HOLDERS_START: int = INT_LEN + BYTE_LEN + BYTE_LEN + BYTE_LEN + BYTE_LEN + NICKNAME_LEN
 
-#Parse function.
 proc parseTransactionStatus*(
   statusStr: string,
   hash: Hash[256]

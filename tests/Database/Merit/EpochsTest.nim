@@ -1,5 +1,3 @@
-#Epochs Test.
-
 #Fuzzing lib.
 import ../../Fuzzed
 
@@ -127,7 +125,7 @@ suite "Epochs":
 
   noFuzzTest "Empty.":
     check(epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]()).len == 0)
-    
+
     #Manually set the RandomX instance to null to make sure it's GC'able.
     blockchain.rx = nil
 
@@ -210,7 +208,7 @@ suite "Epochs":
     check(rewards[0].score == 334)
     check(rewards[1].score == 333)
     check(rewards[2].score == 333)
-    
+
     #Manually set the RandomX instance to null to make sure it's GC'able.
     blockchain.rx = nil
 
@@ -268,10 +266,10 @@ suite "Epochs":
     check(rewards[0].nick == 0)
     check(state.holders[0] == miner.publicKey)
     check(rewards[0].score == 1000)
-    
+
     #Manually set the RandomX instance to null to make sure it's GC'able.
     blockchain.rx = nil
-    
+
   noFuzzTest "Split.":
     var
       #Hash.

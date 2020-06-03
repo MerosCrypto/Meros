@@ -1,30 +1,17 @@
-#Errors lib.
-import ../../lib/Errors
-
-#Hash lib. Used for printing hashes in error messages.
-import ../../lib/Hash
-
-#MinerWallet lib.
+#Hash is imported so we can print them in error messages; not because we mutate or check them.
+import ../../lib/[Errors, Hash]
 import ../../Wallet/MinerWallet
 
-#Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
-#MeritRemoval object.
 import ../Consensus/Elements/objects/MeritRemovalObj
 
-#BlockHeader and Block libs.
-import BlockHeader
-import Block
-
-#Blockchain object.
 import objects/BlockchainObj
+import BlockHeader, Block
 
-#State object.
 import objects/StateObj
 export StateObj
 
-#Get the nickname of the miner in a Block.
 proc getNickname(
   state: var State,
   blockArg: Block,
@@ -73,7 +60,6 @@ proc cacheNextRemoval(
   else:
     state.pendingRemovals.add(-1)
 
-#Constructor.
 proc newState*(
   db: DB,
   deadBlocks: int,
@@ -83,7 +69,6 @@ proc newState*(
   for _ in 0 ..< 6:
     result.cacheNextRemoval(blockchain, blockchain.height)
 
-#Process a block.
 proc processBlock*(
   state: var State,
   blockchain: Blockchain
@@ -131,17 +116,18 @@ proc protocolThresholdAt*(
 ): int {.inline, forceCheck: [].} =
   state.loadUnlocked(height) div 2 + 1
 
-#Calculate the threshold for an Epoch that ends on the specified Block.
-#This is meant to return 80% of the amount of Merit at the time of finalization.
-#Thanks to truncation, it returns 55% in the worst case scenario (9).
-#Anything below 5 would return 1, which is 25%, hence the max.
+#[
+Calculate the threshold for an Epoch that ends on the specified Block.
+This is meant to return 80% of the amount of Merit at the time of finalization.
+Thanks to truncation, it returns 55% in the worst case scenario (9).
+Anything below 5 would return 1, which is 25%, hence the max.
+]#
 proc nodeThresholdAt*(
   state: State,
   height: int
 ): int {.inline, forceCheck: [].} =
   (max(state.loadUnlocked(height), 5) div 5 * 4) + 1
 
-#Revert to a certain block height.
 proc revert*(
   state: var State,
   blockchain: Blockchain,

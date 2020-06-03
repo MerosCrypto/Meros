@@ -1,19 +1,14 @@
-#Errors lib.
-import ../../../../../lib/Errors
+import ../../../../../lib/[Errors, Hash]
 
-#Hash lib.
-import ../../../../../lib/Hash
-
-#Transaction objects.
 import ../../../../Transactions/Transaction
 
-#Serialization libs.
 import ParseMint
-import ../../../../../Network/Serialize/Transactions/ParseClaim
-import ../../../../../Network/Serialize/Transactions/ParseSend
-import ../../../../../Network/Serialize/Transactions/ParseData
+import ../../../../../Network/Serialize/Transactions/[
+  ParseClaim,
+  ParseSend,
+  ParseData
+]
 
-#Serialize the TransactionObj.
 proc parseTransaction*(
   hash: Hash[256],
   tx: string

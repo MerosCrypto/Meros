@@ -1,31 +1,16 @@
-#Errors lib.
-import ../../lib/Errors
+import sequtils
+import algorithm
+import deques
+import tables
 
-when not defined(merosTests):
-  #Hash lib.
-  import ../../lib/Hash
+import ../../lib/[Errors, Hash]
 
-#VerificationPacket and MeritRemoval object.
-import ../Consensus/Elements/objects/VerificationPacketObj
-import ../Consensus/Elements/objects/MeritRemovalObj
+import ../Consensus/Elements/objects/[VerificationPacketObj, MeritRemovalObj]
 
-#Block, Blockcain, and State lib.
-import Block
-import Blockchain
-import State
+import Block, Blockchain, State
 
-#Epoch objects.
 import objects/EpochsObj
 export EpochsObj
-
-#Sequtils standard lib (used to remove Rewards).
-import sequtils
-
-#Algorithm standard lib (used to sort Rewards).
-import algorithm
-
-#Tables standard lib.
-import tables
 
 #This shift does three things:
 # - Adds the newest set of Verifications.
@@ -48,8 +33,11 @@ proc shift*(
     #Find out what Epoch the hash is in.
     e = 0
     while e < 5:
-      if epochs[e].hasKey(packet.hash):
-        break
+      try:
+        if epochs[e].hasKey(packet.hash):
+          break
+      except IndexError as ex:
+        panic("Couldn't access Epoch " & $e & ", despite iterating from 0 up to 5: " & ex.msg)
 
       #If it's not in any, add the packet to the new Epoch.
       if e == 4:
@@ -64,7 +52,10 @@ proc shift*(
 
     #If it was in an existing Epoch, add it to said Epoch.
     if e != 5:
-      epochs[e].add(packet)
+      try:
+        epochs[e].add(packet)
+      except IndexError as ex:
+        panic("Couldn't access Epoch " & $e & ", despite confirming the Epoch existed: " & ex.msg)
 
   #Return the popped Epoch.
   result = epochs.shift(newEpoch)

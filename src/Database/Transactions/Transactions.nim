@@ -14,6 +14,7 @@ import ../Merit/Blockchain
 import ../Merit/Epochs
 
 #Transactions DB lib.
+import ../Filesystem/DB/Serialize/Transactions/DBSerializeTransaction
 import ../Filesystem/DB/TransactionsDB
 
 #Transaction lib.
@@ -23,7 +24,7 @@ export Transaction
 #Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export toString, getUTXOs, loadSpenders, verify, unverify, beat, prune
+export getUTXOs, loadSpenders, verify, unverify, beat, prune
 when defined(merosTests):
   export getSender
 
@@ -32,6 +33,10 @@ import sets
 
 #Tables standard lib.
 import tables
+
+#Horrific stub function while working on the lint branch.
+proc toString*(x: Input): string {.inline, forceCheck: [].} =
+  x.serialize()
 
 #Constructor.
 proc newTransactions*(

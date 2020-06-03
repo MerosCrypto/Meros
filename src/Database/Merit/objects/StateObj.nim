@@ -1,22 +1,12 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Util lib.
-import ../../../lib/Util
-
-#MinerWallet lib.
-import ../../../Wallet/MinerWallet
-
-#Merit DB lib.
-import ../../Filesystem/DB/MeritDB
-
-#Block object.
-import BlockObj
-
-#Tables standard lib.
 import tables
 
-#State object.
+import ../../../lib/[Errors, Util]
+import ../../../Wallet/MinerWallet
+
+import ../../Filesystem/DB/MeritDB
+
+import BlockObj
+
 type State* = object
   #DB.
   db: DB
@@ -39,7 +29,6 @@ type State* = object
   #Pending removals.
   pendingRemovals*: seq[int]
 
-#Constructor.
 proc newStateObj*(
   db: DB,
   deadBlocks: int,
@@ -74,14 +63,11 @@ proc newStateObj*(
     except DBReadError as e:
       panic("Couldn't load a holder's Merit: " & e.msg)
 
-#Save the Unlocked Merit.
 proc saveUnlocked*(
   state: State
 ) {.inline, forceCheck: [].} =
   state.db.saveUnlocked(state.processedBlocks - 1, state.unlocked)
 
-#Getters.
-#Return the amount of Unlocked Merit.
 func unlocked*(
   state: State
 ): int {.inline, forceCheck: [].} =
@@ -139,21 +125,24 @@ proc `[]`*(
     if state.pendingRemovals[r] == int(nick):
       dec(result)
 
-#Get the removals from a Block.
 proc loadBlockRemovals*(
   state: State,
   blockNum: int
 ): seq[tuple[nick: uint16, merit: int]] {.inline, forceCheck: [].} =
   state.db.loadBlockRemovals(blockNum)
 
-#Get the removals for a holder.
 proc loadHolderRemovals*(
   state: State,
   nick: uint16
 ): seq[int] {.inline, forceCheck: [].} =
   state.db.loadHolderRemovals(nick)
 
-#Setters.
+proc holders*(
+  state: State
+): seq[BLSPublicKey] {.inline, forceCheck: [].} =
+  state.holders
+
+#Set a holder's Merit.
 proc `[]=`*(
   state: var State,
   nick: uint16,
@@ -204,9 +193,3 @@ proc reverseLookup*(
     result = state.db.loadNickname(key)
   except DBReadError:
     raise newLoggedException(IndexError, $key & " does not have a nickname.")
-
-#Access the holders.
-proc holders*(
-  state: State
-): seq[BLSPublicKey] {.inline, forceCheck: [].} =
-  state.holders

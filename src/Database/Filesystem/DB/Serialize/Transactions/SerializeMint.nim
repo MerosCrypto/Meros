@@ -1,19 +1,10 @@
-#Errors lib.
-import ../../../../../lib/Errors
+import ../../../../../lib/[Errors, Util]
 
-#Util lib.
-import ../../../../../lib/Util
-
-#Mint object.
 import ../../../../Transactions/objects/MintObj
 
-#Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
-
-#Serialize Mint lib.
 import SerializeMintOutput
 
-#Serialization function.
 proc serialize*(
   mint: Mint
 ): string {.inline, forceCheck: [].} =

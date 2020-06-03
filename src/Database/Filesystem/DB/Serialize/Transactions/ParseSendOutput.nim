@@ -1,19 +1,10 @@
-#Errors lib.
-import ../../../../../lib/Errors
-
-#Util lib.
-import ../../../../../lib/Util
-
-#Wallet lib.
+import ../../../../../lib/[Errors, Util]
 import ../../../../../Wallet/Wallet
 
-#SendOutput object.
-import ../../../..//Transactions/objects/TransactionObj
+import ../../../../Transactions/objects/TransactionObj
 
-#Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
 
-#Parse function.
 proc parseSendOutput*(
   outputStr: string
 ): SendOutput {.forceCheck: [

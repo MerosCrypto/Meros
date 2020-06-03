@@ -1,31 +1,14 @@
-#Errors lib.
-import ../../../../../lib/Errors
-
-#Util lib.
-import ../../../../../lib/Util
-
-#Hash lib.
-import ../../../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../../../lib/[Errors, Util, Hash]
 import ../../../../../Wallet/MinerWallet
 
-#Element libs.
 import ../../../../Consensus/Elements/Elements
 
-#Block lib.
 import ../../../../Merit/Block
 
-#Serialization common functions.
 import ../../../../../Network/Serialize/SerializeCommon
-
-#Parse BlockHeader lib.
 import ../../../../../Network/Serialize/Merit/ParseBlockHeader
-
-#Parse BlockElement lib.
 import ../../../../../Network/Serialize/Consensus/ParseBlockElement
 
-#Parse a Block.
 proc parseBlock*(
   blockStr: string,
   interimHash: string,
@@ -116,7 +99,6 @@ proc parseBlock*(
   except BLSError:
     raise newLoggedException(ValueError, "Invalid aggregate signature.")
 
-  #Create the Block Object.
   result = newBlockObj(
     header,
     newBlockBodyObj(

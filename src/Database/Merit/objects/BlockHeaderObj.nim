@@ -1,13 +1,4 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Util lib.
-import ../../../lib/Util
-
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
 
 type BlockHeader* = ref object
@@ -43,7 +34,6 @@ type BlockHeader* = ref object
   #Block hash.
   hash*: RandomXHash
 
-#Constructors.
 func newBlockHeaderObj*(
   version: uint32,
   last: RandomXHash,

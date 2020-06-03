@@ -1,22 +1,10 @@
-#Errors lib.
-import ../../../../../lib/Errors
+import ../../../../../lib/[Errors, Util, Hash]
 
-#Util lib.
-import ../../../../../lib/Util
+import ../../../../Transactions/objects/MintObj
 
-#Hash lib.
-import ../../../../../lib/Hash
-
-#Mint object.
-import ../../../..//Transactions/objects/MintObj
-
-#Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
-
-#Parse MintOutput lib.
 import ParseMintOutput
 
-#Parse function.
 proc parseMint*(
   hash: Hash[256],
   mintStr: string
@@ -30,5 +18,4 @@ proc parseMint*(
   for o in 0 ..< outputsLen:
     outputs[o] = mintStr[INT_LEN + (o * MINT_OUTPUT_LEN) ..< INT_LEN + ((o + 1) * MINT_OUTPUT_LEN)].parseMintOutput()
 
-  #Create the Mint.
   result = newMintObj(hash, outputs)

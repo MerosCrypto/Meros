@@ -1,5 +1,4 @@
-import ../../../lib/Errors
-import ../../../lib/Hash
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
 import VerificationPacket as VerificationPacketFile
@@ -9,9 +8,11 @@ export MeritRemovalObj
 
 #The serialization of the elements used in the Merit Removal is used to generate a hash.
 import ../../../Network/Serialize/SerializeCommon
-import ../../../Network/Serialize/Consensus/SerializeVerification
-import ../../../Network/Serialize/Consensus/SerializeVerificationPacket
-import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
+import ../../../Network/Serialize/Consensus/[
+  SerializeVerification,
+  SerializeVerificationPacket,
+  SerializeMeritRemoval
+]
 
 #Calculate a hash representing the reason for a MeritRemoval.
 #By making sure every Merit Removal

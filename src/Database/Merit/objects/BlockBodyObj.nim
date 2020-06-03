@@ -1,16 +1,8 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
-#Element libs.
 import ../../Consensus/Elements/Elements
 
-#BlockBody object.
 type BlockBody* = object
   #Hash of the packets side of the content Merkle.
   packetsContents*: Hash[256]
@@ -21,7 +13,6 @@ type BlockBody* = object
   #Aggregate signature.
   aggregate*: BLSSignature
 
-#Constructor.
 func newBlockBodyObj*(
   packetsContents: Hash[256],
   packets: seq[VerificationPacket],

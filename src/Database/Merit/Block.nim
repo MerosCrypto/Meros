@@ -1,43 +1,25 @@
-#Errors lib.
-import ../../lib/Errors
+import algorithm
 
-#Util lib.
-import ../../lib/Util
-
-#Hash and Merkle libs.
-import ../../lib/Hash
-import ../../lib/Merkle
-
-#Sketcher lib.
-import ../../lib/Sketcher
-
-#MinerWallet lib.
+import ../../lib/[Errors, Util, Hash, Merkle, Sketcher]
 import ../../Wallet/MinerWallet
 
-#Element libs.
 import ../Consensus/Elements/Elements
 
-#BlockHeader lib.
 import BlockHeader
 
-#Block object.
 import objects/BlockObj
 export BlockObj
 
-#SerializeCommon lib.
 import ../../Network/Serialize/SerializeCommon
 
-#Element Serialization libs.
-import ../../Network/Serialize/Consensus/SerializeVerification
-import ../../Network/Serialize/Consensus/SerializeSendDifficulty
-import ../../Network/Serialize/Consensus/SerializeDataDifficulty
-import ../../Network/Serialize/Consensus/SerializeVerificationPacket
-import ../../Network/Serialize/Consensus/SerializeMeritRemoval
+import ../../Network/Serialize/Consensus/[
+  SerializeVerification,
+  SerializeVerificationPacket,
+  SerializeSendDifficulty,
+  SerializeDataDifficulty,
+  SerializeMeritRemoval
+]
 
-#Algorithm standard lib.
-import algorithm
-
-#Verify the sketchCheck Merkle.
 proc verifySketchCheck*(
   sketchCheck: Hash[256],
   sketchHashes: seq[uint64]
@@ -75,7 +57,6 @@ proc verifySketchCheck*(
   except ValueError as e:
     raise e
 
-#Verify the contents Merkle.
 proc verifyContents*(
   contents: Hash[256],
   packetsArg: seq[VerificationPacket],
@@ -98,7 +79,8 @@ proc verifyContents*(
           raise newLoggedException(ValueError, "Block has two packets for the same hash.")
         else:
           result = -1
-      , SortOrder.Descending
+      ,
+      SortOrder.Descending
     )
   except ValueError as e:
     raise e
@@ -122,7 +104,6 @@ proc verifyContents*(
     if contents != Hash[256]():
       raise newLoggedException(ValueError, "Invalid contents Merkle.")
 
-#Verify a Block's aggregate signature via a nickname lookup function and a Table of Hash -> VerificationPacket.
 proc verifyAggregate*(
   blockArg: Block,
   lookup: proc (

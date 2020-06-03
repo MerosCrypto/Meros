@@ -1,32 +1,15 @@
-#Errors lib.
-import ../../lib/Errors
+import tables
 
-#Util lib.
-import ../../lib/Util
-
-#MinerWallet lib.
+import ../../lib/[Errors, Util]
 import ../../Wallet/MinerWallet
 
-#Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
-#Merit libs.
-import Difficulty
-import BlockHeader
-import Block
-import Blockchain
-import State
-import Epochs
+import Difficulty, BlockHeader, Block, Blockchain
+import State, Epochs
 
-export Difficulty
-export BlockHeader
-export Block
-export Blockchain
-export State
-export Epochs
-
-#Tables standard lib.
-import tables
+export Difficulty, BlockHeader, Block, Blockchain
+export State, Epochs
 
 #Blockchain, State, and Epochs wrapper.
 type Merit* = ref object
@@ -34,7 +17,6 @@ type Merit* = ref object
   state*: State
   epochs*: Epochs
 
-#Constructor.
 proc newMerit*(
   db: DB,
   genesis: string,
@@ -61,6 +43,7 @@ proc processBlock*(
   merit.blockchain.processBlock(newBlock)
 
 #Process a Block already addded to the Blockchain.
+#Updates the State and Epochs. Needed due to how the TX/Consensus DAG flow.
 proc postProcessBlock*(
   merit: Merit
 ): (Epoch, uint16, int) {.forceCheck: [].} =
@@ -70,7 +53,7 @@ proc postProcessBlock*(
   #Have the state process the block.
   (result[1], result[2]) = merit.state.processBlock(merit.blockchain)
 
-#Get the reverted miners/holders.
+#Theoretically revert the chain, returning the affected miners/holders.
 proc revertMinersAndHolders*(
   merit: Merit,
   height: int
@@ -89,12 +72,11 @@ proc revertMinersAndHolders*(
     except IndexError as e:
       panic("Couldn't get a Block needed to revert the miners and holders: " & e.msg)
 
-#Revert the Blockchain/State/Epochs.
 proc revert*(
   merit: Merit,
   height: int
 ) {.forceCheck: [].} =
-  #Reverting the Blockchain reverts the State.
+  #Reverting the Blockchain reverts the State as well.
   merit.blockchain.revert(merit.state, height)
   #We don't have an Epochs reversion algorithm. We just rebuild it.
   #If the amount of Blocks reverted is greater than the Epochs length, this is faster.

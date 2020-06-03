@@ -1,11 +1,12 @@
 import sets
 import tables
 
-import ../../../lib/Errors
-import ../../../lib/Hash
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
 import ../../../objects/GlobalFunctionBoxObj
+
+import ../../Filesystem/DB/ConsensusDB
 
 import ../../Transactions/Transaction
 
@@ -250,9 +251,12 @@ proc calculateMeritSingle(
       That said, if we only add it post-delay, we don't need to track verified or not overall, so this code can remain.
       Datas have an input yet no parent.
       ]#
-      if (tx of Claim) or ((tx of Data) and (cast[Data](tx).isFirstData)):
-        break
-      else:
+      if not (
+        (tx of Claim) or (
+          (tx of Data) and
+          (cast[Data](tx).isFirstData)
+        )
+      ):
         for input in tx.inputs:
           if not consensus.getStatus(input.hash).verified:
             return

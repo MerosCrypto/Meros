@@ -1,5 +1,7 @@
 #Consensus Revert Test.
 
+import deques
+
 #Fuzzing lib.
 import ../../Fuzzed
 

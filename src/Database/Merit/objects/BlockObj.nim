@@ -1,34 +1,20 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Util lib.
-import ../../../lib/Util
-
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
+import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
 
-#Element libs.
 import ../../Consensus/Elements/Elements
 
-#Block Header lib.
 import ../BlockHeader
 export BlockHeader
 
-#Block Body object.
 import BlockBodyObj
 export BlockBodyObj
 
-#Block class.
 type Block* = object
   #Block Header.
   header*: BlockHeader
   #Block Body.
   body*: BlockBody
 
-#Constructor.
 proc newBlockObj*(
   version: uint32,
   last: RandomXHash,

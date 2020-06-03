@@ -1,8 +1,7 @@
 import macros
 import algorithm
 
-import ../../../lib/Errors
-import ../../../lib/Hash
+import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
 
 import objects/[ElementObj, SignedElementObj]

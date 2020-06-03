@@ -1,5 +1,7 @@
 #Serialize Mint Test.
 
+import deques
+
 #Fuzzing lib.
 import ../../../../../Fuzzed
 

@@ -1,50 +1,28 @@
-#Errors lib.
-import ../../../lib/Errors
+import sets
+import tables
 
-#Util lib.
-import ../../../lib/Util
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet lib.
+import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/Wallet
 
-#Transaction lib.
 import ../../Transactions/Transaction
 
-#Serialization libs.
 import ../../../Network/Serialize/SerializeCommon
 
-import Serialize/Transactions/SerializeMintOutput
-import Serialize/Transactions/SerializeSendOutput
-import Serialize/Transactions/DBSerializeTransaction
+import Serialize/Transactions/[
+  SerializeMintOutput,
+  SerializeSendOutput,
+  DBSerializeTransaction
+]
 
-import Serialize/Transactions/ParseMintOutput
-import Serialize/Transactions/ParseSendOutput
-import Serialize/Transactions/ParseTransaction
+import Serialize/Transactions/[
+  ParseMintOutput,
+  ParseSendOutput,
+  ParseTransaction
+]
 
-#DB object.
 import objects/DBObj
 export DBObj
 
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
-
-#Helper function to convert an input to a string.
-func toString*(
-  input: Input
-): string {.forceCheck: [].} =
-  result = input.hash.toString()
-  if input of FundedInput:
-    result &= char(cast[FundedInput](input).nonce)
-  else:
-    result &= char(0)
-
-#Key generators.
 template UNMENTIONED_TRANSACTIONS(): string =
   "u"
 
@@ -56,7 +34,7 @@ template TRANSACTION(
 template OUTPUT_SPENDERS(
   input: Input
 ): string =
-  input.toString() & "$"
+  input.serialize() & "$"
 
 template OUTPUT(
   hash: Hash[256],
@@ -67,7 +45,7 @@ template OUTPUT(
 template OUTPUT(
   output: Input
 ): string =
-  input.toString()
+  input.serialize()
 
 template DATA_SENDER(
   hash: Hash[256]
@@ -84,7 +62,6 @@ template BEATEN_TRANSACTION(
 ): string =
   hash.toString() & "bt"
 
-#Put/Get/Del/Commit for the Transactions DB.
 proc put(
   db: DB,
   key: string,
@@ -152,7 +129,6 @@ proc commit*(
 
   db.transactions.cache = initTable[string, string]()
 
-#Save functions.
 proc save*(
   db: DB,
   tx: Transaction
@@ -189,7 +165,6 @@ proc saveDataSender*(
 ) {.forceCheck: [].} =
   db.put(DATA_SENDER(data.hash), sender.toString())
 
-#Load functions.
 proc loadUnmentioned*(
   db: DB
 ): HashSet[Hash[256]] {.forceCheck: [].} =
@@ -231,7 +206,6 @@ proc load*(
 
     claim.outputs[0].amount = amount
 
-#Get if a Transaction was beaten.
 proc isBeaten*(
   db: DB,
   hash: Hash[256]
@@ -347,7 +321,7 @@ proc removeFromSpendable(
       db.put(SPENDABLE(key), spendable[0 ..< o] & spendable[o + 33 ..< spendable.len])
       break
 
-#Add a outputs to spendable while removing spent inputs.
+#Add the transaction's outputs to spendable while removing spent inputs.
 proc verify*(
   db: DB,
   tx: Transaction

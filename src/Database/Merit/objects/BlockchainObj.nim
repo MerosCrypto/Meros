@@ -1,28 +1,14 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Util lib.
-import ../../../lib/Util
-
-#Hash lib.
-import ../../../lib/Hash
-
-#MinerWallet lib.
-import ../../../Wallet/MinerWallet
-
-#Merit DB lib.
-import ../../Filesystem/DB/MeritDB
-
-#Block object.
-import BlockObj
-
-#StInt external lib.
-import stint
-
-#Tables standard lib.
 import tables
 
-#Blockchain object.
+import stint
+
+import ../../../lib/[Errors, Util, Hash]
+import ../../../Wallet/MinerWallet
+
+import ../../Filesystem/DB/MeritDB
+
+import BlockObj
+
 type Blockchain* = object
   #DB Function Box.
   db*: DB
@@ -47,7 +33,8 @@ type Blockchain* = object
   #RandomX instance.
   rx*: RandomX
 
-#Calculate a proper difficulty
+#Calculate the difficulties leading up to the specified header.
+#Allows calculating work for a forked chain.
 proc calculateDifficulties*(
   db: DB,
   genesis: Hash[256],
@@ -67,14 +54,12 @@ proc calculateDifficulties*(
     except DBReadError as e:
       panic("Couldn't load a BlockHeader for a Block on the chain: " & e.msg)
 
-#Create a Blockchain object.
 proc newBlockchainObj*(
   db: DB,
   genesisArg: string,
   blockTime: int,
   initialDifficulty: uint64
 ): Blockchain {.forceCheck: [].} =
-  #Create the Blockchain.
   var genesis: string = genesisArg.pad(32)
   try:
     result = Blockchain(
@@ -174,7 +159,6 @@ proc newBlockchainObj*(
   for m in 0 ..< miners.len:
     result.miners[miners[m]] = uint16(m)
 
-#Add a Block.
 proc add*(
   blockchain: var Blockchain,
   newBlock: Block
@@ -222,14 +206,12 @@ proc rewindCache*(
     except DBReadError as e:
       panic("Couldn't get the Block 11 Blocks before the tail when rewinding the cache: " & e.msg)
 
-#Check if a Block exists.
 proc hasBlock*(
   blockchain: Blockchain,
   hash: Hash[256]
 ): bool {.inline, forceCheck: [].} =
   blockchain.db.hasBlock(hash)
 
-#Block getters.
 proc `[]`*(
   blockchain: Blockchain,
   nonce: int
@@ -260,13 +242,11 @@ proc `[]`*(
   except DBReadError:
     raise newLoggedException(IndexError, "Block not found.")
 
-#Get the last Block.
 func tail*(
   blockchain: Blockchain
 ): Block {.inline, forceCheck: [].} =
   blockchain.blocks[^1]
 
-#Get the height of a Block by its hash.
 proc getHeightOf*(
   blockchain: Blockchain,
   hash: Hash[256]

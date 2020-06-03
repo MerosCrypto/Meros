@@ -1,7 +1,5 @@
-import VerificationObj
-import VerificationPacketObj
-import SendDifficultyObj
-import DataDifficultyObj
+import VerificationObj, VerificationPacketObj
+import SendDifficultyObj, DataDifficultyObj
 import MeritRemovalObj
 
 #Typeclass of every possible signed element type.
