@@ -1,6 +1,6 @@
 import sets
 
-import ../../../lib/[Errors, Hash]
+import ../../../lib/[Errors, Util, Hash]
 
 import ../../../objects/GlobalFunctionBoxObj
 
@@ -43,9 +43,12 @@ proc module*(
         #Extract the parameter.
         var hash: Hash[256]
         try:
-          hash = params[0].getStr().toHash[:256]()
+          var strHash: string = parseHexStr(params[0].getStr())
+          if strHash.len != 32:
+            raise newJSONRPCError(-3, "Invalid hash")
+          hash = strHash.toHash[:256]()
         except ValueError:
-          raise newLoggedException(ParamError, "")
+          raise newJSONRPCError(-3, "Invalid hash")
 
         #Get the Status.
         var status: TransactionStatus

@@ -179,7 +179,11 @@ proc module*(
             })
         elif params[0].kind == JString:
           try:
-            res["result"] = % functions.merit.getBlockByHash(params[0].getStr().toHash[:256]())
+            var strHash: string = parseHexStr(params[0].getStr())
+            if strHash.len != 32:
+              raise newJSONRPCError(-3, "Invalid hash")
+
+            res["result"] = % functions.merit.getBlockByHash(strHash.toHash[:256]())
           except IndexError:
             raise newJSONRPCError(-2, "Block not found")
           except ValueError:

@@ -1,7 +1,7 @@
 import strutils
 import json
 
-import ../../../lib/[Errors, Hash]
+import ../../../lib/[Errors, Util, Hash]
 
 import ../../../Wallet/[MinerWallet, Wallet, Address]
 import ../../../Wallet/Address
@@ -105,7 +105,11 @@ proc module*(
 
         #Get the Transaction.
         try:
-          res["result"] = % functions.transactions.getTransaction(params[0].getStr().toHash[:256]())
+          var strHash: string = parseHexStr(params[0].getStr())
+          if strHash.len != 32:
+            raise newJSONRPCError(-3, "Invalid hash")
+
+          res["result"] = % functions.transactions.getTransaction(strHash.toHash[:256]())
         except IndexError:
           raise newJSONRPCError(-2, "Transaction not found")
         except ValueError:
