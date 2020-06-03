@@ -47,7 +47,7 @@ proc calculateMeritRemovalReason*(
     e2 = e1
     e1 = temp
 
-  result = Blake256(holder.toBinary(NICKNAME_LEN) & e1.toString() & e2.toString())
+  result = Blake256(holder.toBinary(NICKNAME_LEN) & e1.serialize() & e2.serialize())
 
 proc newMeritRemoval*(
   nick: uint16,

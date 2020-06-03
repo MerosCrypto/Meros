@@ -7,7 +7,7 @@ export TransactionObj
 type Send* = ref object of Transaction
   signature*: EdSignature
   proof*: uint32
-  argon*: ArgonHash
+  argon*: Hash[256]
 
 func newSendObj*(
   inputs: varargs[FundedInput],

@@ -1,22 +1,16 @@
-#Errors objects.
-import objects/ErrorsObjs
-
-#Nimcrypto lib (for secure RNG).
-import nimcrypto
-
-#Bit operations standard lib.
 import bitops
-
-#Times standard lib.
 import times
 
-#String utils standard lib.
 import strutils
-#Export the commonly used int/hex functions from it.
-export parseInt, parseUInt
-export toHex, parseHexInt, parseHexStr
+export toHex, parseHexStr, parseHexInt, parseUInt
 
-#Gets the epoch and returns it as a Time.
+import nimcrypto
+
+#Manually import these to stop a recursive dependency.
+import ForceCheck
+import objects/ErrorObjs
+
+#Gets the epoch and returns it.
 proc getTime*(): uint32 {.inline, forceCheck: [].} =
   uint32(times.getTime().toUnix())
 
@@ -63,7 +57,7 @@ func toBinary*(
     result &= char((uint64(number) and uint64(mask shl fromEnd)) shr fromEnd)
     fromEnd -= 8
 
-#Converts a binary char/string to a number.
+#Convert a char/string to a number.
 func fromBinary*(
   number: char
 ): int {.inline, forceCheck: [].} =
@@ -85,7 +79,6 @@ func extractBits*(
 ): uint16 {.forceCheck: [].} =
   (data shl start) shr (16 - bits)
 
-#Extract a set of bits.
 func extractBits*(
   data: uint32,
   start: int,

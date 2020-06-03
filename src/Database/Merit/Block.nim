@@ -98,7 +98,7 @@ proc verifyContents*(
     elementsMerkle.add(Blake256(elem.serializeContents()))
 
   if not empty:
-    if Blake256(packetsMerkle.hash.toString() & elementsMerkle.hash.toString()) != contents:
+    if Blake256(packetsMerkle.hash.serialize() & elementsMerkle.hash.serialize()) != contents:
       raise newLoggedException(ValueError, "Invalid contents Merkle.")
   else:
     if contents != Hash[256]():
@@ -130,7 +130,7 @@ proc verifyAggregate*(
 
       agInfos[p] = newBLSAggregationInfo(
         pubKeys,
-        char(VERIFICATION_PREFIX) & blockArg.body.packets[p].hash.toString()
+        char(VERIFICATION_PREFIX) & blockArg.body.packets[p].hash.serialize()
       )
 
     #Iterate over every Element.

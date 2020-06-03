@@ -88,12 +88,12 @@ proc newContents*(
   if not empty:
     result = (
       packets: packetsMerkle.hash,
-      contents: Blake256(packetsMerkle.hash.toString() & elementsMerkle.hash.toString())
+      contents: Blake256(packetsMerkle.hash.serialize() & elementsMerkle.hash.serialize())
     )
 
 proc newBlockHeader*(
   version: uint32,
-  last: RandomXHash,
+  last: Hash[256],
   contents: Hash[256],
   significant: uint16,
   sketchSalt: string,
@@ -121,7 +121,7 @@ proc newBlockHeader*(
 
 proc newBlockHeader*(
   version: uint32,
-  last: RandomXHash,
+  last: Hash[256],
   contents: Hash[256],
   significant: uint16,
   sketchSalt: string,

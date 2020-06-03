@@ -1,38 +1,18 @@
-#Errors lib.
-import Errors
-
-#Hash lib.
-import Hash
-
-#VerificationPacket object.
-import ../Database/Consensus/Elements/objects/VerificationPacketObj
-
-#Serialize Verification Packet lib.
-import ../Network/Serialize/Consensus/SerializeVerificationPacket
-
-#Minisketch lib.
-import mc_minisketch
-
-#Sets standard lib.
 import sets
-
-#Tables standard lib.
 import tables
 
-#The fact these need to be exported is bullshit. Thanks to ForceCheck, something happens somewhere.
-#I honestly don't know the full info. ForceCheck errors on BlockBody.serialize() which doesn't need either of these.
-#It just calls a function in this file which uses the function that returns these.
-#That said, I'd rather export these than remove ForceCheck.
-#-- Luke Parker
-export Sketch, Table
+import mc_minisketch
+
+import Errors, Hash
+
+import ../Database/Consensus/Elements/objects/VerificationPacketObj
+import ../Network/Serialize/Consensus/SerializeVerificationPacket
 
 type
-  #SketchElement. Includes both the packet and its significance.
   SketchElement = object
     packet*: VerificationPacket
     significance*: int
 
-  #Sketcher. Just a seq of SketchElements.
   Sketcher* = seq[SketchElement]
 
   #SketchResult. List of Elements in both sketches and the missing hashes.
@@ -47,7 +27,6 @@ proc sketchHash*(
 ): uint64 {.inline, forceCheck: [].} =
   Blake64(salt & packet.serialize())
 
-#Constructors.
 proc newSketcher*(
   getMerit: proc (
     nick: uint16
@@ -79,7 +58,6 @@ proc newSketcher*(
       significance: 0
     ))
 
-#Add a packet.
 proc add*(
   sketcher: var Sketcher,
   packet: VerificationPacket,

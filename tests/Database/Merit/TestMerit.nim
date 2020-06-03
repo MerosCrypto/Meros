@@ -71,7 +71,7 @@ var lastTime {.threadvar.}: uint32
 proc newBlankBlock*(
   rx: RandomX,
   version: uint32 = 0,
-  last: RandomXHash = RandomXHash(),
+  last: Hash[256] = Hash[256](),
   significant: uint16 = 1,
   sketchSalt: string = newString(4),
   miner: MinerWallet = newMinerWallet(),
@@ -107,7 +107,7 @@ proc newBlankBlock*(
 proc newBlankBlock*(
   rx: RandomX,
   version: uint32 = 0,
-  last: RandomXHash = RandomXHash(),
+  last: Hash[256] = Hash[256](),
   significant: uint16 = 1,
   sketchSalt: string = newString(4),
   nick: uint16,

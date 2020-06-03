@@ -24,7 +24,7 @@ proc sign*(
   wallet: HDWallet,
   data: Data
 ) {.inline, forceCheck: [].} =
-  data.signature = wallet.sign(data.hash.toString())
+  data.signature = wallet.sign(data.hash.serialize())
 
 proc mine*(
   data: Data,
@@ -33,10 +33,10 @@ proc mine*(
   var
     difficulty: uint32 = data.getDifficultyFactor() * baseDifficulty
     proof: uint32 = 0
-    hash: ArgonHash = Argon(data.hash.toString(), proof.toBinary(SALT_LEN))
+    hash: Hash[256] = Argon(data.hash.serialize(), proof.toBinary(SALT_LEN))
   while hash.overflows(difficulty):
     inc(proof)
-    hash = Argon(data.hash.toString(), proof.toBinary(SALT_LEN))
+    hash = Argon(data.hash.serialize(), proof.toBinary(SALT_LEN))
 
   data.proof = proof
   data.argon = hash

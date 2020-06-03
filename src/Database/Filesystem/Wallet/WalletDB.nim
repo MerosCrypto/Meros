@@ -263,7 +263,7 @@ proc saveDataTip*(
   db: WalletDB,
   hash: Hash[256]
 ) {.forceCheck: [].} =
-  db.put(DATA_TIP(), hash.toString())
+  db.put(DATA_TIP(), hash.serialize())
 
 proc loadDataTip*(
   db: WalletDB
@@ -271,7 +271,7 @@ proc loadDataTip*(
   DataMissing
 ].} =
   try:
-    result = db.get(DATA_TIP()).toHash(256)
+    result = db.get(DATA_TIP()).toHash[:256]()
   except ValueError as e:
     panic("Couldn't parse the data tip from the WalletDB: " & e.msg)
   except DBReadError:

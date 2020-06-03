@@ -32,7 +32,7 @@ proc parseVerificationPacket*(
   #Create the VerificationPacket.
   try:
     result = newVerificationPacketObj(
-      packet[packet.len - HASH_LEN ..< packet.len].toHash(256)
+      packet[packet.len - HASH_LEN ..< packet.len].toHash[:256]()
     )
     for v in 0 ..< verifiers:
       result.holders.add(
@@ -60,7 +60,7 @@ proc parseMeritRemovalVerificationPacket*(
   #Create the MeritRemoval VerificationPacket.
   try:
     result = newMeritRemovalVerificationPacketObj(
-      packet[packet.len - HASH_LEN ..< packet.len].toHash(256)
+      packet[packet.len - HASH_LEN ..< packet.len].toHash[:256]()
     )
     for v in 0 ..< verifiers:
       result.holders.add(

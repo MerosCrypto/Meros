@@ -22,14 +22,14 @@ method serialize*(
   verif: Verification
 ): string {.inline, forceCheck: [].} =
   verif.holder.toBinary(NICKNAME_LEN) &
-  verif.hash.toString()
+  verif.hash.serialize()
 
 #Serialize a Verification for signing or a MeritRemoval.
 method serializeWithoutHolder*(
   verif: Verification
 ): string {.inline, forceCheck: [].} =
   char(VERIFICATION_PREFIX) &
-  verif.hash.toString()
+  verif.hash.serialize()
 
 #Serialize a Verification for inclusion in a BlockHeader's contents Merkle.
 #This should never happen.

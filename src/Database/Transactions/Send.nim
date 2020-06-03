@@ -19,7 +19,7 @@ proc sign*(
   wallet: HDWallet,
   send: Send
 ) {.inline, forceCheck: [].} =
-  send.signature = wallet.sign(send.hash.toString())
+  send.signature = wallet.sign(send.hash.serialize())
 
 proc mine*(
   send: Send,
@@ -28,10 +28,10 @@ proc mine*(
   var
     difficulty: uint32 = send.getDifficultyFactor() * baseDifficulty
     proof: uint32 = 0
-    hash: ArgonHash = Argon(send.hash.toString(), proof.toBinary(SALT_LEN))
+    hash: Hash[256] = Argon(send.hash.serialize(), proof.toBinary(SALT_LEN))
   while hash.overflows(difficulty):
     inc(proof)
-    hash = Argon(send.hash.toString(), proof.toBinary(SALT_LEN))
+    hash = Argon(send.hash.serialize(), proof.toBinary(SALT_LEN))
 
   send.proof = proof
   send.argon = hash

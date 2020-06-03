@@ -30,7 +30,7 @@ proc sign*(
   for i in 0 ..< signatures.len:
     signatures[i] = wallet.sign(
       "\1" &
-      claim.inputs[i].hash.toString() &
+      claim.inputs[i].hash.serialize() &
       char(cast[FundedInput](claim.inputs[i]).nonce) &
       cast[SendOutput](claim.outputs[0]).key.toString()
     )
@@ -55,7 +55,7 @@ proc verify*(
         claimers[i],
         (
           "\1" &
-          claim.inputs[i].hash.toString() &
+          claim.inputs[i].hash.serialize() &
           char(cast[FundedInput](claim.inputs[i]).nonce) &
           cast[SendOutput](claim.outputs[0]).key.toString()
         )

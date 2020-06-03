@@ -192,10 +192,10 @@ proc revert*(
     blockUsedAsUpcomingKey: int = (blockchain.height - (blockchain.height mod 384)) - 1
     currentKey: string
   if blockUsedAsKey == -1:
-    currentKey = blockchain.genesis.toString()
+    currentKey = blockchain.genesis.serialize()
   else:
     try:
-      currentKey = blockchain[blockUsedAsKey].header.hash.toString()
+      currentKey = blockchain[blockUsedAsKey].header.hash.serialize()
     except IndexError as e:
       panic("Couldn't grab the Block used as the current RandomX key: " & e.msg)
 
@@ -210,7 +210,7 @@ proc revert*(
     blockchain.db.deleteUpcomingKey()
   else:
     try:
-      blockchain.db.saveUpcomingKey(blockchain[blockUsedAsUpcomingKey].header.hash.toString())
+      blockchain.db.saveUpcomingKey(blockchain[blockUsedAsUpcomingKey].header.hash.serialize())
     except IndexError as e:
       panic("Couldn't grab the Block used as the upcoming RandomX key: " & e.msg)
 

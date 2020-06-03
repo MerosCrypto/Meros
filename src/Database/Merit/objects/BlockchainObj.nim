@@ -65,7 +65,7 @@ proc newBlockchainObj*(
     result = Blockchain(
       db: db,
 
-      genesis: genesis.toRandomXHash(),
+      genesis: genesis.toHash[:256](),
       blockTime: stuint(blockTime, 128),
 
       height: 0,
@@ -183,7 +183,7 @@ proc add*(
 
   #If the height mod 384 == 0, save the upcoming key.
   if blockchain.height mod 384 == 0:
-    blockchain.db.saveUpcomingKey(newBlock.header.hash.toString())
+    blockchain.db.saveUpcomingKey(newBlock.header.hash.serialize())
   #If the height mod 384 == 12, switch to the upcoming key.
   elif (blockchain.height mod 384 == 12) and (blockchain.height != 12):
     var key: string

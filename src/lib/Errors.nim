@@ -1,20 +1,15 @@
-#Hash object.
-import Hash/objects/HashObj
+import json
 
-#Errors objects.
-import objects/ErrorsObjs
-export ErrorsObjs
-
-#MeritRemoval object.
-import ../Database/Consensus/Elements/objects/MeritRemovalObj
-
-#Chronicles lib.
 when not defined(merosTests):
   import chronicles
   export chronicles
 
-#JSON standard lib.
-import json
+import objects/ErrorObjs
+export ErrorObjs
+
+import Hash/objects/HashObj
+
+import ../Database/Consensus/Elements/objects/MeritRemovalObj
 
 #Wrappers around Chronicles.
 template panic*(
@@ -88,7 +83,6 @@ template logWarn*(
   else:
     discard
 
-#Constructors.
 template newLoggedException*(
   ExceptionType: typedesc,
   error: string

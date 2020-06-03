@@ -28,7 +28,7 @@ proc parseVerification*(
   #Create the Verification.
   try:
     result = newVerificationObj(
-      verifSeq[1].toHash(256)
+      verifSeq[1].toHash[:256]()
     )
     result.holder = uint16(verifSeq[0].fromBinary())
   except ValueError as e:
@@ -50,7 +50,7 @@ proc parseSignedVerification*(
   #Create the Verification.
   try:
     result = newSignedVerificationObj(
-      verifSeq[1].toHash(256)
+      verifSeq[1].toHash[:256]()
     )
     result.holder = uint16(verifSeq[0].fromBinary())
     result.signature = newBLSSignature(verifSeq[2])

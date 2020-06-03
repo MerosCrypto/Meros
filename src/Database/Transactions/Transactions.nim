@@ -169,7 +169,7 @@ proc add*(
     raise newLoggedException(ValueError, "Send outputs don't spend the amount provided by the inputs.")
 
   #Verify the signature.
-  if not senders.aggregate().verify(send.hash.toString(), send.signature):
+  if not senders.aggregate().verify(send.hash.serialize(), send.signature):
     raise newLoggedException(ValueError, "Send has an invalid Signature.")
 
   #Add the Send.
@@ -205,7 +205,7 @@ proc add*(
     raise newLoggedException(ValueError, "Data's input is either missing or not a Data: " & e.msg)
 
   #Verify the signature.
-  if not sender.verify(data.hash.toString(), data.signature):
+  if not sender.verify(data.hash.serialize(), data.signature):
     raise newLoggedException(ValueError, "Data has an invalid Signature.")
 
   #Add the Data.
@@ -242,7 +242,7 @@ proc mint*(
   Verify it.
   I'm not sure this is needed. Any Mint should be assumed as verified already.
   We should look into this.
-  -- kayabaNerve
+  -- Kayaba
   ]#
   transactions.verify(mint.hash)
 

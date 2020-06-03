@@ -165,7 +165,7 @@ proc newNetwork*(
                 char(network.liveManager.network) &
                 network.liveManager.services &
                 network.liveManager.port.toBinary(PORT_LEN) &
-                network.functions.merit.getTail().toString()
+                network.functions.merit.getTail().serialize()
               ),
               true
             )
@@ -177,7 +177,7 @@ proc newNetwork*(
                 char(network.liveManager.network) &
                 network.liveManager.services &
                 network.liveManager.port.toBinary(PORT_LEN) &
-                network.functions.merit.getTail().toString()
+                network.functions.merit.getTail().serialize()
               ),
               true
             )

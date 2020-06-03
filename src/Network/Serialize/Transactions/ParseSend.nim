@@ -44,7 +44,7 @@ proc parseSend*(
     raise newLoggedException(ValueError, "parseSend handed a Send with no inputs.")
   for i in countup(0, sendSeq[1].len - 1, 33):
     try:
-      inputs[i div 33] = newFundedInput(sendSeq[1][i ..< i + 32].toHash(256), sendSeq[1][i + 32].fromBinary())
+      inputs[i div 33] = newFundedInput(sendSeq[1][i ..< i + 32].toHash[:256](), sendSeq[1][i + 32].fromBinary())
     except ValueError as e:
       raise e
 
@@ -67,7 +67,7 @@ proc parseSend*(
   #Verify the Send isn't spam.
   var
     hash: Hash[256] = Blake256("\2" & sendStr[0 ..< sendStr.len - (ED_SIGNATURE_LEN + INT_LEN)])
-    argon: ArgonHash = Argon(hash.toString(), sendSeq[5].pad(8))
+    argon: Hash[256] = Argon(hash.serialize(), sendSeq[5].pad(8))
     factor: uint32 = result.getDifficultyFactor()
   if argon.overflows(factor * diff):
     raise newSpam("Send didn't beat the difficulty.", hash, argon, factor * diff)

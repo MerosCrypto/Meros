@@ -1,4 +1,4 @@
-import ../../../../lib/objects/ErrorsObjs
+import ../../../../lib/objects/ErrorObjs
 import ../../../../lib/Hash/objects/HashObj
 import ../../../../Wallet/MinerWallet
 

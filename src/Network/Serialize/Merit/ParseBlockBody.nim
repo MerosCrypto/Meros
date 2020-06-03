@@ -67,7 +67,7 @@ proc parseBlockBody*(
 
   try:
     result.data = newBlockBodyObj(
-      bodyStr[0 ..< HASH_LEN].toHash(256),
+      bodyStr[0 ..< HASH_LEN].toHash[:256](),
       @[],
       elements,
       aggregate

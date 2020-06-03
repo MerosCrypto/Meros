@@ -109,7 +109,7 @@ suite "Spendable":
           if not spendable.hasKey(outputs[o].key):
             spendable[outputs[o].key] = @[]
           spendable[outputs[o].key].add(newFundedInput(send.hash, o))
-          spenders[send.hash.toString() & char(o)] = outputs[o].key
+          spenders[send.hash.serialize() & char(o)] = outputs[o].key
 
       compare()
 
@@ -139,7 +139,7 @@ suite "Spendable":
           sends.add(send)
 
           queue.add((outputKey, newFundedInput(send.hash, 0)))
-          spenders[send.hash.toString() & char(0)] = outputKey
+          spenders[send.hash.serialize() & char(0)] = outputKey
 
       for output in queue:
         if not spendable.hasKey(output[0]):
@@ -154,7 +154,7 @@ suite "Spendable":
         db.unverify(sends[s])
         for input in sends[s].inputs:
           spendable[
-            spenders[input.hash.toString() & char(cast[FundedInput](input).nonce)]
+            spenders[input.hash.serialize() & char(cast[FundedInput](input).nonce)]
           ].add(cast[FundedInput](input))
 
         for o1 in 0 ..< sends[s].outputs.len:

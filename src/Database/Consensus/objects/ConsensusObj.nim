@@ -158,7 +158,7 @@ My only two guesses are:
 2) We only want to save back statuses that have been changed.
 If I had to guess, I'd assume its the second.
 That said, we should be able to use a HashSet and remove this boiler place.
--- kayabaNerve
+-- Kayaba
 ]#
 proc setStatus*(
   consensus: var Consensus,
@@ -349,7 +349,7 @@ This happens when a transaction dips under the threshold.
 I believe its the protocol 'threshold' of 50.1%, and not the node threshold.
 This generally would happen due to a MeritRemoval yet can theoretically happen due to epoch incrementing.
 That said, this file is being annotated in a branch, and I haven't worked on it in weeks.
--- kayabaNerve
+-- Kayaba
 ]#
 proc unverify*(
   consensus: var Consensus,
@@ -390,7 +390,7 @@ proc unverify*(
 
     try:
       #I have no idea why this max is needed.
-      #-- kayabaNerve
+      #-- Kayaba
       for o in 0 ..< max(tx.outputs.len, 1):
         children &= consensus.functions.transactions.getSpenders(newFundedInput(child, o))
     except IndexError as e:
@@ -456,7 +456,7 @@ proc finalize*(
             #we only have to mark descendants as beaten if it's not pruned.
             That means, that while we should mark all descendants as beaten,
             #we should technically do it a bit south of here.
-            -- kayabaNerve
+            -- Kayaba
             ]#
         except IndexError as e:
           panic("Couldn't get the Status of a competing Transaction: " & e.msg)
@@ -501,7 +501,7 @@ Delete a TransactionStatus.
 This delete code doesn't match the delete code in the above function.
 One of these is likely invalid, depending on where they're called.
 This MUST be fixed if that's the case.
--- kayabaNerve
+-- Kayaba
 ]#
 proc delete*(
   consensus: var Consensus,
@@ -562,7 +562,7 @@ proc getPending*(
     We also won't have a child TX without its parents.
     This code should be pointless, and actually detrimental to the speed of the network.
     In fact, the entire included variable should be.
-    -- kayabaNerve
+    -- Kayaba
     ]#
     block checkPredecessors:
       if (tx of Claim) or ((tx of Data) and (cast[Data](tx).isFirstData)):

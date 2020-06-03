@@ -28,7 +28,7 @@ method serialize*(
   #Serialize the inputs.
   result = $char(claim.inputs.len)
   for input in claim.inputs:
-    result &= input.hash.toString() & char(cast[FundedInput](input).nonce)
+    result &= input.hash.serialize() & char(cast[FundedInput](input).nonce)
 
   #Serialize the output and signature.
   result &=

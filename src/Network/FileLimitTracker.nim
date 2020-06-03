@@ -48,7 +48,7 @@ elif defined(WINDOWS):
   proc getMaxFiles(): int {.inline, forceCheck: [].} =
     512
 else:
-  raise newException(UnsupportedTarget, "Meros cannot build on this system because it doesn't know how to get the file limit.")
+  {.fatal: "Meros cannot build on this system because it doesn't know how to get the file limit.".}
 
 when PROC_FS or DEV_FS:
   proc update*(
@@ -67,7 +67,7 @@ when PROC_FS or DEV_FS:
       doAssert(false, "Couldn't detect the amount of open files: " & e.msg)
 
 else:
-  raise newException(UnsupportedTarget, "Meros cannot build on this system because it doesn't know how to get the amount of opened files.")
+  {.fatal: "Meros cannot build on this system because it doesn't know how to get the amount of opened files.".}
 
 proc newFileLimitTracker*(): FileLimitTracker {.forceCheck: [].} =
   result = FileLimitTracker(

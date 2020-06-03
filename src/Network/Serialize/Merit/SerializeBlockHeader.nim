@@ -18,12 +18,12 @@ proc serializeTemplate*(
   header: BlockHeader
 ): string {.inline, forceCheck: [].} =
   header.version.toBinary(INT_LEN) &
-  header.last.toString() &
-  header.contents.toString() &
+  header.last.serialize() &
+  header.contents.serialize() &
 
   header.significant.toBinary(NICKNAME_LEN) &
   header.sketchSalt.pad(INT_LEN) &
-  header.sketchCheck.toString() &
+  header.sketchCheck.serialize() &
 
   (
     if header.newMiner: '\1' & header.minerKey.serialize() else: '\0' & header.minerNick.toBinary(NICKNAME_LEN)

@@ -158,7 +158,7 @@ proc newMnemonic*(
 
   #Extract the checksum.
   result.checksum = newString(int(ceil(checksumLen / 8)))
-  var checksumHash: SHA2_256Hash = SHA2_256(result.entropy)
+  var checksumHash: Hash[256] = SHA2_256(result.entropy)
   for c in 0 ..< result.checksum.len:
     #If the checksum isn't a clean byte...
     if checksumLen < 8:
@@ -181,8 +181,7 @@ proc unlock*(
   mnemonic: Mnemonic,
   password: string = ""
 ): string {.inline, forceCheck: [].} =
-  PDKDF2_HMAC_SHA2_512(mnemonic.sentence.toNFKD(), ("mnemonic" & password.toNFKD())).toString()
-
+  PDKDF2_HMAC_SHA2_512(mnemonic.sentence.toNFKD(), ("mnemonic" & password.toNFKD())).serialize()
 
 #Stringify a mnemonic.
 func `$`*(

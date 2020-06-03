@@ -1,15 +1,12 @@
-#Errors lib.
+import mc_randomx
+
 import ../Errors
 
-#Hash master type.
 import HashCommon
-
-#RandomX library.
-import mc_randomx
 
 type
   #Flags + VM + Cache.
-  RandomXObj* = object
+  RandomXObj = object
     flags: RandomXFlags
     cacheKey*: string
     cache: RandomXCache
@@ -17,10 +14,7 @@ type
 
   RandomX* = ref RandomXObj
 
-  #Hash type.
-  RandomXHash* = HashCommon.Hash[256]
-
-#Destructor to ensure the pointers are freed.
+#Destructor to ensure the pointers, referring to GB of data, are freed.
 proc `=destroy`*(
   rx: var RandomXObj
 ) {.forceCheck: [].} =
@@ -38,7 +32,7 @@ proc newRandomX*(): RandomX {.forceCheck: [].} =
   result.cache.init(result.cacheKey)
   result.vm = createVM(result.flags, result.cache, nil)
 
-#Set the key.
+#Update the cache key.
 proc setCacheKey*(
   rx: RandomX,
   key: string
@@ -47,24 +41,12 @@ proc setCacheKey*(
   rx.cache.init(key)
   rx.vm.setCache(rx.cache)
 
-#Take in data; return a RandomXHash.
 proc hash*(
   rx: RandomX,
   data: string
-): RandomXHash {.forceCheck: [].} =
+): Hash[256] {.forceCheck: [].} =
   try:
     var hashStr: string = rx.vm.hash(data)
     copyMem(addr result.data[0], addr hashStr[0], 32)
   except Exception:
     panic("RandomX raised an error.")
-
-#String to RandomXHash.
-proc toRandomXHash*(
-  hash: string
-): RandomXHash {.forceCheck: [
-  ValueError
-].} =
-  try:
-    result = hash.toHash(256)
-  except ValueError as e:
-    raise e

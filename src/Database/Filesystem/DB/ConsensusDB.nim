@@ -21,7 +21,7 @@ export DBObj
 template STATUS(
   hash: Hash[256]
 ): string =
-  hash.toString()
+  hash.serialize()
 
 template UNMENTIONED(): string =
   "u"
@@ -71,7 +71,7 @@ template SIGNATURE(
 template TRANSACTION(
   hash: Hash[256]
 ): string =
-  hash.toString() & "t"
+  hash.serialize() & "t"
 
 template MALICIOUS_PROOFS(): string =
   "p"
@@ -90,7 +90,7 @@ template HOLDER_MALICIOUS_PROOF(
 template MERIT_REMOVAL(
   mr: MeritRemoval
 ): string =
-  mr.reason.toString() & "r"
+  mr.reason.serialize() & "r"
 
 template MERIT_REMOVAL_NONCES(
   holder: uint16
@@ -155,7 +155,7 @@ proc commit*(
   #Save the unmentioned hashes.
   var unmentioned: string
   for hash in db.consensus.unmentioned:
-    unmentioned &= hash.toString()
+    unmentioned &= hash.serialize()
   items[^1] = (key: UNMENTIONED(), value: unmentioned)
   db.consensus.unmentioned = initHashSet[Hash[256]]()
 
@@ -317,7 +317,7 @@ proc loadUnmentioned*(
 
   for h in countup(0, unmentioned.len - 1, 32):
     try:
-      result.incl(unmentioned[h ..< h + 32].toHash(256))
+      result.incl(unmentioned[h ..< h + 32].toHash[:256]())
     except ValueError as e:
       panic("Couldn't parse an unmentioned hash: " & e.msg)
   db.consensus.unmentioned = result

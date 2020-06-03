@@ -1,61 +1,43 @@
-#Errors lib.
-import ../Errors
+import strutils
 
-#Util lib.
+import ../Errors
 import ../Util
 
-#Hash type.
 import objects/HashObj
 export HashObj
 
-#Empty uint8 'array'.
-const EMPTY_HASH*: ptr uint8 = nil
-
-#toHash functions.
-proc toHash*(
-  hash: string,
-  bits: static[int]
+proc toHash*[bits: static int](
+  hash: string
 ): Hash[bits] {.forceCheck: [
   ValueError
 ].} =
-  if hash.len == bits div 8:
-    for i in 0 ..< hash.len:
-      result.data[i] = uint8(hash[i])
-  elif hash.len div 2 == bits div 8:
-    for i in countup(0, hash.len - 1, 2):
-      result.data[i div 2] = uint8(parseHexInt(hash[i .. i + 1]))
-  else:
-    raise newLoggedException(ValueError, "toHash not handed the right amount of data.")
+  if hash.len != bits div 8:
+    panic("toHash (string) not handed the right amount of data.")
+  for b in 0 ..< hash.len:
+    result.data[b] = byte(hash[b])
 
-#toHash dedicated for Stint.
-proc toHash*(
-  hash: openArray[byte],
-  bits: static[int]
+proc toHash*[bits: static int](
+  hash: openArray[byte]
 ): Hash[bits] {.forceCheck: [
   ValueError
 ].} =
-  if hash.len == bits div 8:
-    for i in 0 ..< hash.len:
-      result.data[i] = uint8(hash[i])
-  else:
-    raise newLoggedException(ValueError, "toHash not handed the right amount of data.")
+  if hash.len != bits div 8:
+    panic("toHash (openArray) not handed the right amount of data.")
+  for b in 0 ..< hash.len:
+    result.data[b] = hash[b]
 
-#To binary string.
-func toString*(
+func serialize*(
   hash: Hash
 ): string {.forceCheck: [].} =
   for b in hash.data:
     result &= char(b)
 
-#To hex string.
 func `$`*(
   hash: Hash
-): string {.forceCheck: [].} =
-  for b in hash.data:
-    result &= b.toHex()
+): string {.inline, forceCheck: [].} =
+  hash.serialize().toHex()
 
-#Check if a hash is empty.
-proc empty*(
+func empty*(
   hash: Hash
 ): bool {.forceCheck: [].} =
   for b in hash.data:
@@ -63,7 +45,6 @@ proc empty*(
       return false
   result = true
 
-#Compare hash values.
 func `<`*[bits: static[int]](
   lhs: Hash[bits],
   rhs: Hash[bits]

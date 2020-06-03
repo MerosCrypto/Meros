@@ -228,7 +228,7 @@ proc handle*(
       char(manager.network) &
       manager.services &
       manager.port.toBinary(PORT_LEN) &
-      manager.functions.merit.getTail().toString()
+      manager.functions.merit.getTail().serialize()
     ))
   except SocketError:
     return
@@ -298,7 +298,7 @@ proc handle*(
           try:
             await peer.sendSync(newMessage(
               MessageType.BlockchainTail,
-              manager.functions.merit.getTail().toString()
+              manager.functions.merit.getTail().serialize()
             ))
           except SocketError:
             return
@@ -308,7 +308,7 @@ proc handle*(
           #Add the tail.
           var tail: Hash[256]
           try:
-            tail = msg.message[5 ..< 37].toHash(256)
+            tail = msg.message[5 ..< 37].toHash[:256]()
           except ValueError as e:
             panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
 
@@ -321,7 +321,7 @@ proc handle*(
           #Get the tail.
           var tail: Hash[256]
           try:
-            tail = msg.message[0 ..< 32].toHash(256)
+            tail = msg.message[0 ..< 32].toHash[:256]()
           except ValueError as e:
             panic("Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
 
@@ -371,7 +371,7 @@ proc handle*(
             i: int = -1
 
           try:
-            last = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN + HASH_LEN].toHash(256)
+            last = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN + HASH_LEN].toHash[:256]()
           except ValueError as e:
             panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
 
@@ -380,13 +380,13 @@ proc handle*(
             if int(msg.message[0]) == 0:
               while i < int(msg.message[1]):
                 last = manager.functions.merit.getBlockHashBefore(last)
-                list &= last.toString()
+                list &= last.serialize()
                 inc(i)
             #Forwards.
             elif int(msg.message[0]) == 1:
               while i < int(msg.message[1]):
                 last = manager.functions.merit.getBlockHashAfter(last)
-                list &= last.toString()
+                list &= last.serialize()
                 inc(i)
             else:
               peer.close("Peer requested an invalid BlockList direction.")
@@ -413,7 +413,7 @@ proc handle*(
                 result = newSeq[Hash[256]](1 + int(serialization[0]))
                 for i in 0 ..< result.len:
                   try:
-                    result[i] = msg.message[BYTE_LEN + (i * HASH_LEN) ..< BYTE_LEN + HASH_LEN + (i * HASH_LEN)].toHash(256)
+                    result[i] = msg.message[BYTE_LEN + (i * HASH_LEN) ..< BYTE_LEN + HASH_LEN + (i * HASH_LEN)].toHash[:256]()
                   except ValueError as e:
                     panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
             )
@@ -425,7 +425,7 @@ proc handle*(
           try:
             res = newMessage(
               MessageType.BlockHeader,
-              manager.functions.merit.getBlockByHash(msg.message.toHash(256)).header.serialize()
+              manager.functions.merit.getBlockByHash(msg.message.toHash[:256]()).header.serialize()
             )
           except ValueError as e:
             panic("Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
@@ -434,7 +434,7 @@ proc handle*(
 
         of MessageType.BlockBodyRequest:
           try:
-            var requested: Block = manager.functions.merit.getBlockByHash(msg.message.toHash(256))
+            var requested: Block = manager.functions.merit.getBlockByHash(msg.message.toHash[:256]())
             res = newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt))
           except ValueError as e:
             panic("Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
@@ -444,7 +444,7 @@ proc handle*(
         of MessageType.SketchHashesRequest:
           var requested: Block
           try:
-            requested = manager.functions.merit.getBlockByHash(msg.message.toHash(256))
+            requested = manager.functions.merit.getBlockByHash(msg.message.toHash[:256]())
             res = newMessage(MessageType.SketchHashes, requested.body.packets.len.toBinary(INT_LEN))
             for packet in requested.body.packets:
               res.message &= sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)
@@ -456,7 +456,7 @@ proc handle*(
         of MessageType.SketchHashRequests:
           var requested: Block
           try:
-            requested = manager.functions.merit.getBlockByHash(msg.message[0 ..< HASH_LEN].toHash(256))
+            requested = manager.functions.merit.getBlockByHash(msg.message[0 ..< HASH_LEN].toHash[:256]())
 
             #Create a Table of the Sketch Hashes.
             var packets: Table[string, VerificationPacket] = initTable[string, VerificationPacket]()
@@ -488,7 +488,7 @@ proc handle*(
         of MessageType.TransactionRequest:
           var tx: Transaction
           try:
-            tx = manager.functions.transactions.getTransaction(msg.message.toHash(256))
+            tx = manager.functions.transactions.getTransaction(msg.message.toHash[:256]())
             if tx of Mint:
               raise newLoggedException(IndexError, "TransactionRequest asked for a Mint.")
 
@@ -662,7 +662,7 @@ proc handle*(
                 for elem in result.data.elements:
                   elementsMerkle.add(Blake256(elem.serializeContents()))
 
-                if Blake256(result.data.packetsContents.toString() & elementsMerkle.hash.toString()) != check:
+                if Blake256(result.data.packetsContents.serialize() & elementsMerkle.hash.serialize()) != check:
                   raise newLoggedException(ValueError, "Peer sent the wrong BlockBody.")
             )
           except ValueError as e:

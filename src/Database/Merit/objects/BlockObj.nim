@@ -17,7 +17,7 @@ type Block* = object
 
 proc newBlockObj*(
   version: uint32,
-  last: RandomXHash,
+  last: Hash[256],
   contents: Hash[256],
   significant: uint16,
   sketchSalt: string,
@@ -56,7 +56,7 @@ proc newBlockObj*(
 
 proc newBlockObj*(
   version: uint32,
-  last: RandomXHash,
+  last: Hash[256],
   contents: Hash[256],
   significant: uint16,
   sketchSalt: string,

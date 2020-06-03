@@ -1,8 +1,8 @@
 #Errors objects.
-import ../lib/objects/ErrorsObjs
+import ../lib/objects/ErrorObjs
 
 #Util lib.
-import ../lib/Util
+from ../lib/Util import randomFill
 
 #BLS lib.
 import BLS

@@ -17,7 +17,7 @@ import ../SerializeCommon
 proc parseBlockHeader*(
   headerStr: string,
   interimHash: string,
-  hash: RandomXHash
+  hash: Hash[256]
 ): BlockHeader {.forceCheck: [
   ValueError
 ].} =
@@ -47,11 +47,11 @@ proc parseBlockHeader*(
     if headerSeq[6] == "\0":
       result = newBlockHeaderObj(
         uint32(headerSeq[0].fromBinary()),
-        headerSeq[1].toRandomXHash(),
-        headerSeq[2].toHash(256),
+        headerSeq[1].toHash[:256](),
+        headerSeq[2].toHash[:256](),
         uint16(headerSeq[3].fromBinary()),
         headerSeq[4],
-        headerSeq[5].toHash(256),
+        headerSeq[5].toHash[:256](),
         uint16(headerSeq[7].fromBinary()),
         uint32(headerSeq[8].fromBinary()),
         uint32(headerSeq[9].fromBinary()),
@@ -60,11 +60,11 @@ proc parseBlockHeader*(
     else:
       result = newBlockHeaderObj(
         uint32(headerSeq[0].fromBinary()),
-        headerSeq[1].toRandomXHash(),
-        headerSeq[2].toHash(256),
+        headerSeq[1].toHash[:256](),
+        headerSeq[2].toHash[:256](),
         uint16(headerSeq[3].fromBinary()),
         headerSeq[4],
-        headerSeq[5].toHash(256),
+        headerSeq[5].toHash[:256](),
         newBLSPublicKey(headerSeq[7]),
         uint32(headerSeq[8].fromBinary()),
         uint32(headerSeq[9].fromBinary()),

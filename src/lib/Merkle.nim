@@ -1,13 +1,7 @@
-#Errors lib.
-import Errors
-
-#Hash lib.
-import Hash
-
-#Math lib
 import math
 
-#Merkle Object.
+import Errors, Hash
+
 type Merkle* = ref object
   unset: bool
   case isLeaf*: bool
@@ -18,16 +12,13 @@ type Merkle* = ref object
       right*: Merkle
   hash*: Hash[256]
 
-#Nil leaf constructor.
-#This exists, instead of just using nil, so we can still access the isLeaf and hash fields.
-func newNilLeaf(): Merkle {.forceCheck: [].} =
+func newLeaf(): Merkle {.forceCheck: [].} =
   Merkle(
     unset: true,
     isLeaf: true
   )
 
-#Leaf constructor.
-func newMerkle(
+func newLeaf(
   hash: Hash[256]
 ): Merkle {.forceCheck: [].} =
   Merkle(
@@ -35,7 +26,6 @@ func newMerkle(
     hash: hash
   )
 
-#Rehashes a Merkle Tree.
 proc rehash(
   tree: Merkle
 ) {.forceCheck: [].} =
@@ -49,10 +39,10 @@ proc rehash(
       tree.hash.data[i] = 0
   #If there's an odd number of children, duplicate the left one.
   elif tree.right.isNil:
-    tree.hash = Blake256(tree.left.hash.toString() & tree.left.hash.toString())
+    tree.hash = Blake256(tree.left.hash.serialize() & tree.left.hash.serialize())
   #Hash the left & right hashes.
   else:
-    tree.hash = Blake256(tree.left.hash.toString() & tree.right.hash.toString())
+    tree.hash = Blake256(tree.left.hash.serialize() & tree.right.hash.serialize())
 
 #Merkle constructor based on two other Merkles.
 proc newMerkle(
@@ -66,20 +56,13 @@ proc newMerkle(
   )
   result.rehash()
 
-#Opposite of isLeaf.
-func isBranch(
-  tree: Merkle
-): bool {.inline, forceCheck: [].} =
-  not tree.isLeaf
-
 #Checks if this tree has any duplicated transactions, anywhere.
 func isFull(
   tree: Merkle
 ): bool {.forceCheck: [].} =
   if tree.isLeaf:
     return true
-
-  if tree.right.isNil:
+  elif tree.right.isNil:
     return false
 
   result = tree.left.isFull and tree.right.isFull
@@ -100,7 +83,7 @@ func leafCount(
 ): int {.forceCheck: [].} =
   if tree.isNil:
     return 0
-  if tree.isLeaf:
+  elif tree.isLeaf:
     return 1
   result = tree.left.leafCount + tree.right.leafCount
 
@@ -110,7 +93,7 @@ proc chainOfDepth(
   hash: Hash[256]
 ): Merkle {.forceCheck: [].} =
   if depth == 0:
-    return newMerkle(hash)
+    return newLeaf(hash)
   result = newMerkle(chainOfDepth(depth - 1, hash), nil)
 
 #Adds a hash to a Merkle Tree.
@@ -119,21 +102,21 @@ proc add*(
   hash: Hash[256]
 ) {.forceCheck: [].} =
   if tree.unset:
-    tree = newMerkle(hash)
+    tree = newLeaf(hash)
     return
   elif tree.isLeaf:
-    tree = newMerkle(tree, newMerkle(hash))
+    tree = newMerkle(tree, newLeaf(hash))
     return
   elif tree.left.isNil:
     tree = newMerkle(
-      newMerkle(hash),
+      newLeaf(hash),
       nil
     )
     return
   elif tree.isFull:
     tree = newMerkle(tree, chainOfDepth(tree.depth, hash))
     return
-  elif tree.left.isBranch and not tree.left.isFull:
+  elif (not tree.left.isLeaf) and (not tree.left.isFull):
     tree.left.add(hash)
   elif tree.right.isNil:
     tree.right = chainOfDepth(tree.depth - 1, hash)
@@ -143,17 +126,20 @@ proc add*(
   tree.rehash()
 
 #From https://stackoverflow.com/a/15327567/4608364.
-const t: array[6, uint64] = [
-  0xFFFFFFFF00000000'u64,
-  0x00000000FFFF0000'u64,
-  0x000000000000FF00'u64,
-  0x00000000000000F0'u64,
-  0x000000000000000C'u64,
-  0x0000000000000002'u64
-]
+#This should be replaced with a compiler intrinsic.
+#bitops2 has some nice functions for this.
 func ceilLog2(
   xArg: uint64
 ): uint64 {.forceCheck: [].} =
+  const t: array[6, uint64] = [
+    0xFFFFFFFF00000000'u64,
+    0x00000000FFFF0000'u64,
+    0x000000000000FF00'u64,
+    0x00000000000000F0'u64,
+    0x000000000000000C'u64,
+    0x0000000000000002'u64
+  ]
+
   var
     x: uint64 = xArg
     j: uint64 = 32
@@ -182,7 +168,7 @@ proc newMerkleAux(
   targetDepth: int
 ): Merkle {.forceCheck: [].} =
   if targetDepth == 0:
-    return newMerkle(hashes[0])
+    return newLeaf(hashes[0])
 
   let halfWidth: int = 2 ^ (targetDepth - 1)
   if hashes.len <= halfWidth:
@@ -194,60 +180,12 @@ proc newMerkleAux(
       newMerkleAux(hashes[halfWidth ..< len(hashes)], targetDepth - 1)
     )
 
-#Merkle constructor based on a seq or array of hashes (as strings).
 proc newMerkle*(
   hashes: varargs[Hash[256]]
 ): Merkle {.forceCheck: [].} =
-  #If there were no hashes, return nil.
+  #If there were no hashes, return a blank leaf.
   if hashes.len == 0:
-    return newNilLeaf()
+    return newLeaf()
 
   #Pass off to Merkle Aux.
-  result = newMerkleAux(
-    hashes,
-    int(
-      ceilLog2(uint64(hashes.len))
-    )
-  )
-
-#Recursive function to trim a Merkle without cutting an entire branch.
-proc trimAux(
-  tree: Merkle,
-  n: int
-): Merkle {.forceCheck: [].} =
-  if n == 0:
-    return tree
-
-  if n >= tree.right.leafCount:
-    result = newMerkle(tree.left.trimAux(n - tree.right.leafCount), nil)
-  else:
-    result = newMerkle(tree.left, tree.right.trimAux(n))
-
-#Nonmutatively remove the last N leaves from a tree.
-proc trim*(
-  treeArg: Merkle,
-  nArg: int
-): Merkle {.forceCheck: [].} =
-  #Clone the arguments.
-  var
-    tree: Merkle = treeArg
-    n: int = nArg
-
-  #This code doesn't handle trimming everything BUT the initial leaf.
-  #This override handles that.
-  if tree.leafCount - n == 1:
-    result = tree
-    while result.isBranch:
-      result = result.left
-    return
-
-  #Chop of the entire right branch for as long as we can.
-  while (
-    (n >= tree.right.leafCount) and
-    (n > 0)
-  ):
-    n -= tree.right.leafCount
-    tree = tree.left
-
-  #Recursively handle the rest.
-  result = tree.trimAux(n)
+  result = newMerkleAux(hashes, int(ceilLog2(uint64(hashes.len))))

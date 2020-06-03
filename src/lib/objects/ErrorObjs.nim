@@ -1,29 +1,20 @@
 #Errors objects, providing easy access to ForceCheck and defining all our custom errors.
 
-#Hash object.
-import ../Hash/objects/HashObj
+import json
 
-#Element object.
-import ../../Database/Consensus/Elements/objects/ElementObj
-
-#ForceCheck lib.
 import ForceCheck
 export ForceCheck
 
-#mc_bls lib. Imported so we can export its error.
+import mc_lmdb
 import mc_bls
 export BLSError
 
-#DB lib, imported so we can export a masked LMDBerror.
-import mc_lmdb
+import ../Hash/objects/HashObj
 
-#JSON standard lib.
-import json
+import ../../Database/Consensus/Elements/objects/ElementObj
+
 
 type
-  #Compile-time Exception used when Meros is being built for an unsupported target.
-  UnsupportedTarget* = object of Defect
-
   #lib Errors.
   RandomError* = object of CatchableError #Used when the RNG fails.
   SaltError*   = object of CatchableError #Used when a sketch salt causes a collision.
@@ -33,7 +24,7 @@ type
   DataExists*  = object of CatchableError #Used when trying to add data which was already added.
 
   #Database/Filesystem Errors.
-  DBError*   = LMDBError
+  DBError*     = LMDBError
   DBReadError* = object of DBError #Used when reading from the DB fails.
 
   #Database/Consensus Statuses.
@@ -54,7 +45,7 @@ type
     hash*: Hash[256]
     #Argon hash.
     argon*: Hash[256]
-    #Difficulty the argon was multiplied by.
+    #Difficulty the argon hash was multiplied by.
     difficulty*: uint32
 
   #Interfaces/RPC Errors.

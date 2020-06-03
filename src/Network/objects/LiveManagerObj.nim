@@ -106,7 +106,7 @@ proc handle*(
       char(manager.network) &
       manager.services &
       manager.port.toBinary(PORT_LEN) &
-      manager.functions.merit.getTail().toString()
+      manager.functions.merit.getTail().serialize()
     ))
   except SocketError:
     return
@@ -182,7 +182,7 @@ proc handle*(
             await peer.sendLive(
               newMessage(
                 MessageType.BlockchainTail,
-                manager.functions.merit.getTail().toString()
+                manager.functions.merit.getTail().serialize()
               )
             )
           except SocketError:
@@ -193,7 +193,7 @@ proc handle*(
           #Add the tail.
           var tail: Hash[256]
           try:
-            tail = msg.message[5 ..< 37].toHash(256)
+            tail = msg.message[5 ..< 37].toHash[:256]()
           except ValueError as e:
             panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
 
@@ -206,7 +206,7 @@ proc handle*(
           #Get the hash.
           var tail: Hash[256]
           try:
-            tail = msg.message[0 ..< 32].toHash(256)
+            tail = msg.message[0 ..< 32].toHash[:256]()
           except ValueError as e:
             panic("Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
 

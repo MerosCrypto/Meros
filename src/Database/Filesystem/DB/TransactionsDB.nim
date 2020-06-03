@@ -29,7 +29,7 @@ template UNMENTIONED_TRANSACTIONS(): string =
 template TRANSACTION(
   hash: Hash[256]
 ): string =
-  hash.toString()
+  hash.serialize()
 
 template OUTPUT_SPENDERS(
   input: Input
@@ -40,7 +40,7 @@ template OUTPUT(
   hash: Hash[256],
   o: int
 ): string =
-  hash.toString() & o.toBinary(BYTE_LEN)
+  hash.serialize() & o.toBinary(BYTE_LEN)
 
 template OUTPUT(
   output: Input
@@ -50,7 +50,7 @@ template OUTPUT(
 template DATA_SENDER(
   hash: Hash[256]
 ): string =
-  hash.toString() & "se"
+  hash.serialize() & "se"
 
 template SPENDABLE(
   key: EdPublicKey
@@ -60,7 +60,7 @@ template SPENDABLE(
 template BEATEN_TRANSACTION(
   hash: Hash[256]
 ): string =
-  hash.toString() & "bt"
+  hash.serialize() & "bt"
 
 proc put(
   db: DB,
@@ -119,7 +119,7 @@ proc commit*(
 
   var unmentioned: string
   for hash in db.transactions.unmentioned:
-    unmentioned &= hash.toString()
+    unmentioned &= hash.serialize()
   items[^1] = (key: UNMENTIONED_TRANSACTIONS(), value: unmentioned)
 
   try:
@@ -139,9 +139,9 @@ proc save*(
   if not ((tx of Data) and (tx.inputs[0].hash == Hash[256]())):
     for input in tx.inputs:
       try:
-        db.put(OUTPUT_SPENDERS(input), db.get(OUTPUT_SPENDERS(input)) & tx.hash.toString())
+        db.put(OUTPUT_SPENDERS(input), db.get(OUTPUT_SPENDERS(input)) & tx.hash.serialize())
       except DBReadError:
-        db.put(OUTPUT_SPENDERS(input), tx.hash.toString())
+        db.put(OUTPUT_SPENDERS(input), tx.hash.serialize())
 
   for o in 0 ..< tx.outputs.len:
     db.put(OUTPUT(tx.hash, o), tx.outputs[o].serialize())
@@ -177,7 +177,7 @@ proc loadUnmentioned*(
   result = initHashSet[Hash[256]]()
   for h in 0 ..< unmentioned.len div 32:
     try:
-      result.incl(unmentioned[h * 32 ..< (h + 1) * 32].toHash(256))
+      result.incl(unmentioned[h * 32 ..< (h + 1) * 32].toHash[:256]())
     except ValueError as e:
       panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
   db.transactions.unmentioned = result
@@ -228,7 +228,7 @@ proc loadSpenders*(
 
   for h in countup(0, spenders.len - 1, 32):
     try:
-      result.add(spenders[h ..< h + 32].toHash(256))
+      result.add(spenders[h ..< h + 32].toHash[:256]())
     except ValueError as e:
       panic("Couldn't load a spending hash from the DB: " & e.msg)
 
@@ -281,7 +281,7 @@ proc loadSpendable*(
     try:
       result.add(
         newFundedInput(
-          spendable[i ..< i + 32].toHash(256),
+          spendable[i ..< i + 32].toHash[:256](),
           int(spendable[i + 32])
         )
       )
@@ -295,9 +295,9 @@ proc addToSpendable(
   nonce: int
 ) {.forceCheck: [].} =
   try:
-    db.put(SPENDABLE(key), db.get(SPENDABLE(key)) & hash.toString() & char(nonce))
+    db.put(SPENDABLE(key), db.get(SPENDABLE(key)) & hash.serialize() & char(nonce))
   except DBReadError:
-    db.put(SPENDABLE(key), hash.toString() & char(nonce))
+    db.put(SPENDABLE(key), hash.serialize() & char(nonce))
 
 proc removeFromSpendable(
   db: DB,
@@ -306,7 +306,7 @@ proc removeFromSpendable(
   nonce: int
 ) {.forceCheck: [].} =
   var
-    output: string = hash.toString() & char(nonce)
+    output: string = hash.serialize() & char(nonce)
     spendable: string
 
   #Load the output.
@@ -408,7 +408,7 @@ proc prune*(
   db.transactions.unmentioned.excl(hash)
 
   #Remove it as a spender.
-  var hashStr: string = hash.toString()
+  var hashStr: string = hash.serialize()
   for i in 0 ..< tx.inputs.len:
     var spenders: string
     try:

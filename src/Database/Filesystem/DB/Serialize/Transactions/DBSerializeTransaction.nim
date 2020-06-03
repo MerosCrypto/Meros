@@ -13,7 +13,7 @@ import ../../../../../Network/Serialize/Transactions/[
 func serialize*(
   input: Input
 ): string {.forceCheck: [].} =
-  result = input.hash.toString()
+  result = input.hash.serialize()
   if input of FundedInput:
     result &= char(cast[FundedInput](input).nonce)
   else:

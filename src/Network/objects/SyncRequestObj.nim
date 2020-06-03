@@ -84,7 +84,7 @@ proc newBlockListSyncRequest*(
       MessageType.BlockListRequest,
       (if forwards: char(1) else: char(0)) &
       char(amount - 1) &
-      hash.toString()
+      hash.serialize()
     ),
     result: future
   )
@@ -94,7 +94,7 @@ proc newTransactionSyncRequest*(
   hash: Hash[256]
 ): TransactionSyncRequest {.inline, forceCheck: [].} =
   TransactionSyncRequest(
-    msg: newMessage(MessageType.TransactionRequest, hash.toString()),
+    msg: newMessage(MessageType.TransactionRequest, hash.serialize()),
     check: hash,
     result: future
   )
@@ -104,7 +104,7 @@ proc newBlockHeaderSyncRequest*(
   hash: Hash[256]
 ): BlockHeaderSyncRequest {.inline, forceCheck: [].} =
   BlockHeaderSyncRequest(
-    msg: newMessage(MessageType.BlockHeaderRequest, hash.toString()),
+    msg: newMessage(MessageType.BlockHeaderRequest, hash.serialize()),
     check: hash,
     result: future
   )
@@ -115,7 +115,7 @@ proc newBlockBodySyncRequest*(
   contents: Hash[256]
 ): BlockBodySyncRequest {.inline, forceCheck: [].} =
   BlockBodySyncRequest(
-    msg: newMessage(MessageType.BlockBodyRequest, hash.toString()),
+    msg: newMessage(MessageType.BlockBodyRequest, hash.serialize()),
     check: contents,
     result: future
   )
@@ -126,7 +126,7 @@ proc newSketchHashesSyncRequest*(
   sketchCheck: Hash[256]
 ): SketchHashesSyncRequest {.inline, forceCheck: [].} =
   SketchHashesSyncRequest(
-    msg: newMessage(MessageType.SketchHashesRequest, hash.toString()),
+    msg: newMessage(MessageType.SketchHashesRequest, hash.serialize()),
     check: sketchCheck,
     result: future
   )
@@ -140,7 +140,7 @@ proc newSketchHashSyncRequests*(
   result = SketchHashSyncRequests(
     msg: newMessage(
       MessageType.SketchHashRequests,
-      hash.toString() &
+      hash.serialize() &
       sketchHashes.len.toBinary(INT_LEN)
     ),
     check: (

@@ -43,7 +43,7 @@ proc module*(
         #Extract the parameter.
         var hash: Hash[256]
         try:
-          hash = params[0].getStr().toHash(256)
+          hash = params[0].getStr().toHash[:256]()
         except ValueError:
           raise newLoggedException(ParamError, "")
 

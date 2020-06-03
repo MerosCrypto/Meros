@@ -5,7 +5,7 @@ type BlockHeader* = ref object
   #Version.
   version*: uint32
   #Hash of the last block.
-  last*: RandomXHash
+  last*: Hash[256]
   #Merkle of the contents.
   contents*: Hash[256]
 
@@ -32,11 +32,11 @@ type BlockHeader* = ref object
   #Interim Block hash.
   interimHash*: string
   #Block hash.
-  hash*: RandomXHash
+  hash*: Hash[256]
 
 func newBlockHeaderObj*(
   version: uint32,
-  last: RandomXHash,
+  last: Hash[256],
   contents: Hash[256],
   significant: uint16,
   sketchSalt: string,
@@ -64,7 +64,7 @@ func newBlockHeaderObj*(
 
 func newBlockHeaderObj*(
   version: uint32,
-  last: RandomXHash,
+  last: Hash[256],
   contents: Hash[256],
   significant: uint16,
   sketchSalt: string,
@@ -99,7 +99,7 @@ proc hash*(
   proof: uint32
 ) {.forceCheck: [].} =
   header.proof = proof
-  header.interimHash = rx.hash(serialized).toString()
+  header.interimHash = rx.hash(serialized).serialize()
   header.signature = miner.sign(header.interimHash)
   header.hash = rx.hash(header.interimHash & header.signature.serialize())
 
@@ -109,5 +109,5 @@ proc hash*(
   header: var BlockHeader,
   serialized: string
 ) {.forceCheck: [].} =
-  header.interimHash = rx.hash(serialized).toString()
+  header.interimHash = rx.hash(serialized).serialize()
   header.hash = rx.hash(header.interimHash & header.signature.serialize())

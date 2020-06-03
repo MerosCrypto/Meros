@@ -132,7 +132,7 @@ suite "Epochs":
   noFuzzTest "Perfect 1000.":
     var
       #Hash.
-      hash: Hash[256] = "".pad(32, char(128)).toHash(256)
+      hash: Hash[256] = "".pad(32, char(128)).toHash[:256]()
       #MinerWallets.
       miners: seq[MinerWallet] = @[
         newMinerWallet(),
@@ -215,7 +215,7 @@ suite "Epochs":
   noFuzzTest "Single.":
     var
       #Hash.
-      hash: Hash[256] = "".pad(32, char(128)).toHash(256)
+      hash: Hash[256] = "".pad(32, char(128)).toHash[:256]()
       #MinerWallets.
       miner: MinerWallet = newMinerWallet()
       #SignedVerification.
@@ -273,7 +273,7 @@ suite "Epochs":
   noFuzzTest "Split.":
     var
       #Hash.
-      hash: Hash[256] = "".pad(32, char(128)).toHash(256)
+      hash: Hash[256] = "".pad(32, char(128)).toHash[:256]()
       #MinerWallets.
       miners: seq[MinerWallet] = @[
         newMinerWallet(),

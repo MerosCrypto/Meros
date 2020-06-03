@@ -40,12 +40,12 @@ template TOTAL_UNLOCKED_MERIT(
 template INTERIM_HASH(
   hash: Hash[256]
 ): string =
-  hash.toString() & "i"
+  hash.serialize() & "i"
 
 template BLOCK_HASH(
   hash: Hash[256]
 ): string =
-  hash.toString()
+  hash.serialize()
 
 template BLOCK_NONCE(
   nonce: int
@@ -55,17 +55,17 @@ template BLOCK_NONCE(
 template BLOCK_HEIGHT(
   hash: Hash[256]
 ): string =
-  hash.toString() & "h"
+  hash.serialize() & "h"
 
 template DIFFICULTY(
   hash: Hash[256]
 ): string =
-  hash.toString() & "d"
+  hash.serialize() & "d"
 
 template CHAIN_WORK(
   hash: Hash[256]
 ): string =
-  hash.toString() & "w"
+  hash.serialize() & "w"
 
 template HOLDER_NICK(
   nick: uint16
@@ -196,7 +196,7 @@ proc saveTip*(
   db: DB,
   hash: Hash[256]
 ) {.forceCheck: [].} =
-  db.put(TIP(), hash.toString())
+  db.put(TIP(), hash.serialize())
 
 proc save*(
   db: DB,
@@ -219,7 +219,7 @@ proc save*(
 ) {.forceCheck: [].} =
   db.put(INTERIM_HASH(blockArg.header.hash), blockArg.header.interimHash)
   db.put(BLOCK_HASH(blockArg.header.hash), blockArg.serialize())
-  db.put(BLOCK_NONCE(nonce), blockArg.header.hash.toString())
+  db.put(BLOCK_NONCE(nonce), blockArg.header.hash.serialize())
   db.put(BLOCK_HEIGHT(blockArg.header.hash), (nonce + 1).toBinary())
 
 proc save*(
@@ -303,7 +303,7 @@ proc loadTip*(
   DBReadError
 ].} =
   try:
-    result = db.get(TIP()).toHash(256)
+    result = db.get(TIP()).toHash[:256]()
   except Exception as e:
     raise newLoggedException(DBReadError, e.msg)
 
@@ -367,7 +367,7 @@ proc loadBlock*(
   DBReadError
 ].} =
   try:
-    result = db.loadBlock(db.get(BLOCK_NONCE(nonce)).toHash(256))
+    result = db.loadBlock(db.get(BLOCK_NONCE(nonce)).toHash[:256]())
   except Exception as e:
     raise newLoggedException(DBReadError, e.msg)
 
@@ -456,7 +456,7 @@ proc hasBlock*(
   hash: Hash[256]
 ): bool {.forceCheck: [].} =
   try:
-    discard db.get(hash.toString())
+    discard db.get(hash.serialize())
     return true
   except DBReadError:
     return false
@@ -473,7 +473,7 @@ proc deleteBlock*(
 ) {.forceCheck: [].} =
   var hash: Hash[256]
   try:
-    hash = db.get(BLOCK_NONCE(nonce)).toHash(256)
+    hash = db.get(BLOCK_NONCE(nonce)).toHash[:256]()
   except ValueError as e:
     panic("Couldn't convert a 32-byte value to a 32-byte hash: " & e.msg)
   except DBReadError as e:

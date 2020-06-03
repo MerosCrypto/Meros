@@ -33,7 +33,7 @@ const
 #HDWallet.
 type HDWallet* = object
   #Chain Code.
-  chainCode*: SHA2_256Hash
+  chainCode*: Hash[256]
   #Private Key.
   privateKey*: EdPrivateKey
   #Public Key.
@@ -109,7 +109,7 @@ proc derive*(
 ].} =
   var
     #Parent properties, serieslized in little endian.
-    pChainCode: string = wallet.chainCode.toString()
+    pChainCode: string = wallet.chainCode.serialize()
     pPrivateKey: string = wallet.privateKey.toString()
     pPrivateKeyL: array[32, uint8]
     pPrivateKeyR: array[32, uint8]
@@ -125,9 +125,9 @@ proc derive*(
 
   #Calculate Z and the Chaincode.
   var
-    Z: SHA2_512Hash
-    chainCodeExtended: SHA2_512Hash
-    chainCode: SHA2_256Hash
+    Z: Hash[512]
+    chainCodeExtended: Hash[512]
+    chainCode: Hash[256]
   if hardened:
     Z = HMAC_SHA2_512(pChainCode, '\0' & pPrivateKey & child)
     chainCodeExtended = HMAC_SHA2_512(pChainCode, '\1' & pPrivateKey & child)

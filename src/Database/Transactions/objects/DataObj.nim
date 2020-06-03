@@ -8,7 +8,7 @@ type Data* = ref object of Transaction
   data*: string
   signature*: EdSignature
   proof*: uint32
-  argon*: ArgonHash
+  argon*: Hash[256]
 
 func newDataObj*(
   input: Hash[256],

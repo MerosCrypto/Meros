@@ -18,17 +18,17 @@ import random
 suite "Merkle":
   noFuzzTest "`nil` Merkle trees.":
     check(newMerkle().isLeaf)
-    check(newMerkle().hash == "".pad(32).toHash(256))
+    check(newMerkle().hash == "".pad(32).toHash[:256]())
 
   noFuzzTest "Leaves.":
-    check(newMerkle("1".pad(32).toHash(256)).hash == "1".pad(32).toHash(256))
+    check(newMerkle("1".pad(32).toHash[:256]()).hash == "1".pad(32).toHash[:256]())
 
   noFuzzTest "A blank Merkle tree with an added leaf is the same as a tree created with said leaf.":
     var
-      created: Merkle = newMerkle("".pad(32).toHash(256))
+      created: Merkle = newMerkle("".pad(32).toHash[:256]())
       added: Merkle = newMerkle()
 
-    added.add("".pad(32).toHash(256))
+    added.add("".pad(32).toHash[:256]())
     check(created.isLeaf)
     check(added.isLeaf)
     check(added.hash == created.hash)
@@ -68,7 +68,7 @@ suite "Merkle":
           fullCopy.add(fullCopy[fullCopy.len - 1])
 
         #Turn fullCopy[h] into the branch hash for fullCopy[h .. h + 1].
-        fullCopy[h] = Blake256(fullCopy[h].toString() & fullCopy[h + 1].toString())
+        fullCopy[h] = Blake256(fullCopy[h].serialize() & fullCopy[h + 1].serialize())
 
       #Delete every other element.
       var d: int = 1
@@ -82,7 +82,7 @@ suite "Merkle":
         if partialCopy.len mod 2 == 1:
           partialCopy.add(partialCopy[partialCopy.len - 1])
 
-        partialCopy[h] = Blake256(partialCopy[h].toString() & partialCopy[h + 1].toString())
+        partialCopy[h] = Blake256(partialCopy[h].serialize() & partialCopy[h + 1].serialize())
 
       var d: int = 1
       while d < partialCopy.len:
@@ -96,16 +96,9 @@ suite "Merkle":
     #Test that the both tree has the same hash as partialCopy.
     check(both.hash == partialCopy[0])
 
-    #Test that when hashLen - bothLen elements are trimmed, their hashes equal both's.
-    check(constructor.trim(hashLen - bothLen).hash == both.hash)
-    check(addition.trim(hashLen - bothLen).hash == both.hash)
-
     #Complete the both tree.
     for hash in hashes[bothLen ..< hashLen]:
       both.add(hash)
 
     #Test that the both tree and the fullCopy have the same hash.
     check(both.hash == fullCopy[0])
-
-    #Make sure trimming, as long as we don't break the lower bound, still works.
-    check(constructor.trim(hashLen div 2).hash == addition.trim(hashLen div 2).hash)

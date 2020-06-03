@@ -24,7 +24,7 @@ method serializeHash*(
   result = "\2" & char(send.inputs.len)
   for input in send.inputs:
     result &=
-      input.hash.toString() &
+      input.hash.serialize() &
       cast[FundedInput](input).nonce.toBinary(BYTE_LEN)
   result &= char(send.outputs.len)
   for output in send.outputs:
@@ -39,7 +39,7 @@ method serialize*(
   result = $char(send.inputs.len)
   for input in send.inputs:
     result &=
-      input.hash.toString() &
+      input.hash.serialize() &
       char(cast[FundedInput](input).nonce)
 
   #Serialize the outputs.

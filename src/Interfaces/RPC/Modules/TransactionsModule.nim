@@ -105,7 +105,7 @@ proc module*(
 
         #Get the Transaction.
         try:
-          res["result"] = % functions.transactions.getTransaction(params[0].getStr().toHash(256))
+          res["result"] = % functions.transactions.getTransaction(params[0].getStr().toHash[:256]())
         except IndexError:
           raise newJSONRPCError(-2, "Transaction not found")
         except ValueError:

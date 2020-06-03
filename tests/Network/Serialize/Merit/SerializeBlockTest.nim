@@ -42,7 +42,7 @@ suite "SerializeBlock":
   setup:
     var
       #Last hash.
-      last: RandomXHash
+      last: Hash[256]
       #Packets.
       packets: seq[VerificationPacket] = @[]
       #Elements.

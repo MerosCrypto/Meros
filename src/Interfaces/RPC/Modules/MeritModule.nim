@@ -179,7 +179,7 @@ proc module*(
             })
         elif params[0].kind == JString:
           try:
-            res["result"] = % functions.merit.getBlockByHash(params[0].getStr().toHash(256))
+            res["result"] = % functions.merit.getBlockByHash(params[0].getStr().toHash[:256]())
           except IndexError:
             raise newJSONRPCError(-2, "Block not found")
           except ValueError:

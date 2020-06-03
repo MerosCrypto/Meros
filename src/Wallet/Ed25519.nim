@@ -143,8 +143,8 @@ proc aggregate*(
 
   var
     bytes: string
-    l: SHA2_256Hash
-    keyHash: SHA2_256Hash
+    l: Hash.Hash[256]
+    keyHash: Hash.Hash[256]
     keyPoint: EdPoint3
     a: EdPoint2
     tempRes: PointP1P1
@@ -157,7 +157,7 @@ proc aggregate*(
   bytes = newString(64)
 
   for k in 0 ..< keys.len:
-    keyHash = SHA2_256(l.toString() & keys[k].toString())
+    keyHash = SHA2_256(l.serialize() & keys[k].toString())
     copyMem(addr bytes[0], addr keyHash.data[0], 32)
     reduceScalar(cast[ptr cuchar](addr bytes[0]))
     copyMem(addr keyHash.data[0], addr bytes[0], 32)
