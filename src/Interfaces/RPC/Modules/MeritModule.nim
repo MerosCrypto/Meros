@@ -1,50 +1,29 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Util lib.
-import ../../../lib/Util
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Sketcher lib.
-import ../../../lib/Sketcher as SketcherFile
-
-#MinerWallet lib.
-import ../../../Wallet/MinerWallet
-
-#Element libs.
-import ../../../Database/Consensus/Elements/Elements
-
-#Merit lib.
-import ../../../Database/Merit/Merit
-
-#SketchyBlock object.
-import ../../../Network/objects/SketchyBlockObj
-
-#SerializeCommon lib.
-import ../../../Network/Serialize/SerializeCommon
-
-#Block Serialization libs.
-import ../../../Network/Serialize/Merit/SerializeBlockHeader
-import ../../../Network/Serialize/Merit/SerializeBlockBody
-
-import ../../../Network/Serialize/Merit/ParseBlock
-
-#GlobalFunctionBox object.
-import ../../../objects/GlobalFunctionBoxObj
-
-#RPC object.
-import ../objects/RPCObj
-
-#String utils standard lib.
 import strutils
-
-#Tables standard lib.
 import tables
 
+import ../../../lib/[Errors, Util, Hash]
+import ../../../lib/Sketcher as SketcherFile
+import ../../../Wallet/MinerWallet
+
+import ../../../objects/GlobalFunctionBoxObj
+
+import ../../../Database/Consensus/Elements/Elements
+
+import ../../../Database/Merit/Merit
+
+import ../../../Network/objects/SketchyBlockObj
+
+import ../../../Network/Serialize/SerializeCommon
+import ../../../Network/Serialize/Merit/[
+  SerializeBlockHeader,
+  SerializeBlockBody,
+  ParseBlock
+]
+
+import ../objects/RPCObj
+
 #Element -> JSON.
-#This wouldn't work with %, broke everything with %*, so now we have this.
+#This wouldn't work with %, broke everything with %*, so now we have this symbol.
 proc `%**`(
   elem: Element
 ): JSONNode {.forceCheck: [].} =
@@ -158,30 +137,27 @@ proc `%`(
   except KeyError as e:
     panic("Couldn't add an Element to a Block's JSON representation despite declaring an array for the Elements: " & e.msg)
 
-#Create the Merit module.
 proc module*(
   functions: GlobalFunctionBox
 ): RPCFunctions {.forceCheck: [].} =
   #Table of usable Sketcher objects.
+  #Shared between the getBlockTemplate/publishBlock routes.
   var sketchers: Table[int, Sketcher] = initTable[int, Sketcher]()
 
   try:
     newRPCFunctions:
-      #Get Height.
       "getHeight" = proc (
         res: JSONNode,
         params: JSONNode
       ) {.forceCheck: [].} =
         res["result"] = % functions.merit.getHeight()
 
-      #Get Difficulty.
       "getDifficulty" = proc (
         res: JSONNode,
         params: JSONNode
       ) {.forceCheck: [].} =
         res["result"] = % functions.merit.getDifficulty().toBinary().toHex().pad(16, '0')
 
-      #Get Block by nonce or hash.
       "getBlock" = proc (
         res: JSONNode,
         params: JSONNode
@@ -211,21 +187,18 @@ proc module*(
         else:
           raise newLoggedException(ParamError, "")
 
-      #Get Total Merit.
       "getTotalMerit" = proc (
         res: JSONNode,
         params: JSONNode
       ) {.forceCheck: [].} =
         res["result"] = % functions.merit.getTotalMerit()
 
-      #Get Unlocked Merit.
       "getUnlockedMerit" = proc (
         res: JSONNode,
         params: JSONNode
       ) {.forceCheck: [].} =
         res["result"] = % functions.merit.getUnlockedMerit()
 
-      #Get a MeritHolder's Merit.
       "getMerit" = proc (
         res: JSONNode,
         params: JSONNode
@@ -250,7 +223,6 @@ proc module*(
           "merit": functions.merit.getMerit(nick, functions.merit.getHeight())
         }
 
-      #Get a Block template.
       "getBlockTemplate" = proc (
         res: JSONNode,
         params: JSONNode
@@ -271,7 +243,7 @@ proc module*(
           raise newJSONRPCError(-4, "Invalid miner")
 
         var
-          #Pending
+          #Pending packets/elements.
           pending: tuple[
             packets: seq[VerificationPacket],
             elements: seq[BlockElement],
@@ -371,7 +343,6 @@ proc module*(
         except ValueError as e:
           panic("Block Body had sketch collision: " & e.msg)
 
-      #Publish a Block.
       "publishBlock" = proc (
         res: JSONNode,
         params: JSONNode

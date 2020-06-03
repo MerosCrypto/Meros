@@ -1,27 +1,16 @@
-#Errors lib.
-import ../../../lib/Errors
+import strutils
+import json
 
-#Hash lib.
-import ../../../lib/Hash
+import ../../../lib/[Errors, Hash]
 
-#Address and Wallet libs.
-import ../../../Wallet/Wallet
+import ../../../Wallet/[MinerWallet, Wallet, Address]
 import ../../../Wallet/Address
 
-#MinerWallet lib.
-import ../../../Wallet/MinerWallet
-
-#Transactions lib.
 import ../../../Database/Transactions/Transactions
 
-#GlobalFunctionBox object.
 import ../../../objects/GlobalFunctionBoxObj
 
-#RPC object.
 import ../objects/RPCObj
-
-#String utils standard lib.
-import strutils
 
 #Transaction -> JSON.
 proc `%`(
@@ -95,13 +84,11 @@ proc `%`(
       result["proof"] = % data.proof
       result["argon"] = % $data.argon
 
-#Create the Transactions module.
 proc module*(
   functions: GlobalFunctionBox
 ): RPCFunctions {.forceCheck: [].} =
   try:
     newRPCFunctions:
-      #Get a Transaction by hash.
       "getTransaction" = proc (
         res: JSONNode,
         params: JSONNode
@@ -124,7 +111,6 @@ proc module*(
         except ValueError:
           raise newJSONRPCError(-3, "Invalid hash")
 
-      #Get a key's balance.
       "getBalance" = proc (
         res: JSONNode,
         params: JSONNode

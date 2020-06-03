@@ -1,29 +1,22 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#GUI object.
-import ../objects/GUIObj
-
-#String utils and string format standard libs.
 import strutils
 import strformat
-
-#JSON standard lib.
 import json
+
+import ../../../lib/Errors
+
+import ../objects/GUIObj
 
 #Add the Wallet bindings to the GUI.
 proc addTo*(
   gui: GUI
 ) {.forceCheck: [].} =
   try:
-    #Create a Send.
     gui.webview.bindProc(
       "Personal",
       "send",
       proc (
         data: string
       ) {.forceCheck: [].} =
-        #Create the Send.
         var hash: JSONNode
         try:
           hash = gui.call("personal", "send", data.split("|")[0], data.split("|")[1])
@@ -45,14 +38,12 @@ proc addTo*(
           return
     )
 
-    #Create a Data.
     gui.webview.bindProc(
       "Personal",
       "data",
       proc (
         data: string
       ) {.forceCheck: [].} =
-        #Create the Send.
         var hash: JSONNode
         try:
           hash = gui.call("personal", "data", data)

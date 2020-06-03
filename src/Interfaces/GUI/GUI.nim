@@ -1,19 +1,14 @@
-#Errors lib.
+import strformat
+import json
+
 import ../../lib/Errors
 
-#GUI object.
 import objects/GUIObj
 export GUI, newGUIObj, call
 
-#JS Bindings.
 import Bindings/Bindings
 
-#String format standard lib.
-import strformat
-
-#JSON standard lib.
-import json
-
+#Create a loop which enables Meros to handle thread communications despite WebView capturing the thread.
 proc newLoop(
   gui: GUI,
   fromMain: ptr Channel[string]
@@ -29,14 +24,14 @@ proc newLoop(
     except Exception as e:
       panic("Couldn't try to receive a message from main due to a Exception: " & e.msg)
 
-    #If there is a message...
+    #If there is a message, switch on it.
     if msg.dataAvailable:
-      #Switch on it.
       case msg.msg:
         of "shutdown":
           gui.webview.exit()
+        else:
+          panic("Received an unknown message to the WebView thread: " & msg.msg)
 
-#Constructor.
 proc newGUI*(
   fromMain: ptr Channel[string],
   toRPC: ptr Channel[JSONNode],
@@ -44,19 +39,9 @@ proc newGUI*(
   width: int,
   height: int
 ) {.forceCheck: [].} =
-  #Create the GUI.
   var gui: GUI
   try:
-    gui = newGUIObj(
-      toRPC,
-      toGUI,
-      newWebView(
-        "Meros",
-        "",
-        width,
-        height
-      )
-    )
+    gui = newGUIObj(toRPC, toGUI, newWebView("Meros", "", width, height))
   except Exception as e:
     panic("Couldn't create the WebView: " & e.msg)
 

@@ -1,36 +1,21 @@
-#Errors lib.
-import ../../../lib/Errors
+import ../../../lib/[Errors, Hash, Util]
+import ../../../Wallet/[MinerWallet, Wallet]
 
-#Hash lib.
-import ../../../lib/Hash
-
-#Util lib.
-import ../../../lib/Util
-
-#Wallet libs.
-import ../../../Wallet/Wallet
-import ../../../Wallet/MinerWallet
-
-#GlobalFunctionBox object.
 import ../../../objects/GlobalFunctionBoxObj
 
-#RPC object.
 import ../objects/RPCObj
 
-#Create the Personal module.
 proc module*(
   functions: GlobalFunctionBox
 ): RPCFunctions {.forceCheck: [].} =
   try:
     newRPCFunctions:
-      #Get the Node's MinerWallet's private key.
       "getMiner" = proc (
         res: JSONNode,
         params: JSONNode
       ) {.forceCheck: [].} =
         res["result"] = % $functions.personal.getMinerWallet().privateKey
 
-      #Set the Node's Wallet's Mnemonic.
       "setMnemonic" = proc (
         res: JSONNode,
         params: JSONNode
@@ -56,14 +41,12 @@ proc module*(
         except ValueError:
           raise newJSONRPCError(-3, "Invalid Mnemonic")
 
-      #Get the Node's Wallet's Mnemonic.
       "getMnemonic" = proc (
         res: JSONNode,
         params: JSONNode
       ) {.forceCheck: [].} =
         res["result"] = % functions.personal.getWallet().mnemonic.sentence
 
-      #Get an address from the Wallet.
       "getAddress" = proc (
         res: JSONNode,
         params: JSONNode
@@ -107,7 +90,6 @@ proc module*(
         except ValueError:
           raise newJSONRPCError(-3, "Tree has no valid children")
 
-      #Create and publish a Send.
       "send" = proc (
         res: JSONNode,
         params: JSONNode
@@ -130,7 +112,6 @@ proc module*(
         except NotEnoughMeros:
           raise newJSONRPCError(1, "Not enough Meros")
 
-      #Create and publish a Data.
       "data" = proc (
         res: JSONNode,
         params: JSONNode

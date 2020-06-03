@@ -59,11 +59,3 @@ proc shift*(
     result = epochs.popFirst()
   except IndexError as e:
     panic("Tried to pop an Epoch yet there wasn't any; there should always be 5: " & e.msg)
-
-func latest*(
-  epochs: Epochs
-): Epoch {.forceCheck: [].} =
-  try:
-    result = epochs.peekLast()
-  except IndexError as e:
-    panic("Tried to peek the latest Epoch yet there wasn't any; there should always be 5: " & e.msg)

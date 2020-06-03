@@ -120,11 +120,11 @@ proc commit*(
 
     for input in tx.inputs:
       try:
-        items.add((INPUT_NONCE(db.verified[input.toString()]), char(1) & input.toString()))
+        items.add((INPUT_NONCE(db.verified[input.serialize()]), char(1) & input.serialize()))
         #If the nonce of this input is the same as the last finalized nonce, increment.
-        if db.verified[input.toString()] == db.finalizedNonces:
+        if db.verified[input.serialize()] == db.finalizedNonces:
           inc(db.finalizedNonces)
-        db.verified.del(input.toString())
+        db.verified.del(input.serialize())
       #We never verified a Transaction spending this input.
       except KeyError:
         continue
@@ -288,7 +288,7 @@ proc verifyTransaction*(
 ].} =
   #If we've already verified a Transaction sharing any inputs, raise.
   for input in tx.inputs:
-    if db.verified.hasKey(input.toString()):
+    if db.verified.hasKey(input.serialize()):
       raise newLoggedException(ValueError, "Attempted to verify a competing Transaction.")
 
   var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]]()
@@ -298,8 +298,8 @@ proc verifyTransaction*(
       continue
 
     #Save the input to the nonce.
-    items.add((INPUT_NONCE(db.unfinalizedNonces), char(0) & input.toString()))
-    db.verified[input.toString()] = db.unfinalizedNonces
+    items.add((INPUT_NONCE(db.unfinalizedNonces), char(0) & input.serialize()))
+    db.verified[input.serialize()] = db.unfinalizedNonces
     inc(db.unfinalizedNonces)
   #Save the nonce count.
   items.add((UNFINALIZED_NONCES(), db.unfinalizedNonces.toBinary()))

@@ -1,27 +1,20 @@
-#Errors lib.
-import ../../lib/Errors
-
-#Config object.
-import ../../objects/ConfigObj
-
-#GlobalFunctionBox object.
-import ../../objects/GlobalFunctionBoxObj
-
-#RPC object.
-import objects/RPCObj
-export RPCObj.RPC
-
-#RPC modules.
-import Modules/TransactionsModule
-import Modules/ConsensusModule
-import Modules/MeritModule
-import Modules/PersonalModule
-import Modules/NetworkModule
-
-#Chronos external lib.
 import chronos
 
-#Constructor.
+import ../../lib/Errors
+
+import ../../objects/[ConfigObj, GlobalFunctionBoxObj]
+
+import objects/RPCObj
+export RPC
+
+import Modules/[
+  TransactionsModule,
+  ConsensusModule,
+  MeritModule,
+  PersonalModule,
+  NetworkModule
+]
+
 proc newRPC*(
   functions: GlobalFunctionBox,
   toRPC: ptr Channel[JSONNode],

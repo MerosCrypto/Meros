@@ -1,25 +1,20 @@
-#Errors lib.
-import ../../../lib/Errors
+import json
 
-#WebView.
 import mc_webview
 export mc_webview
 
-#JSON standard lib.
-import json
+import ../../../lib/Errors
 
 #Constants of the HTML.
 const
   SEND*: string = staticRead("../static/Send.html")
   DATA*: string = staticRead("../static/Data.html")
 
-#GUI object.
 type GUI* = ref object
   toRPC: ptr Channel[JSONNode]
   toGUI: ptr Channel[JSONNode]
   webview*: WebView
 
-#Constructor.
 func newGUIObj*(
   toRPC: ptr Channel[JSONNode],
   toGUI: ptr Channel[JSONNode],

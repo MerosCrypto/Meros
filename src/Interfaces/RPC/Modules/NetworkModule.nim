@@ -1,25 +1,19 @@
-#Errors lib.
+import chronos
+
 import ../../../lib/Errors
 
-#GlobalFunctionBox object.
 import ../../../objects/GlobalFunctionBoxObj
 
-#RPC object.
 import ../objects/RPCObj
-
-#Chronos external lib.
-import chronos
 
 #Default network port.
 const DEFAULT_PORT {.intdefine.}: int = 5132
 
-#Create the Network module.
 proc module*(
   functions: GlobalFunctionBox
 ): RPCFunctions {.forceCheck: [].} =
   try:
     newRPCFunctions:
-      #Connect to a new node.
       "connect" = proc (
         res: JSONNode,
         params: JSONNode
@@ -45,7 +39,6 @@ proc module*(
         except Exception as e:
           panic("MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
-      #Get the peers we're connected to.
       "getPeers" = proc (
         res: JSONNode,
         params: JSONNode

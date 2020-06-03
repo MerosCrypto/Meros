@@ -1,13 +1,9 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#GUI object.
-import ../objects/GUIObj
-
-#String format standard lib.
 import strformat
 
-#Add the GUI bindings to the GUI.
+import ../../../lib/Errors
+
+import ../objects/GUIObj
+
 proc addTo*(
   gui: GUI,
   loop: proc () {.raises: [
@@ -15,7 +11,6 @@ proc addTo*(
   ].}
 ) {.forceCheck: [].} =
   try:
-    #Quit.
     gui.webview.bindProcNoArg(
       "GUI",
       "quit",
@@ -41,15 +36,16 @@ proc addTo*(
       proc (
         pageArg: string
       ) {.forceCheck: [].} =
-        #Declare a var for the page.
         var page: string
 
-        #Grab the page we're trying to load.
+        #Case off the page we're trying to load.
         case pageArg:
           of "send":
             page = SEND
           of "data":
             page = DATA
+          else:
+            panic("Tried to load a page we couldn't identify.")
 
         #Format it as a line of JS code.
         try:
@@ -58,7 +54,6 @@ proc addTo*(
           gui.webview.error("Value Error", "Couldn't format the JS to display the main page: " & e.msg)
           return
 
-        #Load the page.
         if gui.webview.eval(page) != 0:
           gui.webview.error("RPC Error", "Couldn't eval the JS to load a new page.")
           return

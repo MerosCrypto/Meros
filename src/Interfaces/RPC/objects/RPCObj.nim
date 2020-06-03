@@ -1,22 +1,13 @@
-#Errors lib.
-import ../../../lib/Errors
+import macros
+import tables
+import json
+export tables, json
 
-#Chronos external lib.
 import chronos
 export chronos
 
-#Macros standard lib.
-import macros
+import ../../../lib/Errors
 
-#Tables standard lib.
-import tables
-export tables
-
-#JSON standard lib.
-import json
-export json
-
-#RPC object.
 type
   RPCFunction = proc (
     res: JSONNode,
@@ -36,7 +27,6 @@ type
 
     server*: StreamServer
 
-#RPCFunctions constructor.
 macro newRPCFunctions*(
   routes: untyped
 ): untyped =
@@ -93,7 +83,6 @@ proc merge*(
       except Exception as e:
         panic("Couldn't set a value in a table: " & e.msg)
 
-#RPC Object Constructor.
 proc newRPCObj*(
   functions: RPCFunctions,
   quit: proc () {.gcsafe, raises: [].},
