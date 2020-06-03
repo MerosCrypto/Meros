@@ -32,18 +32,18 @@ proc main() {.thread.} =
     #Reload the Config due to the threading rules.
     config: Config = newConfig()
     params: ChainParams = newChainParams(config.network)
+    functions: GlobalFunctionBox = newGlobalFunctionBox()
 
     database: DB
     wallet: WalletDB
 
-    functions: GlobalFunctionBox = newGlobalFunctionBox()
-
-    consensus: ref Consensus = new(Consensus)
     #Merit is already a ref object. That said, we need to assign to it, and `var ref`s are illegal.
     merit: ref Merit = new(ref Merit)
     blockLock: ref Lock = new(Lock)
     innerBlockLock: ref Lock = new(Lock)
     lockedBlock: ref Hash[256] = new(Hash[256])
+
+    consensus: ref Consensus = new(Consensus)
 
     transactions: ref Transactions = new(Transactions)
 

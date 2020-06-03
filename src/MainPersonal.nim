@@ -93,10 +93,7 @@ proc mainPersonal(
         )
       )
 
-    send = newSend(
-      utxos,
-      outputs
-    )
+    send = newSend(utxos, outputs)
     child.sign(send)
     send.mine(functions.consensus.getSendDifficulty())
 

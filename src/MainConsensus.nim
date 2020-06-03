@@ -86,16 +86,8 @@ proc mainConsensus(
   #Returns true if the hash isn't recognized.
   functions.consensus.hasArchivedPacket = proc (
     hash: Hash[256]
-  ): bool {.forceCheck: [
-    IndexError
-  ].} =
-    var status: TransactionStatus
-    try:
-      status = consensus[].getStatus(hash)
-    except IndexError as e:
-      fcRaise e
-
-    return (status.holders.len != 0) and (not consensus.unmentioned.contains(hash))
+  ): bool {.forceCheck: [].} =
+    return not consensus.unmentioned.contains(hash)
 
   functions.consensus.getStatus = proc (
     hash: Hash[256]

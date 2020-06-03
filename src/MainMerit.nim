@@ -47,9 +47,7 @@ proc mainMerit(
 
   functions.merit.getBlockHashAfter = proc (
     hash: Hash[256]
-  ): Hash[256] {.forceCheck: [
-    IndexError
-  ].} =
+  ): Hash[256] {.forceCheck: [].} =
     discard
 
   functions.merit.getDifficulty = proc (): uint64 {.forceCheck: [].} =

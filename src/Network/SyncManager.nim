@@ -388,11 +388,8 @@ proc sync*(
 
     if not ((tx of Claim) or ((tx of Data) and cast[Data](tx).isFirstData)):
       for input in tx.inputs:
-        try:
-          if not (manager.functions.consensus.hasArchivedPacket(input.hash) or includedTXs.contains(input.hash)):
-            raise newLoggedException(ValueError, "Block's Transactions have predecessors which have yet to be mentioned on chain.")
-        except IndexError as e:
-          panic("Couldn't get if a Transaction we're confirmed to have has an archived packet: " & e.msg)
+        if not (manager.functions.consensus.hasArchivedPacket(input.hash) or includedTXs.contains(input.hash)):
+          raise newLoggedException(ValueError, "Block's Transactions have predecessors which have yet to be mentioned on chain.")
 
     #Get the status.
     var status: TransactionStatus

@@ -101,9 +101,7 @@ type
 
     hasArchivedPacket*: proc (
       hash: Hash[256]
-    ): bool {.gcsafe, raises: [
-      IndexError
-    ].}
+    ): bool {.gcsafe, raises: [].}
 
     getStatus*: proc (
       hash: Hash[256]
