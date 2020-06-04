@@ -1,66 +1,52 @@
-#OS standard lib.
 import os
-
-#String utils standard lib.
 import strutils
-
-#Tables standard lib.
 import tables
-
-#JSON standard lib.
 import json
 
-#Networking standard libs.
 import asyncdispatch
 import asyncnet
 
 #Argument types.
 const ARGUMENTS: Table[string, seq[char]] = {
-  "merit_getHeight":       @[],
-  "merit_getDifficulty":     @[],
-  "merit_getBlock":        @['i'],
+  "merit_getHeight":     @[],
+  "merit_getDifficulty": @[],
+  "merit_getBlock":      @['i'],
 
-  "merit_getTotalMerit":     @[],
-  "merit_getUnlockedMerit":    @[],
-  "merit_getMerit":        @['i'],
+  "merit_getTotalMerit":    @[],
+  "merit_getUnlockedMerit": @[],
+  "merit_getMerit":         @['i'],
 
-  "merit_getBlockTemplate":    @['b'],
-  "merit_publishBlock":      @['i', 'b'],
+  "merit_getBlockTemplate": @['b'],
+  "merit_publishBlock":     @['i', 'b'],
 
   "consensus_getSendDifficulty": @[],
   "consensus_getDataDifficulty": @[],
-  "consensus_getStatus":     @['b'],
+  "consensus_getStatus":         @['b'],
 
   "transactions_getTransaction": @['b'],
-  "transactions_getBalance":   @['s'],
+  "transactions_getBalance":     @['s'],
 
-  "network_connect":       @['s', 'i'],
-  "network_getPeers":      @[],
+  "network_connect":  @['s', 'i'],
+  "network_getPeers": @[],
 
-  "personal_getMiner":       @[],
-  "personal_setMnemonic":    @['b', 'b'],
-  "personal_getAddress":     @[],
+  "personal_getMiner":    @[],
+  "personal_setMnemonic": @['b', 'b'],
+  "personal_getAddress":  @[],
 
-  "personal_send":         @['s', 's'],
-  "personal_data":         @['s']
+  "personal_send": @['s', 's'],
+  "personal_data": @['s']
 }.toTable()
 
 var
-  #Client socket.
   client: AsyncSocket = newAsyncSocket()
-  #RPC port.
   port: int = 5133
-  #JSON.
   payload: JSONNode = %* {
     "jsonrpc": "2.0",
     "id": 0,
     "params": []
   }
-  #Current argument.
   p: int = 1
-  #Response.
   res: string
-  #Counter used to track if the response is complete.
   counter: int = 0
 
 if paramCount() != 0:
@@ -186,5 +172,4 @@ while true:
   if counter == 0:
     break
 
-#Print it.
 echo res

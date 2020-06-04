@@ -1,27 +1,17 @@
-#Meros RPC module.
-import MerosRPC
-
-#Async standard lib.
-import asyncdispatch
-
-#String utils standard lib.
 import strutils
-
-#Sets standard lib.
 import sets
-
-#JSON standard lib.
 import json
 
+import asyncdispatch
+
+import MerosRPC
+
 var
-  #RPC.
   rpc: MerosRPC = waitFor newMerosRPC()
-  #DB.
   db: JSONNode = %* {
     "blockchain": [],
     "transactions": {}
   }
-  #HashSet of Transactions.
   hashes: HashSet[string] = initHashSet[string]()
 
 #Get every Block.
