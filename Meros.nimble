@@ -77,7 +77,7 @@ task build, "Build Meros.":
 task install, "Install Meros.":
   setCommand "nop"
 
-task unit, "Run unit tests.":
+task unit, "Run unit/integration tests.":
   #Gather parameters to pass to `nim c -r ...`.
   var additionalParams: seq[string] = newSeq[string]()
   for i in countdown(system.paramCount(), 1):
@@ -115,7 +115,7 @@ task unit, "Run unit tests.":
   nimExec "c -r " & allTestsFile & " " & params
 
 task e2e, "Run end-to-end tests.":
-  #TODO: setup and run `PythonTests`.
+  #TODO: setup and run `e2e`.
   echo "Not yet implemented."
 
 task test, "Run all tests.":
