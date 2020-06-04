@@ -1,62 +1,32 @@
-#Serialize BlockBody Test.
+import random
 
-#Fuzzing lib.
-import ../../../Fuzzed
-
-#Util lib.
-import ../../../../src/lib/Util
-
-#Hash lib.
-import ../../../../src/lib/Hash
-
-#Sketcher lib.
-import ../../../../src/lib/Sketcher
-
-#MinerWallet lib.
+import ../../../../src/lib/[Util, Hash, Sketcher]
 import ../../../../src/Wallet/MinerWallet
 
-#Elements Testing lib.
-import ../../../Database/Consensus/Elements/TestElements
-
-#BlockBody object.
 import ../../../../src/Database/Merit/objects/BlockBodyObj
 
-#SketchyBlockBody object.
 import ../../../../src/Network/objects/SketchyBlockObj
+import ../../../../src/Network/Serialize/Merit/[
+  SerializeBlockBody,
+  ParseBlockBody
+]
 
-#Serialize libs.
-import ../../../../src/Network/Serialize/Merit/SerializeBlockBody
-import ../../../../src/Network/Serialize/Merit/ParseBlockBody
-
-#Compare Merit lib.
+import ../../../Fuzzed
+import ../../../Database/Consensus/Elements/TestElements
 import ../../../Database/Merit/CompareMerit
-
-#Random standard lib.
-import random
 
 suite "SerializeBlockBody":
   setup:
     var
-      #Sketch salt.
       sketchSalt: string
-      #Packets contents.
-      packetsContents: Hash[256]
-      #Packets.
+      packetsContents: Hash[256] = newRandomHash()
       packets: seq[VerificationPacket] = @[]
-      #Elements.
       elements: seq[BlockElement] = @[]
-      #Block Body.
       body: BlockBody
-      #Reloaded Block Body.
       reloaded: SketchyBlockBody
-      #Sketch Result.
       sketchResult: SketchResult
 
   highFuzzTest "Serialize and parse.":
-    #Randomize the packets' contents.
-    for b in 0 ..< 32:
-      packetsContents.data[b] = uint8(rand(255))
-
     #Randomize the packets.
     for _ in 0 ..< rand(300):
       packets.add(newRandomVerificationPacket())
@@ -91,11 +61,11 @@ suite "SerializeBlockBody":
       0,
       sketchSalt
     )
-    check(sketchResult.missing.len == 0)
+    check sketchResult.missing.len == 0
     reloaded.data.packets = sketchResult.packets
 
     #Test the serialized versions.
-    check(body.serialize(sketchSalt) == reloaded.data.serialize(sketchSalt))
+    check body.serialize(sketchSalt) == reloaded.data.serialize(sketchSalt)
 
     #Compare the BlockBodies.
     compare(body, reloaded.data)

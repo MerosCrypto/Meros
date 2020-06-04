@@ -1,39 +1,20 @@
-#Serialize Block Test.
+import random
 
-#Fuzzing lib.
-import ../../../Fuzzed
-
-#Util lib.
-import ../../../../src/lib/Util
-
-#Hash lib.
-import ../../../../src/lib/Hash
-
-#Sketcher lib.
-import ../../../../src/lib/Sketcher
-
-#MinerWallet lib.
+import ../../../../src/lib/[Util, Hash, Sketcher]
 import ../../../../src/Wallet/MinerWallet
 
-#Block lib.
 import ../../../../src/Database/Merit/Block
 
-#SketchyBlockBody object.
 import ../../../../src/Network/objects/SketchyBlockObj
+import ../../../../src/Network/Serialize/Merit/[
+  SerializeBlock,
+  ParseBlock
+]
 
-#Serialize/parse lib.
-import ../../../../src/Network/Serialize/Merit/SerializeBlock
-import ../../../../src/Network/Serialize/Merit/ParseBlock
-
-#Elements Testing lib.
+import ../../../Fuzzed
 import ../../../Database/Consensus/Elements/TestElements
-
-#Test and Compare Merit libs.
-import ../../../Database/Merit/TestMerit
+import ../../../Database/Merit/[TestMerit, CompareMerit]
 import ../../../Database/Merit/CompareMerit
-
-#Random standard lib.
-import random
 
 #Whether or not to create a Block with a new miner.
 var newMiner: bool = true
@@ -41,24 +22,14 @@ var newMiner: bool = true
 suite "SerializeBlock":
   setup:
     var
-      #Last hash.
-      last: Hash[256]
-      #Packets.
+      last: Hash[256] = newRandomHash()
       packets: seq[VerificationPacket] = @[]
-      #Elements.
       elements: seq[BlockElement] = @[]
-      #Block.
       newBlock: Block
-      #Reloaded Block.
       reloaded: SketchyBlock
-      #Sketch Result.
       sketchResult: SketchResult
 
   highFuzzTest "Serialize and parse.":
-    #Randomize the last hash.
-    for b in 0 ..< 32:
-      last.data[b] = uint8(rand(255))
-
     #Randomize the packets.
     for _ in 0 ..< rand(300):
       packets.add(newRandomVerificationPacket())
@@ -113,18 +84,11 @@ suite "SerializeBlock":
       0,
       reloaded.data.header.sketchSalt
     )
-    check(sketchResult.missing.len == 0)
+    check sketchResult.missing.len == 0
     reloaded.data.body.packets = sketchResult.packets
 
-    #Test the serialized versions.
-    check(newBlock.serialize() == reloaded.data.serialize())
-
-    #Compare the Blocks.
+    check newBlock.serialize() == reloaded.data.serialize()
     compare(newBlock, reloaded.data)
-
-    #Clear the packets and elements.
-    packets = @[]
-    elements = @[]
 
     #Flip the newMiner bool.
     newMiner = not newMiner

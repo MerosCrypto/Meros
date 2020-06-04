@@ -1,52 +1,21 @@
-#Consensus Revert Test.
-
+import random
 import deques
+import sets, tables
 
-#Fuzzing lib.
-import ../../Fuzzed
+import ../../../src/lib/[Errors, Util, Hash]
+import ../../../src/Wallet/[MinerWallet, Wallet]
 
-#Errors lib.
-import ../../../src/lib/Errors
-
-#Util lib.
-import ../../../src/lib/Util
-
-#Hash lib.
-import ../../../src/lib/Hash
-
-#Wallet libs.
-import ../../../src/Wallet/Wallet
-import ../../../src/Wallet/MinerWallet
-
-#Consensus DB lib.
 import ../../../src/Database/Filesystem/DB/ConsensusDB
 
-#Merit lib.
 import ../../../src/Database/Merit/Merit
-
-#Consensus lib.
 import ../../../src/Database/Consensus/Consensus
-
-#Transactions lib.
 import ../../../src/Database/Transactions/Transactions
 
-#Test Database lib.
+import ../../Fuzzed
 import ../TestDatabase
-
-#Test Merit lib.
 import ../Merit/TestMerit
-
-#Compare Consensus lib.
 import CompareConsensus
 
-#Random standard lib.
-import random
-
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
 
 suite "ConsensusRevert":
   setup:
@@ -55,10 +24,8 @@ suite "ConsensusRevert":
       initialDataDifficulty: uint32 = uint32(rand(high(int32)))
 
     var
-      #Database.
       db: DB = newTestDatabase()
 
-      #Merit.
       merit: Merit = newMerit(
         db,
         "CONSENSUS_REVERT_TEST",
@@ -67,16 +34,10 @@ suite "ConsensusRevert":
         75
       )
 
-      #Transactions.
-      transactions: Transactions = newTransactions(
-        db,
-        merit.blockchain
-      )
+      transactions: Transactions = newTransactions(db, merit.blockchain)
 
-      #Functions.
       functions: GlobalFunctionBox = newTestGlobalFunctionBox(addr merit.blockchain, addr transactions)
 
-      #Consensus.
       consensus: Consensus = newConsensus(
         functions,
         db,
@@ -84,19 +45,15 @@ suite "ConsensusRevert":
         initialSendDifficulty,
         initialDataDifficulty
       )
-      #Full Consensus DAG.
       full: Consensus
-      #Reverted Consensus DAG.
       reverted: Consensus
 
-      #Merit Holders.
       holders: seq[MinerWallet] = @[
         newMinerWallet(),
         newMinerWallet(),
         newMinerWallet(),
         newMinerWallet()
       ]
-      #Nonces of each holder.
       nonces: seq[int] = @[
         -1,
         -1,
@@ -104,7 +61,6 @@ suite "ConsensusRevert":
         -1
       ]
 
-      #Wallets.
       wallets: seq[Wallet] = @[]
 
       #Planned Sends.
@@ -114,16 +70,14 @@ suite "ConsensusRevert":
 
       #Copy of Transactions.
       txs: Table[Hash[256], Transaction] = initTable[Hash[256], Transaction]()
-      #UTXOs.
       utxos: Table[EdPublicKey, seq[FundedInput]] = initTable[EdPublicKey, seq[FundedInput]]()
-      #Data Tips.
       dataTips: Table[EdPublicKey, Hash[256]] = initTable[EdPublicKey, Hash[256]]()
 
-      #Verifications.
+      #Copy of verifications.
       verifications: Table[Hash[256], Table[Hash[256], HashSet[uint16]]] = initTable[Hash[256], Table[Hash[256], HashSet[uint16]]]()
-      #Epochs.
+      #The Epoch for each Transaction.
       epochs: Table[Hash[256], int] = initTable[Hash[256], int]()
-      #Blocks a Transaction became verified at.
+      #Block number a Transaction became verified at.
       verified: Table[Hash[256], int] = initTable[Hash[256], int]()
       #Finalized statuses.
       finalizedStatuses: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
@@ -145,29 +99,25 @@ suite "ConsensusRevert":
       sendFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
       dataFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
 
-      #Packets.
-      packets: seq[VerificationPacket] = @[]
-      #Elements.
-      elements: seq[BlockElement] = @[]
-      #New Block.
-      newBlock: Block
-      #Blocks.
+      #Copy of the Blocks.
       blocks: seq[Block]
-
-      #Rewards.
+      #Copy of the rewards, indexed by Block hash.
       rewards: Table[Hash[256], seq[Reward]] = initTable[Hash[256], seq[Reward]]()
 
-    #Add a Transaction.
+      #Temporary variables used whn creating a new Block.
+      packets: seq[VerificationPacket] = @[]
+      elements: seq[BlockElement] = @[]
+      newBlock: Block
+
     proc add(
       tx: Transaction,
       requireVerification: bool = false
     ) =
-      #Store a copy of the Transaction and update the Data tip.
+      #Store a copy of the Transaction and update the Data tip, if this is a Data.
       txs[tx.hash] = tx
       if tx of Data:
         dataTips[transactions.getSender(cast[Data](tx))] = tx.hash
 
-      #Add the Transaction.
       case tx:
         of Claim as claim:
           for o in 0 ..< claim.outputs.len:
@@ -227,11 +177,10 @@ suite "ConsensusRevert":
         holders[0].sign(verif)
         cast[SignedVerificationPacket](packets[^1]).add(verif)
 
-    #Add a Block.
     proc addBlock(
       last: bool = false
     ) =
-      #Grab old Transactions in Epochs to verify.
+      #Grab old Transactions in Epochs to verify as well.
       for epoch in merit.epochs:
         for tx in epoch.keys():
           if rand(6) != 0:
@@ -449,8 +398,9 @@ suite "ConsensusRevert":
 
           #If the Transaction is in the cache, make sure Consensus has the status cached with proper values.
           if transactions.transactions.hasKey(tx):
-            check(consensus.statuses.hasKey(tx))
-            check(consensus.statuses[tx].epoch == min(epochs[tx], merit.blockchain.height + 6))
+            check:
+              consensus.statuses.hasKey(tx)
+              consensus.statuses[tx].epoch == min(epochs[tx], merit.blockchain.height + 6)
 
             #Don't check competing since this test doesn't generate competing values.
 
@@ -482,16 +432,14 @@ suite "ConsensusRevert":
                     break
 
               #If this had pending Verifications, or any parent did, it actually could be verified anyways.
-              check(
-                (
-                  parentOrChildPending and
-                  parentsVerified and
-                  (meritSum >= merit.state.nodeThresholdAt(consensus.statuses[tx].epoch))
-                ) == consensus.statuses[tx].verified
-              )
+              check (
+                parentOrChildPending and
+                parentsVerified and
+                (meritSum >= merit.state.nodeThresholdAt(consensus.statuses[tx].epoch))
+              ) == consensus.statuses[tx].verified
             #It was verified at this point in time.
             else:
-              check(consensus.statuses[tx].verified)
+              check consensus.statuses[tx].verified
 
             #Don't test beaten for the same reason as competing.
 
@@ -501,42 +449,39 @@ suite "ConsensusRevert":
 
             #If the Transaction was finalized, pending, packet, and signatures will be blank.
             if finalizedStatuses.hasKey(tx):
-              check(consensus.statuses[tx].pending.len == 0)
-              check(consensus.statuses[tx].packet.hash == tx)
-              check(consensus.statuses[tx].packet.holders.len == 0)
-              check(consensus.statuses[tx].packet.signature.isInf)
-              check(consensus.statuses[tx].signatures.len == 0)
+              check:
+                consensus.statuses[tx].pending.len == 0
+                consensus.statuses[tx].packet.hash == tx
+                consensus.statuses[tx].packet.holders.len == 0
+                consensus.statuses[tx].packet.signature.isInf
+                consensus.statuses[tx].signatures.len == 0
             #Else, pending/packet/signatures should be untouched.
             else:
-              check(pendingStatuses[tx].pending == consensus.statuses[tx].pending)
+              check pendingStatuses[tx].pending == consensus.statuses[tx].pending
               compare(pendingStatuses[tx].packet, consensus.statuses[tx].packet)
-              check(pendingStatuses[tx].signatures.len == consensus.statuses[tx].signatures.len)
+
+              check pendingStatuses[tx].signatures.len == consensus.statuses[tx].signatures.len
               for holder in pendingStatuses[tx].signatures.keys():
-                check(pendingStatuses[tx].signatures[holder] == consensus.statuses[tx].signatures[holder])
+                check pendingStatuses[tx].signatures[holder] == consensus.statuses[tx].signatures[holder]
 
               verifiers[tx] = verifiers[tx] + consensus.statuses[tx].pending
 
-            #Check holders.
-            check(consensus.statuses[tx].holders == verifiers[tx])
-
-            #Check the Merit.
-            check(consensus.statuses[tx].merit == -1)
+            check:
+              consensus.statuses[tx].holders == verifiers[tx]
+              consensus.statuses[tx].merit == -1
           #If the Transaction was finalized and hasn't been reverted back to unfinalized, make sure the Consensus doesn't have it and its status is untouched.
           else:
-            check(not consensus.statuses.hasKey(tx))
+            check not consensus.statuses.hasKey(tx)
             compare(consensus.getStatus(tx), finalizedStatuses[tx])
         #Transaction was pruned.
         except IndexError:
-          try:
-            #Verify the status was pruned.
+          #Verify the status was pruned.
+          expect IndexError:
             discard consensus.getStatus(tx)
-            check(false)
-          except IndexError:
-            discard
 
       #Verify the malicious table is untouched.
       for holder in full.malicious.keys():
-        check(full.malicious[holder].len == consensus.malicious[holder].len)
+        check full.malicious[holder].len == consensus.malicious[holder].len
         for mr in 0 ..< full.malicious[holder].len:
           compare(full.malicious[holder][mr], consensus.malicious[holder][mr])
 
@@ -545,9 +490,9 @@ suite "ConsensusRevert":
       compare(consensus.filters.data, dataFilters[merit.blockchain.tail.header.hash])
 
       #Verify the archived nonces were reverted.
-      check(archivedNonces[merit.blockchain.tail.header.hash].len == consensus.archived.len)
+      check archivedNonces[merit.blockchain.tail.header.hash].len == consensus.archived.len
       for holder in archivedNonces[merit.blockchain.tail.header.hash].keys():
-        check(archivedNonces[merit.blockchain.tail.header.hash][holder] == consensus.archived[holder])
+        check archivedNonces[merit.blockchain.tail.header.hash][holder] == consensus.archived[holder]
 
       #Check if the pending Elements have disappeared yet.
       if merit.blockchain.tail.header.hash == pendingElementsDisappearAt:
@@ -555,9 +500,9 @@ suite "ConsensusRevert":
 
       #Verify the pending signatures are correct.
       if pendingElementsRemoved:
-        check(consensus.signatures[uint16(high(holders))].len == 0)
+        check consensus.signatures[uint16(high(holders))].len == 0
       else:
-        check(consensus.signatures[uint16(high(holders))].len == pendingElements.len)
+        check consensus.signatures[uint16(high(holders))].len == pendingElements.len
         for s in 0 ..< pendingElements.len:
           var sig: BLSSignature
           case pendingElements[s]:
@@ -565,36 +510,36 @@ suite "ConsensusRevert":
               sig = sd.signature
             of SignedDataDifficulty as dd:
               sig = dd.signature
-          check(consensus.signatures[uint16(high(holders))][s].serialize() == sig.serialize())
+          check consensus.signatures[uint16(high(holders))][s].serialize() == sig.serialize()
 
       #Verify the difficulties are correct.
       for h in 0 ..< high(holders):
         try:
-          check(sendDifficulties[merit.blockchain.tail.header.hash][uint16(h)] == consensus.db.loadSendDifficulty(uint16(h)))
+          check sendDifficulties[merit.blockchain.tail.header.hash][uint16(h)] == consensus.db.loadSendDifficulty(uint16(h))
         except KeyError:
           discard
         try:
-          check(dataDifficulties[merit.blockchain.tail.header.hash][uint16(h)] == consensus.db.loadDataDifficulty(uint16(h)))
+          check dataDifficulties[merit.blockchain.tail.header.hash][uint16(h)] == consensus.db.loadDataDifficulty(uint16(h))
         except KeyError:
           discard
 
       #Check for the holder who has pending Elements.
       if pendingElementsRemoved:
         try:
-          check(sendDifficulties[merit.blockchain.tail.header.hash][uint16(high(holders))] == consensus.db.loadSendDifficulty(uint16(high(holders))))
+          check sendDifficulties[merit.blockchain.tail.header.hash][uint16(high(holders))] == consensus.db.loadSendDifficulty(uint16(high(holders)))
         except KeyError:
           discard
         try:
-          check(dataDifficulties[merit.blockchain.tail.header.hash][uint16(high(holders))] == consensus.db.loadDataDifficulty(uint16(high(holders))))
+          check dataDifficulties[merit.blockchain.tail.header.hash][uint16(high(holders))] == consensus.db.loadDataDifficulty(uint16(high(holders)))
         except KeyError:
           discard
       else:
         try:
-          check(sendDifficulties[blocks[^1].header.hash][uint16(high(holders))] == consensus.db.loadSendDifficulty(uint16(high(holders))))
+          check sendDifficulties[blocks[^1].header.hash][uint16(high(holders))] == consensus.db.loadSendDifficulty(uint16(high(holders)))
         except KeyError:
           discard
         try:
-          check(dataDifficulties[blocks[^1].header.hash][uint16(high(holders))] == consensus.db.loadDataDifficulty(uint16(high(holders))))
+          check dataDifficulties[blocks[^1].header.hash][uint16(high(holders))] == consensus.db.loadDataDifficulty(uint16(high(holders)))
         except KeyError:
           discard
 

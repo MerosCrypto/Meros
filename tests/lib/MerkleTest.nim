@@ -1,27 +1,17 @@
-#Merkle Test.
-
-#Fuzzing lib.
-import ../Fuzzed
-
-#Util lib.
-import ../../src/lib/Util
-
-#Hash lib.
-import ../../src/lib/Hash
-
-#Merkle lib.
-import ../../src/lib/Merkle
-
-#Random standard lib.
 import random
+
+import ../../src/lib/[Util, Hash, Merkle]
+
+import ../Fuzzed
 
 suite "Merkle":
   noFuzzTest "`nil` Merkle trees.":
-    check(newMerkle().isLeaf)
-    check(newMerkle().hash == "".pad(32).toHash[:256]())
+    check:
+      newMerkle().isLeaf
+      newMerkle().hash == "".pad(32).toHash[:256]()
 
   noFuzzTest "Leaves.":
-    check(newMerkle("1".pad(32).toHash[:256]()).hash == "1".pad(32).toHash[:256]())
+    check newMerkle("1".pad(32).toHash[:256]()).hash == "1".pad(32).toHash[:256]()
 
   noFuzzTest "A blank Merkle tree with an added leaf is the same as a tree created with said leaf.":
     var
@@ -29,9 +19,10 @@ suite "Merkle":
       added: Merkle = newMerkle()
 
     added.add("".pad(32).toHash[:256]())
-    check(created.isLeaf)
-    check(added.isLeaf)
-    check(added.hash == created.hash)
+    check:
+      created.isLeaf
+      added.isLeaf
+      added.hash == created.hash
 
   highFuzzTest "Verify.":
     #Create a random amount of hashes.
@@ -89,16 +80,16 @@ suite "Merkle":
         partialCopy.delete(d)
         inc(d)
 
-    #Test that the constructor and addition tree have the same hash as fullCopy.
-    check(constructor.hash == fullCopy[0])
-    check(addition.hash == fullCopy[0])
-
-    #Test that the both tree has the same hash as partialCopy.
-    check(both.hash == partialCopy[0])
+    check:
+      #Test that the constructor and addition tree have the same hash as fullCopy.
+      constructor.hash == fullCopy[0]
+      addition.hash == fullCopy[0]
+      #Test that the both tree has the same hash as partialCopy.
+      both.hash == partialCopy[0]
 
     #Complete the both tree.
     for hash in hashes[bothLen ..< hashLen]:
       both.add(hash)
 
     #Test that the both tree and the fullCopy have the same hash.
-    check(both.hash == fullCopy[0])
+    check both.hash == fullCopy[0]

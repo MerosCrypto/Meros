@@ -1,51 +1,28 @@
-#State Revert Test.
+import random
 
-#Fuzzing lib.
-import ../../../Fuzzed
-
-#Util lib.
 import ../../../../src/lib/Util
-
-#MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Element libs.
 import ../../../../src/Database/Consensus/Elements/Elements
+import ../../../../src/Database/Merit/[Difficulty, Block, Blockchain, State]
 
-#Difficulty, Block, Blockchain, and State libs.
-import ../../../../src/Database/Merit/Difficulty
-import ../../../../src/Database/Merit/Block
-import ../../../../src/Database/Merit/Blockchain
-import ../../../../src/Database/Merit/State
-
-#Elements Testing lib.
+import ../../../Fuzzed
 import ../../Consensus/Elements/TestElements
-
-#Merit Testing lib.
 import ../TestMerit
-
-#Compare Merit lib.
 import ../CompareMerit
-
-#Random standard lib.
-import random
 
 suite "Revert":
   setup:
     var
-      #Database.
       db: DB = newTestDatabase()
-      #Blockchain.
       blockchain: Blockchain = newBlockchain(
         db,
         "STATE_TEST",
         1,
         uint64(1)
       )
-      #State.
       states: seq[State] = @[]
 
-      #Miners.
       miners: seq[MinerWallet] = @[]
       #Miners we can remove Merit from.
       removable: seq[MinerWallet]
@@ -54,7 +31,6 @@ suite "Revert":
 
       #Elements we're adding to the Block.
       elements: seq[BlockElement]
-      #Block we're mining.
       mining: Block
 
     #Create the initial state.

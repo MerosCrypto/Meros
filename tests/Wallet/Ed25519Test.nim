@@ -1,8 +1,8 @@
 import strutils
 
-import ../Fuzzed
-
 import ../../src/Wallet/Ed25519
+
+import ../Fuzzed
 
 suite "Ed25519":
   setup:
@@ -14,7 +14,14 @@ suite "Ed25519":
     ]
 
   noFuzzTest "Aggregate.":
-    check(keys.aggregate() == newEdPublicKey(parseHexStr("58E6AF7B9C4FC89380CC84B4D478725A39A05EC9B3F2BE2E149EDD5C857B7371")))
+    check keys.aggregate() == newEdPublicKey(parseHexStr("58E6AF7B9C4FC89380CC84B4D478725A39A05EC9B3F2BE2E149EDD5C857B7371"))
 
   noFuzzTest "Verify.":
-    check(keys.aggregate().verify("test", newEdSignature(parseHexStr("F529B567F152BD037A8EFD0BE58F0D1864E642E2FDA9FD1074A8F2D22B2387404E144C02DE18CCF984D354339928AF63DFDED2518FEF32FC2C0F376A607A250D"))))
+    check keys.aggregate().verify(
+      "test",
+      newEdSignature(
+        parseHexStr(
+          "F529B567F152BD037A8EFD0BE58F0D1864E642E2FDA9FD1074A8F2D22B2387404E144C02DE18CCF984D354339928AF63DFDED2518FEF32FC2C0F376A607A250D"
+        )
+      )
+    )

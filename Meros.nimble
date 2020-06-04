@@ -34,13 +34,12 @@ proc gatherTestFiles(
   dir: string
 ): seq[string] =
   var files: seq[string] = newSeq[string]()
-  for d in listDirs(dir):
-    for f in gatherTestFiles(d):
+  for f in listFiles(dir):
+    let file: tuple[dir, name, ext: string] = splitFile(f)
+    if file.name.endsWith("Test") and file.ext == ".nim":
       files.add(f)
-    for f in listFiles(dir):
-      let file: tuple[dir, name, ext: string] = splitFile(f)
-      if file.name.endsWith("Test") and file.ext == ".nim":
-        files.add(f)
+  for d in listDirs(dir):
+    files &= gatherTestFiles(d)
   return files
 
 proc nimbleExec(

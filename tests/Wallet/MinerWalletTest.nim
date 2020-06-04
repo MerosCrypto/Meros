@@ -1,36 +1,32 @@
-#MinerWallet Test.
+import random
 
-#Fuzzing lib.
-import ../Fuzzed
-
-#Util lib.
 import ../../src/lib/Util
 
-#MinerWallet lib.
 import ../../src/Wallet/MinerWallet
 
-#Random standard lib.
-import random
+import ../Fuzzed
 
 suite "MinerWallet":
   setup:
     var
-      #MinerWallets.
       wallet: MinerWallet = newMinerWallet()
       reloaded: MinerWallet = newMinerWallet(wallet.privateKey.serialize())
 
   midFuzzTest "Recreating the Private Key.":
-    check(newBLSPrivateKey(wallet.privateKey.serialize()).serialize() == wallet.privateKey.serialize())
-    check($newBLSPrivateKey(wallet.privateKey.serialize()) == $wallet.privateKey)
+    check:
+      newBLSPrivateKey(wallet.privateKey.serialize()).serialize() == wallet.privateKey.serialize()
+      $newBLSPrivateKey(wallet.privateKey.serialize()) == $wallet.privateKey
 
   midFuzzTest "Recreating the Public Key.":
-    check(newBLSPublicKey(wallet.publicKey.serialize()).serialize() == wallet.publicKey.serialize())
-    check($newBLSPublicKey(wallet.publicKey.serialize()) == $wallet.publicKey)
+    check:
+      newBLSPublicKey(wallet.publicKey.serialize()).serialize() == wallet.publicKey.serialize()
+      $newBLSPublicKey(wallet.publicKey.serialize()) == $wallet.publicKey
 
   midFuzzTest "Reload the MinerWallet.":
     reloaded = newMinerWallet(wallet.privateKey.serialize())
-    check(wallet.privateKey.serialize() == reloaded.privateKey.serialize())
-    check(wallet.publicKey.serialize() == reloaded.publicKey.serialize())
+    check:
+      wallet.privateKey.serialize() == reloaded.privateKey.serialize()
+      wallet.publicKey.serialize() == reloaded.publicKey.serialize()
 
   midFuzzTest "Messages.":
     var
@@ -41,15 +37,10 @@ suite "MinerWallet":
     for _ in 0 ..< rand(100):
       msg &= char(rand(255))
 
-    #Sign the messages.
     wSig = wallet.sign(msg)
     rSig = reloaded.sign(msg)
 
-    #Verify they're the same signature..
-    check(wSig.serialize() == rSig.serialize())
-
-    #Test recreating the signature.
-    check(newBLSSignature(wSig.serialize()).serialize() == wSig.serialize())
-
-    #Verify the signature.
-    check(wSig.verify(newBLSAggregationInfo(wallet.publicKey, msg)))
+    check:
+      wSig.serialize() == rSig.serialize()
+      newBLSSignature(wSig.serialize()).serialize() == wSig.serialize()
+      wSig.verify(newBLSAggregationInfo(wallet.publicKey, msg))

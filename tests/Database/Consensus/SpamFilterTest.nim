@@ -1,30 +1,16 @@
-#Spam Filter Test.
-
-#Fuzzing lib.
-import ../../Fuzzed
-
-#Util lib.
-import ../../../src/lib/Util
-
-#SpamFilter object.
-import ../../../src/Database/Consensus/objects/SpamFilterObj
-
-#Random standard lib.
 import random
-
-#Seq utils standard lib.
-import sequtils
-
-#Algorithm standard lib.
 import algorithm
-
-#Tables standard lib.
+import sequtils
 import tables
 
+import ../../../src/lib/Util
+
+import ../../../src/Database/Consensus/objects/SpamFilterObj
+
+import ../../Fuzzed
+
 const
-  #Initial difficulty.
   INITIAL_DIFFICULTY: uint32 = uint32(3)
-  #Other difficulty.
   OTHER_DIFFICULTY: uint32 = uint32(5)
 
 #Recreate the VotedDifficulty object for testing purposes.
@@ -37,35 +23,36 @@ suite "SpamFilter":
     var
       #Holder -> Merit.
       merit: Table[uint16, int]
-      #List of Difficulties and their votes.
+      #List of Difficulties in play, along with their summed votes.
       difficulties: seq[VotedDifficultyTest] = @[]
-      #SpamFilter.
       filter: SpamFilter = newSpamFilterObj(INITIAL_DIFFICULTY)
 
   noFuzzTest "Verify the initial difficulty is correct.":
-    check(filter.difficulty == INITIAL_DIFFICULTY)
+    check filter.difficulty == INITIAL_DIFFICULTY
 
   noFuzzTest "Verify adding 0 votes doesn't change the initial difficulty.":
     filter.update(0, 49, OTHER_DIFFICULTY)
-    check(filter.difficulty == INITIAL_DIFFICULTY)
+    check filter.difficulty == INITIAL_DIFFICULTY
 
   noFuzzTest "Add 1 vote and remove it via a decrement.":
     filter.update(0, 50, OTHER_DIFFICULTY)
-    check(filter.difficulty == OTHER_DIFFICULTY)
+    check filter.difficulty == OTHER_DIFFICULTY
     filter.handleBlock(1, 1, 0, 49)
-    check(filter.difficulty == INITIAL_DIFFICULTY)
-    check(filter.left == 0)
-    check(filter.right == 0)
-    check(filter.medianPos == -1)
+    check:
+      filter.difficulty == INITIAL_DIFFICULTY
+      filter.left == 0
+      filter.right == 0
+      filter.medianPos == -1
 
   noFuzzTest "Add 1 vote and remove it via a MeritRemoval.":
     filter.update(0, 50, OTHER_DIFFICULTY)
-    check(filter.difficulty == OTHER_DIFFICULTY)
+    check filter.difficulty == OTHER_DIFFICULTY
     filter.remove(0, 50)
-    check(filter.difficulty == INITIAL_DIFFICULTY)
-    check(filter.left == 0)
-    check(filter.right == 0)
-    check(filter.medianPos == -1)
+    check:
+      filter.difficulty == INITIAL_DIFFICULTY
+      filter.left == 0
+      filter.right == 0
+      filter.medianPos == -1
 
   highFuzzTest "Verify.":
     #Create a random amount of holders.
@@ -204,7 +191,7 @@ suite "SpamFilter":
 
       #Handle no votes.
       if difficulties.len == 0:
-        check(filter.difficulty == INITIAL_DIFFICULTY)
+        check filter.difficulty == INITIAL_DIFFICULTY
         continue
 
       #Sort difficulties.
@@ -213,10 +200,9 @@ suite "SpamFilter":
           x: VotedDifficultyTest,
           y: VotedDifficultyTest
         ): int =
+          check x.difficulty != y.difficulty
           if x.difficulty > y.difficulty:
             return 1
-          elif x.difficulty == y.difficulty:
-            check(false)
           else:
             return -1
       )
@@ -232,8 +218,8 @@ suite "SpamFilter":
           unweighted.add(difficulties[d].difficulty)
 
       #Verify the median.
-      check(filter.difficulty == unweighted[unweighted.len div 2])
+      check filter.difficulty == unweighted[unweighted.len div 2]
 
       #Verify no difficulties have 0 votes.
       for diff in filter.difficulties:
-        check(diff.votes != 0)
+        check diff.votes != 0

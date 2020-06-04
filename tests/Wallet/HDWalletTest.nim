@@ -1,50 +1,25 @@
-#HDWallet Test.
-
-#Fuzzing lib.
-import ../Fuzzed
-
-#Util lib.
-import ../../src/lib/Util
-
-#Hash lib.
-import ../../src/lib/Hash
-
-#HDWallet lib.
-import ../../src/Wallet/HDWallet
-
-#OS standard lib.
 import os
-
-#Math standard lib.
 import math
-
-#String utils standard lib.
 import strutils
-
-#JSON standard lib.
 import json
 
-#Vectors File.
+import ../../src/lib/[Util, Hash]
+
+import ../../src/Wallet/HDWallet
+
+import ../Fuzzed
+
 const vectorsFile: string = staticRead("Vectors" / "HDWallet.json")
+var vectors: JSONNode = parseJSON(vectorsFile)
 
 suite "HDWallet":
   setup:
     var
-      #HDWallets.
       wallet: HDWallet
 
-      #Test vectors.
-      vectors: JSONNode = parseJSON(vectorsFile)
-
-      #Path.
       path: seq[uint32]
-      #Child on the path.
       child: string
-      #Numeric value of a child.
       i: uint32
-
-      #Loop variable signifying if newHDWallet raised.
-      raised: bool
 
   noFuzzTest "Each vector.":
     for vector in vectors:
@@ -60,21 +35,17 @@ suite "HDWallet":
           i += uint32(parseUInt(child))
           path.add(i)
 
-      #If this secret/path is invalid...
+      #Make sure invalid secrets/paths are invalid.
       if vector["node"].kind == JNull:
-        #Make sure it throws.
-        raised = false
-        try:
+        expect ValueError:
           wallet = newHDWallet(vector["secret"].getStr()).derive(path)
-        except:
-          raised = true
-        check(raised)
         continue
 
       #If this wallet is valid, load and derive it.
       wallet = newHDWallet(vector["secret"].getStr()).derive(path)
 
       #Compare the Wallet with the vector.
-      check($wallet.privateKey == (vector["node"]["kLP"].getStr() & vector["node"]["kRP"].getStr()).toUpper())
-      check($wallet.publicKey == vector["node"]["AP"].getStr().toUpper())
-      check($wallet.chainCode == vector["node"]["cP"].getStr().toUpper())
+      check:
+        $wallet.privateKey == (vector["node"]["kLP"].getStr() & vector["node"]["kRP"].getStr()).toUpper()
+        $wallet.publicKey == vector["node"]["AP"].getStr().toUpper()
+        $wallet.chainCode == vector["node"]["cP"].getStr().toUpper()

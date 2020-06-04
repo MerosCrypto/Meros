@@ -1,44 +1,25 @@
-#Merit Testing Functions.
+import random
 
-#Util lib.
-import ../../../src/lib/Util
-
-#Hash lib.
-import ../../../src/lib/Hash
-
-#MinerWallet lib.
+import ../../../src/lib/[Util, Hash]
 import ../../../src/Wallet/MinerWallet
 
-#Element libs.
 import ../../../src/Database/Consensus/Elements/Elements
-
-#BlockHeader and Block libs.
 import ../../../src/Database/Merit/Block
 
-#Test Database lib.
+import ../../Fuzzed
 import ../TestDatabase
 export TestDatabase
 
-#Random standard lib.
-import random
-
-#Get a RandomX instance.
 var rx: RandomX = newRandomX()
 proc getRandomX*(): RandomX =
   {.gcsafe.}:
     rx
 
-#Create a valid VerificationPacket.
 proc newValidVerificationPacket*(
   holders: seq[BLSPublicKey],
   exclude: seq[uint16] = @[],
-  hashArg: Hash[256] = Hash[256]()
+  hash: Hash[256] = newRandomHash()
 ): VerificationPacket =
-  var hash: Hash[256] = hashArg
-  if hash == Hash[256]():
-    for b in 0 ..< 32:
-      hash.data[b] = uint8(rand(255))
-
   result = newVerificationPacketObj(hash)
   for h in 0 ..< holders.len:
     var found: bool = false
@@ -103,7 +84,7 @@ proc newBlankBlock*(
   )
   rx.hash(miner, result.header, proof)
 
-#Create a Block with a nicname.
+#Create a Block with a nickname.
 proc newBlankBlock*(
   rx: RandomX,
   version: uint32 = 0,

@@ -1,50 +1,26 @@
-#Consensus Test.
-
+import random
 import deques
+import tables
 
-#Fuzzing lib.
-import ../../Fuzzed
-
-#Util lib.
-import ../../../src/lib/Util
-
-#Hash lib.
-import ../../../src/lib/Hash
-
-#MinerWallet lib.
+import ../../../src/lib/[Util, Hash]
 import ../../../src/Wallet/MinerWallet
 
-#Merit lib.
+import ../../../src/Database/Filesystem/DB/ConsensusDB
+
 import ../../../src/Database/Merit/Merit
-
-#Consensus lib.
 import ../../../src/Database/Consensus/Consensus
-
-#Transactions lib.
 import ../../../src/Database/Transactions/Transactions
 
-#Test Database lib.
+import ../../Fuzzed
 import ../TestDatabase
-
-#Test Merit lib.
 import ../Merit/TestMerit
-
-#Compare Consensus lib.
 import CompareConsensus
-
-#Random standard lib.
-import random
-
-#Tables lib.
-import tables
 
 suite "Consensus":
   midFuzzTest "Reloaded malicious table.":
     var
-      #Database.
       db: DB = newTestDatabase()
 
-      #Merit.
       merit: Merit = newMerit(
         db,
         "CONSENSUS_DB_TEST",
@@ -53,10 +29,8 @@ suite "Consensus":
         25
       )
 
-      #Functions.
       functions: GlobalFunctionBox = newTestGlobalFunctionBox(addr merit.blockchain, nil)
 
-      #Consensus.
       consensus: Consensus = newConsensus(
         functions,
         db,
@@ -265,19 +239,14 @@ suite "Consensus":
 
       #Create a random amount of 'Transaction's.
       for _ in 0 ..< rand(2) + 1:
-        #Randomize the hash.
-        var hash: Hash[256]
-        for b in 0 ..< hash.data.len:
-          hash.data[b] = uint8(rand(255))
-
         #Register the Transaction.
         var tx: Transaction = Transaction()
-        tx.hash = hash
+        tx.hash = newRandomHash()
         transactions.transactions[tx.hash] = tx
         consensus.register(merit.state, tx, merit.blockchain.height)
 
         #Create a packet for the Transaction.
-        packets.add(newVerificationPacketObj(hash))
+        packets.add(newVerificationPacketObj(tx.hash))
 
         #Grab random holders to sign the packet.
         for h in 0 ..< holders.len:

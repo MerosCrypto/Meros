@@ -1,61 +1,31 @@
-import deques
+import os
+import random
+import sets, tables
 
-#Fuzzed lib.
-import ../../../Fuzzed
+import ../../../../src/lib/[Util, Hash]
+import ../../../../src/Wallet/[MinerWallet, Wallet]
 
-#Util lib.
-import ../../../../src/lib/Util
-
-#Hash lib.
-import ../../../../src/lib/Hash
-
-#Wallet libs.
-import ../../../../src/Wallet/Wallet
-import ../../../../src/Wallet/MinerWallet
-
-#Epoch object.
 import ../../../../src/Database/Merit/objects/EpochsObj
-
-#Input/Output objects.
 import ../../../../src/Database/Transactions/objects/TransactionObj
 
-#WalletDB lib.
 import ../../../../src/Database/Filesystem/Wallet/WalletDB
 
-#OS standard lib.
-import os
-
-#Random standard lib.
-import random
-
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
+import ../../../Fuzzed
 
 suite "WalletDB":
   setup:
     var
-      #Wallet DB.
       wallet: WalletDB
 
-      #Seq of created inputs.
       inputs: seq[tuple[transaction: int, input: Input]] = @[]
-      #Seq of created Transactions.
       transactions: seq[tuple[finalized: bool, transaction: Transaction]] = @[]
-      #Lookup table.
       lookup: Table[Hash[256], Transaction] = initTable[Hash[256], Transaction]()
 
-      #Track finalized/unfinalized indexes.
       finalizedNonces: int = 0
       unfinalizedNonces: int = 0
       finalizedTransactions: int = 0
 
-      #Transaction.
       tx: Transaction
-      #Hash.
-      hash: Hash[256]
 
     #Delete any old database.
     removeFile("./data/NimTests/test-wallet" & $getThreadID())
@@ -67,16 +37,16 @@ suite "WalletDB":
       w1: WalletDB,
       w2: WalletDB
     ) =
-      check(w1.wallet.privateKey == w2.wallet.privateKey)
-      check(w1.miner.privateKey == w2.miner.privateKey)
+      check:
+        w1.wallet.privateKey == w2.wallet.privateKey
+        w1.miner.privateKey == w2.miner.privateKey
+        w1.finalizedNonces == w2.finalizedNonces
+        w1.unfinalizedNonces == w2.unfinalizedNonces
+        w1.verified.len == w2.verified.len
+        w1.elementNonce == w2.elementNonce
 
-      check(w1.finalizedNonces == w2.finalizedNonces)
-      check(w1.unfinalizedNonces == w2.unfinalizedNonces)
-      check(w1.verified.len == w2.verified.len)
       for v in w1.verified.keys():
-        check(w1.verified[v] == w2.verified[v])
-
-      check(w1.elementNonce == w2.elementNonce)
+        check w1.verified[v] == w2.verified[v]
 
       #Close the reloaded DB.
       w2.close()
@@ -85,22 +55,17 @@ suite "WalletDB":
     #Fill it with 250 Transactions.
     for t in 0 ..< 250:
       tx = Transaction()
-      for b in 0 ..< 32:
-        tx.hash.data[b] = uint8(rand(255))
+      tx.hash = newRandomHash()
 
       #Non-funded inputs.
       if rand(5) == 0:
         for i in 0 ..< rand(255):
-          for b in 0 ..< 32:
-            hash.data[b] = uint8(rand(255))
-          tx.inputs.add(newInput(hash))
+          tx.inputs.add(newInput(newRandomHash()))
           inputs.add((transactions.len, tx.inputs[^1]))
       #Funded inputs.
       else:
         for i in 0 ..< rand(255):
-          for b in 0 ..< 32:
-            hash.data[b] = uint8(rand(255))
-          tx.inputs.add(newFundedInput(hash, rand(255)))
+          tx.inputs.add(newFundedInput(newRandomHash(), rand(255)))
           inputs.add((transactions.len, tx.inputs[^1]))
 
       #Register the Transaction.
@@ -143,7 +108,7 @@ suite "WalletDB":
             break
           finalizedNonces += transactions[finalizedTransactions].transaction.inputs.len
           inc(finalizedTransactions)
-        check(finalizedNonces == wallet.finalizedNonces)
+        check finalizedNonces == wallet.finalizedNonces
 
       #Create a Transaction which competes with randomly selected inputs.
       var
@@ -204,8 +169,9 @@ suite "WalletDB":
       tx = Transaction()
 
       #Check the finalizedNonces field.
-      check(fnCache == wallet.finalizedNonces)
-      check(wallet.finalizedNonces == finalizedNonces)
+      check:
+        fnCache == wallet.finalizedNonces
+        wallet.finalizedNonces == finalizedNonces
 
       #Reload and compare the Wallet DBs.
       compare(wallet, newWalletDB("./data/NimTests/test-wallet" & $getThreadID(), 1073741824))

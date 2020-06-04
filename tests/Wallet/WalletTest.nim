@@ -1,25 +1,18 @@
-#Wallet Test.
+import random
 
-#Fuzzing lib.
-import ../Fuzzed
-
-#Util lib.
 import ../../src/lib/Util
 
-#Wallet libs.
-import ../../src/Wallet/Address
-import ../../src/Wallet/Wallet
+import ../../src/Wallet/[Address, Wallet]
 
-#Random standard lib.
-import random
+import ../Fuzzed
 
 proc verify(
   wallet: Wallet
 ) =
   #Test recreating the Public Key.
-  check(newEdPublicKey(wallet.publicKey.serialize()).serialize() ==
-    wallet.publicKey.serialize())
-  check($newEdPublicKey(parseHexStr($wallet.publicKey)) == $wallet.publicKey)
+  check:
+    newEdPublicKey(wallet.publicKey.serialize()).serialize() == wallet.publicKey.serialize()
+    $newEdPublicKey(parseHexStr($wallet.publicKey)) == $wallet.publicKey
 
   #Create messages.
   var
@@ -29,12 +22,8 @@ proc verify(
     msg = ""
     for _ in 0 ..< m:
       msg &= char(rand(255))
-
-    #Sign the message.
     sig = wallet.sign(msg)
-
-    #Verify the signature.
-    check(wallet.verify(msg, sig))
+    check wallet.verify(msg, sig)
 
 suite "Wallet":
   noFuzzTest "New Wallet without password.":
@@ -48,11 +37,12 @@ suite "Wallet":
       wallet = newWallet("password")
       reloaded = newWallet(wallet.mnemonic.sentence, "password")
 
-    check(wallet.mnemonic.entropy == reloaded.mnemonic.entropy)
-    check(wallet.mnemonic.checksum == reloaded.mnemonic.checksum)
-    check(wallet.mnemonic.sentence == reloaded.mnemonic.sentence)
+    check:
+      wallet.mnemonic.entropy == reloaded.mnemonic.entropy
+      wallet.mnemonic.checksum == reloaded.mnemonic.checksum
+      wallet.mnemonic.sentence == reloaded.mnemonic.sentence
 
-    check(wallet.hd.chainCode == reloaded.hd.chainCode)
-    check(wallet.hd.privateKey == reloaded.hd.privateKey)
-    check(wallet.hd.publicKey == reloaded.hd.publicKey)
-    check(wallet.hd.address == reloaded.hd.address)
+      wallet.hd.chainCode == reloaded.hd.chainCode
+      wallet.hd.privateKey == reloaded.hd.privateKey
+      wallet.hd.publicKey == reloaded.hd.publicKey
+      wallet.hd.address == reloaded.hd.address

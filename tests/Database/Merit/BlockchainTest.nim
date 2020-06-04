@@ -1,51 +1,21 @@
-#Blockchain Test.
+import random
+import sets, tables
 
-#Fuzzing lib.
-import ../../Fuzzed
-
-#Errors lib.
-import ../../../src/lib/Errors
-
-#Util lib.
-import ../../../src/lib/Util
-
-#Hash lib.
-import ../../../src/lib/Hash
-
-#MinerWallet lib.
+import ../../../src/lib/[Errors, Util, Hash]
 import ../../../src/Wallet/MinerWallet
 
-#Element libs.
 import ../../../src/Database/Consensus/Elements/Elements
+import ../../../src/Database/Merit/[Difficulty, Block, Blockchain, State]
 
-#Difficulty, Block, Blockchain, and State libs.
-import ../../../src/Database/Merit/Difficulty
-import ../../../src/Database/Merit/Block
-import ../../../src/Database/Merit/Blockchain
-import ../../../src/Database/Merit/State
-
-#Merit Testing lib.
+import ../../Fuzzed
 import TestMerit
-
-#Compare Merit lib.
 import CompareMerit
 
-#Random standard lib.
-import random
-
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
-
-#Initial Difficultty.
 const INITIAL_DIFFICULTY: uint64 = uint64(1)
 
 suite "Blockchain":
   noFuzzTest "Reloaded and reverted Blockchain.":
     var
-      #Database.
       db: DB = newTestDatabase()
       #Full copy of the Blocks independent of any database.
       blocks: seq[Block] = @[]
@@ -68,17 +38,11 @@ suite "Blockchain":
       #Used Element nonces.
       elementNonces: Table[int, int] = initTable[int, int]()
 
-      #Transaction hash.
-      hash: Hash[256]
-      #Packets.
-      packets: seq[VerificationPacket]
-      #Elements.
+      packets: seq[VerificationPacket] = @[]
       elements: seq[BlockElement]
-      #Miners.
       miners: seq[MinerWallet]
       #Selected miner for the next Block.
       miner: int
-      #Block.
       mining: Block
 
     proc backupDatabase() =
@@ -105,10 +69,6 @@ suite "Blockchain":
           except KeyError:
             elementNonce = 0
           elementNonces[holder] = elementNonce + 1
-
-          proc randomHash(): Hash[256] =
-            for b in 0 ..< 32:
-              result.data[b] = uint8(rand(255))
 
           case rand(2):
             of 0:
@@ -227,13 +187,10 @@ suite "Blockchain":
       #We use the key list in the last Database to verify key deletion.
       for key in db.merit.used:
         if databases[c - 1].hasKey(key):
-          check(db.lmdb.get("merit", key) == databases[c - 1][key])
+          check db.lmdb.get("merit", key) == databases[c - 1][key]
         else:
-          try:
+          expect DBReadError:
             discard db.lmdb.get("merit", key)
-            check(false)
-          except DBReadError:
-            discard
 
     #Add all the Blocks back to the last chain.
     for b in 1 ..< blocks.len:
@@ -244,13 +201,10 @@ suite "Blockchain":
       #Verify every key in the Database is what it's supposed to be.
       for key in db.merit.used:
         if databases[b].hasKey(key):
-          check(db.lmdb.get("merit", key) == databases[b][key])
+          check db.lmdb.get("merit", key) == databases[b][key]
         else:
-          try:
+          expect DBReadError:
             discard db.lmdb.get("merit", key)
-            check(false)
-          except DBReadError:
-            discard
 
     #Test one last reversion of the full chain.
     blockchains[^1].revert(state, blockchains[1].height)
@@ -262,10 +216,7 @@ suite "Blockchain":
     #Verify every key in the Database is the same.
     for key in db.merit.used:
       if databases[0].hasKey(key):
-        check(db.lmdb.get("merit", key) == databases[0][key])
+        check db.lmdb.get("merit", key) == databases[0][key]
       else:
-        try:
+        expect DBReadError:
           discard db.lmdb.get("merit", key)
-          check(false)
-        except DBReadError:
-          discard

@@ -14,50 +14,42 @@ MeritRemoval DD/*
 MeritRemoval GP/*
 ]#
 
-#Fuzzing lib.
-import ../../../Fuzzed
+import random
 
-#Util lib.
-import ../../../../src/lib/Util
-
-#Hash lib.
-import ../../../../src/lib/Hash
-
-#MinerWallet lib.
+import ../../../../src/lib/[Util, Hash]
 import ../../../../src/Wallet/MinerWallet
 
-#Elements Testing lib.
-import ../../../Database/Consensus/Elements/TestElements
-
-#Serialization libs.
 import ../../../../src/Network/Serialize/SerializeCommon
-import ../../../../src/Network/Serialize/Consensus/ParseElement
-#import ../../../../src/Network/Serialize/Consensus/SerializeSendDifficulty
-import ../../../../src/Network/Serialize/Consensus/SerializeDataDifficulty
-#import ../../../../src/Network/Serialize/Consensus/SerializeGasPrize
-import ../../../../src/Network/Serialize/Consensus/SerializeMeritRemoval
+import ../../../../src/Network/Serialize/Consensus/[
+  SerializeSendDifficulty,
+  SerializeDataDifficulty,
+  #SerializeGasPrize,
+  SerializeMeritRemoval,
+  ParseElement
+]
 
-#Random standard lib.
-import random
+import ../../../Fuzzed
+import ../../../Database/Consensus/Elements/TestElements
 
 suite "ParseElement":
   noFuzzTest "Serialization.":
-    var sendDiff: SendDifficulty = newRandomSendDifficulty()
-    check(sendDiff.serialize().len == {
-      uint8(SEND_DIFFICULTY_PREFIX)
-    }.getLength(char(SEND_DIFFICULTY_PREFIX)))
+    var
+      sendDiff: SendDifficulty = newRandomSendDifficulty()
+      dataDiff: DataDifficulty = newRandomDataDifficulty()
+      #gasPrice: GasPrice = newRandomGasPrice()
 
-    var dataDiff: DataDifficulty = newRandomDataDifficulty()
-    check(dataDiff.serialize().len == {
-      uint8(DATA_DIFFICULTY_PREFIX)
-    }.getLength(char(DATA_DIFFICULTY_PREFIX)))
+    check:
+      sendDiff.serialize().len == {
+        byte(SEND_DIFFICULTY_PREFIX)
+      }.getLength(char(SEND_DIFFICULTY_PREFIX))
 
-    #[
-    var gasPrice: GasPrice = newRandomGasPrice()
-    check(gasPrice.serialize().len == {
-      uint8(GAS_PRICE_PREFIX)
-    }.getLength(char(GAS_PRICE_PREFIX)))
-    ]#
+      dataDiff.serialize().len == {
+        byte(DATA_DIFFICULTY_PREFIX)
+      }.getLength(char(DATA_DIFFICULTY_PREFIX))
+
+      #[gasPrice.serialize().len == {
+        byte(GAS_PRICE_PREFIX)
+      }.getLength(char(GAS_PRICE_PREFIX))]#
 
     for first in 0 ..< 5:
       var
@@ -67,11 +59,7 @@ suite "ParseElement":
         of 0:
           e1 = newRandomVerification(holder)
         of 1:
-          var hash: Hash[256] = Hash[256]()
-          for b in 0 ..< 32:
-            hash.data[b] = uint8(rand(255))
-
-          var mrvp: MeritRemovalVerificationPacket = newMeritRemovalVerificationPacketObj(hash)
+          var mrvp: MeritRemovalVerificationPacket = newMeritRemovalVerificationPacketObj(newRandomHash())
           for h in 0 ..< rand(500):
             mrvp.holders.add(newMinerWallet().publicKey)
 
@@ -91,14 +79,9 @@ suite "ParseElement":
           of 0:
             e2 = newRandomVerification(holder)
           of 1:
-            var hash: Hash[256] = Hash[256]()
-            for b in 0 ..< 32:
-              hash.data[b] = uint8(rand(255))
-
-            var mrvp: MeritRemovalVerificationPacket = newMeritRemovalVerificationPacketObj(hash)
+            var mrvp: MeritRemovalVerificationPacket = newMeritRemovalVerificationPacketObj(newRandomHash())
             for h in 0 ..< rand(500):
               mrvp.holders.add(newMinerWallet().publicKey)
-
             e2 = mrvp
           of 2:
             e2 = newRandomSendDifficulty(holder)
@@ -119,7 +102,7 @@ suite "ParseElement":
 
         var
           len: int = {
-            uint8(MERIT_REMOVAL_PREFIX)
+            byte(MERIT_REMOVAL_PREFIX)
           }.getLength(char(MERIT_REMOVAL_PREFIX))
           eLen: int
         dec(len)
@@ -128,7 +111,7 @@ suite "ParseElement":
           eLen = 0
           if int(mr.serialize()[len]) == VERIFICATION_PACKET_PREFIX:
             eLen = {
-              uint8(VERIFICATION_PACKET_PREFIX)
+              byte(VERIFICATION_PACKET_PREFIX)
             }.getLength(char(VERIFICATION_PACKET_PREFIX))
 
           len += MERIT_REMOVAL_ELEMENT_SET.getLength(
@@ -137,4 +120,4 @@ suite "ParseElement":
             MERIT_REMOVAL_PREFIX
           ) + eLen
 
-        check(mr.serialize().len == len)
+        check mr.serialize().len == len

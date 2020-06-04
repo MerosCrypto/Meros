@@ -1,61 +1,26 @@
-#Transactions Test.
+import random
+import algorithm
+import sets, tables
 
-#Fuzzing lib.
-import ../../Fuzzed
+import ../../../src/lib/[Util, Errors, Hash]
+import ../../../src/Wallet/[MinerWallet, Wallet]
 
-#Util lib.
-import ../../../src/lib/Util
-
-#Errors lib.
-import ../../../src/lib/Errors
-
-#Hash lib.
-import ../../../src/lib/Hash
-
-#Wallet libs.
-import ../../../src/Wallet/Wallet
-import ../../../src/Wallet/MinerWallet
-
-#VerificationPacket lib.
-import ../../../src/Database/Consensus/Elements/VerificationPacket
-
-#Merit lib.
-import ../../../src/Database/Merit/Merit
-
-#Transactions DB lib.
 import ../../../src/Database/Filesystem/DB/TransactionsDB
 
-#Transactions lib.
+import ../../../src/Database/Merit/Merit
+import ../../../src/Database/Consensus/Elements/VerificationPacket
 import ../../../src/Database/Transactions/Transactions
 
-#Test Database lib.
+import ../../Fuzzed
 import ../TestDatabase
-
-#Test Merit lib.
 import ../Merit/TestMerit
-
-#Compare Transactions lib.
 import CompareTransactions
-
-#Algorithm standard lib.
-import algorithm
-
-#Random standard lib.
-import random
-
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
 
 suite "Transactions":
   setup:
     var
-      #Database.
       db: DB = newTestDatabase()
 
-      #Merit.
       merit: Merit = newMerit(
         db,
         "TRANSACTIONS_TEST",
@@ -63,16 +28,13 @@ suite "Transactions":
         uint64(0),
         100
       )
-      #Transactions.
+
       transactions: Transactions = newTransactions(
         db,
         merit.blockchain
       )
 
-      #MeritHolder.
       holder: MinerWallet = newMinerWallet()
-
-      #Wallets.
       wallets: seq[Wallet] = @[]
       #Reverse lookup Table.
       walletsLookup: Table[EdPublicKey, int] = initTable[EdPublicKey, int]()
@@ -88,19 +50,18 @@ suite "Transactions":
       revertedMints: HashSet[Hash[256]] = initHashSet[Hash[256]]()
       #Mapping of Transaction to Mint trees.
       mintTrees: Table[Hash[256], HashSet[Hash[256]]] = initTable[Hash[256], HashSet[Hash[256]]]()
-      #Data Tips.
       dataTips: Table[EdPublicKey, Hash[256]] = initTable[EdPublicKey, Hash[256]]()
       #Table of a hash to the Block it first appeared on.
       first: Table[Hash[256], int] = initTable[Hash[256], int]()
 
-      #Packets.
-      packets: seq[VerificationPacket] = @[]
-      #New Block.
-      newBlock: Block
-      #Blocks.
+      #Copy of the Blockchain.
       blocks: seq[Block]
 
-      #Rewards.
+      #Variables for the next Block being mined.
+      packets: seq[VerificationPacket] = @[]
+      newBlock: Block
+
+      #Rewards, indexed by Block hash.
       rewards: Table[Hash[256], seq[Reward]] = initTable[Hash[256], seq[Reward]]()
 
       #Trees reverted.
@@ -112,7 +73,6 @@ suite "Transactions":
       #Set of Transactions already reverted past in spendable.
       alreadyReverted: HashSet[Hash[256]] = initHashSet[Hash[256]]()
 
-    #Add a Transaction.
     proc add(
       tx: Transaction,
       mints: HashSet[Hash[256]]
@@ -182,10 +142,9 @@ suite "Transactions":
       if x.hash < y.hash:
         return -1
       elif x.hash == y.hash:
+        check x.nonce != y.nonce
         if x.nonce < y.nonce:
           return -1
-        elif x.nonce == y.nonce:
-          check(false)
         else:
           return 1
       else:
@@ -201,34 +160,29 @@ suite "Transactions":
 
       for hash in txs.keys():
         if (reverted * mintTrees[hash]).len != 0:
-          try:
+          expect IndexError:
             discard transactions[hash]
-            check(false)
-          except IndexError:
-            discard
         else:
           discard transactions[hash]
 
       #Verify spendable was reverted accordingly.
       for w in 0 ..< wallets.len:
         var inputs: seq[FundedInput] = transactions.getUTXOs(wallets[w].publicKey)
-        check(inputs.len == revertedSpendable[w].len)
+        check inputs.len == revertedSpendable[w].len
 
         #Sort the UTXOs.
         inputs.sort(sortUTXOs)
         revertedSpendable[w].sort(sortUTXOs)
 
         for i in 0 ..< inputs.len:
-          check(inputs[i].hash == revertedSpendable[w][i].hash)
-          check(inputs[i].nonce == revertedSpendable[w][i].nonce)
+          check:
+            inputs[i].hash == revertedSpendable[w][i].hash
+            inputs[i].nonce == revertedSpendable[w][i].nonce
 
       #Verify the Mint was pruned.
       if justReverted != Hash[256]():
-        try:
+        expect IndexError:
           discard transactions[justReverted]
-          check(false)
-        except IndexError:
-          discard
 
     #Replay the Blockchain and Transactions from Block 10.
     proc replay() =
@@ -248,11 +202,8 @@ suite "Transactions":
           compare(transactions.transactions[tx.hash], tx)
         #Verify everything else was pruned.
         else:
-          try:
+          expect IndexError:
             discard transactions[tx.hash]
-            check(false)
-          except IndexError:
-            discard
 
       #Add back each Block and its Transactions.
       for b in 9 ..< blocks.len:
@@ -328,10 +279,8 @@ suite "Transactions":
 
       #Verify Transactions.
       for tx in txs.keys():
-        try:
+        expect IndexError:
           compare(transactions[tx], txs[tx])
-        except IndexError:
-          check(false)
 
       #Verify spendable.
       for w in 0 ..< wallets.len:
@@ -341,10 +290,11 @@ suite "Transactions":
         inputs.sort(sortUTXOs)
         spendable[w].sort(sortUTXOs)
 
-        check(inputs.len == spendable[w].len)
+        check inputs.len == spendable[w].len
         for i in 0 ..< inputs.len:
-          check(inputs[i].hash == spendable[w][i].hash)
-          check(inputs[i].nonce == spendable[w][i].nonce)
+          check:
+            inputs[i].hash == spendable[w][i].hash
+            inputs[i].nonce == spendable[w][i].nonce
 
   noFuzzTest "Reloaded and reverted Transactions.":
     for b in 1 .. 30:

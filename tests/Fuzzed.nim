@@ -1,17 +1,18 @@
-#Util lib.
-import ../src/lib/Util
-
-#Random standard lib.
 import random
-
-#unittest standard lib.
 import unittest
-#Export the suite and check macros.
 export suite, suiteStarted, TestStatus, TestResult, testStarted, checkpoint, check, fail, expect
 
-const TEST_FUZZING_LOW {.intdefine.}: int = 1
-const TEST_FUZZING_MID {.intdefine.}: int = 4
+import ../src/lib/[Util, Hash]
+
+const TEST_FUZZING_LOW  {.intdefine.}: int = 1
+const TEST_FUZZING_MID  {.intdefine.}: int = 4
 const TEST_FUZZING_HIGH {.intdefine.}: int = 8
+
+#Create a random hash.
+#Placed here as a lot of tests need this and every test imports this.
+proc newRandomHash*(): Hash[256] =
+  for b in 0 ..< 32:
+    result.data[b] = byte(rand(255))
 
 template setupRandom() =
   var seed: int64 = int64(getTime())

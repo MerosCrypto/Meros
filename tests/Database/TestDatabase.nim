@@ -1,30 +1,19 @@
-#Database Testing Functions.
+import os
 
-#Hash lib.
 import ../../src/lib/Hash
 
-#DB lib.
 import ../../src/Database/Filesystem/DB/DB
 export DB
 
-#Block and Blockchain libs.
-import ../../src/Database/Merit/Block
-import ../../src/Database/Merit/Blockchain
-
-#Transactions lib.
+import ../../src/Database/Merit/[Block, Blockchain]
 import ../../src/Database/Transactions/Transactions
 
-#GlobalFunctionBox.
 import ../../src/objects/GlobalFunctionBoxObj
 export GlobalFunctionBoxObj
-
-#OS standard lib.
-import os
 
 discard existsOrCreateDir("./data")
 discard existsOrCreateDir("./data/NimTests")
 
-#Create a Database.
 var db {.threadvar.}: DB
 proc newTestDatabase*(): DB =
   #Close any existing DB.
@@ -52,11 +41,10 @@ proc newTestGlobalFunctionBox*(
   blockchainArg: ptr Blockchain,
   transactionsArg: ptr Transactions
 ): GlobalFunctionBox =
-  #Save Blockchain/Transactions locally.
+  #Cache Blockchain/Transactions in the threadvars.
   blockchain = blockchainArg
   transactions = transactionsArg
 
-  #Create the functions.
   result = newGlobalFunctionBox()
 
   result.merit.getHeight = proc (): int =

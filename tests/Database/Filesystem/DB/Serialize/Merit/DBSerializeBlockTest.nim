@@ -1,62 +1,35 @@
-#DB Serialize Block Test.
-
-#Fuzzing lib.
-import ../../../../../Fuzzed
-
-#Util lib.
-import ../../../../../../src/lib/Util
-
-#Hash lib.
-import ../../../../../../src/lib/Hash
-
-#MinerWallet lib.
-import ../../../../../../src/Wallet/MinerWallet
-
-#BlockHeader and Block libs.
-import ../../../../../../src/Database/Merit/BlockHeader
-import ../../../../../../src/Database/Merit/Block
-
-#Serialize/parse lib.
-import ../../../../../../src/Database/Filesystem/DB/Serialize/Merit/DBSerializeBlock
-import ../../../../../../src/Database/Filesystem/DB/Serialize/Merit/DBParseBlock
-
-#Elements Testing lib.
-import ../../../../Consensus/Elements/TestElements
-
-#Test and Compare Merit lib.
-import ../../../../Merit/TestMerit
-import ../../../../Merit/CompareMerit
-
-#Random standard lib.
 import random
 
+import ../../../../../../src/lib/[Util, Hash]
+import ../../../../../../src/Wallet/MinerWallet
+
+import ../../../../../../src/Database/Merit/[BlockHeader, Block]
+
+import ../../../../../../src/Database/Filesystem/DB/Serialize/Merit/[
+  DBSerializeBlock,
+  DBParseBlock
+]
+
+import ../../../../../Fuzzed
+import ../../../../Consensus/Elements/TestElements
+import ../../../../Merit/[TestMerit, CompareMerit]
+
 #Whether or not to create a Block with a new miner.
+#Flipped on every test iteration.
 var newMiner: bool = true
 
 suite "DBSerializeBlock":
   setup:
     var
-      #Last hash.
-      last: Hash[256]
-      #Packets.
+      last: Hash[256] = newRandomHash()
       packets: seq[VerificationPacket] = @[]
-      #Elements.
       elements: seq[BlockElement] = @[]
-      #Block.
       newBlock: Block
-      #Reloaded Block.
       reloaded: Block
 
   highFuzzTest "Serialize and parse.":
-    #Randomize the last hash.
-    for b in 0 ..< 32:
-      last.data[b] = uint8(rand(255))
-
-    #Randomize the packets.
     for p in 0 ..< rand(300):
       packets.add(newRandomVerificationPacket())
-
-    #Randomize the elements.
     for _ in 0 ..< rand(300):
       elements.add(newRandomBlockElement())
 
@@ -90,14 +63,8 @@ suite "DBSerializeBlock":
         uint32(rand(high(int32)))
       )
 
-    #Serialize it and parse it back.
     reloaded = newBlock.serialize().parseBlock(newBlock.header.interimHash, newBlock.header.hash)
-
-    #Compare the Blocks.
     compare(newBlock, reloaded)
+    check newBlock.serialize() == reloaded.serialize()
 
-    #Test the serialized versions.
-    check(newBlock.serialize() == reloaded.serialize())
-
-    #Flip the newMiner bool.
     newMiner = not newMiner

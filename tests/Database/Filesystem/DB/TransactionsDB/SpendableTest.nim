@@ -1,59 +1,32 @@
-#TransactionsDB Spendable Test.
-
-
-#Fuzzed lib.
-import ../../../../Fuzzed
-
-#Util lib.
-import ../../../../../src/lib/Util
-
-#Hash lib.
-import ../../../../../src/lib/Hash
-
-#Wallet lib.
-import ../../../../../src/Wallet/Wallet
-
-#TransactionDB lib.
-import ../../../../../src/Database/Filesystem/DB/TransactionsDB
-
-#Input/Output objects.
-import ../../../../../src/Database/Transactions/objects/TransactionObj
-
-#Send lib.
-import ../../../../../src/Database/Transactions/Send
-
-#Test Database lib.
-import ../../../TestDatabase
-
-#Algorithm standard lib.
+import random
 import algorithm
-
-#Tables lib.
 import tables
 
-#Random standard lib.
-import random
+import ../../../../../src/lib/[Util, Hash]
+import ../../../../../src/Wallet/Wallet
+
+import ../../../../../src/Database/Filesystem/DB/TransactionsDB
+
+import ../../../../../src/Database/Transactions/objects/TransactionObj
+import ../../../../../src/Database/Transactions/Send
+
+import ../../../../Fuzzed
+import ../../../TestDatabase
 
 suite "Spendable":
   midFuzzTest "Saving UTXOs, checking which UTXOs an account can spend, and deleting UTXOs.":
     var
-      #DB.
       db = newTestDatabase()
-      #Wallets.
       wallets: seq[Wallet] = @[]
 
-      #Outputs.
       outputs: seq[SendOutput] = @[]
-      #Send.
       send: Send
 
       #Public Key -> Spendable Outputs.
       spendable: Table[EdPublicKey, seq[FundedInput]] = initTable[EdPublicKey, seq[FundedInput]]()
-      #Inputs.
       inputs: seq[FundedInput] = @[]
       #Loaded Spendable.
       loaded: seq[FundedInput] = @[]
-      #Sends.
       sends: seq[Send] = @[]
       #Who can spend a FundedInput.
       spenders: Table[string, EdPublicKey] = initTable[string, EdPublicKey]()
@@ -82,10 +55,11 @@ suite "Spendable":
         spendable[key].sort(inputSort)
         loaded.sort(inputSort)
 
-        check(spendable[key].len == loaded.len)
+        check spendable[key].len == loaded.len
         for i in 0 ..< spendable[key].len:
-          check(spendable[key][i].hash == loaded[i].hash)
-          check(spendable[key][i].nonce == loaded[i].nonce)
+          check:
+            spendable[key][i].hash == loaded[i].hash
+            spendable[key][i].nonce == loaded[i].nonce
 
     #Generate 10 wallets.
     for _ in 0 ..< 10:

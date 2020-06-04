@@ -1,47 +1,27 @@
-#Serialize TransactionStatus Test.
+import random
+import sets, tables
 
-#Fuzzing lib.
-import ../../../../../Fuzzed
-
-#Util lib.
-import ../../../../../../src/lib/Util
-
-#Hash lib.
-import ../../../../../../src/lib/Hash
-
-#MinerWallet lib.
+import ../../../../../../src/lib/[Util, Hash]
 import ../../../../../../src/Wallet/MinerWallet
 
-#VerificationPacket and TransactionStatus libs.
 import ../../../../../../src/Database/Consensus/Elements/VerificationPacket
 import ../../../../../../src/Database/Consensus/TransactionStatus
 
-#Serialize libs.
-import ../../../../../../src/Database/Filesystem/DB/Serialize/Consensus/SerializeTransactionStatus
-import ../../../../../../src/Database/Filesystem/DB/Serialize/Consensus/ParseTransactionStatus
+import ../../../../../../src/Database/Filesystem/DB/Serialize/Consensus/[
+  SerializeTransactionStatus,
+  ParseTransactionStatus
+]
 
-#Compare Consensus lib.
+import ../../../../../Fuzzed
 import ../../../../Consensus/CompareConsensus
-
-#Random standard lib.
-import random
-
-#Sets standard lib.
-import sets
-
-#Tables standard lib.
-import tables
 
 suite "SerializeTransactionStatus":
   setup:
     #Create a TransactionStatus.
     var
-      hash: Hash[256]
+      hash: Hash[256] = newRandomHash()
       status: TransactionStatus
       pendingSigs: seq[BLSSignature]
-
-    for b in 0 ..< 32:
-      hash.data[b] = uint8(rand(255))
 
     status = newTransactionStatusObj(hash, rand(high(int32)))
     status.competing = rand(1) == 0
