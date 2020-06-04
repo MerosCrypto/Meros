@@ -37,14 +37,6 @@ func `$`*(
 ): string {.inline, forceCheck: [].} =
   hash.serialize().toHex()
 
-func empty*(
-  hash: Hash
-): bool {.forceCheck: [].} =
-  for b in hash.data:
-    if b != 0:
-      return false
-  result = true
-
 func `<`*[bits: static[int]](
   lhs: Hash[bits],
   rhs: Hash[bits]

@@ -456,7 +456,7 @@ proc mainMerit(
         lockedBlock[] = header.hash
 
       if header.last != merit.blockchain.tail.header.hash:
-        raise newException(ValueError, "Trying to add a Block which isn't after our current tail, despite calling reorganize and adding previous blocks.")
+        panic("Trying to add a Block which isn't after our current tail, despite calling reorganize and adding previous blocks.")
 
       #This executes twice in the case of reorgs.
       #That said, the only significant performance loss is in the double miner signature verify.

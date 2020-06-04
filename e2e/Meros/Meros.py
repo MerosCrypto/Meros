@@ -35,36 +35,36 @@ import socket
 class MessageType(
   Enum
 ):
-  Handshake         = 0
-  Syncing           = 1
-  Busy            = 2
-  BlockchainTail      = 3
+  Handshake      = 0
+  Syncing        = 1
+  Busy           = 2
+  BlockchainTail = 3
 
-  PeersRequest        = 4
-  Peers           = 5
-  BlockListRequest      = 6
-  BlockList         = 7
+  PeersRequest     = 4
+  Peers            = 5
+  BlockListRequest = 6
+  BlockList        = 7
 
-  BlockHeaderRequest    = 9
-  BlockBodyRequest      = 10
-  SketchHashesRequest     = 11
-  SketchHashRequests    = 12
-  TransactionRequest    = 13
+  BlockHeaderRequest  = 9
+  BlockBodyRequest    = 10
+  SketchHashesRequest = 11
+  SketchHashRequests  = 12
+  TransactionRequest  = 13
   DataMissing         = 14
 
-  Claim           = 15
-  Send            = 16
-  Data            = 17
+  Claim = 15
+  Send  = 16
+  Data  = 17
 
-  SignedVerification    = 20
-  SignedSendDifficulty    = 21
-  SignedDataDifficulty    = 22
-  SignedMeritRemoval    = 24
+  SignedVerification   = 20
+  SignedSendDifficulty = 21
+  SignedDataDifficulty = 22
+  SignedMeritRemoval   = 24
 
-  BlockHeader         = 26
-  BlockBody         = 27
-  SketchHashes        = 28
-  VerificationPacket    = 29
+  BlockHeader        = 26
+  BlockBody          = 27
+  SketchHashes       = 28
+  VerificationPacket = 29
 
   #MessageType -> byte.
   def toByte(
@@ -82,46 +82,46 @@ class MessageType(
 #A zero means custom logic should be used.
 live_lengths: Dict[MessageType, List[int]] = {
   MessageType.Handshake:      [37],
-  MessageType.Busy:         [1, -6],
-  MessageType.BlockchainTail:     [32],
+  MessageType.Busy:           [1, -6],
+  MessageType.BlockchainTail: [32],
 
-  MessageType.Claim:        [1, -33, 80],
-  MessageType.Send:         [1, -33, 1, -40, 68],
-  MessageType.Data:         [32, 1, -1, 69],
+  MessageType.Claim: [1, -33, 80],
+  MessageType.Send:  [1, -33, 1, -40, 68],
+  MessageType.Data:  [32, 1, -1, 69],
 
   MessageType.SignedVerification:   [82],
   MessageType.SignedSendDifficulty: [58],
   MessageType.SignedDataDifficulty: [58],
   MessageType.SignedMeritRemoval:   [4, 0, 1, 0, 48],
 
-  MessageType.BlockHeader:      [107, 0, 56]
+  MessageType.BlockHeader: [107, 0, 56]
 }
 
 sync_lengths: Dict[MessageType, List[int]] = {
-  MessageType.Syncing:       live_lengths[MessageType.Handshake],
-  MessageType.Busy:        live_lengths[MessageType.Busy],
-  MessageType.BlockchainTail:    [32],
+  MessageType.Syncing:        live_lengths[MessageType.Handshake],
+  MessageType.Busy:           live_lengths[MessageType.Busy],
+  MessageType.BlockchainTail: [32],
 
-  MessageType.PeersRequest:    [],
-  MessageType.Peers:         live_lengths[MessageType.Busy],
-  MessageType.BlockListRequest:  [34],
-  MessageType.BlockList:       [1, -32, 32],
+  MessageType.PeersRequest:     [],
+  MessageType.Peers:            live_lengths[MessageType.Busy],
+  MessageType.BlockListRequest: [34],
+  MessageType.BlockList:        [1, -32, 32],
 
   MessageType.BlockHeaderRequest:  [32],
-  MessageType.BlockBodyRequest:  [32],
+  MessageType.BlockBodyRequest:    [32],
   MessageType.SketchHashesRequest: [32],
   MessageType.SketchHashRequests:  [32, 4, -8],
   MessageType.TransactionRequest:  [32],
-  MessageType.DataMissing:     [],
+  MessageType.DataMissing:         [],
 
-  MessageType.Claim:         live_lengths[MessageType.Claim],
-  MessageType.Send:        live_lengths[MessageType.Send],
-  MessageType.Data:        live_lengths[MessageType.Data],
+  MessageType.Claim: live_lengths[MessageType.Claim],
+  MessageType.Send:  live_lengths[MessageType.Send],
+  MessageType.Data:  live_lengths[MessageType.Data],
 
-  MessageType.BlockHeader:     live_lengths[MessageType.BlockHeader],
-  MessageType.BlockBody:       [32, 4, -8, 4, 0, 48],
-  MessageType.SketchHashes:    [4, -8],
-  MessageType.VerificationPacket:  [2, -2, 32]
+  MessageType.BlockHeader:        live_lengths[MessageType.BlockHeader],
+  MessageType.BlockBody:          [32, 4, -8, 4, 0, 48],
+  MessageType.SketchHashes:       [4, -8],
+  MessageType.VerificationPacket: [2, -2, 32]
 }
 
 #Receive a message.

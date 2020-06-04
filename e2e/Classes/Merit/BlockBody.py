@@ -29,11 +29,14 @@ class BlockBody:
     elements: List[Element] = [],
     aggregate: Signature = Signature()
   ) -> None:
-    self.packets: List[VerificationPacket] = list(packets)
-    self.packets.sort(key=lambda packet: packet.hash, reverse=True)
+    self.packets: List[VerificationPacket] = sorted(
+      list(packets),
+      key=lambda packet: packet.hash,
+      reverse=True
+    )
 
     packetsMerkle: List[bytes] = []
-    for packet in packets:
+    for packet in self.packets:
       packetsMerkle.append(blake2b(packet.prefix + packet.serialize(), digest_size=32).digest())
     self.packetsContents: bytes = merkle(packetsMerkle)
 
