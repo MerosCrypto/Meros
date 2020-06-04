@@ -231,12 +231,12 @@ proc sync*(
     #Clear packets.
     packets = @[]
 
-    #Generate a Table of hashes we have in the Sketcher (which are over significance).
-    var lookup: HashSet[uint64] = initHashSet[uint64]()
+    #Generate a Table of hashes we have in the Sketcher (which are over significance) to their packet.
+    var lookup: Table[uint64, VerificationPacket] = initTable[uint64, VerificationPacket]()
     for elem in sketcher:
       if elem.significance < int(newBlock.data.header.significant):
         continue
-      lookup.incl(sketchHash(newBlock.data.header.sketchSalt, elem.packet))
+      lookup[sketchHash(newBlock.data.header.sketchSalt, elem.packet)] = elem.packet
 
     #Sync the list of sketch hashes.
     try:
@@ -252,7 +252,11 @@ proc sync*(
     #Remove packets present in our sketcher.
     var m: int = 0
     while m < missingPackets.len:
-      if lookup.contains(missingPackets[m]):
+      if lookup.hasKey(missingPackets[m]):
+        try:
+          packets.add(lookup[missingPackets[m]])
+        except KeyError as e:
+          panic("Couldn't add a packet we already have back to the packets list: " & e.msg)
         missingPackets.del(m)
       inc(m)
 
