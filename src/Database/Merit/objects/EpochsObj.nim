@@ -1,88 +1,61 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Util lib.
-import ../../../lib/Util
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Merit DB lib.
-import ../../Filesystem/DB/MeritDB
-
-#VerificationPacket object.
-import ../../Consensus/Elements/objects/VerificationPacketObj
-
-#Seq utils standard lib.
 import sequtils
-
-#Tables standard lib.
+import deques
 import tables
 
+import ../../../lib/[Errors, Util, Hash]
+
+import ../../Consensus/Elements/objects/VerificationPacketObj
+
 type
-    #Reward object.
-    Reward* = object
-        nick*: uint16
-        score*: uint64
+  Reward* = object
+    nick*: uint16
+    score*: uint64
 
-    #Epoch object. Transaction Hash -> Nicks of verifiers.
-    Epoch* = Table[Hash[256], seq[uint16]]
+  #Epoch object. Simply, a table of Transaction Hash -> Nicks of verifiers.
+  Epoch* = Table[Hash[256], seq[uint16]]
 
-    #Epochs object. Seq of the current 5 Epochs.
-    Epochs* = seq[Epoch]
+  #Epochs. Simply, again, a queue of the current 5 Epochs.
+  Epochs* = Deque[Epoch]
 
-#Constructors.
 func newReward*(
-    nick: uint16,
-    score: uint64
+  nick: uint16,
+  score: uint64
 ): Reward {.inline, forceCheck: [].} =
-    Reward(
-        nick: nick,
-        score: score
-    )
+  Reward(
+    nick: nick,
+    score: score
+  )
 
 func newEpoch*(): Epoch {.inline, forceCheck: [].} =
-    initTable[Hash[256], seq[uint16]]()
+  initTable[Hash[256], seq[uint16]]()
 
 func newEpochsObj*(): Epochs {.forceCheck: [].} =
-    #Create the seq.
-    result = newSeq[Epoch](5)
+  result = initDeque[Epoch](8)
+  for _ in 0 ..< 5:
+    result.addLast(newEpoch())
 
-    #Place blank epochs in.
-    for i in 0 ..< 5:
-        result[i] = newEpoch()
-
-#Register a hash within an Epoch.
 func register*(
-    epoch: var Epoch,
-    hash: Hash[256]
+  epoch: var Epoch,
+  hash: Hash[256]
 ) {.inline, forceCheck: [].} =
-    epoch[hash] = @[]
+  epoch[hash] = @[]
 
-#Add a VerificationPacket to an Epoch.
 proc add*(
-    epoch: var Epoch,
-    packet: VerificationPacket
+  epoch: var Epoch,
+  packet: VerificationPacket
 ) {.forceCheck: [].} =
-    try:
-        epoch[packet.hash] = epoch[packet.hash].concat(packet.holders)
-    except KeyError as e:
-        panic("Adding a packet to an Epoch which doesn't have that hash registered: " & e.msg)
+  try:
+    epoch[packet.hash] = epoch[packet.hash].concat(packet.holders)
+  except KeyError as e:
+    panic("Adding a packet to an Epoch which doesn't have that hash registered: " & e.msg)
 
-#Shift an Epoch.
+#Push on a new Epoch while popping the oldest one.
 proc shift*(
-    epochs: var Epochs,
-    epoch: Epoch
+  epochs: var Epochs,
+  epoch: Epoch
 ): Epoch {.forceCheck: [].} =
-    #Add the newest Epoch.
-    epochs.add(epoch)
-    #Set the result to the oldest.
-    result = epochs[0]
-    #Remove the oldest.
-    epochs.delete(0)
-
-#Get the latest Epoch.
-func latest*(
-    epochs: Epochs
-): Epoch {.inline, forceCheck: [].} =
-    epochs[4]
+  epochs.addLast(epoch)
+  try:
+    result = epochs.popFirst()
+  except IndexError as e:
+    panic("Tried to pop an Epoch yet there wasn't any; there should always be 5: " & e.msg)

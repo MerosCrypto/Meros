@@ -1,117 +1,100 @@
-#Errors lib.
-import ../../lib/Errors
-
-#Util lib.
-import ../../lib/Util
-
-#Socket object.
-import SocketObj
-
-#Locks standard lib.
+import random
 import locks
-
-#Table standard lib.
 import tables
 
-#Random standard lib.
-import random
+import ../../lib/[Errors, Util]
 
-#Service bytes.
-const SERVER_SERVICE*: uint8 = 0b10000000
+import SocketObj
 
-#Peer object.
+#[
+Handshakes include service bytes, which are used to declare supported... services.
+Right now, these are just used to say a peer is accepting connections as a server.
+In the future, it can be used for protocol extensions which allow optimizations without a hardfork.
+Or building a second layer communication network on top of the existing Meros network, through nodes who allow it.
+]#
+const SERVER_SERVICE*: byte = 0b10000000
+
 type Peer* = ref object
-    #ID.
-    id*: int
+  id*: int
+  ip*: string
 
-    #IP.
-    ip*: string
-    #Server who can accept connections.
-    server*: bool
-    #Port of their server.
-    port*: int
+  #Whether or not the server service bit has been set.
+  server*: bool
+  #Port of their server, if one exists.
+  port*: int
 
-    #Time of their last message.
-    last*: uint32
+  #Time of their last message.
+  last*: uint32
 
-    #Sync Lock.
-    syncLock*: Lock
-    #Pending sync requests.
-    requests*: seq[int]
+  #Lock used to append to the pending sync requests.
+  syncLock*: Lock
+  #Pending sync requests. The int refers to an ID in the SyncManager's table.
+  #This seq is used to handle sync responses from this peer, specifically.
+  #Verifying they're ordered and knowing how to hand them off.
+  requests*: seq[int]
 
-    #Sockets.
-    live*: Socket
-    sync*: Socket
+  live*: Socket
+  sync*: Socket
 
-#Constructor.
 proc newPeer*(
-    ip: string,
+  ip: string,
 ): Peer {.forceCheck: [].} =
-    result = Peer(
-        ip: ip,
-        last: getTime()
-    )
-    initLock(result.syncLock)
+  result = Peer(
+    ip: ip,
+    last: getTime()
+  )
+  initLock(result.syncLock)
 
 #Check if a Peer is closed.
 func isClosed*(
-    peer: Peer
+  peer: Peer
 ): bool {.inline, forceCheck: [].} =
-    (
-        peer.live.isNil or peer.live.closed
-    ) and (
-        peer.sync.isNil or peer.sync.closed
-    )
+  (
+    peer.live.isNil or peer.live.closed
+  ) and (
+    peer.sync.isNil or peer.sync.closed
+  )
 
-#Close a Peer.
 proc close*(
-    peer: Peer,
-    reason: string
+  peer: Peer,
+  reason: string
 ) {.forceCheck: [].} =
-    peer.live.safeClose("")
-    peer.sync.safeClose("")
+  peer.live.safeClose("")
+  peer.sync.safeClose("")
 
-    logDebug "Closing peer", id = peer.id, reason = reason
+  logDebug "Closing peer", id = peer.id, reason = reason
 
-#Get random peers which meet criteria.
-#Helper function used in a few places.
+#Get random peers which meet the specified criteria.
 proc getPeers*(
-    peers: TableRef[int, Peer],
-    reqArg: int,
-    skip: int = 0,
-    live: bool = false,
-    server: bool = false
+  peers: TableRef[int, Peer],
+  reqArg: int,
+  #Peer to skip. Used when rebroadcasting and we don't want to rebroadcast back to the source.
+  skip: int = 0,
+  #Only get peers with a live socket.
+  live: bool = false,
+  #Only get peers who are servers. Used when asked for peers to connect to.
+  server: bool = false
 ): seq[Peer] {.forceCheck: [].} =
-    var
-        req: int = reqArg
-        peersLeft: int = peers.len
-    for peer in peers.values():
-        if req == 0:
-            break
+  if peers.len == 0:
+    return
 
-        if rand(peersLeft - 1) < req:
-            #Skip peers who aren't servers if that's a requirement.
-            if server and (not peer.server):
-                dec(peersLeft)
-                if req > peersLeft:
-                    dec(req)
-                continue
+  var
+    #Copied so we can mutate req.
+    req: int = reqArg
+    peersLeft: int = peers.len
 
-            #Skip peers who don't have a Live socket if that's a requirement.
-            if live and (peer.live.isNil or peer.live.closed):
-                dec(peersLeft)
-                if req > peersLeft:
-                    dec(req)
-                continue
+  for peer in peers.values():
+    if rand(peersLeft - 1) < req:
+      dec(peersLeft)
+      if server and (not peer.server):
+        continue
 
-            #Skip the Peer who sent us this message.
-            if peer.id == skip:
-                dec(peersLeft)
-                if req > peersLeft:
-                    dec(req)
-                continue
+      if live and (peer.live.isNil or peer.live.closed):
+        continue
 
-            #Add the peers to the result, delete them from usable, and lower req.
-            result.add(peer)
-            dec(peersLeft)
-            dec(req)
+      if peer.id == skip:
+        continue
+
+      #Add the peer to the result and lower the amount of requested peers.
+      result.add(peer)
+      dec(req)

@@ -1,22 +1,14 @@
-#Errors lib.
-import ../../../../../lib/Errors
+import ../../../../../lib/[Errors, Util]
 
-#Util lib.
-import ../../../../../lib/Util
+import ../../../../Transactions/objects/TransactionObj
 
-#MintOutput object.
-import ../../../..//Transactions/objects/TransactionObj
+import ../../../../../Network/Serialize/SerializeCommon
 
-#SerializeOutput method.
 import SerializeOutput
 export SerializeOutput
 
-#Common serialization functions.
-import ../../../../../Network/Serialize/SerializeCommon
-
-#Serialization function.
 method serialize*(
-    output: MintOutput
+  output: MintOutput
 ): string {.inline, forceCheck: [].} =
-    output.key.toBinary(NICKNAME_LEN) &
-    output.amount.toBinary(MEROS_LEN)
+  output.key.toBinary(NICKNAME_LEN) &
+  output.amount.toBinary(MEROS_LEN)

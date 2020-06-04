@@ -1,60 +1,31 @@
-#Serialize Mint Test.
-
-#Fuzzing lib.
-import ../../../../../Fuzzed
-
-#Util lib.
-import ../../../../../../src/lib/Util
-
-#Hash lib.
-import ../../../../../../src/lib/Hash
-
-#Epochs lib.
-import ../../../../../../src/Database/Merit/Epochs
-
-#Mint lib.
-import ../../../../../../src/Database/Transactions/Mint
-
-#Serialize libs.
-import ../../../../../../src/Database/Filesystem/DB/Serialize/Transactions/SerializeMint
-import ../../../../../../src/Database/Filesystem/DB/Serialize/Transactions/ParseMint
-
-#Compare Transactions lib.
-import ../../../../Transactions/CompareTransactions
-
-#Random standard lib.
 import random
 
+import ../../../../../../src/lib/[Util, Hash]
+
+import ../../../../../../src/Database/Merit/Epochs
+import ../../../../../../src/Database/Transactions/Mint
+
+import ../../../../../../src/Database/Filesystem/DB/Serialize/Transactions/[
+  SerializeMint,
+  ParseMint
+]
+
+import ../../../../../Fuzzed
+import ../../../../Transactions/CompareTransactions
+
 suite "SerializeMint":
-    midFuzzTest "Serialize and parse.":
-        var
-            #Mint.
-            mint: Mint
-            #Reloaded Mint.
-            reloaded: Mint
+  midFuzzTest "Serialize and parse.":
+    var
+      mint: Mint
+      reloaded: Mint
+      hash: Hash[256] = newRandomHash()
+      outputs: seq[MintOutput]
 
-            #Hash.
-            hash: Hash[256]
-            #Outputs.
-            outputs: seq[MintOutput]
+    outputs = newSeq[MintOutput](rand(99) + 1)
+    for o in 0 ..< outputs.len:
+      outputs[o] = newMintOutput(uint16(rand(65535)), uint64(rand(high(int32))))
 
-        #Randomize the hash.
-        for b in 0 ..< hash.data.len:
-            hash.data[b] = uint8(rand(255))
-
-        #Randomize the outputs.
-        outputs = newSeq[MintOutput](rand(99) + 1)
-        for o in 0 ..< outputs.len:
-            outputs[o] = newMintOutput(uint16(rand(65535)), uint64(rand(high(int32))))
-
-        #Create the Mint.
-        mint = newMint(hash, outputs)
-
-        #Serialize it and parse it back.
-        reloaded = hash.parseMint(mint.serialize())
-
-        #Compare the Mints.
-        compare(mint, reloaded)
-
-        #Test the serialized versions.
-        check(mint.serialize() == reloaded.serialize())
+    mint = newMint(hash, outputs)
+    reloaded = hash.parseMint(mint.serialize())
+    compare(mint, reloaded)
+    check mint.serialize() == reloaded.serialize()

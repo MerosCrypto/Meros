@@ -1,41 +1,24 @@
-#Serialize MintOutput Test.
-
-#Fuzzing lib.
-import ../../../../../Fuzzed
-
-#Util lib.
-import ../../../../../../src/lib/Util
-
-#MintOutput object.
-import ../../../../../../src/Database/Transactions/objects/TransactionObj
-
-#Serialize libs.
-import ../../../../../../src/Database/Filesystem/DB/Serialize/Transactions/SerializeMintOutput
-import ../../../../../../src/Database/Filesystem/DB/Serialize/Transactions/ParseMintOutput
-
-#Compare Transactions lib.
-import ../../../../Transactions/CompareTransactions
-
-#Random standard lib.
 import random
 
+import ../../../../../../src/lib/Util
+
+import ../../../../../../src/Database/Transactions/objects/TransactionObj
+
+import ../../../../../../src/Database/Filesystem/DB/Serialize/Transactions/[
+  SerializeMintOutput,
+  ParseMintOutput
+]
+
+import ../../../../../Fuzzed
+import ../../../../Transactions/CompareTransactions
+
 suite "SerializeMintOutput":
-    lowFuzzTest "Serialize and parse.":
-        var
-            output: MintOutput
-            reloaded: MintOutput
-
-        #Create the MintOutput.
-        output = newMintOutput(
-            uint16(rand(high(int16))),
-            uint64(rand(high(int32)))
-        )
-
-        #Serialize it and parse it back.
-        reloaded = output.serialize().parseMintOutput()
-
-        #Compare the MintOutputs.
-        compare(output, reloaded)
-
-        #Test the serialized versions.
-        check(output.serialize() == reloaded.serialize())
+  lowFuzzTest "Serialize and parse.":
+    var
+      output: MintOutput = newMintOutput(
+        uint16(rand(high(int16))),
+        uint64(rand(high(int32)))
+      )
+      reloaded: MintOutput = output.serialize().parseMintOutput()
+    compare(output, reloaded)
+    check output.serialize() == reloaded.serialize()

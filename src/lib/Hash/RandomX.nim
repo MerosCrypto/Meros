@@ -1,70 +1,52 @@
-#Errors lib.
-import ../Errors
-
-#Hash master type.
-import HashCommon
-
-#RandomX library.
 import mc_randomx
 
+import ../Errors
+
+import HashCommon
+
 type
-    #Flags + VM + Cache.
-    RandomXObj* = object
-        flags: RandomXFlags
-        cacheKey*: string
-        cache: RandomXCache
-        vm: RandomXVM
+  #Flags + VM + Cache.
+  RandomXObj = object
+    flags: RandomXFlags
+    cacheKey*: string
+    cache: RandomXCache
+    vm: RandomXVM
 
-    RandomX* = ref RandomXObj
+  RandomX* = ref RandomXObj
 
-    #Hash type.
-    RandomXHash* = HashCommon.Hash[256]
-
-#Destructor to ensure the pointers are freed.
+#Destructor to ensure the pointers, referring to GB of data, are freed.
 proc `=destroy`*(
-    rx: var RandomXObj
+  rx: var RandomXObj
 ) {.forceCheck: [].} =
-    mc_randomx.dealloc(rx.cache)
-    rx.cache = nil
-    destroy rx.vm
-    rx.vm = nil
+  mc_randomx.dealloc(rx.cache)
+  rx.cache = nil
+  destroy rx.vm
+  rx.vm = nil
 
 proc newRandomX*(): RandomX {.forceCheck: [].} =
-    result = RandomX(
-        flags: getFlags(),
-        cacheKey: "Initial RandomX Key." #Used by Meros's tests.
-    )
-    result.cache = allocCache(result.flags)
-    result.cache.init(result.cacheKey)
-    result.vm = createVM(result.flags, result.cache, nil)
+  result = RandomX(
+    flags: getFlags(),
+    cacheKey: "Initial RandomX Key." #Used by Meros's tests.
+  )
+  result.cache = allocCache(result.flags)
+  result.cache.init(result.cacheKey)
+  result.vm = createVM(result.flags, result.cache, nil)
 
-#Set the key.
+#Update the cache key.
 proc setCacheKey*(
-    rx: RandomX,
-    key: string
+  rx: RandomX,
+  key: string
 ) {.forceCheck: [].} =
-    rx.cacheKey = key
-    rx.cache.init(key)
-    rx.vm.setCache(rx.cache)
+  rx.cacheKey = key
+  rx.cache.init(key)
+  rx.vm.setCache(rx.cache)
 
-#Take in data; return a RandomXHash.
 proc hash*(
-    rx: RandomX,
-    data: string
-): RandomXHash {.forceCheck: [].} =
-    try:
-        var hashStr: string = rx.vm.hash(data)
-        copyMem(addr result.data[0], addr hashStr[0], 32)
-    except Exception:
-        panic("RandomX raised an error.")
-
-#String to RandomXHash.
-proc toRandomXHash*(
-    hash: string
-): RandomXHash {.forceCheck: [
-    ValueError
-].} =
-    try:
-        result = hash.toHash(256)
-    except ValueError as e:
-        raise e
+  rx: RandomX,
+  data: string
+): Hash[256] {.forceCheck: [].} =
+  try:
+    var hashStr: string = rx.vm.hash(data)
+    copyMem(addr result.data[0], addr hashStr[0], 32)
+  except Exception:
+    panic("RandomX raised an error.")

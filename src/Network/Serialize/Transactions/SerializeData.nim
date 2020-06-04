@@ -1,35 +1,25 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/Wallet
 
-#Data object.
 import ../../../Database/Transactions/objects/DataObj
 
-#Common serialization functions.
 import ../SerializeCommon
 
-#SerializeTransaction method.
 import SerializeTransaction
 export SerializeTransaction
 
-#Serialization functions.
 method serializeHash*(
-    data: Data
+  data: Data
 ): string {.inline, forceCheck: [].} =
-    "\3" &
-    data.inputs[0].hash.toString() &
-    data.data
+  "\3" &
+  data.inputs[0].hash.serialize() &
+  data.data
 
 method serialize*(
-    data: Data
+  data: Data
 ): string {.inline, forceCheck: [].} =
-    data.inputs[0].hash.toString() &
-    char(data.data.len - 1) &
-    data.data &
-    data.signature.toString() &
-    data.proof.toBinary(INT_LEN)
+  data.inputs[0].hash.serialize() &
+  char(data.data.len - 1) &
+  data.data &
+  data.signature.serialize() &
+  data.proof.toBinary(INT_LEN)

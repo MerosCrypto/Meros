@@ -16,59 +16,59 @@
 The result is an object, as follows:
 - `hash`   (string)
 - `header` (object)
-    - `version`   (int)
-    - `last`      (string)
-    - `contents`  (string)
-    - `significant` (int)
-    - `sketchSalt`  (string)
-    - `sketchCheck`  (string)
-    - `miner`     (int/string): Either the miner's nick as an int or the key as a string if this is their first Block.
-    - `time`      (int)
-    - `proof`     (int)
-    - `signature` (string)
+  - `version`   (int)
+  - `last`      (string)
+  - `contents`  (string)
+  - `significant` (int)
+  - `sketchSalt`  (string)
+  - `sketchCheck`  (string)
+  - `miner`     (int/string): Either the miner's nick as an int or the key as a string if this is their first Block.
+  - `time`      (int)
+  - `proof`     (int)
+  - `signature` (string)
 
 - `transactions` (array of objects, each as follows)
-    - `hash`    (string)
-    - `holders` (array of ints)
+  - `hash`    (string)
+  - `holders` (array of ints)
 
 - `elements` (array of objects, each as follows)
-    - `descendant` (string)
-    - `holder`     (int)
+  - `descendant` (string)
+  - `holder`     (int)
 
-        When `descendant` == "SendDifficulty":
-        - `nonce`      (int)
-        - `difficulty` (int)
+    When `descendant` == "SendDifficulty":
+      - `nonce`      (int)
+      - `difficulty` (int)
 
-        When `descendant` == "DataDifficulty":
-        - `nonce`      (int)
-        - `difficulty` (int)
+    When `descendant` == "DataDifficulty":
+    - `nonce`      (int)
+      - `difficulty` (int)
 
-        When `descendant` == "GasPrice":
-        - `nonce` (int)
+      When `descendant` == "GasPrice":
+      - `nonce` (int)
+      - `price` (int)
+
+      When `descendant` == "MeritRemoval":
+      - `partial`  (bool):             Whether or not the first Element is already archived on the Blockchain.
+      - `elements` (array of objects): The two Elements which caused this MeritRemoval. If they're an Element which goes in a Block, they're formatted as they would be in a Block. Else....
+
+        When `descendant` == "Verification":
+        - `hash` (string)
+
+      When `descendant` == "VerificationPacket":
+        - `holders` (array of strings, each a BLS Public Key)
+        - `hash` (string)
+
+      When `descendant` == "SendDifficulty":
+      - `nonce`      (int)
+      - `difficulty` (string)
+
+      When `descendant` == "DataDifficulty":
+      - `nonce`      (int)
+      - `difficulty` (string)
+
+      When `descendant` == "GasPrice":
+      - `nonce` (int)
         - `price` (int)
-
-        When `descendant` == "MeritRemoval":
-        - `partial`  (bool):             Whether or not the first Element is already archived on the Blockchain.
-        - `elements` (array of objects): The two Elements which caused this MeritRemoval. If they're an Element which goes in a Block, they're formatted as they would be in a Block. Else....
-
-            When `descendant` == "Verification":
-                - `hash` (string)
-
-            When `descendant` == "VerificationPacket":
-                - `holders` (array of strings, each a BLS Public Key)
-                - `hash` (string)
-
-            When `descendant` == "SendDifficulty":
-            - `nonce`      (int)
-            - `difficulty` (string)
-
-            When `descendant` == "DataDifficulty":
-            - `nonce`      (int)
-            - `difficulty` (string)
-
-            When `descendant` == "GasPrice":
-            - `nonce` (int)
-            - `price` (int)
 
 - `aggregate` (string)
 

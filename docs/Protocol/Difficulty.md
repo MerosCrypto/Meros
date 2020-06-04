@@ -10,17 +10,17 @@ The spam function takes in a Transaction's hash and proof, as well as the diffic
 max = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
 def spam(
-    hash: bytes,
-    proof: bytes,
-    difficulty: int
+  hash: bytes,
+  proof: bytes,
+  difficulty: int
 ) -> bool:
-    return Argon2d(
-        iterations = 1,
-        memory = 8,
-        parallelism = 1,
-        data = hash,
-        salt = proof left padded to be 8 bytes long
-    ) * difficulty <= max
+  return Argon2d(
+    iterations = 1,
+    memory = 8,
+    parallelism = 1,
+    data = hash,
+    salt = proof left padded to be 8 bytes long
+  ) * difficulty <= max
 ```
 
 # Send Difficulty

@@ -1,37 +1,25 @@
-#Serialize Verification Test.
-
-#Fuzzing lib.
-import ../../../Fuzzed
-
-#Util lib.
-import ../../../../src/lib/Util
-
-#MinerWallet lib.
-import ../../../../src/Wallet/MinerWallet
-
-#Elements Testing lib.
-import ../../../Database/Consensus/Elements/TestElements
-
-#Serialization libs.
-import ../../../../src/Network/Serialize/Consensus/SerializeVerification
-import ../../../../src/Network/Serialize/Consensus/ParseVerification
-
-#Compare Consensus lib.
-import ../../../Database/Consensus/CompareConsensus
-
-#Random standard lib.
 import random
 
+import ../../../../src/Wallet/MinerWallet
+
+import ../../../../src/Network/Serialize/Consensus/[
+  SerializeVerification,
+  ParseVerification
+]
+
+import ../../../Fuzzed
+import ../../../Database/Consensus/Elements/TestElements
+import ../../../Database/Consensus/CompareConsensus
+
 suite "SerializeVerification":
-    setup:
-        var
-            #SignedVerification Element.
-            verif: SignedVerification = newRandomVerification()
-            #Reloaded SignedVerification Element.
-            reloadedSV: SignedVerification = verif.signedSerialize().parseSignedVerification()
+  setup:
+    var
+      verif: SignedVerification = newRandomVerification()
+      reloadedSV: SignedVerification = verif.signedSerialize().parseSignedVerification()
 
-    lowFuzzTest "Compare the Elements/serializations.":
-        compare(verif, reloadedSV)
-        check(verif.signature == reloadedSV.signature)
+  lowFuzzTest "Compare the Elements/serializations.":
+    compare(verif, reloadedSV)
 
-        check(verif.signedSerialize() == reloadedSV.signedSerialize())
+    check:
+      verif.signature == reloadedSV.signature
+      verif.signedSerialize() == reloadedSV.signedSerialize()

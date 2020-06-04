@@ -1,111 +1,100 @@
-#Errors lib.
-import ../../../lib/Errors
+import macros
+import tables
+import json
+export tables, json
 
-#Chronos external lib.
 import chronos
 export chronos
 
-#Macros standard lib.
-import macros
+import ../../../lib/Errors
 
-#Tables standard lib.
-import tables
-export tables
-
-#JSON standard lib.
-import json
-export json
-
-#RPC object.
 type
-    RPCFunction = proc (
-        res: JSONNode,
-        params: JSONNode
-    ): Future[void] {.gcsafe.}
+  RPCFunction = proc (
+    res: JSONNode,
+    params: JSONNode
+  ): Future[void] {.gcsafe.}
 
-    RPCFunctions* = Table[string, RPCFunction]
+  RPCFunctions* = Table[string, RPCFunction]
 
-    RPC* = ref object
-        alive*: bool
+  RPC* = ref object
+    alive*: bool
 
-        functions*: RPCFunctions
-        quit*: proc () {.gcsafe, raises: [].}
+    functions*: RPCFunctions
+    quit*: proc () {.gcsafe, raises: [].}
 
-        toRPC*: ptr Channel[JSONNode]
-        toGUI*: ptr Channel[JSONNode]
+    toRPC*: ptr Channel[JSONNode]
+    toGUI*: ptr Channel[JSONNode]
 
-        server*: StreamServer
+    server*: StreamServer
 
-#RPCFunctions constructor.
 macro newRPCFunctions*(
-    routes: untyped
+  routes: untyped
 ): untyped =
-    #Create a toTable call.
-    result = newNimNode(nnkAsgn).add(
-        ident("result"),
-        newCall(
-            ident("toTable")
-        ).add(
-            newNimNode(nnkTableConstr)
-        )
+  #Create a toTable call.
+  result = newNimNode(nnkAsgn).add(
+    ident("result"),
+    newCall(
+      ident("toTable")
+    ).add(
+      newNimNode(nnkTableConstr)
     )
+  )
 
-    #Add each route.
-    for route in routes:
-        #Make sure they're closures.
-        route[1].addPragma(ident("closure"))
-        #Also add the gcsafe pragma for Chronos.
-        route[1].addPragma(ident("gcsafe"))
+  #Add each route.
+  for route in routes:
+    #Make sure they're closures.
+    route[1].addPragma(ident("closure"))
+    #Also add the gcsafe pragma for Chronos.
+    route[1].addPragma(ident("gcsafe"))
 
-        #Make sure they're async.
-        var async: bool = false
-        for pragma in route[1][4]:
-            if (pragma.kind == nnkIdent) and (pragma.strVal == "async"):
-                async = true
-        if not async:
-            route[1].addPragma(ident("async"))
-            route[1][3][0] = newNimNode(nnkBracketExpr).add(
-                ident("Future"),
-                ident("void")
-            )
+    #Make sure they're async.
+    var async: bool = false
+    for pragma in route[1][4]:
+      if (pragma.kind == nnkIdent) and (pragma.strVal == "async"):
+        async = true
+    if not async:
+      route[1].addPragma(ident("async"))
+      route[1][3][0] = newNimNode(nnkBracketExpr).add(
+        ident("Future"),
+        ident("void")
+      )
 
-        result[1][1].add(
-            newNimNode(nnkExprColonExpr).add(
-                route[0],
-                route[1]
-            )
-        )
+    result[1][1].add(
+      newNimNode(nnkExprColonExpr).add(
+        route[0],
+        route[1]
+      )
+    )
 
 #Combine multiple RPCFunctions together.
 proc merge*(
-    rpcs: varargs[
-        tuple[prefix: string, rpc: RPCFunctions]
-    ]
+  rpcs: varargs[
+    tuple[prefix: string, rpc: RPCFunctions]
+  ]
 ): RPCFunctions {.raises: [].} =
-    result = initTable[string, RPCFunction]()
+  result = initTable[string, RPCFunction]()
 
-    for rpc in rpcs:
-        for key in rpc.rpc.keys():
-            try:
-                result[rpc.prefix & key] = rpc.rpc[key]
-            except KeyError as e:
-                panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
-            except Exception as e:
-                panic("Couldn't set a value in a table: " & e.msg)
+  for rpc in rpcs:
+    for key in rpc.rpc.keys():
+      try:
+        result[rpc.prefix & key] = rpc.rpc[key]
+      except KeyError as e:
+        panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+      except Exception as e:
+        panic("Couldn't set a value in a table: " & e.msg)
 
-#RPC Object Constructor.
 proc newRPCObj*(
-    functions: RPCFunctions,
-    quit: proc () {.gcsafe, raises: [].},
-    toRPC: ptr Channel[JSONNode],
-    toGUI: ptr Channel[JSONNode]
+  functions: RPCFunctions,
+  quit: proc () {.gcsafe, raises: [].},
+  toRPC: ptr Channel[JSONNode],
+  toGUI: ptr Channel[JSONNode]
 ): RPC {.inline, forceCheck: [].} =
-    RPC(
-        alive: true,
+  RPC(
+    alive: true,
 
-        functions: functions,
-        quit: quit,
+    functions: functions,
+    quit: quit,
 
-        toRPC: toRPC,
-        toGUI: toGUI
-    )
+    toRPC: toRPC,
+    toGUI: toGUI
+  )

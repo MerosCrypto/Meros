@@ -22,11 +22,11 @@ switch("nimcache", thisDir() & "/../build/nimcache/samples")
 switch("out", thisDir() & "/../build/Sample")
 
 when defined(merosRelease):
-    #Disable extra debug info.
-    switch("excessiveStackTrace", "off")
-    switch("lineDir", "off")
+  #Disable extra debug info.
+  switch("excessiveStackTrace", "off")
+  switch("lineDir", "off")
 else:
-    #Enable extra debug info.
-    switch("debuginfo")
-    switch("excessiveStackTrace", "on")
-    switch("lineDir", "on")
+  #Enable extra debug info.
+  switch("debuginfo")
+  switch("excessiveStackTrace", "on")
+  switch("lineDir", "on")

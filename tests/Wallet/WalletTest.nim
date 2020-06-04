@@ -1,58 +1,48 @@
-#Wallet Test.
-
-#Fuzzing lib.
-import ../Fuzzed
-
-#Util lib.
-import ../../src/lib/Util
-
-#Wallet libs.
-import ../../src/Wallet/Address
-import ../../src/Wallet/Wallet
-
-#Random standard lib.
 import random
 
+import ../../src/lib/Util
+
+import ../../src/Wallet/[Address, Wallet]
+
+import ../Fuzzed
+
 proc verify(
-    wallet: Wallet
+  wallet: Wallet
 ) =
-    #Test recreating the Public Key.
-    check(newEdPublicKey(wallet.publicKey.toString()).toString() ==
-        wallet.publicKey.toString())
-    check($newEdPublicKey($wallet.publicKey) == $wallet.publicKey)
+  #Test recreating the Public Key.
+  check:
+    newEdPublicKey(wallet.publicKey.serialize()).serialize() == wallet.publicKey.serialize()
+    $newEdPublicKey(parseHexStr($wallet.publicKey)) == $wallet.publicKey
 
-    #Create messages.
-    var
-        msg: string
-        sig: EdSignature
-    for m in 1 .. rand(100):
-        msg = ""
-        for _ in 0 ..< m:
-            msg &= char(rand(255))
-
-        #Sign the message.
-        sig = wallet.sign(msg)
-
-        #Verify the signature.
-        check(wallet.verify(msg, sig))
+  #Create messages.
+  var
+    msg: string
+    sig: EdSignature
+  for m in 1 .. rand(100):
+    msg = ""
+    for _ in 0 ..< m:
+      msg &= char(rand(255))
+    sig = wallet.sign(msg)
+    check wallet.verify(msg, sig)
 
 suite "Wallet":
-    noFuzzTest "New Wallet without password.":
-        verify(newWallet(""))
+  noFuzzTest "New Wallet without password.":
+    verify(newWallet(""))
 
-    noFuzzTest "New Wallet with password.":
-        verify(newWallet("password"))
+  noFuzzTest "New Wallet with password.":
+    verify(newWallet("password"))
 
-    noFuzzTest "Reloaded Wallet.":
-        var
-            wallet = newWallet("password")
-            reloaded = newWallet(wallet.mnemonic.sentence, "password")
+  noFuzzTest "Reloaded Wallet.":
+    var
+      wallet = newWallet("password")
+      reloaded = newWallet(wallet.mnemonic.sentence, "password")
 
-        check(wallet.mnemonic.entropy == reloaded.mnemonic.entropy)
-        check(wallet.mnemonic.checksum == reloaded.mnemonic.checksum)
-        check(wallet.mnemonic.sentence == reloaded.mnemonic.sentence)
+    check:
+      wallet.mnemonic.entropy == reloaded.mnemonic.entropy
+      wallet.mnemonic.checksum == reloaded.mnemonic.checksum
+      wallet.mnemonic.sentence == reloaded.mnemonic.sentence
 
-        check(wallet.hd.chainCode == reloaded.hd.chainCode)
-        check(wallet.hd.privateKey == reloaded.hd.privateKey)
-        check(wallet.hd.publicKey == reloaded.hd.publicKey)
-        check(wallet.hd.address == reloaded.hd.address)
+      wallet.hd.chainCode == reloaded.hd.chainCode
+      wallet.hd.privateKey == reloaded.hd.privateKey
+      wallet.hd.publicKey == reloaded.hd.publicKey
+      wallet.hd.address == reloaded.hd.address

@@ -1,22 +1,17 @@
-#Errors lib.
 import ../../../lib/Errors
 
-#Block lib.
 import ../../../Database/Merit/Block
 
-#Serialize functions.
-import SerializeBlockHeader
-import SerializeBlockBody
+import SerializeBlockHeader, SerializeBlockBody
 
-#Serialize a Block.
 proc serialize*(
-    blockArg: Block
+  blockArg: Block
 ): string {.forceCheck: [
-    ValueError
+  ValueError
 ].} =
-    try:
-        result =
-            blockArg.header.serialize() &
-            blockArg.body.serialize(blockArg.header.sketchSalt)
-    except ValueError as e:
-        raise e
+  try:
+    result =
+      blockArg.header.serialize() &
+      blockArg.body.serialize(blockArg.header.sketchSalt)
+  except ValueError as e:
+    raise e

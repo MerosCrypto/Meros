@@ -1,336 +1,329 @@
-#Errors lib.
-import ../../lib/Errors
+import locks
+import tables
 
-#Util lib.
-import ../../lib/Util
+import chronos
 
-#Hash lib.
-import ../../lib/Hash
+import ../../lib/[Errors, Util, Hash]
 
-#GlobalFunctionBox object.
 import ../../objects/GlobalFunctionBoxObj
 
-#Message object.
 import MessageObj
-
-#Socket object.
 import SocketObj
 
-#Manager objects.
 import LiveManagerObj
 import SyncManagerObj
 
-#FileLimitTracker lib.
 import ../FileLimitTracker
 
-#Peer library.
 import ../Peer as PeerFile
 
-#SerializeCommon lib.
 import ../Serialize/SerializeCommon
 
-#Chronos external lib.
-import chronos
-
-#Locks standard lib.
-import locks
-
-#Tables standard lib.
-import tables
-
-#IP lock masks.
+#Masks used to lock an IP while we modify it.
 const
-    CLIENT_IP_LOCK: uint8 = 1
-    LIVE_IP_LOCK*: uint8 = 2
-    SYNC_IP_LOCK*: uint8 = 4
+  CLIENT_IP_LOCK: byte = 0b1
+  LIVE_IP_LOCK*: byte = 0b10
+  SYNC_IP_LOCK*: byte = 0b100
 
-#Network object.
 type Network* = ref object
-    #File limit tracker. Used to ensure we don't hit ulimit.
-    fileTracker*: FileLimitTracker
+  functions*: GlobalFunctionBox
 
-    #Lock for the IP masks.
-    ipLock: Lock
-    #IP masks.Explores science fiction + corporations ruling the world
-    masks: Table[string, uint8]
+  #[
+  File limit tracker. Used to ensure we don't trigger ulimit, causing undefined behavior.
+  It shouldn't actually be undefined; just behavior we don't account for and handle.
+  This causes undefined behavior in the node.
+  Also allows us to refer clients to other peers when we're near our limit.
+  ]#
+  fileTracker*: FileLimitTracker
 
-    #Used to provide each Peer an unique ID.
-    count*: int
-    #Table of every Peer.
-    peers*: TableRef[int, Peer]
-    #IDs of every Peer.
-    ids*: seq[int]
-    #Set of the IPs of our peers who have Live sockets.
-    live*: Table[string, int]
-    #Set of the IPs of our peers who have Sync sockets.
-    sync*: Table[string, int]
+  #[
+  Lock for the IP masks.
+  This is required before the byte locks are modified.
+  Then when the byte locks are modified, safe modification of the Peers is possible.
+  ]#
+  ipLock: Lock
+  masks: Table[string, byte]
 
-    #Last local peer.
-    #We support unlimited connections from 127.0.0.1.
-    #That said, we still attempt to link live/sync sockets.
-    #This is how.
-    lastLocalPeer*: Peer
+  #Used to provide each Peer an unique ID.
+  #peers.len wouldn't work due to peers disconnecting over time.
+  count*: int
 
-    #Server.
-    server*: StreamServer
+  peers*: TableRef[int, Peer]
 
-    #Live Manager.
-    liveManager*: LiveManager
-    #Sync Manager.
-    syncManager*: SyncManager
+  #[
+  Dedicated seq exists, instead of using peers.items or a HashSet, so we can mutate the ID list as we iterate.
+  We could use peers.items, combined with a queue to delete after the fact, as that may be cleaner.
+  ]#
+  ids*: seq[int]
 
-    #Global Function Box.
-    functions*: GlobalFunctionBox
+  #Tables pointing from an IP to the peer ID. Exists for both live and sync.
+  live*: Table[string, int]
+  sync*: Table[string, int]
 
-#Constructor.
+  #[
+  Last local peer.
+  We support unlimited connections from 127.0.0.1.
+  That said, we still attempt to link live/sync sockets.
+  This is an imperfect solution which allows that.
+  When a new Sync socket is added, if this Peer is missing the Live socket, they're linked.
+  The same applies when a Live socket is added.
+  ]#
+  lastLocalPeer*: Peer
+
+  server*: StreamServer
+
+  liveManager*: LiveManager
+  syncManager*: SyncManager
+
 proc newNetwork*(
-    protocol: int,
-    networkID: int,
-    port: int,
-    functions: GlobalFunctionBox
+  protocol: int,
+  networkID: int,
+  port: int,
+  functions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
-    var network: Network = Network(
-        fileTracker: newFileLimitTracker(),
+  #This is set to network, instead of result, so the functions defined inside this function have access.
+  var network: Network = Network(
+    functions: functions,
 
-        masks: initTable[string, uint8](),
+    fileTracker: newFileLimitTracker(),
 
-        #Starts at 1 because the local node is 0.
-        count: 1,
-        peers: newTable[int, Peer](),
-        ids: @[],
-        live: initTable[string, int](),
-        sync: initTable[string, int](),
+    masks: initTable[string, byte](),
 
-        functions: functions
-    )
-    initLock(network.ipLocK)
+    #Starts at 1 because the local node is 0.
+    count: 1,
+    peers: newTable[int, Peer](),
+    ids: @[],
+    live: initTable[string, int](),
+    sync: initTable[string, int]()
+  )
+  initLock(network.ipLocK)
 
-    network.liveManager = newLiveManager(
-        protocol,
-        networkID,
-        port,
-        network.peers,
-        functions
-    )
-    network.syncManager = newSyncManager(
-        protocol,
-        networkID,
-        port,
-        network.peers,
-        functions
-    )
+  network.liveManager = newLiveManager(
+    protocol,
+    networkID,
+    port,
+    network.peers,
+    functions
+  )
+  network.syncManager = newSyncManager(
+    protocol,
+    networkID,
+    port,
+    network.peers,
+    functions
+  )
 
-    result = network
+  #Set result to network so it's returned.
+  result = network
 
-    #Add a repeating timer to remove inactive Peers.
-    var removeInactiveTimer: TimerCallback = nil
-    proc removeInactive(
-        data: pointer = nil
-    ) {.gcsafe, forceCheck: [].} =
-        var
-            p: int = 0
-            peer: Peer
-        while p < network.ids.len:
-            #Grab the peer.
-            try:
-                peer = network.peers[network.ids[p]]
-            except KeyError as e:
-                #Not a panic due to GC safety rules.
-                doAssert(false, "Failed to get a peer we have an ID for: " & e.msg)
+  #Add a repeating timer to remove inactive Peers.
+  var removeInactiveTimer: TimerCallback = nil
+  proc removeInactive(
+    data: pointer = nil
+  ) {.gcsafe, forceCheck: [].} =
+    var
+      p: int = 0
+      peer: Peer
+    while p < network.ids.len:
+      #Grab the peer.
+      try:
+        peer = network.peers[network.ids[p]]
+      except KeyError as e:
+        #Not a panic due to GC safety rules.
+        doAssert(false, "Failed to get a peer we have an ID for: " & e.msg)
 
-            #Exclude closed sockets from live/sync.
-            if peer.live.isNil or peer.live.closed:
-                network.live.del(peer.ip)
-            if peer.sync.isNil or peer.sync.closed:
-                network.sync.del(peer.ip)
+      #Exclude closed sockets from live/sync.
+      if peer.live.isNil or peer.live.closed:
+        network.live.del(peer.ip)
+      if peer.sync.isNil or peer.sync.closed:
+        network.sync.del(peer.ip)
 
-            #Close Peers who have been inactive for half a minute.
-            if peer.isClosed or (peer.last + 30 <= getTime()):
-                peer.close("Peer is closed/inactive.")
-                network.live.del(peer.ip)
-                network.sync.del(peer.ip)
-                network.peers.del(network.ids[p])
-                network.ids.del(p)
-                continue
+      #Close Peers who have been inactive for half a minute.
+      if peer.isClosed or (peer.last + 30 <= getTime()):
+        peer.close("Peer is closed/inactive.")
+        network.live.del(peer.ip)
+        network.sync.del(peer.ip)
+        network.peers.del(network.ids[p])
+        network.ids.del(p)
+        continue
 
-            #Handshake with Peers who have been inactive for 20 seconds.
-            if peer.last + 20 <= getTime():
-                #Send the Handshake.
-                try:
-                    if (not peer.live.isNil) and (not peer.live.closed):
-                        asyncCheck peer.sendLive(
-                            newMessage(
-                                MessageType.Handshake,
-                                char(network.liveManager.protocol) &
-                                char(network.liveManager.network) &
-                                network.liveManager.services &
-                                network.liveManager.port.toBinary(PORT_LEN) &
-                                network.functions.merit.getTail().toString()
-                            ),
-                            true
-                        )
-                    else:
-                        asyncCheck peer.sendSync(
-                            newMessage(
-                                MessageType.Syncing,
-                                char(network.liveManager.protocol) &
-                                char(network.liveManager.network) &
-                                network.liveManager.services &
-                                network.liveManager.port.toBinary(PORT_LEN) &
-                                network.functions.merit.getTail().toString()
-                            ),
-                            true
-                        )
-                except SocketError:
-                    discard
-                except Exception as e:
-                    panic("Sending to a Peer threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-            #Move on to the next Peer.
-            inc(p)
-
-        #Clear the existing timer.
-        if not removeInactiveTimer.isNil:
-            clearTimer(removeInactiveTimer)
-
-        #Register the timer again.
+      #Handshake with Peers who have been inactive for 20 seconds.
+      if peer.last + 20 <= getTime():
+        #Send the Handshake.
         try:
-            removeInactiveTimer = setTimer(Moment.fromNow(seconds(10)), removeInactive)
-        except OSError as e:
-            panic("Setting a timer to remove inactive peers failed: " & e.msg)
-
-    #Call removeInactive so it registers the timer.
-    removeInactive()
-
-    #Add a repeating timer to update the amount of open files.
-    var updateFileTrackerTimer: TimerCallback = nil
-    proc updateFileTracker(
-        data: pointer = nil
-    ) {.gcsafe, forceCheck: [].} =
-        network.fileTracker.update()
-        if not updateFileTrackerTimer.isNil:
-            clearTimer(updateFileTrackerTimer)
-        try:
-            updateFileTrackerTimer = setTimer(Moment.fromNow(minutes(1)), updateFileTracker)
-        except OSError as e:
-            panic("Setting a timer to update the amount of open files failed: " & e.msg)
-    updateFileTracker()
-
-proc lockIP*(
-    network: Network,
-    ip: string,
-    mask: uint8 = CLIENT_IP_LOCK
-): Future[bool] {.forceCheck: [], async.} =
-    #Acquire the IP lock.
-    while true:
-        if tryAcquire(network.ipLock):
-            break
-
-        try:
-            await sleepAsync(milliseconds(10))
+          if (not peer.live.isNil) and (not peer.live.closed):
+            asyncCheck peer.sendLive(
+              newMessage(
+                MessageType.Handshake,
+                char(network.liveManager.protocol) &
+                char(network.liveManager.network) &
+                network.liveManager.services &
+                network.liveManager.port.toBinary(PORT_LEN) &
+                network.functions.merit.getTail().serialize()
+              ),
+              true
+            )
+          else:
+            asyncCheck peer.sendSync(
+              newMessage(
+                MessageType.Syncing,
+                char(network.liveManager.protocol) &
+                char(network.liveManager.network) &
+                network.liveManager.services &
+                network.liveManager.port.toBinary(PORT_LEN) &
+                network.functions.merit.getTail().serialize()
+              ),
+              true
+            )
+        except SocketError:
+          discard
         except Exception as e:
-            panic("Failed to complete an async sleep: " & e.msg)
+          panic("Sending to a Peer threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    #Create the mask if there isn't one.
-    if not network.masks.hasKey(ip):
-        network.masks[ip] = mask
-        result = true
-    #If we're forming a client connection, and either already have one or they're already connecting to us, return false.
-    elif mask == CLIENT_IP_LOCK:
-        result = false
+      #Move on to the next Peer.
+      inc(p)
+
+    #Clear the existing timer.
+    if not removeInactiveTimer.isNil:
+      clearTimer(removeInactiveTimer)
+
+    #Register the timer again.
+    try:
+      removeInactiveTimer = setTimer(Moment.fromNow(seconds(10)), removeInactive)
+    except OSError as e:
+      panic("Setting a timer to remove inactive peers failed: " & e.msg)
+
+  #Call removeInactive so it registers the timer.
+  removeInactive()
+
+  #Add a repeating timer to update the amount of open files.
+  var updateFileTrackerTimer: TimerCallback = nil
+  proc updateFileTracker(
+    data: pointer = nil
+  ) {.gcsafe, forceCheck: [].} =
+    network.fileTracker.update()
+    if not updateFileTrackerTimer.isNil:
+      clearTimer(updateFileTrackerTimer)
+    try:
+      updateFileTrackerTimer = setTimer(Moment.fromNow(minutes(1)), updateFileTracker)
+    except OSError as e:
+      panic("Setting a timer to update the amount of open files failed: " & e.msg)
+  updateFileTracker()
+
+#Lock an IP so we can modify its Peer.
+proc lockIP*(
+  network: Network,
+  ip: string,
+  mask: byte = CLIENT_IP_LOCK
+): Future[bool] {.forceCheck: [], async.} =
+  #Acquire the IP lock so we can edit the locks in the first place.
+  while true:
+    if tryAcquire(network.ipLock):
+      break
+
+    try:
+      await sleepAsync(milliseconds(10))
+    except Exception as e:
+      panic("Failed to complete an async sleep: " & e.msg)
+
+  #Create the mask if there isn't one.
+  if not network.masks.hasKey(ip):
+    network.masks[ip] = mask
+    result = true
+  #If we're forming a client connection, and either already have one or they're already connecting to us, return false.
+  elif mask == CLIENT_IP_LOCK:
+    result = false
+  else:
+    var currMask: byte
+    try:
+      currMask = network.masks[ip]
+    except KeyError as e:
+      panic("Couldn't get an IP's mask despite confirming the key exists: " & e.msg)
+
+    #If we're currently attempting a client connection, or attempting to handle this type of server connection, set the result to false.
+    if (
+      (currMask == CLIENT_IP_LOCK) or
+      ((currMask and mask) == mask)
+    ):
+      result = false
     else:
-        var currMask: uint8
-        try:
-            currMask = network.masks[ip]
-        except KeyError as e:
-            panic("Couldn't get an IP's mask despite confirming the key exists: " & e.msg)
+      #Add the mask and set the result to true.
+      network.masks[ip] = currMask or mask
+      result = true
 
-        #If we're currently attempting a client connection, or attempting to handle this type of server connection, set the result to false.
-        if (
-            (currMask == CLIENT_IP_LOCK) or
-            ((currMask and mask) == mask)
-        ):
-            result = false
-        else:
-            #Add the mask and set the result to true.
-            network.masks[ip] = currMask or mask
-            result = true
-
-    #Release the IP lock.
-    release(network.ipLock)
+  #Release the IP lock.
+  release(network.ipLock)
 
 proc unlockIP*(
-    network: Network,
-    ip: string,
-    mask: uint8 = CLIENT_IP_LOCK
+  network: Network,
+  ip: string,
+  mask: byte = CLIENT_IP_LOCK
 ) {.forceCheck: [], async.} =
-    #Acquire the IP lock.
-    while true:
-        if tryAcquire(network.ipLock):
-            break
+  #Acquire the IP lock.
+  while true:
+    if tryAcquire(network.ipLock):
+      break
 
-        try:
-            await sleepAsync(milliseconds(10))
-        except Exception as e:
-            panic("Failed to complete an async sleep: " & e.msg)
-
-    #Remove the bitmask.
-    var newMask: uint8
     try:
-        newMask = network.masks[ip] and (not mask)
-    except KeyError as e:
-        panic("Attempted to unlock an IP that was never locked: " & e.msg)
+      await sleepAsync(milliseconds(10))
+    except Exception as e:
+      panic("Failed to complete an async sleep: " & e.msg)
 
-    #Delete the mask entirely if it's no longer used.
-    if newMask == 0:
-        network.masks.del(ip)
-    else:
-        network.masks[ip] = newMask
+  #Remove the bitmask.
+  var newMask: byte
+  try:
+    newMask = network.masks[ip] and (not mask)
+  except KeyError as e:
+    panic("Attempted to unlock an IP that was never locked: " & e.msg)
 
-    #Release the IP lock.
-    release(network.ipLock)
+  #Delete the mask entirely if it's no longer used.
+  if newMask == 0:
+    network.masks.del(ip)
+  else:
+    network.masks[ip] = newMask
 
-#Add a peer.
+  #Release the IP lock.
+  release(network.ipLock)
+
 proc add*(
-    network: Network,
-    peer: Peer
+  network: Network,
+  peer: Peer
 ) {.forceCheck: [].} =
-    peer.id = network.count
-    inc(network.count)
+  peer.id = network.count
+  inc(network.count)
 
-    network.peers[peer.id] = peer
-    network.ids.add(peer.id)
+  network.peers[peer.id] = peer
+  network.ids.add(peer.id)
 
-    if peer.ip.len == 6:
-        network.lastLocalPeer = peer
+  if peer.ip.len == 6:
+    network.lastLocalPeer = peer
 
-#Disconnect a peer.
 proc disconnect*(
-    network: Network,
-    peer: Peer
+  network: Network,
+  peer: Peer
 ) {.forceCheck: [].} =
-    #Close the peer and delete it from the tables.
-    peer.close("Ordered to disconnect the peer.")
-    network.peers.del(peer.id)
-    network.live.del(peer.ip)
-    network.sync.del(peer.ip)
+  #Close the peer and delete it from the tables.
+  peer.close("Ordered to disconnect the peer.")
+  network.peers.del(peer.id)
+  network.live.del(peer.ip)
+  network.sync.del(peer.ip)
 
-    #Delete its ID.
-    for p in 0 ..< network.ids.len:
-        if peer.id == network.ids[p]:
-            network.ids.del(p)
-            break
+  #Delete its ID.
+  for p in 0 ..< network.ids.len:
+    if peer.id == network.ids[p]:
+      network.ids.del(p)
+      break
 
-#Disconnects every Peer.
+#Disconnect every Peer.
 proc shutdown*(
-    network: Network
+  network: Network
 ) {.forceCheck: [].} =
-    #Delete the first Peer until there is no first Peer.
-    while network.ids.len != 0:
-        try:
-            network.peers[network.ids[0]].close("Shutting down.")
-        except Exception:
-            discard
+  #Delete the first Peer until there is no first Peer.
+  while network.ids.len != 0:
+    try:
+      network.peers[network.ids[0]].close("Shutting down.")
+    except Exception:
+      discard
 
-        network.peers.del(network.ids[0])
-        network.ids.del(0)
+    network.peers.del(network.ids[0])
+    network.ids.del(0)

@@ -1,23 +1,16 @@
-#Errors lib.
-import ../../../lib/Errors
+import ../../../lib/[Errors, Hash]
 
-#Hash lib.
-import ../../../lib/Hash
-
-#Transaction object.
 import TransactionObj
 export TransactionObj
 
-#Mint object.
 type Mint* = ref object of Transaction
 
-#Mint constructor.
 func newMintObj*(
-    hash: Hash[256],
-    outputs: seq[MintOutput]
+  hash: Hash[256],
+  outputs: seq[MintOutput]
 ): Mint {.inline, forceCheck: [].} =
-    Mint(
-        hash: hash,
-        inputs: @[],
-        outputs: cast[seq[Output]](outputs)
-    )
+  Mint(
+    hash: hash,
+    inputs: @[],
+    outputs: cast[seq[Output]](outputs)
+  )

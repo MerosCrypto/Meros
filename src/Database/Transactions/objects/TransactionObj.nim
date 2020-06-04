@@ -1,99 +1,86 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet lib.
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/Wallet
 
 type
-    #Transaction input types.
-    Input* = ref object of RootObj
-        hash*: Hash[256]
-    #FundedInput, which also includes a nonce.
-    FundedInput* = ref object of Input
-        nonce*: int
+  Input* = ref object of RootObj
+    hash*: Hash[256]
 
-    #Transaction output types.
-    Output* = ref object of RootObj
-        amount*: uint64
-    #MintOutput, which sends to a MeritHolder nickname.
-    MintOutput* = ref object of Output
-        key*: uint16
-    #SendOutput, which sends to an EdPublicKey. This also used by Claim.
-    SendOutput* = ref object of Output
-        key*: EdPublicKey
+  #FundedInput, which includes a nonce specifying the output to use the funds of.
+  FundedInput* = ref object of Input
+    nonce*: int
 
-    #Transaction object.
-    Transaction* = ref object of RootObj
-        #Input transactions.
-        inputs*: seq[Input]
-        #Outputs,
-        outputs*: seq[Output]
-        #Hash.
-        hash*: Hash[256]
+  Output* = ref object of RootObj
+    amount*: uint64
 
-#Input/Output constructors.
+  #MintOutput, which sends to a MeritHolder nickname.
+  MintOutput* = ref object of Output
+    key*: uint16
+
+  #SendOutput, which sends to an EdPublicKey. This is also used by Claim.
+  SendOutput* = ref object of Output
+    key*: EdPublicKey
+
+  Transaction* = ref object of RootObj
+    inputs*: seq[Input]
+    outputs*: seq[Output]
+    hash*: Hash[256]
+
 func newInput*(
-    hash: Hash[256]
+  hash: Hash[256]
 ): Input {.inline, forceCheck: [].} =
-    Input(
-        hash: hash
-    )
+  Input(
+    hash: hash
+  )
 
 func newFundedInput*(
-    hash: Hash[256],
-    nonce: int
+  hash: Hash[256],
+  nonce: int
 ): FundedInput {.inline, forceCheck: [].} =
-    FundedInput(
-        hash: hash,
-        nonce: nonce
-    )
+  FundedInput(
+    hash: hash,
+    nonce: nonce
+  )
 
 func newOutput*(
-    amount: uint64
+  amount: uint64
 ): Output {.inline, forceCheck: [].} =
-    Output(
-        amount: amount
-    )
+  Output(
+    amount: amount
+  )
 
 func newMintOutput*(
-    key: uint16,
-    amount: uint64
+  key: uint16,
+  amount: uint64
 ): MintOutput {.inline, forceCheck: [].} =
-    MintOutput(
-        key: key,
-        amount: amount
-    )
+  MintOutput(
+    key: key,
+    amount: amount
+  )
 
 func newClaimOutput*(
-    key: EdPublicKey
+  key: EdPublicKey
 ): SendOutput {.inline, forceCheck: [].} =
-    SendOutput(
-        key: key
-    )
+  SendOutput(
+    key: key
+  )
 
 func newSendOutput*(
-    key: EdPublicKey,
-    amount: uint64
+  key: EdPublicKey,
+  amount: uint64
 ): SendOutput {.inline, forceCheck: [].} =
-    SendOutput(
-        key: key,
-        amount: amount
-    )
+  SendOutput(
+    key: key,
+    amount: amount
+  )
 
 func newSendOutput*(
-    addy: Address,
-    amount: uint64
+  addy: Address,
+  amount: uint64
 ): SendOutput {.forceCheck: [].} =
-    case addy.addyType:
-        of AddressType.PublicKey:
-            var key: EdPublicKey
-            for b in 0 ..< 32:
-                key.data[b] = cuchar(addy.data[b])
+  case addy.addyType:
+    of AddressType.PublicKey:
+      var key: EdPublicKey
+      for b in 0 ..< 32:
+        key.data[b] = cuchar(addy.data[b])
 
-            result = newSendOutput(
-                key,
-                amount
-            )
+      result = newSendOutput(key, amount)

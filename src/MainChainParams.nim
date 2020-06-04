@@ -5,82 +5,78 @@ include MainImports
 #This is because they're for libraries which can't have their constants defined in a foreign file.
 
 const
-    #DB constants.
-    MAX_DB_SIZE: int64 = 107374182400 #Max DB size.
-    DB_VERSION: int = 0               #DB Version.
+  #DB constants.
+  MAX_DB_SIZE: int64 = 107374182400 #Max DB size.
+  DB_VERSION: int = 0               #DB Version.
 
 type ChainParams = object
-    #Genesis.
-    GENESIS: string
+  GENESIS: string
 
-    #Target Block Time in seconds.
-    BLOCK_TIME: int
-    #Blocks before Merit dies.
-    DEAD_MERIT: int
+  #Target Block Time in seconds.
+  BLOCK_TIME: int
+  #Blocks before Merit dies.
+  DEAD_MERIT: int
 
-    #Initial Blockchain Difficulty.
-    BLOCK_DIFFICULTY: uint64
-    #Initial Send Difficulty.
-    SEND_DIFFICULTY: uint32
-    #Initial Data Difficulty.
-    DATA_DIFFICULTY: uint32
+  #Initial Blockchain Difficulty.
+  BLOCK_DIFFICULTY: uint64
+  #Initial Send Difficulty.
+  SEND_DIFFICULTY: uint32
+  #Initial Data Difficulty.
+  DATA_DIFFICULTY: uint32
 
-    #Protocol version.
-    NETWORK_PROTOCOL: int
-    #Network ID.
-    NETWORK_ID: int
+  NETWORK_PROTOCOL: int
+  NETWORK_ID: int
 
-    #Seed servers.
-    SEEDS: seq[tuple[ip: string, port: int]]
+  SEEDS: seq[tuple[ip: string, port: int]]
 
 proc newChainParams(
-    network: string
+  network: string
 ): ChainParams {.forceCheck: [].} =
-    case network:
-        of "mainnet":
-            echo "The mainnet has yet to launch."
-            quit(0)
+  case network:
+    of "mainnet":
+      echo "The mainnet has yet to launch."
+      quit(0)
 
-        of "testnet":
-            result = ChainParams(
-                GENESIS: "MEROS_DEVELOPER_TESTNET_4S",
+    of "testnet":
+      result = ChainParams(
+        GENESIS: "MEROS_DEVELOPER_TESTNET_4S",
 
-                #The following is a temporary value for before the mainnet launches.
-                BLOCK_TIME: 120,
-                DEAD_MERIT: 1000,
+        #The following is a temporary value for before the mainnet launches.
+        BLOCK_TIME: 120,
+        DEAD_MERIT: 1000,
 
-                BLOCK_DIFFICULTY: 1000,
-                SEND_DIFFICULTY:  3,
-                DATA_DIFFICULTY:  5,
+        BLOCK_DIFFICULTY: 1000,
+        SEND_DIFFICULTY:  3,
+        DATA_DIFFICULTY:  5,
 
-                NETWORK_PROTOCOL: 0,
-                NETWORK_ID: 1,
+        NETWORK_PROTOCOL: 0,
+        NETWORK_ID: 1,
 
-                SEEDS: @[
-                    (ip: "107.191.110.132", port: 5132),
-                    (ip: "168.235.78.110", port: 5132),
-                    (ip: "81.4.106.162", port: 5132),
-                ]
-            )
+        SEEDS: @[
+          (ip: "107.191.110.132", port: 5132),
+          (ip: "168.235.78.110", port: 5132),
+          (ip: "81.4.106.162", port: 5132),
+        ]
+      )
 
-        of "devnet":
-            result = ChainParams(
-                GENESIS: "MEROS_DEVELOPER_NETWORK",
+    of "devnet":
+      result = ChainParams(
+        GENESIS: "MEROS_DEVELOPER_NETWORK",
 
-                BLOCK_TIME: 60,
-                DEAD_MERIT: 100,
+        BLOCK_TIME: 60,
+        DEAD_MERIT: 100,
 
-                BLOCK_DIFFICULTY: 100,
-                SEND_DIFFICULTY:  3,
-                DATA_DIFFICULTY:  5,
+        BLOCK_DIFFICULTY: 100,
+        SEND_DIFFICULTY:  3,
+        DATA_DIFFICULTY:  5,
 
-                #By not using 255, we allow eventually extending these fields. If we read 255, we can also read an extra byte,
-                NETWORK_PROTOCOL: 254,
-                NETWORK_ID: 254,
+        #By not using 255, we allow eventually extending these fields. If we read 255, we can also read an extra byte,
+        NETWORK_PROTOCOL: 254,
+        NETWORK_ID: 254,
 
-                SEEDS: @[]
-            )
+        SEEDS: @[]
+      )
 
-        else:
-            echo "Invalid network specified."
-            quit(0)
+    else:
+      echo "Invalid network specified."
+      quit(0)

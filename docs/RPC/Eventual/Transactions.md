@@ -9,35 +9,35 @@ The result is an object, as follows:
 - `descendant` (string)
 
 - `inputs` (array of objects, each as follows)
-    - `hash` (string)
+  - `hash` (string)
 
-    	When (`descendant` == "Claim") or (`descendant` == "Send"):
-        - `nonce` (int)
+  	When (`descendant` == "Claim") or (`descendant` == "Send"):
+    - `nonce` (int)
 
 - `outputs` (array of objects, each as follows)
-    - `amount` (string)
+  - `amount` (string)
 
-        When `descendant` == "Mint":
-        - `key` (int): Miner nickname.
+    When `descendant` == "Mint":
+    - `key` (int): Miner nickname.
 
-        When `descendant` == "Claim" or `descendant` == "Send":
-        - `key` (string): Ed25519 Public Key.
+    When `descendant` == "Claim" or `descendant` == "Send":
+    - `key` (string): Ed25519 Public Key.
 
 - `hash` (string)
 
 	When `descendant` == "Claim":
-    - `signature` (string)
+  - `signature` (string)
 
 	When `descendant` == "Send":
-    - `signature` (string)
-    - `proof`     (int)
-    - `argon`     (string)
+  - `signature` (string)
+  - `proof`     (int)
+  - `argon`     (string)
 
 	When `descendant` == "Data":
-    - `data`      (string)
-    - `signature` (string)
-    - `proof`     (int)
-    - `argon`     (string)
+  - `data`      (string)
+  - `signature` (string)
+  - `proof`     (int)
+  - `argon`     (string)
 
 ### `getUTXOs`
 

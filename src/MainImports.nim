@@ -1,79 +1,41 @@
-#Errors lib.
-import lib/Errors
-
-#Util lib.
-import lib/Util
-
-#Hash lib.
-import lib/Hash
-
-#Sketcher lib.
-import lib/Sketcher
-
-#Wallet libs.
-import Wallet/MinerWallet
-import Wallet/Wallet
-
-#Transactions.
-import Database/Transactions/Transactions as TransactionsFile
-
-#Consensus.
-import Database/Consensus/Consensus as ConsensusFile
-
-#Merit.
-import Database/Merit/Merit as MeritFile
-
-#DB.
-import Database/Filesystem/DB/DB
-
-#WalletDB.
-import Database/Filesystem/Wallet/WalletDB
-
-#Network.
-import Network/Network
-
-#Serialization libs.
-import Network/Serialize/Transactions/SerializeClaim
-import Network/Serialize/Transactions/SerializeSend
-import Network/Serialize/Transactions/SerializeData
-
-import Network/Serialize/Consensus/SerializeVerification
-import Network/Serialize/Consensus/SerializeVerificationPacket
-
-import Network/Serialize/Merit/SerializeBlockHeader
-
-#Interfaces.
-import Interfaces/Interfaces
-
-#Global Function Box object.
-import objects/GlobalFunctionBoxObj
-
-#Config object.
-import objects/ConfigObj
-
-#StInt external lib.
-import stint
-
-#Chronos external lib.
-import chronos
-
-#OS standard lib.
 import os
-
-#Thread standard lib.
-import threadpool
-
-#Locks standard lib.
-import locks
-
-#JSON standard lib.
+import threadpool, locks
+import sequtils
+import sets, tables
 import json
 
-#Seq utils standard lib.
-import sequtils
+import objects/GlobalFunctionBoxObj
+import objects/ConfigObj
 
-#Sets standard lib.
-import sets
+import lib/[Errors, Util, Hash, Sketcher]
+import Wallet/[MinerWallet, Wallet]
 
-#Tables standard lib.
-import tables
+import Database/Filesystem/DB/DB
+import Database/Filesystem/Wallet/WalletDB
+
+import Database/Transactions/Transactions as TransactionsFile
+import Database/Consensus/Consensus as ConsensusFile
+import Database/Merit/Merit as MeritFile
+
+import Network/Network
+import Network/Serialize/Transactions/[
+  SerializeClaim,
+  SerializeSend,
+  SerializeData
+]
+import Network/Serialize/Consensus/[
+  SerializeVerification,
+  SerializeVerificationPacket
+]
+import Network/Serialize/Merit/SerializeBlockHeader
+
+import Interfaces/Interfaces
+
+#[
+This is supposed to be after the standard lib modules, before the local files.
+Moving it causes the compiler to crash. I wish I was joking.
+Don't move this.
+-- Kayaba
+]#
+import stint
+import chronos

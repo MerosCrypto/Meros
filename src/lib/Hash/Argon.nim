@@ -1,45 +1,26 @@
-#Errors lib.
-import ../Errors
-
-#Hash master type.
-import HashCommon
-
-#Argon library.
 import Argon2
 
-#Define the Hash Type.
-type ArgonHash* = HashCommon.Hash[256]
+import ../Errors
 
-#Take in data and a salt; return a ArgonHash.
+import HashCommon
+
 proc Argon*(
-    data: string,
-    salt: string
-): ArgonHash {.forceCheck: [].} =
-    #The iteration quantity and memory usage values are for testing only.
-    #They are not final and will be changed.
-    var
-        #Reduced paramters:
-        iterations: uint32 = 1
-        memory: uint32 = 8 #8 KB of memor
+  data: string,
+  salt: string
+): HashCommon.Hash[256] {.forceCheck: [].} =
+  #The iteration quantity and memory usage values are for testing only.
+  #They are not final and will be changed.
+  var
+    iterations: uint32 = 1
+    memory: uint32 = 8
 
-    try:
-        result.data = Argon2d(
-            data,
-            salt,
-            iterations,
-            memory,
-            1
-        ).data
-    except Exception:
-        panic("Argon2d raised an error.")
-
-#String to ArgonHash.
-proc toArgonHash*(
-    hash: string
-): ArgonHash {.forceCheck: [
-    ValueError
-].} =
-    try:
-        result = hash.toHash(256)
-    except ValueError as e:
-        raise e
+  try:
+    result.data = Argon2d(
+      data,
+      salt,
+      iterations,
+      memory,
+      1
+    ).data
+  except Exception:
+    panic("Argon2d raised an error.")
