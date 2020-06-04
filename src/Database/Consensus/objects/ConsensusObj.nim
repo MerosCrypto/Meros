@@ -147,13 +147,13 @@ proc setUnmentioned*(
   consensus.unmentioned.incl(hash)
   consensus.db.addUnmentioned(hash)
 
-#[]
+#[
 Save back a Transaction's Status.
 I honestly forget why this is needed.
 Since we only commit to the database at the end of every block, and the table should be updated with refs...
 We should be able to use those two properties and just save them all back at once on block addition.
 My only two guesses are:
-1) A transaction system. We making changes to a status and then discard them on error.
+1) A transaction system. We make changes to a status and then discard them on error.
 2) We only want to save back statuses that have been changed.
 If I had to guess, I'd assume its the second.
 That said, we should be able to use a HashSet and remove this boiler place.
@@ -347,7 +347,7 @@ Unverify a Transaction.
 This happens when a transaction dips under the threshold.
 I believe its the protocol 'threshold' of 50.1%, and not the node threshold.
 This generally would happen due to a MeritRemoval yet can theoretically happen due to epoch incrementing.
-That said, this file is being annotated in a branch, and I haven't worked on it in weeks.
+That said, this file is being annotated in a branch, so I haven't worked on this in weeks.
 -- Kayaba
 ]#
 proc unverify*(
@@ -454,7 +454,7 @@ proc finalize*(
             As we do completely prune the tree below, under certain circumstances,
             #we only have to mark descendants as beaten if it's not pruned.
             That means, that while we should mark all descendants as beaten,
-            #we should technically do it a bit south of here.
+            we should technically do it a bit south of here.
             -- Kayaba
             ]#
         except IndexError as e:
