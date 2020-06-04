@@ -279,8 +279,10 @@ suite "Transactions":
 
       #Verify Transactions.
       for tx in txs.keys():
-        expect IndexError:
+        try:
           compare(transactions[tx], txs[tx])
+        except IndexError:
+          check false
 
       #Verify spendable.
       for w in 0 ..< wallets.len:
