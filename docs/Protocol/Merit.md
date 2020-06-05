@@ -168,13 +168,10 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 - Meros doesn't check that if VerificationPackets in a Block cause MeritRemovals, the matching MeritRemoval is included in the Block.
 - Meros allows Transactions which are descendants of Transactions which competed with finalized Transactions and lost.
 
-- Meros creates contents/sketchCheck hashes highest to lowest, not lowest to highest.
-
 - Meros doesn't support dead Merit.
 
 - Meros puts competitors in the first archived TX's Epoch, instead of bringing that TX forward.
 - Meros doesn't rollover rewards or use a negative sigmoid.
 - Meros doesn't wait 10 Blocks to create Mints.
 
-- Meros doesn't support chain reorganizations.
 - Meros doesn't support the `Checkpoint` message type.

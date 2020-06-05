@@ -51,8 +51,7 @@ class BlockHeader:
     #Sort the VerificationPackets.
     packets: List[VerificationPacket] = sorted(
       list(packetsArg),
-      key=lambda packet: packet.hash,
-      reverse=True
+      key=lambda packet: packet.hash
     )
 
     #Hash each packet.
@@ -84,7 +83,7 @@ class BlockHeader:
       sketchHashes.append(Sketch.hash(salt, packet))
 
     #Sort the Sketch Hashes.
-    sketchHashes.sort(reverse=True)
+    sketchHashes.sort()
 
     #Hash each sketch hash to leaf length.
     leaves: List[bytes] = []

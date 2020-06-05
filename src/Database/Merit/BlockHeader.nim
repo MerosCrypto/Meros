@@ -49,7 +49,7 @@ proc newSketchCheck*(
 
   for packet in packets:
     sketchHashes.add(sketchHash(sketchSalt, packet))
-  sketchHashes.sort(SortOrder.Descending)
+  sketchHashes.sort()
 
   for hash in sketchHashes:
     calculated.add(Blake256(hash.toBinary(SKETCH_HASH_LEN)))
@@ -76,7 +76,6 @@ proc newContents*(
         result = 1
       else:
         result = -1
-    , SortOrder.Descending
   ):
     empty = false
     packetsMerkle.add(Blake256(packet.serializeContents()))

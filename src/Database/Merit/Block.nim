@@ -26,6 +26,8 @@ proc verifySketchCheck*(
 ) {.raises: [
   ValueError
 ].} =
+  var sketchHashes: seq[uint64] = sorted(sketchHashes)
+
   var calculated: Hash[256]
   if sketchHashes.len != 0:
     var leaves: seq[Hash[256]] = newSeq[Hash[256]](sketchHashes.len)
@@ -50,8 +52,6 @@ proc verifySketchCheck*(
   var sketchHashes: seq[uint64] = missing
   for packet in packets:
     sketchHashes.add(sketchHash(sketchSalt, packet))
-  sketchHashes.sort(SortOrder.Descending)
-
   try:
     sketchCheck.verifySketchCheck(sketchHashes)
   except ValueError as e:
@@ -79,8 +79,6 @@ proc verifyContents*(
           raise newLoggedException(ValueError, "Block has two packets for the same hash.")
         else:
           result = -1
-      ,
-      SortOrder.Descending
     )
   except ValueError as e:
     raise e
