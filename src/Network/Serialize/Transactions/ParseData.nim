@@ -28,14 +28,7 @@ proc parseData*(
     INT_LEN
   )
 
-  #Create the Data.
-  try:
-    result = newDataObj(
-      dataSeq[0].toHash[:256](),
-      dataSeq[2]
-    )
-  except ValueError as e:
-    raise e
+  result = newDataObj(dataSeq[0].toHash[:256](), dataSeq[2])
 
   #Verify the Data isn't spam.
   var
@@ -45,13 +38,7 @@ proc parseData*(
   if argon.overflows(factor * diff):
     raise newSpam("Data didn't beat the difficulty.", hash, argon, factor * diff)
 
-  #Hash it and set its signature/proof/argon.
   result.hash = hash
-
-  try:
-    result.signature = newEdSignature(dataSeq[3])
-  except ValueError as e:
-    raise e
-
+  result.signature = newEdSignature(dataSeq[3])
   result.proof = uint32(dataSeq[4].fromBinary())
   result.argon = argon

@@ -61,8 +61,6 @@ proc parseBlockHeader*(
         uint32(headerSeq[9].fromBinary()),
         newBLSSignature(headerSeq[10])
       )
-  except ValueError as e:
-    raise e
   except BLSError:
     raise newLoggedException(ValueError, "Invalid Public Key or Signature.")
 

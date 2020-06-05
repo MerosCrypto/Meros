@@ -86,12 +86,7 @@ proc mainPersonal(
 
     #Add a change output.
     if amountIn != amountOut:
-      outputs.add(
-        newSendOutput(
-          child.publicKey,
-          amountIn - amountOut
-        )
-      )
+      outputs.add(newSendOutput(child.publicKey, amountIn - amountOut))
 
     send = newSend(utxos, outputs)
     child.sign(send)

@@ -175,10 +175,7 @@ proc loadUnmentioned*(
 
   result = initHashSet[Hash[256]]()
   for h in 0 ..< unmentioned.len div 32:
-    try:
-      result.incl(unmentioned[h * 32 ..< (h + 1) * 32].toHash[:256]())
-    except ValueError as e:
-      panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+    result.incl(unmentioned[h * 32 ..< (h + 1) * 32].toHash[:256]())
   db.transactions.unmentioned = result
 
 proc load*(
@@ -226,10 +223,7 @@ proc loadSpenders*(
     return
 
   for h in countup(0, spenders.len - 1, 32):
-    try:
-      result.add(spenders[h ..< h + 32].toHash[:256]())
-    except ValueError as e:
-      panic("Couldn't load a spending hash from the DB: " & e.msg)
+    result.add(spenders[h ..< h + 32].toHash[:256]())
 
 proc loadDataSender*(
   db: DB,
@@ -277,15 +271,12 @@ proc loadSpendable*(
     raise newLoggedException(DBReadError, e.msg)
 
   for i in countup(0, spendable.len - 1, 33):
-    try:
-      result.add(
-        newFundedInput(
-          spendable[i ..< i + 32].toHash[:256](),
-          int(spendable[i + 32])
-        )
+    result.add(
+      newFundedInput(
+        spendable[i ..< i + 32].toHash[:256](),
+        int(spendable[i + 32])
       )
-    except ValueError as e:
-      raise newLoggedException(DBReadError, e.msg)
+    )
 
 proc addToSpendable(
   db: DB,

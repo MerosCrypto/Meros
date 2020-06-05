@@ -27,22 +27,13 @@ proc parseClaim*(
   if inputs.len == 0:
     raise newLoggedException(ValueError, "parseClaim handed a Claim with no inputs.")
   for i in countup(0, claimSeq[1].len - 1, HASH_LEN + BYTE_LEN):
-    try:
-      inputs[i div (HASH_LEN + BYTE_LEN)] = newFundedInput(
-        claimSeq[1][i ..< i + HASH_LEN].toHash[:256](),
-        int(claimSeq[1][i + HASH_LEN])
-      )
-    except ValueError as e:
-      raise e
+    inputs[i div (HASH_LEN + BYTE_LEN)] = newFundedInput(
+      claimSeq[1][i ..< i + HASH_LEN].toHash[:256](),
+      int(claimSeq[1][i + HASH_LEN])
+    )
 
   #Create the Claim.
-  try:
-    result = newClaimObj(
-      inputs,
-      newEdPublicKey(claimSeq[2])
-    )
-  except ValueError as e:
-    raise e
+  result = newClaimObj(inputs, newEdPublicKey(claimSeq[2]))
 
   #Set the signature and hash it.
   try:

@@ -108,7 +108,6 @@ proc module*(
           var strHash: string = parseHexStr(params[0].getStr())
           if strHash.len != 32:
             raise newJSONRPCError(-3, "Invalid hash")
-
           res["result"] = % functions.transactions.getTransaction(strHash.toHash[:256]())
         except IndexError:
           raise newJSONRPCError(-2, "Transaction not found")
@@ -139,12 +138,7 @@ proc module*(
 
         case decodedAddy.addyType:
           of AddressType.PublicKey:
-            try:
-              utxos = functions.transactions.getUTXOs(
-                newEdPublicKey(cast[string](decodedAddy.data))
-              )
-            except ValueError:
-              raise newLoggedException(ParamError, "")
+            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](decodedAddy.data)))
 
         var balance: uint64 = 0
         for utxo in utxos:

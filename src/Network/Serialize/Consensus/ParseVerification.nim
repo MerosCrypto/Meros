@@ -7,9 +7,7 @@ import ../SerializeCommon
 
 proc parseVerification*(
   verifStr: string
-): Verification {.forceCheck: [
-  ValueError
-].} =
+): Verification {.forceCheck: [].} =
   #Holder's Nickname | Transaction Hash
   var verifSeq: seq[string] = verifStr.deserialize(
     NICKNAME_LEN,
@@ -17,13 +15,8 @@ proc parseVerification*(
   )
 
   #Create the Verification.
-  try:
-    result = newVerificationObj(
-      verifSeq[1].toHash[:256]()
-    )
-    result.holder = uint16(verifSeq[0].fromBinary())
-  except ValueError as e:
-    raise e
+  result = newVerificationObj(verifSeq[1].toHash[:256]())
+  result.holder = uint16(verifSeq[0].fromBinary())
 
 proc parseSignedVerification*(
   verifStr: string
@@ -39,12 +32,8 @@ proc parseSignedVerification*(
 
   #Create the Verification.
   try:
-    result = newSignedVerificationObj(
-      verifSeq[1].toHash[:256]()
-    )
+    result = newSignedVerificationObj(verifSeq[1].toHash[:256]())
     result.holder = uint16(verifSeq[0].fromBinary())
     result.signature = newBLSSignature(verifSeq[2])
-  except ValueError as e:
-    raise e
   except BLSError:
     raise newLoggedException(ValueError, "Invalid signature.")

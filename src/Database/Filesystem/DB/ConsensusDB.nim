@@ -315,10 +315,7 @@ proc loadUnmentioned*(
     return
 
   for h in countup(0, unmentioned.len - 1, 32):
-    try:
-      result.incl(unmentioned[h ..< h + 32].toHash[:256]())
-    except ValueError as e:
-      panic("Couldn't parse an unmentioned hash: " & e.msg)
+    result.incl(unmentioned[h ..< h + 32].toHash[:256]())
   db.consensus.unmentioned = result
 
 proc load*(

@@ -51,12 +51,9 @@ proc parseBlockBody*(
   except BLSError:
     raise newLoggedException(ValueError, "Invalid aggregate signature.")
 
-  try:
-    result.data = newBlockBodyObj(
-      bodyStr[0 ..< HASH_LEN].toHash[:256](),
-      @[],
-      elements,
-      aggregate
-    )
-  except ValueError as e:
-    panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+  result.data = newBlockBodyObj(
+    bodyStr[0 ..< HASH_LEN].toHash[:256](),
+    @[],
+    elements,
+    aggregate
+  )

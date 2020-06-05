@@ -52,10 +52,7 @@ proc parseBlock*(
 
     aggregate: BLSSignature
 
-  try:
-    packetsContents = bodyStr[0 ..< HASH_LEN].toHash[:256]()
-  except ValueError as e:
-    panic("Failed to create a 32-byte hash out of a 32-byte value: " & e.msg)
+  packetsContents = bodyStr[0 ..< HASH_LEN].toHash[:256]()
 
   i = packetsStart
   if bodyStr.len < i + NICKNAME_LEN:
@@ -74,11 +71,8 @@ proc parseBlock*(
       holders[h] = uint16(bodyStr[i ..< i + NICKNAME_LEN].fromBinary())
       i += NICKNAME_LEN
 
-    try:
-      packets[p] = newVerificationPacketObj(bodyStr[i ..< i + HASH_LEN].toHash[:256]())
-      i += HASH_LEN
-    except ValueError as e:
-      raise e
+    packets[p] = newVerificationPacketObj(bodyStr[i ..< i + HASH_LEN].toHash[:256]())
+    i += HASH_LEN
     packets[p].holders = holders
 
   elementsLen = bodyStr[i ..< i + INT_LEN].fromBinary()

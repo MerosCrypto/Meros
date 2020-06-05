@@ -24,12 +24,9 @@ proc getSender*(
   DataMissing
 ].} =
   if data.isFirstData:
-    try:
-      if data.data.len != 32:
-        raise newLoggedException(DataMissing, "Initial data wasn't provided a public key.")
-      return newEdPublicKey(data.data)
-    except ValueError as e:
-      panic("Couldn't create an EdPublicKey from a Data's input: " & e.msg)
+    if data.data.len != 32:
+      raise newLoggedException(DataMissing, "Initial data wasn't provided a public key.")
+    return newEdPublicKey(data.data)
   else:
     try:
       return transactions.db.loadDataSender(data.inputs[0].hash)

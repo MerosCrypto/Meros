@@ -156,11 +156,7 @@ proc handle*(
             panic("Replying `BlockchainTail` in response to a keep-alive `Handshake` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
           #Add the tail.
-          var tail: Hash[256]
-          try:
-            tail = msg.message[5 ..< 37].toHash[:256]()
-          except ValueError as e:
-            panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+          var tail: Hash[256] = msg.message[5 ..< 37].toHash[:256]()
 
           try:
             await manager.functions.merit.addBlockByHash(peer, tail)
@@ -169,11 +165,7 @@ proc handle*(
 
         of MessageType.BlockchainTail:
           #Get the hash.
-          var tail: Hash[256]
-          try:
-            tail = msg.message[0 ..< 32].toHash[:256]()
-          except ValueError as e:
-            panic("Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
+          var tail: Hash[256] = msg.message[0 ..< 32].toHash[:256]()
 
           #Add the Block.
           try:

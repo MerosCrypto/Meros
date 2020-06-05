@@ -270,11 +270,7 @@ proc handle*(
             panic("Failed to reply to a Sync request: " & e.msg)
 
           #Add the tail.
-          var tail: Hash[256]
-          try:
-            tail = msg.message[5 ..< 37].toHash[:256]()
-          except ValueError as e:
-            panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+          var tail: Hash[256] = msg.message[5 ..< 37].toHash[:256]()
 
           try:
             asyncCheck manager.functions.merit.addBlockByHash(peer, tail)
@@ -283,11 +279,7 @@ proc handle*(
 
         of MessageType.BlockchainTail:
           #Get the tail.
-          var tail: Hash[256]
-          try:
-            tail = msg.message[0 ..< 32].toHash[:256]()
-          except ValueError as e:
-            panic("Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
+          var tail: Hash[256] = msg.message[0 ..< 32].toHash[:256]()
 
           #Add the Block.
           try:
@@ -331,13 +323,8 @@ proc handle*(
         of MessageType.BlockListRequest:
           var
             list: string = ""
-            last: Hash[256]
+            last: Hash[256] = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN + HASH_LEN].toHash[:256]()
             i: int = -1
-
-          try:
-            last = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN + HASH_LEN].toHash[:256]()
-          except ValueError as e:
-            panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
 
           try:
             #Backwards.
@@ -376,10 +363,7 @@ proc handle*(
                 #Parse out the hashes.
                 result = newSeq[Hash[256]](1 + int(serialization[0]))
                 for i in 0 ..< result.len:
-                  try:
-                    result[i] = msg.message[BYTE_LEN + (i * HASH_LEN) ..< BYTE_LEN + HASH_LEN + (i * HASH_LEN)].toHash[:256]()
-                  except ValueError as e:
-                    panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+                  result[i] = msg.message[BYTE_LEN + (i * HASH_LEN) ..< BYTE_LEN + HASH_LEN + (i * HASH_LEN)].toHash[:256]()
             )
           except PeerError as e:
             peer.close(e.msg)
@@ -391,8 +375,6 @@ proc handle*(
               MessageType.BlockHeader,
               manager.functions.merit.getBlockByHash(msg.message.toHash[:256]()).header.serialize()
             )
-          except ValueError as e:
-            panic("Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
           except IndexError:
             res = newMessage(MessageType.DataMissing)
 
@@ -401,7 +383,7 @@ proc handle*(
             var requested: Block = manager.functions.merit.getBlockByHash(msg.message.toHash[:256]())
             res = newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt))
           except ValueError as e:
-            panic("Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
+            panic("Couldn't create a sketch for a BlockBody, despite being able to add it which means it has a valid sketch: " & e.msg)
           except IndexError:
             res = newMessage(MessageType.DataMissing)
 
@@ -412,8 +394,6 @@ proc handle*(
             res = newMessage(MessageType.SketchHashes, requested.body.packets.len.toBinary(INT_LEN))
             for packet in requested.body.packets:
               res.message &= sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)
-          except ValueError as e:
-            panic("Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
           except IndexError:
             res = newMessage(MessageType.DataMissing)
 
@@ -444,8 +424,6 @@ proc handle*(
                 panic("Failed to reply to a Sync request: " & e.msg)
 
             res = newMessage(MessageType.End)
-          except ValueError as e:
-            panic("Couldn't convert a 32-byte message to a 32-byte hash: " & e.msg)
           except IndexError, KeyError:
             res = newMessage(MessageType.DataMissing)
 
@@ -468,8 +446,6 @@ proc handle*(
                 panic("Responding with an unsupported Transaction type to a TransactionRequest.")
 
             res = newMessage(content, tx.serialize())
-          except ValueError as e:
-            panic("Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
           except IndexError:
             res = newMessage(MessageType.DataMissing)
 
@@ -652,9 +628,6 @@ proc handle*(
                 for i in 0 ..< result.len:
                   result[i] = uint64(msg.message[INT_LEN + (i * SKETCH_HASH_LEN) ..< INT_LEN + SKETCH_HASH_LEN + (i * SKETCH_HASH_LEN)].fromBinary())
 
-                #Sort the result.
-                result.sort(SortOrder.Descending)
-
                 #Verify the sketchCheck Merkle.
                 try:
                   check.verifySketchCheck(result)
@@ -727,7 +700,6 @@ proc handle*(
               peer.close("Peer sent the wrong VerificationPacket.")
               return
 
-            #Increment i.
             inc(i)
 
           #Verify we received every packet.

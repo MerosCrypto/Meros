@@ -20,18 +20,14 @@ type
 
 proc newEdPublicKey*(
   key: string
-): EdPublicKey {.forceCheck: [
-  ValueError
-].} =
+): EdPublicKey {.forceCheck: [].} =
   if key.len != 32:
     panic("Key which wasn't 32 bytes was passed to newEdPublicKey.")
   copyMem(addr result.data[0], unsafeAddr key[0], 32)
 
 proc newEdSignature*(
   sig: string
-): EdSignature {.forceCheck: [
-  ValueError
-].} =
+): EdSignature {.forceCheck: [].} =
   if sig.len != 64:
     panic("Key which wasn't 64 bytes was passed to newEdPublicKey.")
   copyMem(addr result.data[0], unsafeAddr sig[0], 64)

@@ -20,17 +20,13 @@ proc parseVerificationPacket*(
   if packet.len != NICKNAME_LEN + (verifiers * NICKNAME_LEN) + HASH_LEN:
     raise newLoggedException(ValueError, "parseVerificationPacket not handed enough data to get the verifiers and hash.")
 
-  #Create the VerificationPacket.
-  try:
-    result = newVerificationPacketObj(
-      packet[packet.len - HASH_LEN ..< packet.len].toHash[:256]()
+  result = newVerificationPacketObj(
+    packet[packet.len - HASH_LEN ..< packet.len].toHash[:256]()
+  )
+  for v in 0 ..< verifiers:
+    result.holders.add(
+      uint16(packet[NICKNAME_LEN + (NICKNAME_LEN * v) ..< NICKNAME_LEN + (NICKNAME_LEN * (v + 1))].fromBinary())
     )
-    for v in 0 ..< verifiers:
-      result.holders.add(
-        uint16(packet[NICKNAME_LEN + (NICKNAME_LEN * v) ..< NICKNAME_LEN + (NICKNAME_LEN * (v + 1))].fromBinary())
-      )
-  except ValueError as e:
-    raise e
 
 #Parse a MeritRemoval's VerificationPacket.
 proc parseMeritRemovalVerificationPacket*(
@@ -57,7 +53,5 @@ proc parseMeritRemovalVerificationPacket*(
       result.holders.add(
         newBLSPublicKey(packet[NICKNAME_LEN + (BLS_PUBLIC_KEY_LEN * v) ..< NICKNAME_LEN + (BLS_PUBLIC_KEY_LEN * (v + 1))])
       )
-  except ValueError as e:
-    raise e
   except BLSError:
     raise newLoggedException(ValueError, "Invalid Public Key.")

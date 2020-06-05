@@ -61,23 +61,20 @@ proc newBlockchainObj*(
   initialDifficulty: uint64
 ): Blockchain {.forceCheck: [].} =
   var genesis: string = genesisArg.pad(32)
-  try:
-    result = Blockchain(
-      db: db,
+  result = Blockchain(
+    db: db,
 
-      genesis: genesis.toHash[:256](),
-      blockTime: stuint(blockTime, 128),
+    genesis: genesis.toHash[:256](),
+    blockTime: stuint(blockTime, 128),
 
-      height: 0,
-      blocks: @[],
-      difficulties: @[],
+    height: 0,
+    blocks: @[],
+    difficulties: @[],
 
-      miners: initTable[BLSPublicKey, uint16](),
+    miners: initTable[BLSPublicKey, uint16](),
 
-      rx: newRandomX()
-    )
-  except ValueError as e:
-    panic("Couldn't convert the genesis to a hash, despite being padded to 32 bytes: " & e.msg)
+    rx: newRandomX()
+  )
 
   #Get the RandomX key from the DB.
   try:

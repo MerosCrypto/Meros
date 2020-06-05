@@ -8,9 +8,7 @@ export HashObj
 
 proc toHash*[bits: static int](
   hash: string
-): Hash[bits] {.forceCheck: [
-  ValueError
-].} =
+): Hash[bits] {.forceCheck: [].} =
   if hash.len != bits div 8:
     panic("toHash (string) not handed the right amount of data.")
   for b in 0 ..< hash.len:
@@ -18,9 +16,7 @@ proc toHash*[bits: static int](
 
 proc toHash*[bits: static int](
   hash: openArray[byte]
-): Hash[bits] {.forceCheck: [
-  ValueError
-].} =
+): Hash[bits] {.forceCheck: [].} =
   if hash.len != bits div 8:
     panic("toHash (openArray) not handed the right amount of data.")
   for b in 0 ..< hash.len:

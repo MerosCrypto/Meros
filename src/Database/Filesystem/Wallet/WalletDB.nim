@@ -272,8 +272,6 @@ proc loadDataTip*(
 ].} =
   try:
     result = db.get(DATA_TIP()).toHash[:256]()
-  except ValueError as e:
-    panic("Couldn't parse the data tip from the WalletDB: " & e.msg)
   except DBReadError:
     raise newLoggedException(DataMissing, "No Data Tip available.")
 
