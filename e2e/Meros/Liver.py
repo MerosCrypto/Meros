@@ -49,7 +49,8 @@ class Liver:
 
   #Sned the DB and verify it.
   def live(
-    self
+    self,
+    ignorePackets: List[bytes] = []
   ) -> None:
     #Handshake with the node.
     self.rpc.meros.liveConnect(self.merit.blockchain.blocks[0].header.hash)
@@ -65,6 +66,8 @@ class Liver:
       pendingPackets: List[bytes] = []
       pendingTXs: List[bytes] = []
       for packet in block.body.packets:
+        if packet.hash in ignorePackets:
+          continue
         pendingPackets.append(packet.hash)
 
         if packet.hash not in self.rpc.meros.sentTXs:

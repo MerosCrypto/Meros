@@ -13,6 +13,7 @@ from e2e.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
 from e2e.Tests.Merit.DifficultyTest import DifficultyTest
 from e2e.Tests.Merit.StateTest import StateTest
 from e2e.Tests.Merit.HundredTwentyFourTest import HundredTwentyFourTest
+from e2e.Tests.Merit.HundredSeventyFiveTest import HundredSeventyFiveTest
 from e2e.Tests.Merit.Reorganizations.DepthOneTest import DepthOneTest
 from e2e.Tests.Merit.Reorganizations.LongerChainMoreWorkTest import LongerChainMoreWorkTest
 from e2e.Tests.Merit.Reorganizations.ShorterChainMoreWorkTest import ShorterChainMoreWorkTest
@@ -89,6 +90,7 @@ tests: List[Callable[[RPC], None]] = [
   DifficultyTest,
   StateTest,
   HundredTwentyFourTest,
+  HundredSeventyFiveTest,
   DepthOneTest,
   LongerChainMoreWorkTest,
   ShorterChainMoreWorkTest,
