@@ -88,6 +88,10 @@ def HundredFiftyFiveTest(
   if MessageType(rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
     raise TestError("Meros didn't broadcast the Block we just published.")
 
+  #Ignore the Verification for the Block's Data.
+  if MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:
+    raise TestError("Meros didn't send the SignedVerification for the Block's Data.")
+
   #Create the Datas.
   datas: List[Data] = [
     Data(bytes(32), edPubKeys[0].to_bytes()),
