@@ -81,7 +81,9 @@ def HundredSeventySevenTest(
       )
     except TestError as e:
       if e.message == didntShakeError:
-        raise TestError(didntShakeError)
+        raise e
+      #Sleep for just over two thirty-second cycles to make sure we can reconnect.
+      sleep(65)
       rpc.meros.liveConnect(blockchain.blocks[-1].header.hash)
 
     blockchain.add(Block(header, BlockBody()))
