@@ -638,7 +638,8 @@ proc syncPeers*(
 
   #Send the request to every peer.
   for peer in manager.peers.values():
-    try:
-      asyncCheck peer.syncRequest(id, request.msg)
-    except Exception as e:
-      panic("Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)
+    if not peer.sync.isNil:
+      try:
+        asyncCheck peer.syncRequest(id, request.msg)
+      except Exception as e:
+        panic("Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)
