@@ -245,6 +245,16 @@ proc mainMerit(
           if wallet.miner.nick == rewards[r].nick:
             receivedMint = r
 
+    logDebug "Creating this Block's data ", hash = newBlock.header.hash
+    try:
+      var blockData: Data = newData(merit.blockchain.genesis, newBlock.header.hash.serialize())
+      transactions.dataWallet.sign(blockData)
+      functions.transactions.addData(blockData, true, true)
+    except ValueError as e:
+      panic("Couldn't create this Block's data due to a ValueError: " & e.msg)
+    except DataExists as e:
+      panic("Couldn't create this Block's data due to a DataExists: " & e.msg)
+
     #Commit the DBs.
     database.commit(merit.blockchain.height)
     try:

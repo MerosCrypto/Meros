@@ -131,7 +131,8 @@ proc mainTransactions(
 
   functions.transactions.addData = proc (
     data: Data,
-    syncing: bool = false
+    syncing: bool = false,
+    stillVerify: bool = false
   ) {.forceCheck: [
     ValueError,
     DataExists
@@ -154,6 +155,7 @@ proc mainTransactions(
         data.serialize()
       )
 
+    if (not syncing) or (syncing and stillVerify):
       try:
         asyncCheck verify(wallet, functions, merit, consensus, data)
       except Exception as e:

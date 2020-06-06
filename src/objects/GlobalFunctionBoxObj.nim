@@ -61,7 +61,8 @@ type
 
     addData*: proc (
       data: Data,
-      syncing: bool = false
+      syncing: bool = false,
+      stillVerify: bool = false
     ) {.gcsafe, raises: [
       ValueError,
       DataExists

@@ -13,6 +13,10 @@ import ../Transaction as TransactionFile
 
 type Transactions* = object
   db: DB
+  #Copy of the Genesis.
+  genesis: Hash[256]
+  #Wallet used to sign/verify Datas created by Blocks.
+  dataWallet*: Wallet
   #Cache of transactions which have yet to leave Epochs.
   transactions*: Table[Hash[256], Transaction]
 
@@ -26,10 +30,12 @@ proc getSender*(
   if data.isFirstData:
     if data.data.len != 32:
       raise newLoggedException(DataMissing, "Initial data wasn't provided a public key.")
-    return newEdPublicKey(data.data)
+    result = newEdPublicKey(data.data)
   else:
+    if data.inputs[0].hash == transactions.genesis:
+      return transactions.dataWallet.hd.publicKey
     try:
-      return transactions.db.loadDataSender(data.inputs[0].hash)
+      result = transactions.db.loadDataSender(data.inputs[0].hash)
     except DBReadError:
       raise newLoggedException(DataMissing, "Couldn't find the Data's input which was not its sender.")
 
@@ -42,7 +48,10 @@ proc add*(
 ].} =
   if save:
     #Verify every input doesn't have a spender out of Epochs.
-    if not ((tx of Data) and (tx.inputs[0].hash == Hash[256]())):
+    #When the Transaction is a Data, this has two exceptions.
+    #If it's the first Data, it doesn't have a valid input.
+    #If it's a Data created from a Block, the input is reused.
+    if not ((tx of Data) and (cast[Data](tx).isFirstData or (tx.inputs[0].hash == transactions.genesis))):
       for input in tx.inputs:
         if transactions.db.isBeaten(input.hash):
           raise newLoggedException(ValueError, "Transaction spends a finalized Transaction which was beaten.")
@@ -59,9 +68,9 @@ proc add*(
 
   if save:
     #Save the TX.
-    transactions.db.save(tx)
+    transactions.db.save(tx, transactions.genesis)
 
-    #If this is a Data, save the sender.
+    #If this is a Data, save the sender as well.
     if tx of Data:
       var data: Data = cast[Data](tx)
       try:
@@ -96,8 +105,17 @@ proc newTransactionsObj*(
 ): Transactions {.forceCheck: [].} =
   result = Transactions(
     db: db,
+    genesis: blockchain.genesis,
     transactions: initTable[Hash[256], Transaction]()
   )
+
+  try:
+    result.dataWallet = newWallet(result.db.loadDataWallet(), "")
+  except ValueError as e:
+    panic("Couldn't reload this node's Data Wallet: " & e.msg)
+  except DBReadError:
+    result.dataWallet = newWallet("")
+    result.db.saveDataWallet($result.dataWallet.mnemonic)
 
   #Load the Transactions from the DB.
   try:
