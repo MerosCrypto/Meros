@@ -331,7 +331,7 @@ proc removeFromSpendable(
       db.put(SPENDABLE(key), spendable[0 ..< o] & spendable[o + 33 ..< spendable.len])
       break
 
-#Add the transaction's outputs to spendable while removing spent inputs.
+#Add the Transaction's outputs to spendable while removing spent inputs.
 proc verify*(
   db: DB,
   tx: Transaction

@@ -163,7 +163,7 @@ My only two guesses are:
 1) A transaction system. We make changes to a status and then discard them on error.
 2) We only want to save back statuses that have been changed.
 If I had to guess, I'd assume its the second.
-That said, we should be able to use a HashSet and remove this boiler place.
+That said, we should be able to use a HashSet and remove this boiler plate.
 -- Kayaba
 ]#
 proc setStatus*(
@@ -398,8 +398,6 @@ proc unverify*(
     consensus.db.save(child, childStatus)
 
     try:
-      #I have no idea why this max is needed.
-      #-- Kayaba
       for o in 0 ..< max(tx.outputs.len, 1):
         children &= consensus.functions.transactions.getSpenders(newFundedInput(child, o))
     except IndexError as e:
@@ -565,14 +563,6 @@ proc getPending*(
     except IndexError as e:
       panic("Couldn't get a Transaction which has a packet: " & e.msg)
 
-    #[
-    We can't mention a Transaction unless we its parent is already mentioned.
-    That said, we should be to also mention its parent in the same Block.
-    We also won't have a child TX without its parents.
-    This code should be pointless, and actually detrimental to the speed of the network.
-    In fact, the entire included variable should be.
-    -- Kayaba
-    ]#
     if not (
       (tx of Claim) or
       (
@@ -588,7 +578,7 @@ proc getPending*(
           except IndexError as e:
             panic("Couldn't get the status of a Transaction before the current Transaction: " & e.msg)
 
-          mentioned = included.contains(input.hash) or ((status.holders.len != 0) and (not consensus.unmentioned.contains(input.hash)))
+          mentioned = included.contains(input.hash) or (not consensus.unmentioned.contains(input.hash))
           if not mentioned:
             break
 

@@ -237,10 +237,13 @@ proc mint*(
   except ValueError as e:
     panic("Adding a Mint raised a ValueError: " & e.msg)
 
+
   #[
-  Verify it.
-  I'm not sure this is needed. Any Mint should be assumed as verified already.
-  We should look into this.
+  This is not needed, yet is beneficial... somewhat.
+  This removes the inputs from spendable, of which there are none, and adds the outputs to spendable.
+  As of right now, due to how we construct Claims, this has no value.
+  That said, I eventually want to utilize a Claim spendable, as our current auto-Claim system is quite naive.
+  So while this currently has no benefit, it provides infrastructure that will be used.
   -- Kayaba
   ]#
   transactions.verify(mint.hash)

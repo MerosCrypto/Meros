@@ -37,9 +37,9 @@ proc overflows*(
 #[
 These following lines are stupid.
 They're not meant for debugging. They're not old leftovers.
-#These are statements needed for Meros to compile.
-#Without these lines, the above function refuses to compile, complaining about an error in StInt.
-#Don't touch these.
+These are statements needed for Meros to compile.
+Without these lines, the above function refuses to compile, complaining about an error in StInt.
+Don't touch these.
 -- Kayaba
 ]#
 discard HashCommon.Hash[256]().overflows(uint32(0))
