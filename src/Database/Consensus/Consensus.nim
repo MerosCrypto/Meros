@@ -300,36 +300,38 @@ proc register*(
   #Create the status.
   var status: TransactionStatus = newTransactionStatusObj(tx.hash, height + 6)
 
-  for input in tx.inputs:
-    #Check if this Transaction's parent was beaten.
-    try:
-      if (
-        (not status.beaten) and
-        (not (tx of Claim)) and
-        (not ((tx of Data) and cast[Data](tx).isFirstData)) and
-        (consensus.getStatus(input.hash).beaten)
-      ):
-        consensus.functions.transactions.beat(tx.hash)
-        status.beaten = true
-    except IndexError:
-      panic("Parent Transaction doesn't have a status.")
+  if not (
+    (tx of Claim) or
+    (
+      (tx of Data) and
+      (cast[Data](tx).isFirstData or (tx.inputs[0].hash == consensus.genesis))
+    )
+  ):
+    for input in tx.inputs:
+      #Check if this Transaction's parent was beaten.
+      try:
+        if (not status.beaten) and (consensus.getStatus(input.hash).beaten):
+          consensus.functions.transactions.beat(tx.hash)
+          status.beaten = true
+      except IndexError:
+        panic("Parent Transaction doesn't have a status.")
 
-    #Check for competing Transactions.
-    var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
-    if (spenders.len != 1) and (input.hash != Hash[256]()):
-      status.competing = true
+      #Check for competing Transactions.
+      var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
+      if (spenders.len != 1) and (input.hash != Hash[256]()):
+        status.competing = true
 
-      #If there's a competing Transaction, mark competitors as needing to default.
-      #This will run for every input with multiple spenders.
-      if status.competing:
-        for spender in spenders:
-          if spender == tx.hash:
-            continue
+        #If there's a competing Transaction, mark competitors as needing to default.
+        #This will run for every input with multiple spenders.
+        if status.competing:
+          for spender in spenders:
+            if spender == tx.hash:
+              continue
 
-          try:
-            consensus.getStatus(spender).competing = true
-          except IndexError:
-            panic("Competing Transaction doesn't have a Status despite being marked as a spender.")
+            try:
+              consensus.getStatus(spender).competing = true
+            except IndexError:
+              panic("Competing Transaction doesn't have a Status despite being marked as a spender.")
 
   #Set the status.
   consensus.setStatus(tx.hash, status)

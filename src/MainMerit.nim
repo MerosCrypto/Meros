@@ -1,5 +1,13 @@
 include MainReorganization
 
+proc verify(
+  wallet: WalletDB,
+  functions: GlobalFunctionBox,
+  merit: Merit,
+  consensus: ref Consensus,
+  transaction: Transaction
+) {.async.}
+
 proc mainMerit(
   params: ChainParams,
   database: DB,
@@ -246,10 +254,11 @@ proc mainMerit(
             receivedMint = r
 
     logDebug "Creating this Block's data ", hash = newBlock.header.hash
+    var blockData: Data
     try:
-      var blockData: Data = newData(merit.blockchain.genesis, newBlock.header.hash.serialize())
+      blockData = newData(merit.blockchain.genesis, newBlock.header.hash.serialize())
       transactions.dataWallet.sign(blockData)
-      functions.transactions.addData(blockData, true, true)
+      functions.transactions.addData(blockData, true)
     except ValueError as e:
       panic("Couldn't create this Block's data due to a ValueError: " & e.msg)
     except DataExists as e:
@@ -288,16 +297,21 @@ proc mainMerit(
         except IndexError as e:
           panic("Couldn't grab a Mint we just added: " & e.msg)
 
-        #Sign the claim.
         wallet.miner.sign(claim)
 
-        #Emit it.
         try:
           functions.transactions.addClaim(claim)
         except ValueError as e:
           panic("Failed to add a Claim due to a ValueError: " & e.msg)
         except DataExists:
           logNotice "Already added Claim", hash = claim.hash
+
+      #Verify the new Block Data.
+      {.gcsafe.}:
+        try:
+          asyncCheck verify(wallet, functions, merit[], consensus, blockData)
+        except Exception as e:
+          panic("Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
   functions.merit.addBlock = proc (
     sketchyBlock: SketchyBlock,
