@@ -75,7 +75,7 @@ suite "Spendable":
         )
 
       send = newSend(@[], outputs)
-      db.save(send)
+      db.save(send, Hash[256]())
 
       if rand(2) != 0:
         db.verify(send)
@@ -108,7 +108,7 @@ suite "Spendable":
         if inputs.len != 0:
           var outputKey: EdPublicKey = wallets[rand(10 - 1)].publicKey
           send = newSend(inputs, newSendOutput(outputKey, 0))
-          db.save(send)
+          db.save(send, Hash[256]())
           db.verify(send)
           sends.add(send)
 

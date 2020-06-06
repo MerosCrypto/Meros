@@ -31,7 +31,7 @@ suite "WalletDB":
     removeFile("./data/tests/test-wallet" & $getThreadID())
 
     #Open the database.
-    wallet = newWalletDB("./data/tests/test-wallet" & $getThreadID(), 1073741824)
+    wallet = newWalletDB(Hash[256](), "./data/tests/test-wallet" & $getThreadID(), 1073741824)
 
     proc compare(
       w1: WalletDB,
@@ -174,7 +174,7 @@ suite "WalletDB":
         wallet.finalizedNonces == finalizedNonces
 
       #Reload and compare the Wallet DBs.
-      compare(wallet, newWalletDB("./data/tests/test-wallet" & $getThreadID(), 1073741824))
+      compare(wallet, newWalletDB(Hash[256](), "./data/tests/test-wallet" & $getThreadID(), 1073741824))
 
     #Close the DB.
     wallet.close()

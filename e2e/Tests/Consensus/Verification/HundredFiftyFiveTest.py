@@ -85,9 +85,8 @@ def HundredFiftyFiveTest(
   #Publish it.
   rpc.call("merit", "publishBlock", [template["id"], block.serialize().hex()])
 
-  #Handle the fact Meros will now broadcast it to us.
   if MessageType(rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
-    raise TestError("Meros didn't broadcast the Block it just published.")
+    raise TestError("Meros didn't broadcast the Block we just published.")
 
   #Create the Datas.
   datas: List[Data] = [
