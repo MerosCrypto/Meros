@@ -22,6 +22,9 @@ import Serialize/Transactions/[
 import objects/DBObj
 export DBObj
 
+template DATA_WALLET(): string =
+  "w"
+
 template UNMENTIONED_TRANSACTIONS(): string =
   "u"
 
@@ -128,14 +131,21 @@ proc commit*(
 
   db.transactions.cache = initTable[string, string]()
 
+proc saveDataWallet*(
+  db: DB,
+  mnemonic: string
+) {.inline, forceCheck: [].} =
+  db.put(DATA_WALLET(), mnemonic)
+
 proc save*(
   db: DB,
-  tx: Transaction
+  tx: Transaction,
+  genesis: Hash[256]
 ) {.forceCheck: [].} =
   db.put(TRANSACTION(tx.hash), tx.serialize())
   db.transactions.unmentioned.incl(tx.hash)
 
-  if not ((tx of Data) and (tx.inputs[0].hash == Hash[256]())):
+  if not ((tx of Data) and (cast[Data](tx).isFirstData or (tx.inputs[0].hash == genesis))):
     for input in tx.inputs:
       try:
         db.put(OUTPUT_SPENDERS(input), db.get(OUTPUT_SPENDERS(input)) & tx.hash.serialize())
@@ -177,6 +187,16 @@ proc loadUnmentioned*(
   for h in 0 ..< unmentioned.len div 32:
     result.incl(unmentioned[h * 32 ..< (h + 1) * 32].toHash[:256]())
   db.transactions.unmentioned = result
+
+proc loadDataWallet*(
+  db: DB,
+): string {.forceCheck: [
+  DBReadError
+].} =
+  try:
+    result = db.get(DATA_WALLET())
+  except Exception as e:
+    raise newLoggedException(DBReadError, e.msg)
 
 proc load*(
   db: DB,

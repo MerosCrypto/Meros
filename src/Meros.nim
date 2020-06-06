@@ -82,7 +82,7 @@ proc main() {.thread.} =
   initLock(innerBlockLock[])
 
   #Spawn everything.
-  mainDatabase(config, database, wallet)
+  mainDatabase(params, config, database, wallet)
   mainMerit(params, database, wallet, functions, merit, consensus, transactions, network, blockLock, innerBlockLock, lockedBlock)
   mainConsensus(params, database, functions, merit[], consensus, transactions, network)
   mainTransactions(database, wallet, functions, merit[], consensus, transactions)

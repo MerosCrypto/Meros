@@ -22,4 +22,4 @@ class SuccessError(
 class TestError(
   Exception
 ):
-  pass
+  message: str

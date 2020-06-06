@@ -89,10 +89,7 @@ proc mainTransactions(
     logInfo "Added Claim", hash = claim.hash
 
     if not syncing:
-      functions.network.broadcast(
-        MessageType.Claim,
-        claim.serialize()
-      )
+      functions.network.broadcast(MessageType.Claim, claim.serialize())
 
       try:
         asyncCheck verify(wallet, functions, merit, consensus, claim)

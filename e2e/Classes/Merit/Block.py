@@ -1,9 +1,6 @@
 #Types.
 from typing import Dict, Any
 
-#RandomX lib.
-from e2e.Libs.RandomX import RandomX
-
 #BLS lib.
 from e2e.Libs.BLS import PrivateKey
 
@@ -28,15 +25,7 @@ class Block:
     privKey: PrivateKey,
     difficulty: int
   ) -> None:
-    self.header.proof = -1
-    while (
-      (self.header.proof == -1) or
-      ((int.from_bytes(self.header.hash, "big") * difficulty) > int.from_bytes(bytes.fromhex("FF" * 32), "big"))
-    ):
-      self.header.proof += 1
-      self.header.hash = RandomX(self.header.serializeHash())
-      self.header.signature = privKey.sign(self.header.hash).serialize()
-      self.header.hash = RandomX(self.header.hash + self.header.signature)
+    self.header.mine(privKey, difficulty)
 
   #Serialize.
   def serialize(

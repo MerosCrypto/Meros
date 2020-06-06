@@ -18,6 +18,8 @@ export TransactionStatusObj
 import SpamFilterObj
 
 type Consensus* = object
+  genesis*: Hash[256]
+
   functions*: GlobalFunctionBox
   db*: DB
 
@@ -68,6 +70,11 @@ proc newConsensusObj*(
 
     archived: initTable[uint16, int]()
   )
+
+  try:
+    result.genesis = result.functions.merit.getBlockByNonce(0).header.last
+  except IndexError as e:
+    panic("Couldn't get the genesis Block: " & e.msg)
 
   for h in 0 ..< state.holders.len:
     #Reload the filters.
@@ -248,12 +255,15 @@ proc calculateMeritSingle(
       Claims claim Mints which are always verified.
       This will change, as according to the protocol, they're supposed to have a delay.
       That said, if we only add it post-delay, we don't need to track verified or not overall, so this code can remain.
-      Datas have an input yet no parent.
+      Datas have an input yet no parent in two cases:
+      1) When the initial Data in a chain.
+      2) When they're created from a Block.
       ]#
       if not (
-        (tx of Claim) or (
+        (tx of Claim) or
+        (
           (tx of Data) and
-          (cast[Data](tx).isFirstData)
+          (cast[Data](tx).isFirstData or (tx.inputs[0].hash == consensus.genesis))
         )
       ):
         for input in tx.inputs:
@@ -563,24 +573,28 @@ proc getPending*(
     In fact, the entire included variable should be.
     -- Kayaba
     ]#
-    block checkPredecessors:
-      if (tx of Claim) or ((tx of Data) and (cast[Data](tx).isFirstData)):
-        break checkPredecessors
+    if not (
+      (tx of Claim) or
+      (
+        (tx of Data) and
+        (cast[Data](tx).isFirstData or (tx.inputs[0].hash == consensus.genesis))
+      )
+    ):
+      block checkPredecessors:
+        for input in tx.inputs:
+          var status: TransactionStatus
+          try:
+            status = consensus.getStatus(input.hash)
+          except IndexError as e:
+            panic("Couldn't get the status of a Transaction before the current Transaction: " & e.msg)
 
-      for input in tx.inputs:
-        var status: TransactionStatus
-        try:
-          status = consensus.getStatus(input.hash)
-        except IndexError as e:
-          panic("Couldn't get the status of a Transaction before the current Transaction: " & e.msg)
+          mentioned = included.contains(input.hash) or ((status.holders.len != 0) and (not consensus.unmentioned.contains(input.hash)))
+          if not mentioned:
+            break
 
-        mentioned = included.contains(input.hash) or ((status.holders.len != 0) and (not consensus.unmentioned.contains(input.hash)))
         if not mentioned:
-          break
-
-      if not mentioned:
-        result.packets.del(p)
-        continue
+          result.packets.del(p)
+          continue
 
     signatures.add(result.packets[p].signature)
     inc(p)

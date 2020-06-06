@@ -2,7 +2,7 @@
 from typing import Dict, List, Union, Any
 
 #BLS lib.
-from e2e.Libs.BLS import Signature
+from e2e.Libs.BLS import PrivateKey, Signature
 
 #Element classes.
 from e2e.Classes.Consensus.Element import Element
@@ -42,6 +42,9 @@ def merkle(
 #BlockHeader class.
 #pylint: disable=too-many-instance-attributes
 class BlockHeader:
+  #Defined here to avoid warnings.
+  hash: bytes
+
   #Create a contents Merkle.
   @staticmethod
   def createContents(
@@ -114,7 +117,7 @@ class BlockHeader:
   def rehash(
     self
   ) -> None:
-    self.hash: bytes = RandomX(RandomX(self.serializeHash()) + self.signature)
+    self.hash = RandomX(RandomX(self.serializeHash()) + self.signature)
 
   #Constructor.
   def __init__(
@@ -148,6 +151,21 @@ class BlockHeader:
     self.signature: bytes = signature
 
     self.rehash()
+
+  def mine(
+    self,
+    privKey: PrivateKey,
+    difficulty: int
+  ) -> None:
+    self.proof = -1
+    while (
+      (self.proof == -1) or
+      ((int.from_bytes(self.hash, "big") * difficulty) > int.from_bytes(bytes.fromhex("FF" * 32), "big"))
+    ):
+      self.proof += 1
+      self.hash = RandomX(self.serializeHash())
+      self.signature = privKey.sign(self.hash).serialize()
+      self.hash = RandomX(self.hash + self.signature)
 
   #Serialize.
   def serialize(

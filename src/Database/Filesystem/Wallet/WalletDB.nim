@@ -5,7 +5,7 @@ import mc_lmdb
 import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/[MinerWallet, Wallet]
 
-import ../../Transactions/objects/TransactionObj
+import ../../Transactions/objects/[TransactionObj, DataObj]
 
 import ../../Merit/objects/EpochsObj
 
@@ -43,6 +43,8 @@ template USING_ELEMENT_NONCE(): string =
   "u"
 
 type WalletDB* = ref object
+  genesis: Hash[256]
+
   lmdb: LMDB
 
   wallet*: Wallet
@@ -145,6 +147,7 @@ proc commit*(
   db.put(FINALIZED_NONCES(), db.finalizedNonces.toBinary())
 
 proc newWalletDB*(
+  genesis: Hash[256],
   path: string,
   size: int64
 ): WalletDB {.forceCheck: [
@@ -152,6 +155,8 @@ proc newWalletDB*(
 ].} =
   try:
     result = WalletDB(
+      genesis: genesis,
+
       lmdb: newLMDB(path, size, 1),
 
       wallet: newWallet(""),
@@ -285,9 +290,13 @@ proc verifyTransaction*(
   ValueError
 ].} =
   #If we've already verified a Transaction sharing any inputs, raise.
-  for input in tx.inputs:
-    if db.verified.hasKey(input.serialize()):
-      raise newLoggedException(ValueError, "Attempted to verify a competing Transaction.")
+  if not (
+    (tx of Data) and
+    (cast[Data](tx).isFirstData or (tx.inputs[0].hash == db.genesis))
+  ):
+    for input in tx.inputs:
+      if db.verified.hasKey(input.serialize()):
+        raise newLoggedException(ValueError, "Attempted to verify a competing Transaction.")
 
   var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]]()
   for input in tx.inputs:

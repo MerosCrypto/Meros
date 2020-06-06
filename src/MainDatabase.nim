@@ -1,6 +1,7 @@
 include MainChainParams
 
 proc mainDatabase(
+  params: ChainParams,
   config: Config,
   database: var DB,
   wallet: var WalletDB
@@ -27,6 +28,10 @@ proc mainDatabase(
 
   #Open the Wallet Database.
   try:
-    wallet = newWalletDB(config.dataDir / (config.network & "-" & config.db & "-wallet"), MAX_DB_SIZE)
+    wallet = newWalletDB(
+      params.GENESIS.pad(32).toHash[:256](),
+      config.dataDir / (config.network & "-" & config.db & "-wallet"),
+      MAX_DB_SIZE
+    )
   except DBError as e:
     panic("Couldn't create the DB: " & e.msg)
