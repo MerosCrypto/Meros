@@ -116,12 +116,12 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 ```
 List[BLSSignature] signatures
 for tx in transactions:
-    signatures.add(packets[tx])
+  signatures.add(packets[tx])
 for elem in elements:
-    signatures.add(element.signature)
+  signatures.add(element.signature)
 BLSSignature aggregate = infinity
 if signatures.length != 0
-    aggregate = signatures.aggregate()
+  aggregate = signatures.aggregate()
 ```
 
 If the Block is valid, it's added, triggering four events. The first event is the addition of all included VerificationPackets and Elements. The second event is the emission of newly-minted Meros. The third event is the emission of newly-mined Merit. Any MeritRemovals included in the Block prevent the malicious Merit Holder from gaining newly-mined Merit that Block. The fourth event is the automated creation of a Data Transaction.
@@ -132,11 +132,11 @@ In the process of calculating rewards, first every Merit Holder is assigned a sc
 
 ```
 for tx in epoch:
-    for verifier in epoch[tx]:
-        scores[verifier] += 1
+  for verifier in epoch[tx]:
+    scores[verifier] += 1
 
 for holder in scores:
-    scores[holder] *= unlocked_merit(holder)
+  scores[holder] *= unlocked_merit(holder)
 ```
 
 The scores are then ordered from highest to lowest. When there is a tie, the Merit Holder with the lower nickname is placed first. Only the top 100 scoring Merit Holders receive Mints, with the rest of the scores rolling over to the next Block. Once the top 100 scoring Merit Holders are identified, the scores are normalized to 1000 as such:
@@ -144,7 +144,7 @@ The scores are then ordered from highest to lowest. When there is a tie, the Mer
 ```
 total = sum(scores)
 for holder in scores:
-    scores[holder] = scores[holder] * 1000 / total
+  scores[holder] = scores[holder] * 1000 / total
 ```
 
 If any scores happen to be 0, they are removed. If the sum of every score is less than 1000, the Merit Holder with the top score receives the difference between 1000 and the sum of the scores. A negative sigmoid which uses the Block’s difficulty for its x value produces a multiplier. Mints are then queued for each Merit Holder, in order, with an amount of `score * multiplier`. After 10 more Blocks, the mints are added to the Transactions.
