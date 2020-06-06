@@ -62,7 +62,7 @@ proc newHDWallet*(
     raise newLoggedException(ValueError, "Secret generated an invalid private key.")
   privateKey.data[0]  = cuchar(byte(privateKey.data[0])  and (not byte(0b00000111)))
   privateKey.data[31] = cuchar(byte(privateKey.data[31]) and (not byte(0b10000000)))
-  privateKey.data[31] = cuchar(byte(privateKey.data[31]) or       0b01000000)
+  privateKey.data[31] = cuchar(byte(privateKey.data[31]) or       byte(0b01000000))
 
   #Create the Public Key.
   publicKey = privateKey.toPublicKey()
