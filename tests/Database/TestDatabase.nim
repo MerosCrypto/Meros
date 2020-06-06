@@ -12,7 +12,7 @@ import ../../src/objects/GlobalFunctionBoxObj
 export GlobalFunctionBoxObj
 
 discard existsOrCreateDir("./data")
-discard existsOrCreateDir("./data/NimTests")
+discard existsOrCreateDir("./data/tests")
 
 var db {.threadvar.}: DB
 proc newTestDatabase*(): DB =
@@ -21,10 +21,10 @@ proc newTestDatabase*(): DB =
     db.close()
 
   #Delete any old database.
-  removeFile("./data/NimTests/test" & $getThreadID())
+  removeFile("./data/tests/test" & $getThreadID())
 
   #Open the database.
-  db = newDB("./data/NimTests/test" & $getThreadID(), 1073741824)
+  db = newDB("./data/tests/test" & $getThreadID(), 1073741824)
   result = db
 
 #Commit the Database.
