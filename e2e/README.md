@@ -6,7 +6,7 @@ End-to-End tests written in Python to test Meros's networking code and the RPC.
 
 These tests require Python 3.6+ and pip. To install the needed modules:
 
-`python3 -m pip install --user argon2-cffi ed25519 bip-utils`
+`python3 -m pip install --user argon2-cffi ed25519`
 
 They also require the Minisketch, RandomX, and Milagro shared libraries. Minisketch's should have been built as part of `mc_minisketch`.
 

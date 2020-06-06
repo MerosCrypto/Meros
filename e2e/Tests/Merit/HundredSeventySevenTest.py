@@ -2,11 +2,9 @@
 
 #Types.
 from typing import Dict, Any
-from time import sleep
-from hashlib import sha512
 
-from ed25519 import SigningKey
-from bip_utils import Bip39SeedGenerator
+#Sleep standard function.
+from time import sleep
 
 #BLS lib.
 from e2e.Libs.BLS import PrivateKey, PublicKey
@@ -29,6 +27,7 @@ from e2e.Tests.Errors import TestError
 
 #Meros classes.
 from e2e.Meros.RPC import RPC
+from e2e.Meros.Meros import MessageType
 
 def HundredSeventySevenTest(
   rpc: RPC
@@ -36,18 +35,6 @@ def HundredSeventySevenTest(
   #Grab the keys.
   blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMiner")))
   blsPubKey: PublicKey = blsPrivKey.toPublicKey()
-
-  edPrivKey: bytearray = bytearray(
-    sha512(
-      Bip39SeedGenerator(
-        rpc.call("personal", "getMnemonic")
-      ).Generate()[0 : 32]
-    ).digest()
-  )
-  edPrivKey[0] = edPrivKey[0] & (~0b00000111)
-  edPrivKey[31] = edPrivKey[31] & (~0b10000000)
-  edPrivKey[31] = edPrivKey[31] | 0b01000000
-  edPubKey: bytes = SigningKey(bytes(edPrivKey)).get_verifying_key().to_bytes()
 
   #Faux Blockchain used to calculate the difficulty.
   blockchain: Blockchain = Blockchain()
@@ -84,10 +71,20 @@ def HundredSeventySevenTest(
 
     header.mine(blsPrivKey, blockchain.difficulty())
 
-    if len(rpc.meros.live.recv()) == 0:
+    didntShakeError: str = "Meros didn't handshake with us to check if we're inactive."
+    try:
+      if MessageType(rpc.meros.live.recv()[0]) != MessageType.Handshake:
+        raise TestError(didntShakeError)
+      rpc.meros.live.send(
+        MessageType.BlockchainTail.toByte() + blockchain.blocks[-1].header.hash,
+        False
+      )
+    except TestError as e:
+      if e.message == didntShakeError:
+        raise TestError(didntShakeError)
       rpc.meros.liveConnect(blockchain.blocks[-1].header.hash)
-    blockchain.add(Block(header, BlockBody()))
 
+    blockchain.add(Block(header, BlockBody()))
     rpc.call(
       "merit",
       "publishBlock",
@@ -103,7 +100,7 @@ def HundredSeventySevenTest(
     )
 
     if rpc.meros.live.recv() != rpc.meros.liveBlockHeader(header):
-        raise TestError("Meros didn't broadcast the BlockHeader.")
+      raise TestError("Meros didn't broadcast the BlockHeader.")
 
     #If there's supposed to be a Mint, verify Meros claimed it.
     if b >= 6:
@@ -111,10 +108,13 @@ def HundredSeventySevenTest(
       #It's faster to create a faux Mint than to handle the BlockBodies.
       mint: Mint = Mint(header.hash, [(0, 50000)])
 
-      claim: Claim = Claim([(mint.hash, 0)], edPubKey)
+      claim: Claim = Claim([(mint.hash, 0)], bytes(32))
       claim.sign([blsPrivKey])
-      if rpc.meros.live.recv() != rpc.meros.liveTransaction(claim):
+      if rpc.meros.live.recv()[0 : -80] != (MessageType.Claim.toByte() + claim.serialize())[0 : -80]:
         raise TestError("Meros didn't claim its Mint.")
+
+      if MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:
+        raise TestError("Meros didn't verify its Claim.")
 
     #Create the matching Data.
     data: Data = Data(blockchain.genesis, header.hash)
