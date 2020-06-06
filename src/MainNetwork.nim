@@ -16,8 +16,8 @@ proc mainNetwork(
   if config.server:
     try:
       asyncCheck network[].listen()
-    except Exception:
-      discard
+    except Exception as e:
+      panic("Couldn't start listening on our server: " & e.msg)
 
   functions.network.connect = proc (
     ip: string,

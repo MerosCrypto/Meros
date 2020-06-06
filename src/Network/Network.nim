@@ -184,12 +184,12 @@ proc connect*(
       if network.fileTracker.allocateSocket() == PeerStatus.Busy:
         raise newException(Exception, "")
       peer.live = await newSocket(tAddy)
+      network.live[verified.ip] = peer.id
     except Exception:
       discard
 
     #Add it to the network.
     network.add(peer)
-    network.live[verified.ip] = peer.id
     network.sync[verified.ip] = peer.id
 
   try:
