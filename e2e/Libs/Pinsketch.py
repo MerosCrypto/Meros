@@ -57,3 +57,11 @@ def create_sketch(
       odd_sums[i] ^= shortid
       shortid = mul(shortid, squared)
   return b''.join(elem.to_bytes(FIELD_BITS // 8, 'little') for elem in odd_sums)
+
+#A merge function is not provided as it's literally a xor of the two sketches.
+
+def decode_sketch(
+  sketch: bytes,
+  capacity: int
+) -> List[int]:
+  pass
