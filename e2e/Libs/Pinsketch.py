@@ -26,8 +26,10 @@ SOFTWARE.
 
 from typing import List
 
+from pyfinite.ffield import FField
+
 FIELD_BITS: int = 64
-FiELD_BYTES: int = FIELD_BITS // 8
+FIELD_BYTES: int = FIELD_BITS // 8
 FIELD_MODULUS: int = (1 << FIELD_BITS) + 0b10001101
 
 def mul2(
@@ -57,12 +59,33 @@ def create_sketch(
     for i in range(capacity):
       odd_sums[i] ^= shortid
       shortid = mul(shortid, squared)
-  return b''.join(elem.to_bytes(FiELD_BYTES, 'little') for elem in odd_sums)
+  return b''.join(elem.to_bytes(FIELD_BYTES, 'little') for elem in odd_sums)
 
 #A merge function is not provided as it's literally a xor of the two sketches.
+
+def setCoeff(
+  field: FField,
+  i: int
+) -> int:
+  result: int = field.FindDegree(i)
+  #set(x.rep[i]);
+  #x.normalize();
+  return result
 
 def decode_sketch(
   sketch: bytes,
   capacity: int
 ) -> List[int]:
-  return []
+  withoutEvens: List[int] = []
+  for e in range(0, len(sketch), FIELD_BYTES):
+    withoutEvens.append(int.from_bytes(sketch[e : e + FIELD_BYTES], 'little'))
+
+  evened: List[int] = []
+  for wE in withoutEvens:
+    evened.append(wE)
+    evened.append(mul(wE, wE))
+
+  field: FField = FField(FIELD_BITS)
+  #While the following setCoeff call is required, it shouldn't be returned.
+  #It's used to calculate what should be returned.
+  return [setCoeff(field, capacity * 2)]
