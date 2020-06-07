@@ -27,6 +27,7 @@ SOFTWARE.
 from typing import List
 
 FIELD_BITS: int = 64
+FiELD_BYTES: int = FIELD_BITS // 8
 FIELD_MODULUS: int = (1 << FIELD_BITS) + 0b10001101
 
 def mul2(
@@ -56,7 +57,7 @@ def create_sketch(
     for i in range(capacity):
       odd_sums[i] ^= shortid
       shortid = mul(shortid, squared)
-  return b''.join(elem.to_bytes(FIELD_BITS // 8, 'little') for elem in odd_sums)
+  return b''.join(elem.to_bytes(FiELD_BYTES, 'little') for elem in odd_sums)
 
 #A merge function is not provided as it's literally a xor of the two sketches.
 
@@ -64,4 +65,4 @@ def decode_sketch(
   sketch: bytes,
   capacity: int
 ) -> List[int]:
-  pass
+  return []
