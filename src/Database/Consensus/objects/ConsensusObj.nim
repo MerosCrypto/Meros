@@ -354,11 +354,10 @@ proc calculateMerit*(
 
 #[
 Unverify a Transaction.
-This happens when a transaction dips under the threshold.
-I believe its the protocol 'threshold' of 50.1%, and not the node threshold.
+This happens when a transaction dips under the protocol 'threshold' of 50.1%.
 This generally would happen due to a MeritRemoval yet can theoretically happen due to epoch incrementing.
-That said, this file is being annotated in a branch, so I haven't worked on this in weeks.
--- Kayaba
+Since the protocol actually defines whatever competing Transaction with the most Merit as winning, this may be a poor decision.
+There's discussion about when to call unverify here: https://github.com/MerosCrypto/Meros/issues/90.
 ]#
 proc unverify*(
   consensus: var Consensus,

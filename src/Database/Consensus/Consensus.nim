@@ -771,7 +771,7 @@ proc archive*(
       merit += state[holder, status.epoch]
 
     #If it's not, unverify it.
-    if merit < state.nodeThresholdAt(status.epoch):
+    if merit < state.protocolThresholdAt(status.epoch):
       consensus.unverify(hash, status)
 
     #Make sure the hash is included in unmentioned.
@@ -977,11 +977,14 @@ proc revert*(
     except KeyError as e:
       panic("Couldn't get the reverted to nonce/archived nonce of a holder with one: " & e.msg)
 
-  #Rebuild the filters.
-  #We shouldn't need those copies. I, Kayaba, originally tried to inline this.
-  #That said, newSpamFilterObj printed it was handed the initial value yet didn't set it.
-  #My theory, which I can't think of why this would happen, is that it overwrote the SpamFilter during construction, and then grabbed its unset value.
-  #I truly don't know. This works. Don't try to inline it.
+  #[
+  Rebuild the filters.
+  We shouldn't need those copies. I originally tried to inline this.
+  That said, newSpamFilterObj printed it was handed the initial value yet didn't set it.
+  My theory, which I can't think of why this would happen, is that it overwrote the SpamFilter during construction, and then grabbed its unset value.
+  I truly don't know. This works. Don't try to inline it.
+  -- Kayaba
+  ]#
   var
     sendDiff: uint32 = consensus.filters.send.initialDifficulty
     dataDiff: uint32 = consensus.filters.data.initialDifficulty
