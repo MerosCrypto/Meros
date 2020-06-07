@@ -14,6 +14,12 @@ import os
 #Blake2b standard function.
 from hashlib import blake2b
 
+#Pure Python implementation of PinSketch.
+from e2e.Libs.Pinsketch import create_sketch
+
+#TestError Exception.
+from e2e.Tests.Errors import TestError
+
 #SketchError Exception. Used when a sketch has more differences than its capacity.
 class SketchError(
   Exception
@@ -54,6 +60,8 @@ class Sketch:
     self.capacity: int = capacity
     if self.capacity != 0:
       self.sketch: Any = MinisketchLib.minisketch_create(c_uint32(64), c_uint32(0), c_size_t(self.capacity))
+    self.hashes: List[int] = []
+    self.pythonSketch: bytes = bytes()
 
   @staticmethod
   def hash(
@@ -71,7 +79,8 @@ class Sketch:
     sketchSalt: bytes,
     packet: VerificationPacket
   ) -> None:
-    MinisketchLib.minisketch_add_uint64(self.sketch, c_uint64(Sketch.hash(sketchSalt, packet)))
+    self.hashes.append(Sketch.hash(sketchSalt, packet))
+    MinisketchLib.minisketch_add_uint64(self.sketch, c_uint64(self.hashes[-1]))
 
   #Serialize a sketch.
   def serialize(
@@ -86,6 +95,12 @@ class Sketch:
     result: bytes = bytes()
     for b in serialization:
       result += b
+
+    #Also create a pure Python serialized sketch and compare the two.
+    self.pythonSketch = create_sketch(self.hashes, self.capacity)
+    if result != self.pythonSketch:
+      raise TestError("Pure Python Pinsketch implementation doesn't match with Minisketch.")
+
     return result
 
   #Merge two sketches.
@@ -97,6 +112,7 @@ class Sketch:
     merged: bytearray = bytearray()
     for b in range(len(serialized)):
       merged.append(serialized[b] ^ other[b])
+    self.pythonSketch = bytes(merged)
     MinisketchLib.minisketch_deserialize(self.sketch, c_char_p(bytes(merged)))
 
   #Decode a sketch's differences.
