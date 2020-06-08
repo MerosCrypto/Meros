@@ -3,8 +3,8 @@
 #Types.
 from typing import Dict, Any
 
-#Sleep standard function.
 from time import sleep
+import socket
 
 #BLS lib.
 from e2e.Libs.BLS import PrivateKey, PublicKey
@@ -39,8 +39,6 @@ def HundredSeventySevenTest(
   #Faux Blockchain used to calculate the difficulty.
   blockchain: Blockchain = Blockchain()
 
-  rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
-
   #Mine 8 Blocks.
   #The first creates the initial Data.
   #The next 6 pop it from the Epochs.
@@ -71,20 +69,9 @@ def HundredSeventySevenTest(
 
     header.mine(blsPrivKey, blockchain.difficulty())
 
-    didntShakeError: str = "Meros didn't handshake with us to check if we're inactive."
-    try:
-      if MessageType(rpc.meros.live.recv()[0]) != MessageType.Handshake:
-        raise TestError(didntShakeError)
-      rpc.meros.live.send(
-        MessageType.BlockchainTail.toByte() + blockchain.blocks[-1].header.hash,
-        False
-      )
-    except TestError as e:
-      if e.message == didntShakeError:
-        raise e
-      #Sleep for just over two thirty-second cycles to make sure we can reconnect.
-      sleep(65)
-      rpc.meros.liveConnect(blockchain.blocks[-1].header.hash)
+    #Sleep for just over two thirty-second cycles to make sure we can connect to the node.
+    sleep(65)
+    rpc.meros.liveConnect(blockchain.blocks[-1].header.hash)
 
     blockchain.add(Block(header, BlockBody()))
     rpc.call(
@@ -126,4 +113,10 @@ def HundredSeventySevenTest(
     if rpc.meros.live.recv() != rpc.meros.signedElement(verif):
       raise TestError("Meros didn't verify the Block's Data.")
 
+    #Close the live connection so we don't have to worry about it being disconnected for inactivity.
+    try:
+      rpc.meros.live.connection.shutdown(socket.SHUT_RDWR)
+      rpc.meros.live.connection.close()
+    except OSError:
+      pass
     sleep(3)
