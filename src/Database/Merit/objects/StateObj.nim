@@ -1,5 +1,3 @@
-import tables
-
 import ../../../lib/[Errors, Util]
 import ../../../Wallet/MinerWallet
 
@@ -23,8 +21,8 @@ type State* = object
 
   #List of holders. Position on the list is their nickname.
   holders: seq[BLSPublicKey]
-  #Nickname -> Merit
-  merit: Table[uint16, int]
+  #List of Merit balances.
+  merit: seq[int]
 
   #Pending removals.
   pendingRemovals*: seq[int]
@@ -43,9 +41,6 @@ proc newStateObj*(
 
     processedBlocks: blockchainHeight,
 
-    holders: @[],
-    merit: initTable[uint16, int](),
-
     pendingRemovals: @[]
   )
 
@@ -57,9 +52,10 @@ proc newStateObj*(
 
   #Load the holders.
   result.holders = result.db.loadHolders()
+  result.merit = newSeq[int](result.holders.len)
   for h in 0 ..< result.holders.len:
     try:
-      result.merit[uint16(h)] = result.db.loadMerit(uint16(h))
+      result.merit[h] = result.db.loadMerit(uint16(h))
     except DBReadError as e:
       panic("Couldn't load a holder's Merit: " & e.msg)
 
@@ -96,7 +92,7 @@ proc newHolder*(
   holder: BLSPublicKey
 ): uint16 {.forceCheck: [].} =
   result = uint16(state.holders.len)
-  state.merit[result] = 0
+  state.merit.add(0)
   state.holders.add(holder)
   state.db.saveHolder(holder)
 
@@ -115,10 +111,7 @@ proc `[]`*(
     return 0
 
   #Set the Merit to the result.
-  try:
-    result = state.merit[nick]
-  except KeyError as e:
-    panic("State threw a KeyError when getting a value, despite checking the nick was in bounds: " & e.msg)
+  result = state.merit[int(nick)]
 
   #Iterate over the pending removal cache, seeing if we need to decrement at all.
   for r in 0 ..< height - state.processedBlocks:
@@ -151,7 +144,7 @@ proc `[]=`*(
   #Get the current value.
   var current: int = state[nick, state.processedBlocks]
   #Set their new value.
-  state.merit[nick] = value
+  state.merit[int(nick)] = value
   #Update unlocked accrodingly.
   if value > current:
     state.unlocked += value - current
