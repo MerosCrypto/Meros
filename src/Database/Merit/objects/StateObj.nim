@@ -17,7 +17,7 @@ type
     Pending
 
   State* = object
-    db: DB
+    db*: DB
     #Reverting/Catching up.
     oldData*: bool
 
@@ -71,9 +71,13 @@ proc newStateObj*(
   #Load the holders.
   result.holders = result.db.loadHolders()
   result.merit = newSeq[int](result.holders.len)
+  result.statuses = newSeq[MeritStatus](result.holders.len)
+  result.lastParticipation = newSeq[int](result.holders.len)
   for h in 0 ..< result.holders.len:
     try:
       result.merit[h] = result.db.loadMerit(uint16(h))
+      result.statuses[h] = MeritStatus(result.db.loadMeritStatus(uint16(h)))
+      result.lastParticipation[h] = result.db.loadLastParticipation(uint16(h))
     except DBReadError as e:
       panic("Couldn't load a holder's Merit: " & e.msg)
 
@@ -102,12 +106,28 @@ proc loadUnlocked*(
 #Register a new Merit Holder.
 proc newHolder*(
   state: var State,
+  nick: uint16
+) {.forceCheck: [].} =
+  if int(nick) == state.merit.len:
+    state.merit.setLen(int(nick) + 1)
+    state.statuses.setLen(int(nick) + 1)
+    state.lastParticipation.setLen(int(nick) + 1)
+
+  state.merit[int(nick)] = 0
+  state.statuses[int(nick)] = MeritStatus.Unlocked
+  state.lastParticipation[int(nick)] = state.processedBlocks + (5 - ((state.processedBlocks + 1) mod 5))
+
+  state.db.saveMeritStatus(nick, int(state.statuses[int(nick)]))
+  state.db.saveLastParticipation(nick, state.lastParticipation[int(nick)])
+
+proc newHolder*(
+  state: var State,
   holder: BLSPublicKey
 ): uint16 {.forceCheck: [].} =
   result = uint16(state.holders.len)
-  state.merit.add(0)
   state.holders.add(holder)
   state.db.saveHolder(holder)
+  state.newHolder(result)
 
 #Get a Merit Holder's Merit.
 proc `[]`*(
@@ -115,15 +135,14 @@ proc `[]`*(
   nick: uint16,
   height: int
 ): int {.forceCheck: [].} =
-  #Throw a fatal error if the nickname is invalid.
-  if nick < 0:
-    panic("Asking for the Merit of an invalid nickname.")
-
   #If the nick is out of bounds, yet still positive, return 0.
   if nick >= uint16(state.holders.len):
     return 0
 
-  #Set the Merit to the result.
+  #If the Merit is locked, report it as non-existent.
+  if state.statuses[int(nick)] == MeritStatus.Locked:
+    return 0
+
   result = state.merit[int(nick)]
 
   #Iterate over the pending removal cache, seeing if we need to decrement at all.
@@ -133,6 +152,13 @@ proc `[]`*(
         dec(result)
     except IndexError as e:
       panic("Couldn't get a pending Dead Merit removal: " & e.msg)
+
+  #If their Merit is pending, return 0 if it won't be unlocked by the specified height.
+  if (
+    (state.statuses[int(nick)] == MeritStatus.Pending) and
+    (height < state.lastParticipation[int(nick)])
+  ):
+    return 0
 
 proc loadBlockRemovals*(
   state: State,

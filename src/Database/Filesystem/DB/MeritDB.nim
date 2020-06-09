@@ -86,6 +86,16 @@ template MERIT(
 ): string =
   nick.toBinary(NICKNAME_LEN) & "m"
 
+template MERIT_STATUS(
+  nick: uint16
+): string =
+  nick.toBinary(NICKNAME_LEN) & "s"
+
+template LAST_PARTICIPATION(
+  nick: uint16
+): string =
+  nick.toBinary(NICKNAME_LEN) & "p"
+
 template BLOCK_REMOVALS(
   blockNum: int
 ): string =
@@ -250,6 +260,20 @@ proc saveMerit*(
   merit: int
 ) {.forceCheck: [].} =
   db.put(MERIT(nick), merit.toBinary())
+
+proc saveMeritStatus*(
+  db: DB,
+  nick: uint16,
+  status: int
+) {.forceCheck: [].} =
+  db.put(MERIT_STATUS(nick), status.toBinary())
+
+proc saveLastParticipation*(
+  db: DB,
+  nick: uint16,
+  last: int
+) {.forceCheck: [].} =
+  db.put(LAST_PARTICIPATION(nick), last.toBinary())
 
 proc remove*(
   db: DB,
@@ -416,6 +440,28 @@ proc loadMerit*(
 ].} =
   try:
     result = db.get(MERIT(nick)).fromBinary()
+  except DBReadError as e:
+    raise e
+
+proc loadMeritStatus*(
+  db: DB,
+  nick: uint16
+): int {.forceCheck: [
+  DBReadError
+].} =
+  try:
+    result = db.get(MERIT_STATUS(nick)).fromBinary()
+  except DBReadError as e:
+    raise e
+
+proc loadLastParticipation*(
+  db: DB,
+  nick: uint16
+): int {.forceCheck: [
+  DBReadError
+].} =
+  try:
+    result = db.get(LAST_PARTICIPATION(nick)).fromBinary()
   except DBReadError as e:
     raise e
 

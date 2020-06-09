@@ -101,7 +101,7 @@ proc compare*(
 
     s1.processedBlocks == s2.processedBlocks
 
-    s1.holders == s2.holders
+    s1.holders.len == s2.holders.len
     s1.merit == s2.merit
     s1.statuses == s2.statuses
     s1.lastParticipation == s2.lastParticipation
@@ -114,8 +114,9 @@ proc compare*(
 
   for h in 0 ..< s1.holders.len:
     check:
+      s1.holders[h] == s2.holders[h]
       uint16(h) == s1.reverseLookup(s1.holders[h])
-      uint16(h) == s2.reverseLookup(s1.holders[h])
+      uint16(h) == s2.reverseLookup(s2.holders[h])
 
 proc compare*(
   e1Arg: Epochs,
