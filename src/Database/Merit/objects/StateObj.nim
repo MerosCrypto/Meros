@@ -1,3 +1,5 @@
+import deques
+
 import ../../../lib/[Errors, Util]
 import ../../../Wallet/MinerWallet
 
@@ -5,27 +7,43 @@ import ../../Filesystem/DB/MeritDB
 
 import BlockObj
 
-type State* = object
-  #DB.
-  db: DB
-  #Reverting/Catching up.
-  oldData*: bool
+type
+  MeritStatus* = enum
+    #Fully usable.
+    Unlocked,
+    #Not usable, yet allows Elements on the chain.
+    Locked,
+    #Elements present on the chain, will convert to Unlocked soon.
+    Pending
 
-  #Blocks until Merit is dead.
-  deadBlocks*: int
-  #Unlocked Merit.
-  unlocked: int
+  State* = object
+    db: DB
+    #Reverting/Catching up.
+    oldData*: bool
 
-  #Amount of Blocks processed.
-  processedBlocks*: int
+    deadBlocks*: int
+    unlocked*: int
 
-  #List of holders. Position on the list is their nickname.
-  holders: seq[BLSPublicKey]
-  #List of Merit balances.
-  merit: seq[int]
+    processedBlocks*: int
 
-  #Pending removals.
-  pendingRemovals*: seq[int]
+    #List of holders. Position on the list is their nickname.
+    holders*: seq[BLSPublicKey]
+    merit*: seq[int]
+    #State of their Merit.
+    statuses*: seq[MeritStatus]
+    #[
+    Block this user last participated int.
+
+    If this user only just got Merit, or only just got their Merit unlocked,
+    there is a buffer period for their inactivity.
+    Then this is set to when the buffer period is over, to ensure the buffer period is enforced.
+
+    If their Merit is pending, this is set to the Block in which their Merit will unlock.
+    This again handles the buffer period.
+    ]#
+    lastParticipation*: seq[int]
+
+    pendingRemovals*: Deque[int]
 
 proc newStateObj*(
   db: DB,
@@ -41,7 +59,7 @@ proc newStateObj*(
 
     processedBlocks: blockchainHeight,
 
-    pendingRemovals: @[]
+    pendingRemovals: initDeque[int](8)
   )
 
   #Load the amount of Unlocked Merit.
@@ -63,11 +81,6 @@ proc saveUnlocked*(
   state: State
 ) {.inline, forceCheck: [].} =
   state.db.saveUnlocked(state.processedBlocks - 1, state.unlocked)
-
-func unlocked*(
-  state: State
-): int {.inline, forceCheck: [].} =
-  state.unlocked
 
 proc loadUnlocked*(
   state: State,
@@ -115,8 +128,11 @@ proc `[]`*(
 
   #Iterate over the pending removal cache, seeing if we need to decrement at all.
   for r in 0 ..< height - state.processedBlocks:
-    if state.pendingRemovals[r] == int(nick):
-      dec(result)
+    try:
+      if state.pendingRemovals[r] == int(nick):
+        dec(result)
+    except IndexError as e:
+      panic("Couldn't get a pending Dead Merit removal: " & e.msg)
 
 proc loadBlockRemovals*(
   state: State,
@@ -129,11 +145,6 @@ proc loadHolderRemovals*(
   nick: uint16
 ): seq[int] {.inline, forceCheck: [].} =
   state.db.loadHolderRemovals(nick)
-
-proc holders*(
-  state: State
-): seq[BLSPublicKey] {.inline, forceCheck: [].} =
-  state.holders
 
 #Set a holder's Merit.
 proc `[]=`*(
@@ -165,9 +176,12 @@ proc remove*(
   state[nick] = 0
   state.db.saveUnlocked(state.processedBlocks, state.unlocked)
 
-  for p in 0 ..< state.pendingRemovals.len:
-    if state.pendingRemovals[p] == int(nick):
-      state.pendingRemovals[p] = -1
+  try:
+    for p in 0 ..< state.pendingRemovals.len:
+      if state.pendingRemovals[p] == int(nick):
+        state.pendingRemovals[p] = -1
+  except IndexError as e:
+    panic("Couldn't remove the Dead Merit removal for a Merit Holder who had a MeritRemoval: " & e.msg)
 
 #Delete the last nickname from RAM.
 proc deleteLastNickname*(
