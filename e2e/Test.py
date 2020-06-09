@@ -9,6 +9,8 @@ from e2e.Meros.Meros import Meros
 from e2e.Meros.RPC import RPC
 
 #Tests.
+from e2e.Tests.Libs.HundredEightyOneTest import HundredEightyOneTest
+
 from e2e.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
 from e2e.Tests.Merit.DifficultyTest import DifficultyTest
 from e2e.Tests.Merit.StateTest import StateTest
@@ -87,6 +89,8 @@ ress: List[str] = []
 
 #Tests.
 tests: List[Callable[[RPC], None]] = [
+  HundredEightyOneTest,
+
   ChainAdvancementTest,
   DifficultyTest,
   StateTest,

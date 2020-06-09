@@ -30,7 +30,7 @@ from pyfinite.ffield import FField
 
 FIELD_BITS: int = 64
 FIELD_BYTES: int = FIELD_BITS // 8
-FIELD_MODULUS: int = (1 << FIELD_BITS) + 0b10001101
+FIELD_MODULUS: int = (1 << FIELD_BITS) + 27
 
 def mul2(
   x: int

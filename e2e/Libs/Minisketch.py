@@ -15,7 +15,7 @@ import os
 from hashlib import blake2b
 
 #Pure Python implementation of PinSketch.
-from e2e.Libs.Pinsketch import create_sketch
+from e2e.Libs.Pinsketch import create_sketch, decode_sketch
 
 #TestError Exception.
 from e2e.Tests.Errors import TestError
@@ -92,14 +92,12 @@ class Sketch:
     serialization: Array[c_char] = create_string_buffer(self.capacity * 8)
     MinisketchLib.minisketch_serialize(self.sketch, byref(serialization))
 
-    result: bytes = bytes()
-    for b in serialization:
-      result += b
+    result: bytes = bytes(serialization)
 
     #Also create a pure Python serialized sketch and compare the two.
     self.pythonSketch = create_sketch(self.hashes, self.capacity)
     if result != self.pythonSketch:
-      raise TestError("Pure Python Pinsketch implementation doesn't match with Minisketch.")
+      raise TestError("Pure Python Pinsketch implementation's encoding doesn't match Minisketch's.")
 
     return result
 
@@ -131,4 +129,8 @@ class Sketch:
     result: List[int] = []
     for diff in range(differences):
       result.append(decoded[diff])
-    return sorted(result)
+    result.sort()
+
+    if result != sorted(decode_sketch(self.pythonSketch, self.capacity)):
+      raise TestError("Pure Python Pinsketch implementation's decoding doesn't match Minisketch's.")
+    return result
