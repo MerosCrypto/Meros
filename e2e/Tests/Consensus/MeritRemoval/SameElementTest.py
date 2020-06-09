@@ -1,5 +1,7 @@
 #Tests a MeritRemoval created from the same Elements/same Transaction hashes are rejected.
 
+import pytest
+
 #Types.
 from typing import Dict, IO, Any
 
@@ -59,5 +61,6 @@ def SameElementTest(
       }
     ).live()
 
-  for i in range(2):
-    testBlockchain(i)
+  with pytest.raises(SuccessError):
+    for i in range(2):
+      testBlockchain(i)

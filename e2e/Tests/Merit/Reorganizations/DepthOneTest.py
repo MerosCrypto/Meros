@@ -1,3 +1,5 @@
+import pytest
+
 #Types.
 from typing import Dict, List, IO, Any
 
@@ -46,10 +48,11 @@ def DepthOneTest(
     raise SuccessError("Meros re-organized to the alternate chain.")
 
   #Create and execute a Liver.
-  Liver(
-    rpc,
-    chains["main"],
-    callbacks={
-      3: sendAlternateTip
-    }
-  ).live()
+  with pytest.raises(SuccessError):
+    Liver(
+      rpc,
+      chains["main"],
+      callbacks={
+        3: sendAlternateTip
+      }
+    ).live()

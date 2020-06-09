@@ -1,5 +1,7 @@
 #Tests the proper handling of Transactions which try to spend an underflow.
 
+import pytest
+
 #Types.
 from typing import Dict, IO, Any
 
@@ -74,4 +76,5 @@ def HundredFortySevenTest(
         raise TestError("Meros sent a keep-alive.")
 
   #Create and execute a Liver.
-  Liver(rpc, vectors["blockchain"], transactions, callbacks={12: checkFail}).live()
+  with pytest.raises(SuccessError):
+    Liver(rpc, vectors["blockchain"], transactions, callbacks={12: checkFail}).live()

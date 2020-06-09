@@ -1,5 +1,7 @@
 #Tests proper handling of Verifications with Transactions which don't exist.
 
+import pytest
+
 #Types.
 from typing import Dict, List, IO, Any
 
@@ -112,4 +114,5 @@ def VUnknownTest(
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
   #Create and execute a Liver.
-  Liver(rpc, vectors["blockchain"], callbacks={1: checkFail}).live()
+  with pytest.raises(SuccessError):
+    Liver(rpc, vectors["blockchain"], callbacks={1: checkFail}).live()

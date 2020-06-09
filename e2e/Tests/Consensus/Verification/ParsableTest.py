@@ -2,6 +2,8 @@
 #Meros used to allow any Verifications of any Transaction, no matter its data or signature.
 #Meros no longer allows this. All Verifications must be of Transactions on the DAG.
 
+import pytest
+
 #Types.
 from typing import Dict, List, IO, Any
 
@@ -126,4 +128,5 @@ def VParsableTest(
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
   #Create and execute a Liver.
-  Liver(rpc, vectors["blockchain"], transactions, callbacks={1: checkFail}).live()
+  with pytest.raises(SuccessError):
+    Liver(rpc, vectors["blockchain"], transactions, callbacks={1: checkFail}).live()

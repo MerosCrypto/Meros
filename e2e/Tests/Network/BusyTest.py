@@ -1,3 +1,5 @@
+import pytest
+
 #Blockchain class.
 from e2e.Classes.Merit.Blockchain import Blockchain
 
@@ -81,29 +83,30 @@ def BusyTest(
       break
 
   #Make sure Meros connects to the server we redirected to.
-  for _ in select.select([server], [], [], 5000):
-    #Accept a new connection.
-    client, _ = server.accept()
+  with pytest.raises(SuccessError):
+    for _ in select.select([server], [], [], 5000):
+      #Accept a new connection.
+      client, _ = server.accept()
 
-    #Verify Meros's Handshake.
-    buf = client.recv(38)
-    if MessageType(buf[0]) not in {MessageType.Handshake, MessageType.Syncing}:
+      #Verify Meros's Handshake.
+      buf = client.recv(38)
+      if MessageType(buf[0]) not in {MessageType.Handshake, MessageType.Syncing}:
+        server.close()
+        raise TestError("Meros didn't start its connection with a Handshake.")
+
+      if buf[1:] != (
+        (254).to_bytes(1, "big") +
+        (254).to_bytes(1, "big") +
+        (128).to_bytes(1, "big") + (rpc.meros.tcp).to_bytes(2, "big") +
+        blockchain.blocks[0].header.hash
+      ):
+        server.close()
+        raise TestError("Meros had an invalid Handshake.")
+
       server.close()
-      raise TestError("Meros didn't start its connection with a Handshake.")
+      raise SuccessError("Meros connected to the server we redirected it to with a Busy message.")
 
-    if buf[1:] != (
-      (254).to_bytes(1, "big") +
-      (254).to_bytes(1, "big") +
-      (128).to_bytes(1, "big") + (rpc.meros.tcp).to_bytes(2, "big") +
-      blockchain.blocks[0].header.hash
-    ):
-      server.close()
-      raise TestError("Meros had an invalid Handshake.")
-
+    #Raise a TestError.
+    busyServer.close()
     server.close()
-    raise SuccessError("Meros connected to the server we redirected it to with a Busy message.")
-
-  #Raise a TestError.
-  busyServer.close()
-  server.close()
-  raise TestError("Meros didn't connect to the redirected server.")
+    raise TestError("Meros didn't connect to the redirected server.")

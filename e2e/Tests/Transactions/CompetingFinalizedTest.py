@@ -1,3 +1,5 @@
+import pytest
+
 #Types.
 from typing import Dict, List, IO, Any
 
@@ -120,4 +122,5 @@ def CompetingFinalizedTest(
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
   #Create and execute a Liver.
-  Liver(rpc, vectors["blockchain"], transactions, callbacks={7: checkFail}).live()
+  with pytest.raises(SuccessError):
+    Liver(rpc, vectors["blockchain"], transactions, callbacks={7: checkFail}).live()
