@@ -80,10 +80,10 @@ def decode_sketch(
   for e in range(0, len(sketch), FIELD_BYTES):
     withoutEvens.append(int.from_bytes(sketch[e : e + FIELD_BYTES], 'little'))
 
-  evened: List[int] = []
+  ss: List[int] = []
   for wE in withoutEvens:
-    evened.append(wE)
-    evened.append(mul(wE, wE))
+    ss.append(wE)
+    ss.append(mul(wE, wE))
 
   field: FField = FField(FIELD_BITS)
   #While the following setCoeff call is required, it shouldn't be returned.
