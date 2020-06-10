@@ -4,6 +4,8 @@
 #2) That a VC MeritRemoval of Verification Packets where one has their holders re-ordered is identified as a repeat.
 #Also tests receiving a SignedMeritRemoval containing VerificationPackets.
 
+import pytest
+
 #Types.
 from typing import Dict, List, IO, Any
 
@@ -126,5 +128,6 @@ def HTTPacketTest(
       }
     ).live()
 
-  for b in range(2):
-    testBlockchain(b)
+  with pytest.raises(SuccessError):
+    for b in range(2):
+      testBlockchain(b)

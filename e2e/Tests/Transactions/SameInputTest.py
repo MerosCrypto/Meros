@@ -1,5 +1,7 @@
 #Tests the proper handling of Transactions which spend the same input twice.
 
+import pytest
+
 #Types.
 from typing import Dict, List, IO, Any
 
@@ -122,4 +124,5 @@ def SameInputTest(
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
   #Create and execute a Liver.
-  Liver(rpc, vectors["blockchain"], transactions, callbacks={12: checkFail}).live()
+  with pytest.raises(SuccessError):
+    Liver(rpc, vectors["blockchain"], transactions, callbacks={12: checkFail}).live()

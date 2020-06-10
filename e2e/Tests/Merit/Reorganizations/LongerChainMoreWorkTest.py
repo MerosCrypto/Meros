@@ -1,3 +1,5 @@
+import pytest
+
 #Types.
 from typing import Dict, List, IO, Any
 
@@ -70,10 +72,11 @@ def LongerChainMoreWorkTest(
     #Raise SuccessError so the Liver doesn't fail when verifying the original chain.
     raise SuccessError("Meros re-organized to the alternate chain.")
   #Create and execute a Liver.
-  Liver(
-    rpc,
-    chains["main"],
-    callbacks={
-      25: sendAlternateTip
-    }
-  ).live()
+  with pytest.raises(SuccessError):
+    Liver(
+      rpc,
+      chains["main"],
+      callbacks={
+        25: sendAlternateTip
+      }
+    ).live()

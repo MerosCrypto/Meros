@@ -91,8 +91,7 @@ disable=wrong-import-order,
     no-else-break,
     no-else-continue,
 
-    #We only care about 4 Errors:
-    #- EmptyError (test is empty)
+    #We only care about 3 Errors:
     #- NodeError (node broke)
     #- TestError (test didn't pass)
     #- Exception (test broke)

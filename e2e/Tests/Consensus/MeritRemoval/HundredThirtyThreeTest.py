@@ -1,5 +1,7 @@
 #https://github.com/MerosCrypto/Meros/issues/133.
 
+import pytest
+
 #Types.
 from typing import Dict, List, IO, Any
 
@@ -106,5 +108,6 @@ def HundredThirtyThreeTest(
       }
     ).live()
 
-  for b in range(2):
-    testBlockchain(b)
+  with pytest.raises(SuccessError):
+    for b in range(2):
+      testBlockchain(b)

@@ -1,5 +1,7 @@
 #Tests proper handling of a MeritRemoval created from Verifications verifying competing, and invalid, Transactions.
 
+import pytest
+
 #Types.
 from typing import Dict, IO, Any
 
@@ -70,12 +72,13 @@ def InvalidCompetingTest(
     verifyBlockchain(rpc, Blockchain.fromJSON(vectors["blockchain"]))
     raise SuccessError("MeritRemoval and Blockchain were properly handled.")
 
-  Liver(
-    rpc,
-    vectors["blockchain"],
-    transactions,
-    callbacks={
-      1: sendMeritRemoval,
-      2: verify
-    }
-  ).live()
+  with pytest.raises(SuccessError):
+    Liver(
+      rpc,
+      vectors["blockchain"],
+      transactions,
+      callbacks={
+        1: sendMeritRemoval,
+        2: verify
+      }
+    ).live()

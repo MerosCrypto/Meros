@@ -1,5 +1,7 @@
 #Tests proper handling of a MeritRemoval which has already been archived.
 
+import pytest
+
 #Types.
 from typing import Dict, List, IO, Any
 
@@ -58,10 +60,11 @@ def RepeatTest(
       else:
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-  Liver(
-    rpc,
-    vectors,
-    callbacks={
-      3: sendBlock
-    }
-  ).live()
+  with pytest.raises(SuccessError):
+    Liver(
+      rpc,
+      vectors,
+      callbacks={
+        3: sendBlock
+      }
+    ).live()

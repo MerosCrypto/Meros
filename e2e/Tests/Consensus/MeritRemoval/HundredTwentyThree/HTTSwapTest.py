@@ -1,6 +1,8 @@
 #https://github.com/MerosCrypto/Meros/issues/123.
 #Tests that a MeritRemoval which has its Elements swapped and is sent again is rejected.
 
+import pytest
+
 #Types.
 from typing import Dict, IO, Any
 
@@ -74,10 +76,11 @@ def HTTSwapTest(
       else:
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-  Liver(
-    rpc,
-    vectors["blockchain"],
-    callbacks={
-      2: sendRepeatMeritRemoval
-    }
-  ).live()
+  with pytest.raises(SuccessError):
+    Liver(
+      rpc,
+      vectors["blockchain"],
+      callbacks={
+        2: sendRepeatMeritRemoval
+      }
+    ).live()
