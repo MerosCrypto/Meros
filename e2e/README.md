@@ -44,22 +44,12 @@ Meros supports static typing via both Pyright (`pyright -p e2e`) and MyPy (`mypy
 
 Meros supports linting via Pylint (`pylint --rcfile=e2e/Pylint/pylintrc e2e`).
 
-### Running (PyTest)
-In the project root dir, use the following to run all available test cases:
+### Running
+
+From `Meros/` use the following to run all available test cases:
 
 `python3 -m pytest e2e/Tests/`
-
-Only list all available tests:
-
-`python3 -m pytest e2e/Tests/ --collect-only`
 
 Run a specific test case:
 
 `python3 -m pytest e2e/Tests/ -k "ChainAdvancement"`
-
-(A more detailed description of all available filter options can be found [here](https://docs.pytest.org/en/latest/usage.html))
-
-### Running (old test runner - deprecated)
-Run the all available tests:
-
-`python3.6 -m e2e.Test`

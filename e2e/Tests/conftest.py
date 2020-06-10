@@ -1,3 +1,7 @@
+#pylint: disable=invalid-name
+
+from typing import Any
+
 import pytest
 
 #Meros class.
@@ -10,34 +14,40 @@ from time import sleep
 #ShUtil standard lib.
 import shutil
 
-@pytest.fixture(scope="session", params = ["./data/e2e", ])
-def data_dir(
-  request
+#Delete the existing data directory.
+@pytest.fixture(scope="session", params=["./data/e2e"])
+def dataDir(
+  request: Any
 ) -> str:
-  d = request.param
-  # delete the data directory.
   try:
-    shutil.rmtree(d)
+    shutil.rmtree(request.param)
   except FileNotFoundError:
     pass
-  return d
+  return request.param
 
 @pytest.fixture(scope="module")
 def rpc(
+  #pylint: disable=redefined-outer-name
   meros: Meros,
-  request
+  request: Any
 ) -> RPC:
-  r = RPC(meros)
-  request.addfinalizer(r.quit)
-  return r
+  result: RPC = RPC(meros)
+  request.addfinalizer(result.quit)
+  return result
 
-@pytest.fixture(scope="module", params=[5132,])
+@pytest.fixture(scope="module", params=[5132])
 def meros(
-  data_dir: str,
-  request
+  #pylint: disable=redefined-outer-name
+  dataDir: str,
+  request: Any
 ) -> Meros:
-  m = Meros(request.node.module.__name__, request.param, request.param + 1, data_dir)
-  # let the instance start up
-  sleep(3)
-  request.addfinalizer(m.quit)
-  return m
+  result: Meros = Meros(
+    request.node.module.__name__,
+    request.param,
+    request.param + 1,
+    dataDir
+  )
+  #Let the instance start up.
+  sleep(5)
+  request.addfinalizer(result.quit)
+  return result
