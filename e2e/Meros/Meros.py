@@ -303,7 +303,8 @@ class Meros:
     self,
     test: str,
     tcp: int,
-    rpc: int
+    rpc: int,
+    data_dir: str = "./data/e2e"
   ) -> None:
     #Save the network/protocol.
     self.network = 254
@@ -315,7 +316,7 @@ class Meros:
     self.rpc: int = rpc
 
     #Create the instance.
-    self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", "./data/e2e", "--log-file", test + ".log", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
+    self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", data_dir, "--log-file", test + ".log", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
 
     #Connection variables.
     self.live: MerosSocket
