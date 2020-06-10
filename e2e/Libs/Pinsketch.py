@@ -63,22 +63,65 @@ def create_sketch(
 
 #A merge function is not provided as it's literally a xor of the two sketches.
 
+# a^2 % f
+def SqrMod(a, f):
+  sqr = field.Multiply(a, a)
+  _, rem = field.FullDivision(sqr, f, field.FindDegree(sqr), field.FindDegree(f))
+  return rem
+
 def setCoeff(
-  x: List[int],
+  field: FField,
+  f: int,
   i: int,
   a: int
-) -> None:
-  if a != 0:  # TODO: necessary to check this?
-    x[i] = a
+) -> int:
+  degree: int = field.FindDegree(i)
+  result: int = result | 1 << degree  # FIXME: Works only if the bit is zero
+  #x.normalize();
+  return result
 
-def deg(x: List[int]):
-  return len(x) - 1
+void TraceMap(const GF2EX& a, const GF2EXModulus& F)
+  GF2EX res, tmp;
+
+  res = a
+  tmp = a
+
+  long i;
+  for i in range(FIELD_BITS-1):
+    tmp = SqrMod(tmp, F)
+    res = field.Add(res, tmp)
+
+  return res
+
+def findRoots(field, x, ff) -> List[int]:
+  if field.FindDegree(f) == 0:
+    return [0]
+
+  if field.FindDegree(f) == 1:
+    return f & 1
+      
+  GF2EXModulus F;
+  build(F, f);
+
+  while True:
+    r = field.GetRandomElement()
+    h = 0
+    h = setCoeff(field, h, 1, r);
+    h = TraceMap(h, F);
+    h, _, _ = field.ExtendedEuclid(h, f, field.FindDegree(h), field.FindDegree(f))
+    if not (field.FindDegree(h) <= 0 or field.FindDegree(h) == field.FindDegree(f)):
+      break
+
+  roots = FindRoots(x, h)
+  h = field.Divide(f, h)
+  roots.extend(FindRoots(x, h))
+  return roots
 
 def decode_sketch(
   sketch: bytes,
   capacity: int
 ) -> List[int]:
-  withoutEvens: List[int] = []
+  withoutEvens: int = 0
   for e in range(0, len(sketch), FIELD_BYTES):
     withoutEvens.append(int.from_bytes(sketch[e : e + FIELD_BYTES], 'little'))
 
@@ -87,71 +130,85 @@ def decode_sketch(
     ss.append(wE)
     ss.append(mul(wE, wE))
 
-	r1: List[int] = []
-  r2: List[int] = []
-  r3: List[int] = []
-  v1: List[int] = []
-  v2: List[int] = []
-  v3: List[int] = []
-  q: List[int] = []
-  temp: List[int] = []
-  
+  r1: int = 0
+  r2: int = 0
+  r3: int = 0
+  v1: int = 0
+  v2: int = 0
+  v3: int = 0
+  q: int = 0
+  temp: int = 0
+
   # TODO: Don't introduce these vars
-	Rold: List[int] = []
-  Rcur: List[int] = []
-  Rnew: List[int] = []
-  Vold: List[int] = []
-  Vcur: List[int] = []
-  Vnew: List[int] = []
-  tempPointer: List[int] = []
+  Rold: int = 0
+  Rcur: int = 0
+  Rnew: int = 0
+  Vold: int = 0
+  Vcur: int = 0
+  Vnew: int = 0
+  tempPointer: int = 0
 
-	Rold = r1
-	Rcur = r2
-	Rnew = r3
+  Rold = r1
+  Rcur = r2
+  Rnew = r3
 
-	Vold = v1
-	Vcur = v2
-	Vnew = v3
+  Vold = v1
+  Vcur = v2
+  Vnew = v3
 
-  # field: FField = FField(FIELD_BITS)
+  field: FField = FField(FIELD_BITS)
 
-  setCoeff(Rold, d-1, 1);  # Rold holds z^{d-1}
+  Rold = setCoeff(field, Rold, d-1, 1);  # Rold holds z^{d-1}
 
-	# Rcur=S(z)/z where S is the syndrome poly, Rcur = \sum S_j z^{j-1}
+  # Rcur=S(z)/z where S is the syndrome poly, Rcur = \sum S_j z^{j-1}
   # Note that because we index arrays from 0, S_j is stored in ss[j-1]
-	for i in range(d-1):
-	  setCoeff(Rcur, i, ss[i]);
+  for i in range(d-1):
+    Rcur = setCoeff(field, Rcur, i, ss[i]);
 
 	# Vold is already 0 -- no need to initialize
 	# Initialize Vcur to 1
-	setCoeff(Vcur, 0, 1); // Vcur = 1
+	Vcur = setCoeff(field, Vcur, 0, 1); // Vcur = 1
 
+  # TODO: Use Euclid from ffinite
 	# Now run Euclid, but stop as soon as degree of Rcur drops below
 	# (d-1)/2
 	# This will take O(d^2) operations in GF(2^m)
 
 	t: int = (d-1)//2;
 
-	while deg(Rcur) >= t:
+	while field.FindDegree(Rcur) >= t:
 	  # Rold = Rcur*q + Rnew
-	  DivRem(q, *Rnew, *Rold, *Rcur);
+    q, Rnew = field.FullDivision(Rold, Rcur, field.FindDegree(Rold), field.FindDegree(Rcur))
 
-	  // Vnew = Vold - qVcur)
-	  mul(temp, q, *Vcur);
-	  sub (*Vnew, *Vold, temp);
+	  // Vnew = Vold - qVcur
+	  temp = field.Multiply(q, Vcur);
+	  Vnew = field.Subtract(Vold, temp);
 
+    # swap everything (TODO: Simplify.)
+	  tempPointer = Rold
+	  Rold = Rcur
+	  Rcur = Rnew
+	  Rnew = tempPointer
 
-          // swap everything
-	  tempPointer = Rold;	
-	  Rold = Rcur;
-	  Rcur = Rnew;
-	  Rnew = tempPointer;
+	  tempPointer = Vold
+	  Vold = Vcur
+	  Vcur = Vnew
+	  Vnew = tempPointer
 
-	  tempPointer = Vold;
-	  Vold = Vcur;
-	  Vcur = Vnew;
-	  Vnew = tempPointer;
+	# At the end of the loop, sigma(z) is Vcur
+	# (up to a constant factor, which doesn't matter,
+	# since we care about roots of sigma).
+	# The roots of sigma(z) are inverses of the points we
+	# are interested in.  
 
+  # find roots of sigma(z)
+  # this will take O(e^2 + e^{\log_2 3} m) operations in GF(2^m),
+  # where e is the degree of sigma(z)
+  answer = findRoots(*Vcur)
+
+  # take inverses of roots of sigma(z)
+  for v in answer
+    v = field.Inverse(v)
 
   #########################################################
 
