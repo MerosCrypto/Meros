@@ -32,6 +32,8 @@ FIELD_BITS: int = 64
 FIELD_BYTES: int = FIELD_BITS // 8
 FIELD_MODULUS: int = (1 << FIELD_BITS) + 27
 
+# TODO: Uset the following two functions?
+
 def mul2(
   x: int
 ) -> int:
@@ -64,7 +66,7 @@ def create_sketch(
 #A merge function is not provided as it's literally a xor of the two sketches.
 
 # a^2 % f
-def SqrMod(a, f):
+def sqrMod(a, f):
   sqr = field.Multiply(a, a)
   _, rem = field.FullDivision(sqr, f, field.FindDegree(sqr), field.FindDegree(f))
   return rem
@@ -80,41 +82,35 @@ def setCoeff(
   #x.normalize();
   return result
 
-void TraceMap(const GF2EX& a, const GF2EXModulus& F)
-  GF2EX res, tmp;
-
+def traceMap(a, f):
   res = a
   tmp = a
 
-  long i;
   for i in range(FIELD_BITS-1):
-    tmp = SqrMod(tmp, F)
+    tmp = sqrMod(tmp, f)
     res = field.Add(res, tmp)
 
   return res
 
-def findRoots(field, x, ff) -> List[int]:
+def findRoots(field, f) -> List[int]:
   if field.FindDegree(f) == 0:
     return [0]
 
   if field.FindDegree(f) == 1:
     return f & 1
       
-  GF2EXModulus F;
-  build(F, f);
-
   while True:
     r = field.GetRandomElement()
     h = 0
     h = setCoeff(field, h, 1, r);
-    h = TraceMap(h, F);
+    h = traceMap(h, f);
     h, _, _ = field.ExtendedEuclid(h, f, field.FindDegree(h), field.FindDegree(f))
     if not (field.FindDegree(h) <= 0 or field.FindDegree(h) == field.FindDegree(f)):
       break
 
-  roots = FindRoots(x, h)
+  roots = FindRoots(field, h)
   h = field.Divide(f, h)
-  roots.extend(FindRoots(x, h))
+  roots.extend(FindRoots(field, h))
   return roots
 
 def decode_sketch(
@@ -204,14 +200,10 @@ def decode_sketch(
   # find roots of sigma(z)
   # this will take O(e^2 + e^{\log_2 3} m) operations in GF(2^m),
   # where e is the degree of sigma(z)
-  answer = findRoots(*Vcur)
+  answer = findRoots(field, Vcur)
 
   # take inverses of roots of sigma(z)
   for v in answer
     v = field.Inverse(v)
 
-  #########################################################
-
-  #While the following setCoeff call is required, it shouldn't be returned.
-  #It's used to calculate what should be returned.
-  return [setCoeff(field, capacity * 2)]
+  return answer
