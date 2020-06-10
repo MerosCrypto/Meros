@@ -64,13 +64,15 @@ def create_sketch(
 #A merge function is not provided as it's literally a xor of the two sketches.
 
 def setCoeff(
-  field: FField,
-  i: int
-) -> int:
-  result: int = field.FindDegree(i)
-  #set(x.rep[i]);
-  #x.normalize();
-  return result
+  x: List[int],
+  i: int,
+  a: int
+) -> None:
+  if a != 0:  # TODO: necessary to check this?
+    x[i] = a
+
+def deg(x: List[int]):
+  return len(x) - 1
 
 def decode_sketch(
   sketch: bytes,
@@ -85,7 +87,74 @@ def decode_sketch(
     ss.append(wE)
     ss.append(mul(wE, wE))
 
-  field: FField = FField(FIELD_BITS)
+	r1: List[int] = []
+  r2: List[int] = []
+  r3: List[int] = []
+  v1: List[int] = []
+  v2: List[int] = []
+  v3: List[int] = []
+  q: List[int] = []
+  temp: List[int] = []
+  
+  # TODO: Don't introduce these vars
+	Rold: List[int] = []
+  Rcur: List[int] = []
+  Rnew: List[int] = []
+  Vold: List[int] = []
+  Vcur: List[int] = []
+  Vnew: List[int] = []
+  tempPointer: List[int] = []
+
+	Rold = r1
+	Rcur = r2
+	Rnew = r3
+
+	Vold = v1
+	Vcur = v2
+	Vnew = v3
+
+  # field: FField = FField(FIELD_BITS)
+
+  setCoeff(Rold, d-1, 1);  # Rold holds z^{d-1}
+
+	# Rcur=S(z)/z where S is the syndrome poly, Rcur = \sum S_j z^{j-1}
+  # Note that because we index arrays from 0, S_j is stored in ss[j-1]
+	for i in range(d-1):
+	  setCoeff(Rcur, i, ss[i]);
+
+	# Vold is already 0 -- no need to initialize
+	# Initialize Vcur to 1
+	setCoeff(Vcur, 0, 1); // Vcur = 1
+
+	# Now run Euclid, but stop as soon as degree of Rcur drops below
+	# (d-1)/2
+	# This will take O(d^2) operations in GF(2^m)
+
+	t: int = (d-1)//2;
+
+	while deg(Rcur) >= t:
+	  # Rold = Rcur*q + Rnew
+	  DivRem(q, *Rnew, *Rold, *Rcur);
+
+	  // Vnew = Vold - qVcur)
+	  mul(temp, q, *Vcur);
+	  sub (*Vnew, *Vold, temp);
+
+
+          // swap everything
+	  tempPointer = Rold;	
+	  Rold = Rcur;
+	  Rcur = Rnew;
+	  Rnew = tempPointer;
+
+	  tempPointer = Vold;
+	  Vold = Vcur;
+	  Vcur = Vnew;
+	  Vnew = tempPointer;
+
+
+  #########################################################
+
   #While the following setCoeff call is required, it shouldn't be returned.
   #It's used to calculate what should be returned.
   return [setCoeff(field, capacity * 2)]
