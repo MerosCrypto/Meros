@@ -1,55 +1,37 @@
-#Types.
 from typing import IO, Dict, List, Any
+from hashlib import blake2b
+import json
 
-#BLS lib.
+import ed25519
 from e2e.Libs.BLS import PrivateKey, PublicKey, Signature
 
-#Transactions classes.
 from e2e.Classes.Transactions.Claim import Claim
 from e2e.Classes.Transactions.Send import Send
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#SpamFilter class.
-from e2e.Classes.Consensus.SpamFilter import SpamFilter
-
-#Verification classes.
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
+from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-#Blockchain classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Merit import Blockchain
 
-#Ed25519 lib.
-import ed25519
-
-#Blake2b standard function.
-from hashlib import blake2b
-
-#JSON standard lib.
-import json
-
 cmFile: IO[Any] = open("e2e/Vectors/Transactions/ClaimedMint.json", "r")
 cmVectors: Dict[str, Any] = json.loads(cmFile.read())
-#Transactions.
 transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
-#Blockchain.
 blockchain: Blockchain = Blockchain.fromJSON(cmVectors["blockchain"])
 cmFile.close()
 
-#Spam Filter.
 sendFilter: SpamFilter = SpamFilter(3)
 
-#Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKeys: List[ed25519.VerifyingKey] = [
   edPrivKey.get_verifying_key(),
   ed25519.SigningKey(b'\1' * 32).get_verifying_key()
 ]
 
-#BLS keys.
 blsPrivKeys: List[PrivateKey] = [
   PrivateKey(blake2b(b'\0', digest_size=32).digest()),
   PrivateKey(blake2b(b'\1', digest_size=32).digest())
@@ -76,11 +58,7 @@ block: Block = Block(
   ),
   BlockBody()
 )
-
-#Mine it.
 block.mine(blsPrivKeys[1], blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated Competing Block " + str(len(blockchain.blocks)) + ".")
 
@@ -121,10 +99,7 @@ block = Block(
   BlockBody(packets, [], Signature.aggregate(toAggregate))
 )
 for _ in range(6):
-  #Mine it.
   block.mine(blsPrivKeys[0], blockchain.difficulty())
-
-  #Add it.
   blockchain.add(block)
   print("Generated Competing Block " + str(len(blockchain.blocks)) + ".")
 

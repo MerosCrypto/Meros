@@ -1,17 +1,13 @@
-import pytest
+import socket
 
-#Blockchain class.
+from pytest import raises
+
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 
-#TestError and SuccessError Exceptions.
 from e2e.Tests.Errors import TestError, SuccessError
-
-#Socket standard lib.
-import socket
 
 def HundredTwentyFiveTest(
   rpc: RPC
@@ -34,7 +30,7 @@ def HundredTwentyFiveTest(
   connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   connection.connect((lanIP, rpc.meros.tcp))
 
-  with pytest.raises(SuccessError):
+  with raises(SuccessError):
     try:
       connection.send(
         MessageType.Syncing.toByte() +

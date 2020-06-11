@@ -1,31 +1,19 @@
-#Types.
 from typing import Dict, List, Union, Any
+from hashlib import blake2b
 
-#BLS lib.
 from e2e.Libs.BLS import PrivateKey, Signature
+from e2e.Libs.RandomX import RandomX
+from e2e.Libs.Minisketch import Sketch
 
-#Element classes.
 from e2e.Classes.Consensus.Element import Element
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 
-#Sketch class.
-from e2e.Libs.Minisketch import Sketch
-
-#RandomX lib.
-from e2e.Libs.RandomX import RandomX
-
-#Blake2b standard function.
-from hashlib import blake2b
-
-#Merkle constructor.
 def merkle(
   hashes: List[bytes]
 ) -> bytes:
-  #Support empty Merkles.
   if not hashes:
     return bytes(32)
 
-  #Pair down until there's one hash left.
   while len(hashes) > 1:
     if len(hashes) % 2 != 0:
       hashes.append(hashes[-1])
@@ -36,56 +24,45 @@ def merkle(
       ).digest()
     hashes = hashes[0 : len(hashes) // 2]
 
-  #Return the Merkle hash.
   return hashes[0]
 
-#BlockHeader class.
 #pylint: disable=too-many-instance-attributes
 class BlockHeader:
   #Defined here to avoid warnings.
   hash: bytes
 
-  #Create a contents Merkle.
   @staticmethod
   def createContents(
     packetsArg: List[VerificationPacket] = [],
     elements: List[Element] = []
   ) -> bytes:
-    #Sort the VerificationPackets.
     packets: List[VerificationPacket] = sorted(
       list(packetsArg),
       key=lambda packet: packet.hash
     )
 
-    #Hash each packet.
     hashes: List[bytes] = []
     for packet in packets:
       hashes.append(blake2b(packet.prefix + packet.serialize(), digest_size=32).digest())
     packetsContents: bytes = merkle(hashes)
 
-    #Hash each Element.
     hashes = []
     for element in elements:
       hashes.append(blake2b(element.prefix + element.serialize(), digest_size=32).digest())
     elementsContents: bytes = merkle(hashes)
 
-    #Return the contents hash.
     if (packetsContents == bytes(32)) and (elementsContents == bytes(32)):
       return bytes(32)
     return blake2b(packetsContents + elementsContents, digest_size=32).digest()
 
-  #Create a sketchCheck Merkle.
   @staticmethod
   def createSketchCheck(
     salt: bytes = bytes(4),
     packets: List[VerificationPacket] = []
   ) -> bytes:
-    #Create sketch hashes for every packet.
     sketchHashes: List[int] = []
     for packet in packets:
       sketchHashes.append(Sketch.hash(salt, packet))
-
-    #Sort the Sketch Hashes.
     sketchHashes.sort()
 
     #Hash each sketch hash to leaf length.
@@ -93,10 +70,8 @@ class BlockHeader:
     for sketchHash in sketchHashes:
       leaves.append(blake2b(sketchHash.to_bytes(8, byteorder="big"), digest_size=32).digest())
 
-    #Return the Merkle hash.
     return merkle(leaves)
 
-  #Serialize to be hashed.
   def serializeHash(
     self
   ) -> bytes:
@@ -113,13 +88,11 @@ class BlockHeader:
       self.proof.to_bytes(4, "big")
     )
 
-  #Hash.
   def rehash(
     self
   ) -> None:
     self.hash = RandomX(RandomX(self.serializeHash()) + self.signature)
 
-  #Constructor.
   def __init__(
     self,
     version: int,
@@ -167,13 +140,11 @@ class BlockHeader:
       self.signature = privKey.sign(self.hash).serialize()
       self.hash = RandomX(self.hash + self.signature)
 
-  #Serialize.
   def serialize(
     self
   ) -> bytes:
     return self.serializeHash() + self.signature
 
-  #BlockHeader -> JSON.
   def toJSON(
     self
   ) -> Dict[str, Any]:
@@ -190,7 +161,6 @@ class BlockHeader:
       "signature": self.signature.hex().upper()
     }
 
-  #JSON -> BlockHeader.
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]

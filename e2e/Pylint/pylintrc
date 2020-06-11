@@ -61,9 +61,7 @@ confidence=
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
 
-#We use the opposite import order as PEP8.
-disable=wrong-import-order,
-
+disable=
     #We have our own formatting rules.
     bad-continuation,
 

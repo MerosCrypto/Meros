@@ -1,27 +1,19 @@
 #Tests proper handling of an Element from the blockchain which conflicts with an Elemenet in the mempool.
 #Meros should archive the Block, then broadcast a partial MeritRemoval with the mempool's DataDifficulty.
 
-#Types.
 from typing import Dict, IO, Any
+import json
 
-#DataDifficulty classes.
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty, SignedDataDifficulty
-#Parital MeritRemoval class.
 from e2e.Classes.Consensus.MeritRemoval import PartialMeritRemoval
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#MeritRemoval verifier.
+from e2e.Tests.Errors import TestError
 from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 
-#JSON standard lib.
-import json
 
 def HundredTwentyTest(
   rpc: RPC
@@ -31,10 +23,8 @@ def HundredTwentyTest(
   file.close()
 
   #DataDifficulty for the mempool.
-  #pylint: disable=no-member
   mempoolDataDiff: SignedDataDifficulty = SignedDataDifficulty.fromSignedJSON(vectors["mempoolDataDiff"])
   #DataDifficulty for the Blockchain.
-  #pylint: disable=no-member
   blockchainDataDiff: DataDifficulty = DataDifficulty.fromJSON(vectors["blockchainDataDiff"])
 
   def sendDataDifficulty() -> None:

@@ -1,27 +1,19 @@
 #https://github.com/MerosCrypto/Meros/issues/123.
 #Tests that a MeritRemoval which has its Elements swapped and is sent again is rejected.
 
-import pytest
-
-#Types.
 from typing import Dict, IO, Any
+from time import sleep
+import json
 
-#Merit classes.
+from pytest import raises
+
 from e2e.Classes.Merit.Block import Block
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#TestError and SuccessError Exceptions.
 from e2e.Tests.Errors import TestError, SuccessError
-
-#Sleep standard function.
-from time import sleep
-
-#JSON standard lib.
-import json
 
 def HTTSwapTest(
   rpc: RPC
@@ -76,7 +68,7 @@ def HTTSwapTest(
       else:
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-  with pytest.raises(SuccessError):
+  with raises(SuccessError):
     Liver(
       rpc,
       vectors["blockchain"],

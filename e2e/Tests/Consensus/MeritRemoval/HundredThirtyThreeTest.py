@@ -1,30 +1,21 @@
 #https://github.com/MerosCrypto/Meros/issues/133.
 
-import pytest
-
-#Types.
 from typing import Dict, List, IO, Any
+from time import sleep
+import json
 
-#Transactions classes.
+from pytest import raises
+
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#Merit classes.
 from e2e.Classes.Merit.Block import Block
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#TestError and SuccessError Exceptions.
 from e2e.Tests.Errors import TestError, SuccessError
-
-#Sleep standard function.
-from time import sleep
-
-#JSON standard lib.
-import json
 
 def HundredThirtyThreeTest(
   rpc: RPC
@@ -108,6 +99,6 @@ def HundredThirtyThreeTest(
       }
     ).live()
 
-  with pytest.raises(SuccessError):
+  with raises(SuccessError):
     for b in range(2):
       testBlockchain(b)

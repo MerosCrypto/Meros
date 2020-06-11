@@ -1,29 +1,20 @@
-#Types.
 from typing import Dict, List, Set, Union, Any
 
-#Sketch class.
 from e2e.Libs.Minisketch import Sketch
 
-#Merit classes.
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Merit import Merit
 
-#Element classes.
 from e2e.Classes.Consensus.Verification import Verification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
-#Transactions class.
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 
-#Merit and Transactions verifiers.
+from e2e.Tests.Errors import TestError
 from e2e.Tests.Merit.Verify import verifyBlockchain
 from e2e.Tests.Transactions.Verify import verifyTransactions
 
@@ -36,15 +27,14 @@ class Syncer:
     transactions: Union[Transactions, None] = None,
     settings: Dict[str, Any] = {}
   ) -> None:
-    #RPC.
     self.rpc: RPC = rpc
 
-    #DBs/Settings.
+    #Copy the arguments.
     self.merit: Merit = Merit.fromJSON(blockchain)
     self.transactions: Union[Transactions, None] = transactions
     self.settings: Dict[str, Any] = dict(settings)
 
-    #Provide default settings.
+    #Provide default settings when some aren't specified.
     if "height" not in self.settings:
       self.settings["height"] = len(self.merit.blockchain.blocks) - 1
     if "playback" not in self.settings:
@@ -62,20 +52,16 @@ class Syncer:
     self.packets: Dict[int, VerificationPacket] = {}
 
     #Set of mentioned Transactions.
+    #Includes Transactions verified once the Verifications are sent.
     self.txs: Set[bytes] = set()
-    #Dict of synced Transactions.
-    self.synced: Set[bytes] = set()
 
-  #Sync the DB and verify it.
-  #The following PyLint errors are due to handling all the various message types.
+  #Send the Blockchain, via syncing, and verify it.
   #pylint: disable=too-many-nested-blocks,too-many-statements
   def sync(
     self
   ) -> None:
-    #Handshake with the node.
     self.rpc.meros.syncConnect(self.merit.blockchain.blocks[self.settings["height"]].header.hash)
 
-    #Handle sync requests.
     reqHash: bytes = bytes()
     while True:
       #Break out of the for loop if the sync finished.
@@ -124,10 +110,9 @@ class Syncer:
             self.rpc.meros.dataMissing()
 
       elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
+        reqHash = msg[1 : 33]
         if (self.txs != set()) or (self.packets != {}):
           raise TestError("Meros asked for a new Block before syncing the last Block's Transactions and Packets.")
-
-        reqHash = msg[1 : 33]
         if reqHash != self.blocks[-1].header.hash:
           raise TestError("Meros asked for a BlockHeader other than the next Block's on the last BlockList.")
 
@@ -141,10 +126,10 @@ class Syncer:
         self.rpc.meros.blockBody(self.blocks[-1])
         self.blockHashes.remove(self.blocks[-1].header.hash)
 
-        #Set packets/transactions.
+        #Set the packets/transactions which should be synced.
         self.packets = {}
         for packet in self.blocks[-1].body.packets:
-          if packet.hash not in self.synced:
+          if packet.hash not in self.rpc.meros.sentTXs:
             self.txs.add(packet.hash)
           self.packets[Sketch.hash(self.blocks[-1].header.sketchSalt, packet)] = packet
 
@@ -167,17 +152,13 @@ class Syncer:
         if reqHash != self.blocks[-1].header.hash:
           raise TestError("Meros asked for Sketch Hashes that didn't belong to the header we just sent it.")
 
-        #Get the haashes.
         hashes: List[int] = list(self.packets)
-
-        #Send the Sketch Hashes.
         self.rpc.meros.sketchHashes(hashes)
 
       elif MessageType(msg[0]) == MessageType.SketchHashRequests:
+        reqHash = msg[1 : 33]
         if not self.packets:
           raise TestError("Meros asked for Verification Packets from a Block without any.")
-
-        reqHash = msg[1 : 33]
         if reqHash != self.blocks[-1].header.hash:
           raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
 
@@ -194,15 +175,12 @@ class Syncer:
 
         if self.transactions is None:
           raise TestError("Meros asked for a Transaction when we have none.")
-
         if reqHash not in self.transactions.txs:
           raise TestError("Meros asked for a Transaction we don't have.")
-
         if reqHash not in self.txs:
           raise TestError("Meros asked for a Transaction we haven't mentioned.")
 
         self.rpc.meros.syncTransaction(self.transactions.txs[reqHash])
-        self.synced.add(reqHash)
         self.txs.remove(reqHash)
 
         if self.txs == set():
@@ -218,6 +196,6 @@ class Syncer:
     if self.transactions is not None:
       verifyTransactions(self.rpc, self.transactions)
 
+    #Playback their messages.
     if self.settings["playback"]:
-      #Playback their messages.
       self.rpc.meros.sync.playback()

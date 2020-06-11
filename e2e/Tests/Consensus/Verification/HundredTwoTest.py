@@ -1,20 +1,14 @@
 #https://github.com/MerosCrypto/Meros/issues/102.
 
-#Types.
 from typing import Dict, IO, Any
+import json
 
-#Transaction class.
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#JSON standard lib.
-import json
+from e2e.Tests.Errors import TestError
 
 def HundredTwoTest(
   rpc: RPC
@@ -23,7 +17,6 @@ def HundredTwoTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #Transactions.
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
   #Verifies the Transaction is added, it has the right holders, the holders Merit surpasses the threshold, yet it isn't verified.
@@ -42,5 +35,4 @@ def HundredTwoTest(
       if status["verified"]:
         raise TestError("Meros verified the Transaction which won't have enough Merit by the time the Transaction finalizes.")
 
-  #Create and execute a Liver.
   Liver(rpc, vectors["blockchain"], transactions, callbacks={100: verify}).live()

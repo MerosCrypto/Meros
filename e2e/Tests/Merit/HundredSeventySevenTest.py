@@ -1,33 +1,26 @@
 #Unfortunately, as this works on the premise of the node being used by a miner, this can't be vectored.
 
-#Types.
 from typing import Dict, Any
-
 from time import sleep
 import socket
 
-#BLS lib.
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
-#Merit classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Consensus classes.
 from e2e.Classes.Consensus.Verification import SignedVerification
 
 from e2e.Classes.Transactions.Mint import Mint
 from e2e.Classes.Transactions.Claim import Claim
 from e2e.Classes.Transactions.Data import Data
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Meros import MessageType
+
+from e2e.Tests.Errors import TestError
 
 def HundredSeventySevenTest(
   rpc: RPC

@@ -1,27 +1,14 @@
-#Types.
 from typing import Dict, List, Any
-
-#Meros class.
-from e2e.Meros.Meros import Meros
-
-#NodeError and TestError Exceptions.
-from e2e.Tests.Errors import NodeError, TestError
-
-#Remove standard function.
 from os import remove
-
-#Sleep standard function.
 from time import sleep
-
-#JSON standard lib.
 import json
-
-#Socket standard lib.
 import socket
 
-#RPC class.
+from e2e.Meros.Meros import Meros
+
+from e2e.Tests.Errors import NodeError, TestError
+
 class RPC:
-  #Constructor.
   def __init__(
     self,
     meros: Meros
@@ -30,14 +17,12 @@ class RPC:
     self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.socket.connect(("127.0.0.1", meros.rpc))
 
-  #Call an RPC method.
   def call(
     self,
     module: str,
     method: str,
     args: List[Any] = []
   ) -> Any:
-    #Send the call.
     try:
       self.socket.send(
         bytes(
@@ -55,7 +40,6 @@ class RPC:
     except BrokenPipeError:
       raise NodeError()
 
-    #Get the result.
     response: bytes = bytes()
     nextChar: bytes = bytes()
     counter: int = 0
@@ -83,28 +67,24 @@ class RPC:
       raise TestError(result["error"]["message"] + ".")
     return result["result"]
 
-  #Quit Meros.
   def quit(
     self
   ) -> None:
     self.call("system", "quit")
 
-  #Reset the Meros node.
+  #Reset the Meros node, deleting its Database and rebooting it.
+  #Used after caling a Liver and before calling a Syncer.
   def reset(
     self
   ) -> None:
-    #Quit Meros.
     self.quit()
-    sleep(2)
+    sleep(3)
 
-    #Remove the existing DB files.
     remove("./data/e2e/devnet-" + self.meros.db)
     remove("./data/e2e/devnet-" + self.meros.db + "-lock")
 
-    #Launch Meros.
     self.meros = Meros(self.meros.db, self.meros.tcp, self.meros.rpc)
     sleep(5)
 
-    #Reconnect.
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.socket.connect(("127.0.0.1", self.meros.rpc))

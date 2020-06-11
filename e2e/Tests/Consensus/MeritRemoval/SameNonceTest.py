@@ -1,25 +1,17 @@
 #Tests proper handling of a MeritRemoval created from Difficulty/Gas Price Updates sharing nonces.
 
-#Types.
 from typing import Dict, IO, Any
+import json
 
-#SignedMeritRemoval class.
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 from e2e.Meros.Syncer import Syncer
 
-#MeritRemoval verifier.
+from e2e.Tests.Errors import TestError
 from e2e.Tests.Consensus.Verify import verifyMeritRemoval
-
-#JSON standard lib.
-import json
 
 def SameNonceTest(
   rpc: RPC
@@ -28,8 +20,6 @@ def SameNonceTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #MeritRemoval.
-  #pylint: disable=no-member
   removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(vectors["removal"])
 
   #Create and execute a Liver to cause a Signed MeritRemoval.

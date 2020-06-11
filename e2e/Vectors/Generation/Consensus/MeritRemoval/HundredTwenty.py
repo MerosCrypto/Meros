@@ -1,28 +1,19 @@
-#Types.
 from typing import Dict, IO, Any
 
-#BLS lib.
+from hashlib import blake2b
+import json
+
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
-#Element classes.
 from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 
-#Blockchain classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Blake2b standard function.
-from hashlib import blake2b
-
-#JSON standard lib.
-import json
-
-#Blockchain.
 blockchain: Blockchain = Blockchain()
 
-#BLS Keys.
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
@@ -40,10 +31,7 @@ block = Block(
   ),
   BlockBody()
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated Hundred Twenty Block " + str(len(blockchain.blocks)) + ".")
 
@@ -69,10 +57,7 @@ block = Block(
   ),
   BlockBody([], [dataDiffConflicting], dataDiffConflicting.signature)
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated Hundred Twenty Block " + str(len(blockchain.blocks)) + ".")
 

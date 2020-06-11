@@ -1,10 +1,8 @@
 from typing import List, IO, Any
-
 from hashlib import blake2b
 import json
 
 import ed25519
-
 from e2e.Libs.BLS import PrivateKey, PublicKey, Signature
 
 from e2e.Classes.Merit.Block import Block

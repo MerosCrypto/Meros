@@ -1,23 +1,15 @@
 #Tests that a Transaction added to the Transactions DAG, yet not mentioned while it can still be added, is pruned.
 
-#Types.
 from typing import Dict, IO, Any
+import json
 
-#Data class.
 from e2e.Classes.Transactions.Data import Data
-
-#SignedVerification class.
 from e2e.Classes.Consensus.Verification import SignedVerification
 
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#TestError Exception.
 from e2e.Tests.Errors import TestError
-
-#JSON standard lib.
-import json
 
 def PruneUnaddableTest(
   rpc: RPC
@@ -54,7 +46,6 @@ def PruneUnaddableTest(
     except Exception:
       raise TestError("Meros didn't prune the Transaction.")
 
-  #Create and execute a Liver.
   Liver(
     rpc,
     vectors["blockchain"],

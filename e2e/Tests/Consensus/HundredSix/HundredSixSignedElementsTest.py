@@ -1,39 +1,28 @@
 #https://github.com/MerosCrypto/Meros/issues/106. Specifically tests signed elements (except MeritRemovals).
 
-#Types.
 from typing import List
+from time import sleep
+from hashlib import blake2b
 
-#BLS lib.
 from e2e.Libs.BLS import PrivateKey, Signature
 
-#Blockchain class.
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Signed Element classes.
 from e2e.Classes.Consensus.Element import SignedElement
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.SendDifficulty import SignedSendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 
-#RPC class.
 from e2e.Meros.RPC import RPC
 
-#TestError Exception.
 from e2e.Tests.Errors import TestError
-
-#Sleep standard function.
-from time import sleep
-
-#Blake2b standard function.
-from hashlib import blake2b
 
 def HundredSixSignedElementsTest(
   rpc: RPC
 ) -> None:
-  #Blockchain. Solely used to get the genesis Block hash.
+  #Solely used to get the genesis Block hash.
   blockchain: Blockchain = Blockchain()
 
-  #BLS Key.
   blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
   sig: Signature = blsPrivKey.sign(bytes())
 

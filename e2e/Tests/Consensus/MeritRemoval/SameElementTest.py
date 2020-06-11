@@ -1,25 +1,17 @@
 #Tests a MeritRemoval created from the same Elements/same Transaction hashes are rejected.
 
-import pytest
-
-#Types.
 from typing import Dict, IO, Any
+import json
 
-#Data class.
+from pytest import raises
+
 from e2e.Classes.Transactions.Data import Data
-
-#SignedMeritRemoval class.
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 
-#TestError and SuccessError Exceptions.
-from e2e.Tests.Errors import TestError, SuccessError
-
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#JSON standard lib.
-import json
+from e2e.Tests.Errors import TestError, SuccessError
 
 def SameElementTest(
   rpc: RPC
@@ -31,11 +23,7 @@ def SameElementTest(
   def testBlockchain(
     b: int
   ) -> None:
-    #Data.
     data: Data = Data.fromJSON(vectors["data"])
-
-    #pylint: disable=no-member
-    #MeritRemoval.
     removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(vectors["removals"][b])
 
     #Create and execute a Liver to send the MeritRemoval.
@@ -61,6 +49,6 @@ def SameElementTest(
       }
     ).live()
 
-  with pytest.raises(SuccessError):
+  with raises(SuccessError):
     for i in range(2):
       testBlockchain(i)

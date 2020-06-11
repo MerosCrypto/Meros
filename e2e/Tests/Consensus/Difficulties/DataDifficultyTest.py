@@ -2,19 +2,14 @@
 #Does test that DataDifficulties from before having votes are applied when the Merit Holder gains votes.
 #Doesn't test signed DataDifficulties, despite having a Liver.
 
-#Types.
 from typing import Dict, Callable, IO, Any
+import json
 
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 from e2e.Meros.Syncer import Syncer
 
-#Difficulty/MeritRemoval verifier.
 from e2e.Tests.Consensus.Verify import verifyDataDifficulty, verifyMeritRemoval
-
-#JSON standard lib.
-import json
 
 #pylint: disable=too-many-statements
 def DataDifficultyTest(

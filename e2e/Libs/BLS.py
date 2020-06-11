@@ -1,15 +1,9 @@
-#Types.
 from typing import List, Tuple, Any
+from ctypes import Array, c_char_p, c_char, create_string_buffer, byref
+from hashlib import shake_256
 
-#Milagro sub-libraries.
 from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, OctetObj, r
 from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
-
-#CTypes.
-from ctypes import Array, c_char_p, c_char, create_string_buffer, byref
-
-#SHAKE256 standard function.
-from hashlib import shake_256
 
 A_FLAG: int = 1 << 5
 B_FLAG: int = 1 << 6

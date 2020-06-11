@@ -1,24 +1,16 @@
 #https://github.com/MerosCrypto/Meros/issues/142.
 #Tests proper handling of Verifications with never actually get archived.
 
-#Types.
 from typing import Dict, IO, Any
+import json
 
-#SignedVerification class.
 from e2e.Classes.Consensus.Verification import SignedVerification
-
-#Transactions class.
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#JSON standard lib.
-import json
+from e2e.Tests.Errors import TestError
 
 #pylint: disable=too-many-statements
 def HundredFortyTwoTest(
@@ -28,7 +20,6 @@ def HundredFortyTwoTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #Transactions.
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
   #Function to verify the Transaction includes unarchived Merit before finalization.
@@ -51,5 +42,12 @@ def HundredFortyTwoTest(
     if status["merit"] != 1:
       raise TestError("Status included Merit which was never archived.")
 
-  #Create and execute a Liver.
-  Liver(rpc, vectors["blockchain"], transactions, callbacks={7: verifyUnarchivedMerit, 8: verifyArchivedMerit}).live()
+  Liver(
+    rpc,
+    vectors["blockchain"],
+    transactions,
+    callbacks={
+      7: verifyUnarchivedMerit,
+      8: verifyArchivedMerit
+    }
+  ).live()

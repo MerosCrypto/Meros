@@ -1,34 +1,27 @@
-#RPC class.
-from e2e.Meros.RPC import RPC
-
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Sleep standard function.
 from time import sleep
 
-#Verify the Send Difficulty.
+from e2e.Meros.RPC import RPC
+
+from e2e.Tests.Errors import TestError
+
 def verifySendDifficulty(
   rpc: RPC,
   sendDiff: int
 ) -> None:
   #Sleep to ensure data races aren't a problem.
+  #Of course, this doesn't actually ensure it; just makes the odds extemely unlikely.
   sleep(1)
-
   if rpc.call("consensus", "getSendDifficulty") != sendDiff:
     raise TestError("Send Difficulty doesn't match.")
 
-#Verify the Data Difficulty.
 def verifyDataDifficulty(
   rpc: RPC,
   dataDiff: int
 ) -> None:
   sleep(1)
-
   if rpc.call("consensus", "getDataDifficulty") != dataDiff:
     raise TestError("Data Difficulty doesn't match.")
 
-#Verify a MeritRemoval.
 def verifyMeritRemoval(
   rpc: RPC,
   total: int,
@@ -38,11 +31,9 @@ def verifyMeritRemoval(
 ) -> None:
   sleep(1)
 
-  #Verify the total Merit.
   if rpc.call("merit", "getTotalMerit") != total if pending else total - merit:
     raise TestError("Total Merit doesn't match.")
 
-  #Verify the holder's Merit.
   if rpc.call("merit", "getMerit", [holder]) != {
     "unlocked": True,
     "malicious": pending,
