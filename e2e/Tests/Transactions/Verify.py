@@ -11,6 +11,7 @@ def verifyTransaction(
   rpc: RPC,
   tx: Transaction
 ) -> None:
+  sleep(1)
   if rpc.call("transactions", "getTransaction", [tx.hash.hex()]) != tx.toJSON():
     raise TestError("Transaction doesn't match.")
 
@@ -18,6 +19,5 @@ def verifyTransactions(
   rpc: RPC,
   transactions: Transactions
 ) -> None:
-  sleep(2)
   for tx in transactions.txs:
     verifyTransaction(rpc, transactions.txs[tx])

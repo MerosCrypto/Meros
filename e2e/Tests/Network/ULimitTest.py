@@ -7,10 +7,15 @@ import socket
 from e2e.Classes.Merit.Blockchain import Blockchain
 
 from e2e.Meros.Meros import MessageType, BusyError, MerosSocket
+from e2e.Meros.RPC import RPC
 
 from e2e.Tests.Errors import TestError
 
-def ULimitTest() -> None:
+def ULimitTest(
+  #Required so a Meros node is spawned.
+  #pylint: disable=unused-argument
+  rpc: RPC
+) -> None:
   #Sleep 60 seconds so Meros can correct its FD count.
   sleep(60)
 
