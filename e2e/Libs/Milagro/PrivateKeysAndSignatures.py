@@ -1,6 +1,5 @@
-from typing import Type, Union, List, Tuple, Any
-from ctypes import cdll, Structure, Array, POINTER, \
-                   c_char_p, c_int64, c_int32, c_int
+from typing import Type, List, Tuple, Any
+from ctypes import cdll, Structure, POINTER, c_char_p, c_int64, c_int32, c_int
 import os
 
 #Import the Milagro Curve library.
@@ -12,8 +11,8 @@ else:
   MilagroCurve = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_curve_BLS381.so")
 
 #Define the structures.
-Big384: Type[Array[c_int64]] = c_int64 * 7
-DBig384: Type[Array[c_int64]] = c_int64 * 14
+Big384: Any = c_int64 * 7
+DBig384: Any = c_int64 * 14
 
 #pylint: disable=too-few-public-methods
 class OctetObj(
@@ -92,8 +91,4 @@ MilagroCurve.ECP_BLS381_get.restype = c_int
 MilagroCurve.ECP_BLS381_mapit.argtypes = [G1, Octet]
 MilagroCurve.ECP_BLS381_mapit.restype = None
 
-rUnion: Union[c_int64, Array[c_int64]] = Big384.in_dll(MilagroCurve, "CURVE_Order_BLS381")
-if isinstance(rUnion, Array[c_int64]):
-  r: Big384 = rUnion
-else:
-  raise Exception("Couldn't load the BLS curve order.")
+r: Big384 = Big384.in_dll(MilagroCurve, "CURVE_Order_BLS381")
