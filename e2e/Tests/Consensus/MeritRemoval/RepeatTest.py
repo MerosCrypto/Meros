@@ -1,23 +1,17 @@
 #Tests proper handling of a MeritRemoval which has already been archived.
 
-import pytest
-
-#Types.
 from typing import Dict, List, IO, Any
+import json
 
-#Block class.
+from raises
+
 from e2e.Classes.Merit.Block import Block
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#TestError and SuccessError Exceptions.
 from e2e.Tests.Errors import TestError, SuccessError
-
-#JSON standard lib.
-import json
 
 def RepeatTest(
   rpc: RPC
@@ -60,7 +54,7 @@ def RepeatTest(
       else:
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-  with pytest.raises(SuccessError):
+  with raises(SuccessError):
     Liver(
       rpc,
       vectors,

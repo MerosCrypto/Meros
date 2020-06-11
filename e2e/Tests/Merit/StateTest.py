@@ -1,31 +1,22 @@
-#Types.
 from typing import Dict, List, IO, Any
+import json
 
-#Blockchain and State classes.
 from e2e.Classes.Merit.Blockchain import Blockchain
 from e2e.Classes.Merit.State import State
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#JSON standard lib.
-import json
+from e2e.Tests.Errors import TestError
 
 def StateTest(
   rpc: RPC
 ) -> None:
-  #Blocks.
   file: IO[Any] = open("e2e/Vectors/Merit/StateBlocks.json", "r")
   blocks: List[Dict[str, Any]] = json.loads(file.read())
   file.close()
 
-  #Blockchain.
   blockchain: Blockchain = Blockchain.fromJSON(blocks)
-  #State.
   state: State = State()
 
   def checkState(

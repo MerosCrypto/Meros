@@ -1,24 +1,16 @@
-import pytest
-
-#Types.
 from typing import Dict, List, IO, Any
+import json
 
-#Blockchain class.
+from pytest import raises
+
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#TestError and SuccessError Exceptions.
 from e2e.Tests.Errors import TestError, SuccessError
-
-#Blockchain verifier.
 from e2e.Tests.Merit.Verify import verifyBlockchain
-
-#JSON standard lib.
-import json
 
 def DelayedMeritHolderTest(
   rpc: RPC
@@ -72,8 +64,7 @@ def DelayedMeritHolderTest(
     #Raise SuccessError so the Liver doesn't fail when verifying the original chain.
     raise SuccessError("Meros re-organized to the alternate chain.")
 
-  #Create and execute a Liver.
-  with pytest.raises(SuccessError):
+  with raises(SuccessError):
     Liver(
       rpc,
       chains["main"],

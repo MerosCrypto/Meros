@@ -1,24 +1,18 @@
-#Blockchain class.
+from time import sleep
+import socket
+
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 
-#TestError Exception.
 from e2e.Tests.Errors import TestError
-
-#Sleep standard function.
-from time import sleep
-
-#Socket standard lib.
-import socket
 
 #pylint: disable=too-many-statements
 def LANPeersTest(
   rpc: RPC
 ) -> None:
-  #Blockchain. Solely used to get the genesis Block hash.
+  #Solely used to get the genesis Block hash.
   blockchain: Blockchain = Blockchain()
 
   #Handshake with the node.

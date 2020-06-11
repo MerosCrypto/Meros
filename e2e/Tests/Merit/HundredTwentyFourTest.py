@@ -1,35 +1,26 @@
 #https://github.com/MerosCrypto/Meros/issues/124.
 
-#Types.
 from typing import Dict, List, IO, Any
+import json
 
-#Blockchain classes.
 from e2e.Classes.Merit.Blockchain import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Meros import MessageType
 
-#Blockchain verifier.
-from e2e.Tests.Merit.Verify import verifyBlockchain
-
-#TestError Exception.
 from e2e.Tests.Errors import TestError
-
-#JSON standard lib.
-import json
+from e2e.Tests.Merit.Verify import verifyBlockchain
 
 #pylint: disable=too-many-statements,too-many-nested-blocks
 def HundredTwentyFourTest(
   rpc: RPC
 ) -> None:
-  #Load the vectors.
   file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
   vectors: List[Dict[str, Any]] = json.loads(file.read())
   file.close()
 
-  #Blockchain. Solely used to get the genesis Block hash.
+  #Solely used to get the genesis Block hash.
   blockchain: Blockchain = Blockchain()
 
   #Parse the Blocks from the vectors.

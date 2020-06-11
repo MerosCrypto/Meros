@@ -1,32 +1,21 @@
 #Verifies Meros will send Busy when it starts approaching the open file limit.
 
-#Types.
 from typing import List
+from time import sleep
+import socket
 
-#Blockchain class.
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Exceptions.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.Meros import MessageType, BusyError, MerosSocket
 from e2e.Meros.RPC import RPC
 
-#Socket standard lib.
-import socket
+from e2e.Tests.Errors import TestError
 
-#Sleep standard function.
-from time import sleep
-
-def ULimitTest(
-  #pylint: disable=unused-argument
-  rpc: RPC
-) -> None:
+def ULimitTest() -> None:
   #Sleep 60 seconds so Meros can correct its FD count.
   sleep(60)
 
-  #Create a Blockchain so we have the genesis Block hash.
+  #Solely used for the genesis Block hash.
   blockchain: Blockchain = Blockchain()
 
   #Create peers until Meros sends us busy.

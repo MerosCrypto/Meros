@@ -92,10 +92,7 @@ block: Block = Block(
   BlockBody(packets, [], Signature.aggregate([verifs[0].signature, verifs[1].signature]))
 )
 for _ in range(6):
-  #Mine it.
   block.mine(blsPrivKey, blockchain.difficulty())
-
-  #Add it.
   blockchain.add(block)
   print("Generated Prune Unaddable Block " + str(len(blockchain.blocks)) + ".")
 

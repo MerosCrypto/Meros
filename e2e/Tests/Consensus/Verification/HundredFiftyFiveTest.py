@@ -1,39 +1,29 @@
 #https://github.com/MerosCrypto/Meros/issues/155
 
-#Types.
 from typing import Dict, List, Any
 
-#BLS lib.
+import ed25519
 from e2e.Libs.BLS import PrivateKey
 
-#Merit classes.
 from e2e.Classes.Merit.Blockchain import BlockHeader
 from e2e.Classes.Merit.Blockchain import BlockBody
 from e2e.Classes.Merit.Blockchain import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Consensus classes.
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 from e2e.Classes.Consensus.Verification import SignedVerification
 
-#Data class.
 from e2e.Classes.Transactions.Data import Data
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 
-#Ed25519 lib.
-import ed25519
+from e2e.Tests.Errors import TestError
 
 #pylint: disable=too-many-locals,too-many-statements
 def HundredFiftyFiveTest(
   rpc: RPC
 ) -> None:
-  #Ed25519 keys.
   edPrivKeys: List[ed25519.SigningKey] = [
     ed25519.SigningKey(b'\0' * 32),
     ed25519.SigningKey(b'\1' * 32)
@@ -43,13 +33,10 @@ def HundredFiftyFiveTest(
     edPrivKeys[1].get_verifying_key()
   ]
 
-  #BLS keys.
   blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMiner")))
   blsPubKey: bytes = blsPrivKey.toPublicKey().serialize()
 
-  #Blockchain.
   blockchain: Blockchain = Blockchain()
-  #Spam Filter.
   dataFilter: SpamFilter = SpamFilter(5)
 
   #Handshake with the node.
@@ -82,24 +69,20 @@ def HundredFiftyFiveTest(
   block.mine(blsPrivKey, blockchain.difficulty())
   blockchain.add(block)
 
-  #Publish it.
   rpc.call("merit", "publishBlock", [template["id"], block.serialize().hex()])
 
   if MessageType(rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
     raise TestError("Meros didn't broadcast the Block we just published.")
-
   #Ignore the Verification for the Block's Data.
-  if MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:
+  elif MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:
     raise TestError("Meros didn't send the SignedVerification for the Block's Data.")
 
-  #Create the Datas.
   datas: List[Data] = [
     Data(bytes(32), edPubKeys[0].to_bytes()),
     Data(bytes(32), edPubKeys[1].to_bytes())
   ]
 
   for d in range(len(datas)):
-    #Sign, and mine the Data.
     datas[d].sign(edPrivKeys[d])
     datas[d].beat(dataFilter)
 

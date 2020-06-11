@@ -55,10 +55,7 @@ block: Block = Block(
   ),
   BlockBody()
 )
-#Mine it.
 block.mine(blsPrivKeys[1], merit.blockchain.difficulty())
-
-#Add it.
 merit.add(block)
 print("Generated Aggregated Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 

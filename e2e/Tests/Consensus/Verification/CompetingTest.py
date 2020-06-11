@@ -1,21 +1,15 @@
 #Tests proper handling of Verifications with unsynced Transactions which are beaten by other Transactions.
 
-#Types.
 from typing import Dict, IO, Any
+import json
 
-#Transaction class.
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 from e2e.Meros.Syncer import Syncer
 
-#JSON standard lib.
-import json
+from e2e.Tests.Errors import TestError
 
 def VCompetingTest(
   rpc: RPC
@@ -24,7 +18,6 @@ def VCompetingTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #Transactions.
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
   #Function to verify the right Transaction was confirmed.
@@ -35,6 +28,5 @@ def VCompetingTest(
     if rpc.call("consensus", "getStatus", [vectors["beaten"]])["verified"]:
       raise TestError("Did verify the Send which should have been beaten.")
 
-  #Create and execute a Liver/Syncer.
   Liver(rpc, vectors["blockchain"], transactions, callbacks={19: verifyConfirmation}).live()
   Syncer(rpc, vectors["blockchain"], transactions).sync()

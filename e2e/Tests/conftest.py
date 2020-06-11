@@ -1,21 +1,16 @@
 #pylint: disable=invalid-name
 
 from typing import Any
+from time import sleep
+import shutil
 
-import pytest
+from pytest import fixture
 
-#Meros class.
 from e2e.Meros.Meros import Meros
 from e2e.Meros.RPC import RPC
 
-#Sleep standard function.
-from time import sleep
-
-#ShUtil standard lib.
-import shutil
-
 #Delete the existing data directory.
-@pytest.fixture(scope="session", params=["./data/e2e"])
+@fixture(scope="session", params=["./data/e2e"])
 def dataDir(
   request: Any
 ) -> str:
@@ -25,7 +20,7 @@ def dataDir(
     pass
   return request.param
 
-@pytest.fixture(scope="module")
+@fixture(scope="module")
 def rpc(
   #pylint: disable=redefined-outer-name
   meros: Meros,
@@ -35,7 +30,7 @@ def rpc(
   request.addfinalizer(result.quit)
   return result
 
-@pytest.fixture(scope="module", params=[5132])
+@fixture(scope="module", params=[5132])
 def meros(
   #pylint: disable=redefined-outer-name
   dataDir: str,

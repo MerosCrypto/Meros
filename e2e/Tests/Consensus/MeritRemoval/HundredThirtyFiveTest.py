@@ -1,27 +1,18 @@
 #https://github.com/MerosCrypto/Meros/issues/135.
 
-#Types.
 from typing import Dict, List, IO, Any
+import json
 
-#Transactions classes.
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#MeritRemoval class.
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#MeritRemoval verifier.
-from e2e.Tests.Consensus.Verify import verifyMeritRemoval
-
-#TestError Exceptions.
 from e2e.Tests.Errors import TestError
-
-#JSON standard lib.
-import json
+from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 
 def HundredThirtyFiveTest(
   rpc: RPC

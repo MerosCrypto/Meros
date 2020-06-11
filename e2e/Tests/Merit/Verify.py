@@ -1,37 +1,26 @@
-#Blockchain class.
-from e2e.Classes.Merit.Blockchain import Blockchain
-
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#RPC class.
-from e2e.Meros.RPC import RPC
-
-#Sleep standard function.
 from time import sleep
 
-#Verify the Blockchain.
+from e2e.Classes.Merit.Blockchain import Blockchain
+
+from e2e.Meros.RPC import RPC
+
+from e2e.Tests.Errors import TestError
+
 def verifyBlockchain(
   rpc: RPC,
   blockchain: Blockchain
 ) -> None:
-  #Sleep to ensure data races aren't a problem.
   sleep(2)
 
-  #Verify the height.
   if rpc.call("merit", "getHeight") != len(blockchain.blocks):
     raise TestError("Height doesn't match.")
-
-  #Verify the difficulty.
-  if blockchain.difficulty() != int(rpc.call("merit", "getDifficulty"), 16):
+  elif blockchain.difficulty() != int(rpc.call("merit", "getDifficulty"), 16):
     raise TestError("Difficulty doesn't match.")
 
-  #Verify the Blocks.
   for b in range(len(blockchain.blocks)):
     if rpc.call("merit", "getBlock", [b]) != blockchain.blocks[b].toJSON():
       raise TestError("Block doesn't match.")
-
-    if rpc.call(
+    elif rpc.call(
       "merit",
       "getBlock",
       [blockchain.blocks[b].header.hash.hex().upper()]

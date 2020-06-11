@@ -1,30 +1,21 @@
 #Tests proper handling of a MeritRemoval created from Verifications verifying competing Transactions.
 
-#Types.
 from typing import Dict, List, IO, Any
+import json
 
-#Transactions classes.
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#Element classes.
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 from e2e.Meros.Syncer import Syncer
 
-#MeritRemoval verifier.
-from e2e.Tests.Consensus.Verify import verifyMeritRemoval
-
-#TestError Exception.
 from e2e.Tests.Errors import TestError
-
-#JSON standard lib.
-import json
+from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 
 def VerifyCompetingTest(
   rpc: RPC
@@ -33,14 +24,12 @@ def VerifyCompetingTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #Datas.
   datas: List[Data] = [
     Data.fromJSON(vectors["datas"][0]),
     Data.fromJSON(vectors["datas"][1]),
     Data.fromJSON(vectors["datas"][2])
   ]
 
-  #Transactions.
   transactions: Transactions = Transactions()
   for data in datas:
     transactions.add(data)
@@ -48,8 +37,6 @@ def VerifyCompetingTest(
   #Initial Data's Verification.
   verif: SignedVerification = SignedVerification.fromSignedJSON(vectors["verification"])
 
-  #MeritRemoval.
-  #pylint: disable=no-member
   removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(vectors["removal"])
 
   #Create and execute a Liver to cause a Signed MeritRemoval.

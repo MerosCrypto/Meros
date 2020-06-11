@@ -1,5 +1,4 @@
 from typing import Dict, IO, Any
-
 import json
 
 from e2e.Classes.Consensus.Verification import SignedVerification

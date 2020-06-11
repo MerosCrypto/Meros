@@ -1,24 +1,20 @@
-import pytest
+import socket
+import select
 
-#Blockchain class.
+from pytest import raises
+
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 
-#TestError and SuccessError Exceptions.
 from e2e.Tests.Errors import TestError, SuccessError
-
-#Socket and select standard libs.
-import socket
-import select
 
 #pylint: disable=too-many-statements
 def BusyTest(
   rpc: RPC
 ) -> None:
-  #Blockchain. Solely used to get the genesis Block hash.
+  # Solely used to get the genesis Block hash.
   blockchain: Blockchain = Blockchain()
 
   #Handshake with the node.
@@ -52,7 +48,11 @@ def BusyTest(
   busy: int = 0
   buf: bytes
   for _ in select.select([busyServer], [], [], 5000):
-    #Accept a new connection.
+    #Accept a new
+#Socket and select standard libs.
+import socket
+import select
+ connection.
     client, _ = busyServer.accept()
 
     #Verify Meros's Handshake.
@@ -83,7 +83,7 @@ def BusyTest(
       break
 
   #Make sure Meros connects to the server we redirected to.
-  with pytest.raises(SuccessError):
+  with raises(SuccessError):
     for _ in select.select([server], [], [], 5000):
       #Accept a new connection.
       client, _ = server.accept()

@@ -1,33 +1,21 @@
 #Tests the proper handling of Transactions which try to spend an underflow.
 
-import pytest
-
-#Types.
 from typing import Dict, IO, Any
+import json
 
-#Merit class.
+import ed25519
+from pytest import raises
+
 from e2e.Classes.Merit.Merit import Merit
-
-#SpamFilter class.
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
-
-#Transactions classes.
 from e2e.Classes.Transactions.Transactions import Transactions
 from e2e.Classes.Transactions.Claim import Claim
 from e2e.Classes.Transactions.Send import Send
 
-#Exceptions.
-from e2e.Tests.Errors import TestError, SuccessError
-
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#Ed25519 lib.
-import ed25519
-
-#JSON standard lib.
-import json
+from e2e.Tests.Errors import TestError, SuccessError
 
 def HundredFortySevenTest(
   rpc: RPC
@@ -36,12 +24,9 @@ def HundredFortySevenTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #Merit.
   merit: Merit = Merit.fromJSON(vectors["blockchain"])
-  #Transactions.
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
-  #Ed25519 keys.
   privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
   pubKey: ed25519.VerifyingKey = privKey.get_verifying_key()
 
@@ -76,5 +61,5 @@ def HundredFortySevenTest(
         raise TestError("Meros sent a keep-alive.")
 
   #Create and execute a Liver.
-  with pytest.raises(SuccessError):
+  with raises(SuccessError):
     Liver(rpc, vectors["blockchain"], transactions, callbacks={12: checkFail}).live()

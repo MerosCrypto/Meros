@@ -1,35 +1,21 @@
 #Tests proper handling of a MeritRemoval created from Verifications verifying competing, and invalid, Transactions.
 
-import pytest
-
-#Types.
 from typing import Dict, IO, Any
+import json
 
-#Transactions class.
-from e2e.Classes.Transactions.Transactions import Transactions
+from pytest import raises
 
-#MeritRemoval class.
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
-
-#Blockchain class.
+from e2e.Classes.Transactions.Transactions import Transactions
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#MeritRemoval verifier.
-from e2e.Tests.Consensus.Verify import verifyMeritRemoval
-
-#Blockchain verifier.
-from e2e.Tests.Merit.Verify import verifyBlockchain
-
-#TestError and SuccessError Exceptions.
 from e2e.Tests.Errors import TestError, SuccessError
-
-#JSON standard lib.
-import json
+from e2e.Tests.Consensus.Verify import verifyMeritRemoval
+from e2e.Tests.Merit.Verify import verifyBlockchain
 
 def InvalidCompetingTest(
   rpc: RPC
@@ -38,12 +24,8 @@ def InvalidCompetingTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #Transactions.
-  transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
-
-  #MeritRemoval.
-  #pylint: disable=no-member
   removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(vectors["removal"])
+  transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
   #Create and execute a Liver to handle the MeritRemoval.
   def sendMeritRemoval() -> None:
@@ -72,7 +54,7 @@ def InvalidCompetingTest(
     verifyBlockchain(rpc, Blockchain.fromJSON(vectors["blockchain"]))
     raise SuccessError("MeritRemoval and Blockchain were properly handled.")
 
-  with pytest.raises(SuccessError):
+  with raises(SuccessError):
     Liver(
       rpc,
       vectors["blockchain"],
