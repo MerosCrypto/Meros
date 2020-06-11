@@ -1,15 +1,8 @@
-#pylint: disable=no-self-use
-
-#Types.
 from typing import Dict, Any
-
-#BLS lib.
-from e2e.Libs.BLS import Signature
-
-#Abstract class standard lib.
 from abc import ABC, abstractmethod
 
-#Element class
+from e2e.Libs.BLS import Signature
+
 class Element(
   ABC
 ):
@@ -34,7 +27,6 @@ class Element(
   ) -> Dict[str, Any]:
     pass
 
-#SignedElement class.
 class SignedElement(
   ABC
 ):

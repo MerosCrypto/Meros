@@ -1,71 +1,17 @@
-#Types.
 from typing import Dict, List, Tuple, Any
+from hashlib import blake2b
 
-#Transaction and SpamFilter classes.
+import ed25519
+
 from e2e.Classes.Transactions.Transaction import Transaction
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-#Ed25519 lib.
-import ed25519
-
-#Blake2b standard function.
-from hashlib import blake2b
-
-#Send class.
 class Send(
   Transaction
 ):
-  #Constructor.
-  #Even though this calls serializeInputs/serializeOutputs, it is above those as it provides the class's type hints.
-  def __init__(
-    self,
-    inputs: List[Tuple[bytes, int]],
-    outputs: List[Tuple[bytes, int]],
-    signature: bytes = bytes(64),
-    proof: int = 0
-  ) -> None:
-    self.inputs: List[Tuple[bytes, int]] = inputs
-    self.outputs: List[Tuple[bytes, int]] = outputs
-    self.hash = blake2b(
-      (
-        b"\2" +
-        len(self.inputs).to_bytes(1, "big") +
-        self.serializeInputs() +
-        len(self.outputs).to_bytes(1, "big") +
-        self.serializeOutputs()
-      ),
-      digest_size=32
-    ).digest()
+  inputs: List[Tuple[bytes, int]]
+  outputs: List[Tuple[bytes, int]]
 
-    self.signature: bytes = signature
-
-    self.proof: int = proof
-    self.argon: bytes = SpamFilter.run(self.hash, self.proof)
-
-  #Transaction -> Send. Satisifes static typing requirements.
-  @staticmethod
-  def fromTransaction(
-    tx: Transaction
-  ) -> Any:
-    return tx
-
-  #Sign.
-  def sign(
-    self,
-    privKey: ed25519.SigningKey
-  ) -> None:
-    self.signature = privKey.sign(b"MEROS" + self.hash)
-
-  #Mine.
-  def beat(
-    self,
-    spamFilter: SpamFilter
-  ) -> None:
-    result: Tuple[bytes, int] = spamFilter.beat(self.hash, (70 + (33 * len(self.inputs)) + (40 * len(self.outputs))) // 143)
-    self.argon = result[0]
-    self.proof = result[1]
-
-  #Serialize Inputs.
   #Separate from serialize as it's called by the constructor.
   def serializeInputs(
     self
@@ -75,8 +21,6 @@ class Send(
       result += txInput[0] + txInput[1].to_bytes(1, "big")
     return result
 
-  #Serialize Outputs.
-  #Separate from serialize as it's called by the constructor.
   def serializeOutputs(
     self
   ) -> bytes:
@@ -85,7 +29,51 @@ class Send(
       result += output[0] + output[1].to_bytes(8, "big")
     return result
 
-  #Serialize.
+  def __init__(
+    self,
+    inputs: List[Tuple[bytes, int]],
+    outputs: List[Tuple[bytes, int]],
+    signature: bytes = bytes(64),
+    proof: int = 0
+  ) -> None:
+    self.inputs = inputs
+    self.outputs = outputs
+    self.hash: bytes = blake2b(
+      (
+        b"\2" +
+        len(self.inputs).to_bytes(1, "big") +
+        self.serializeInputs() +
+        len(self.outputs).to_bytes(1, "big") +
+        self.serializeOutputs()
+      ),
+      digest_size=32
+    ).digest()
+    self.signature: bytes = signature
+
+    self.proof: int = proof
+    self.argon: bytes = SpamFilter.run(self.hash, self.proof)
+
+  #Satisifes static typing requirements.
+  @staticmethod
+  def fromTransaction(
+    tx: Transaction
+  ) -> Any:
+    return tx
+
+  def sign(
+    self,
+    privKey: ed25519.SigningKey
+  ) -> None:
+    self.signature = privKey.sign(b"MEROS" + self.hash)
+
+  def beat(
+    self,
+    spamFilter: SpamFilter
+  ) -> None:
+    result: Tuple[bytes, int] = spamFilter.beat(self.hash, (70 + (33 * len(self.inputs)) + (40 * len(self.outputs))) // 143)
+    self.argon = result[0]
+    self.proof = result[1]
+
   def serialize(
     self
   ) -> bytes:
@@ -98,7 +86,6 @@ class Send(
       self.proof.to_bytes(4, "big")
     )
 
-  #Send -> JSON.
   def toJSON(
     self
   ) -> Dict[str, Any]:
@@ -124,7 +111,6 @@ class Send(
       })
     return result
 
-  #JSON -> Send.
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]

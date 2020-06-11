@@ -1,20 +1,13 @@
-#Types.
 from typing import Dict, List, Tuple, Any
-
-#BLS lib.
-from e2e.Libs.BLS import PrivateKey, Signature
-
-#Transaction classs.
-from e2e.Classes.Transactions.Transaction import Transaction
-
-#Blake2b standard function.
 from hashlib import blake2b
 
-#Claim class.
+from e2e.Libs.BLS import PrivateKey, Signature
+
+from e2e.Classes.Transactions.Transaction import Transaction
+
 class Claim(
   Transaction
 ):
-  #Constructor.
   def __init__(
     self,
     inputs: List[Tuple[bytes, int]],
@@ -24,18 +17,16 @@ class Claim(
     self.inputs: List[Tuple[bytes, int]] = inputs
     self.output: bytes = output
     self.amount: int = 0
-
     self.signature: bytes = signature
     self.hash = blake2b(b'\1' + self.signature, digest_size=32).digest()
 
-  #Transaction -> Claim. Satisifes static typing requirements.
+  #Satisifes static typing requirements.
   @staticmethod
   def fromTransaction(
     tx: Transaction
   ) -> Any:
     return tx
 
-  #Sign.
   def sign(
     self,
     privKeys: List[PrivateKey]
@@ -62,7 +53,6 @@ class Claim(
     self.signature = Signature.aggregate(signatures).serialize()
     self.hash = blake2b(b'\1' + self.signature, digest_size=32).digest()
 
-  #Serialize.
   def serialize(
     self
   ) -> bytes:
@@ -72,7 +62,6 @@ class Claim(
     result += self.output + self.signature
     return result
 
-  #Claim -> JSON.
   def toJSON(
     self
   ) -> Dict[str, Any]:
@@ -83,7 +72,6 @@ class Claim(
         "key": self.output.hex().upper(),
         "amount": str(self.amount)
       }],
-
       "signature": self.signature.hex().upper(),
       "hash": self.hash.hex().upper()
     }
@@ -94,7 +82,6 @@ class Claim(
       })
     return result
 
-  #JSON -> Claim.
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]

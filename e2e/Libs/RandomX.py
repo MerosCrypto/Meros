@@ -1,11 +1,7 @@
-#Types.
 from typing import Any
-
-#CTypes.
 from ctypes import cdll, c_int, c_char, \
            Array, c_char_p, c_void_p, create_string_buffer, byref
 
-#OS standard lib.
 import os
 
 #Import the RandomX library.
@@ -16,7 +12,6 @@ if os.name == "nt":
 else:
   RandomXLib = cdll.LoadLibrary("e2e/Libs/mc_randomx/RandomX/build/librandomx.so")
 
-#Define the function types.
 RandomXLib.randomx_get_flags.randomx_get_flags = None
 RandomXLib.randomx_get_flags.restype = c_int
 

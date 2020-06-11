@@ -1,14 +1,8 @@
-#Types.
 from typing import List, Tuple, Type, Any
-
-#Curve lib.
-from e2e.Libs.Milagro.PrivateKeysAndSignatures import Big384, FP1Obj, G1
-
-#OS standard lib.
+from ctypes import cdll, Structure, POINTER, c_int
 import os
 
-#CTypes.
-from ctypes import cdll, Structure, POINTER, c_int
+from e2e.Libs.Milagro.PrivateKeysAndSignatures import Big384, FP1Obj, G1
 
 #Import the Milagro Curve library.
 #pylint: disable=invalid-name
@@ -18,14 +12,11 @@ if os.name == "nt":
 else:
   MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_pairing_BLS381.so")
 
-#pylint: disable=too-few-public-methods,unneeded-multiline-expansion
+#pylint: disable=too-few-public-methods
 class FP2Obj(
   Structure
 ):
-  _fields_: List[Tuple[str, Type[Any]]] = [
-    ("a", FP1Obj),
-    ("b", FP1Obj)
-  ]
+  _fields_: List[Tuple[str, Type[Any]]] = [("a", FP1Obj), ("b", FP1Obj)]
 FP2: Any = POINTER(FP2Obj)
 
 #pylint: disable=too-few-public-methods
@@ -62,7 +53,6 @@ class G2Obj(
   ]
 G2: Any = POINTER(G2Obj)
 
-#Define the function types.
 MilagroPairing.FP2_BLS381_neg.argtypes = [FP2, FP2]
 MilagroPairing.FP2_BLS381_neg.restype = None
 

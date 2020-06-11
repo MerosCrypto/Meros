@@ -1,27 +1,18 @@
-#Types.
 from typing import Deque, Dict, List, Tuple, Optional
+from collections import deque
 
-#Mint class.
 from e2e.Classes.Transactions.Mint import Mint
-
-#Block, Blockchain, and State classes.
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 from e2e.Classes.Merit.State import State
 
-#Deque standard lib.
-from collections import deque
-
-#Epochs class.
 class Epochs:
-  #Constructor.
   def __init__(
     self
   ) -> None:
     self.epochs: Deque[Dict[bytes, List[int]]] = deque([{}] * 5)
     self.mint: int = 0
 
-  #Turn scores into rewards.
   @staticmethod
   def reward(
     blockHash: bytes,
@@ -32,7 +23,6 @@ class Epochs:
       if score[1] == 0:
         break
       outputs.append((score[0], score[1] * 50))
-
     return Mint(blockHash, outputs)
 
   #Score an Epoch and generate rewards.
@@ -75,11 +65,11 @@ class Epochs:
     for i in range(100, len(tupleScores)):
       del tupleScores[i]
 
-    #Normalize each score to 1000.
+    #Normalize the scores to 1000.
     for i in range(len(tupleScores)):
       tupleScores[i] = (tupleScores[i][0], tupleScores[i][1] * 1000 // total)
 
-    #If we don't have a perfect 1000, fix that.
+    #Make sure we have a total of 1000 by giving the edge to the top score.
     total = 0
     for tupleScore in tupleScores:
       total += tupleScore[1]
@@ -88,14 +78,13 @@ class Epochs:
     #Create Mints.
     return Epochs.reward(blockHash, tupleScores)
 
-  #Shift a Block.
+  #Shift on a Block, creating a Mint out of the oldest Epoch.
   def shift(
     self,
     state: State,
     blockchain: Blockchain,
     b: int
   ) -> Optional[Mint]:
-    #Grab the Block.
     block: Block = blockchain.blocks[b]
 
     #Construct the new Epoch.
@@ -112,8 +101,8 @@ class Epochs:
           epoch[packet.hash] = []
         epoch[packet.hash] += packet.holders
 
-    #Shift on the Epoch.
     self.epochs.append(epoch)
     epoch = self.epochs.popleft()
 
+    #Score the Epoch, which creates a Mint and returns it.
     return Epochs.score(state, block.header.hash, epoch)

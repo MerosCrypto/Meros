@@ -1,29 +1,20 @@
-#Types.
 from typing import Callable, Dict, List, Optional, Any
 
-#Sketch class.
 from e2e.Libs.Minisketch import Sketch
 
-#Merit classes.
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Merit import Merit
 
-#Element classes.
 from e2e.Classes.Consensus.Verification import Verification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
-#Transactions class.
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 
-#Merit and Transactions verifiers.
+from e2e.Tests.Errors import TestError
 from e2e.Tests.Merit.Verify import verifyBlockchain
 from e2e.Tests.Transactions.Verify import verifyTransactions
 
@@ -37,17 +28,16 @@ class Liver:
     callbacks: Dict[int, Callable[[], None]] = {},
     everyBlock: Optional[Callable[[int], None]] = None
   ) -> None:
-    #RPC.
     self.rpc: RPC = rpc
 
-    #Arguments.
+    #Copy the arguments into the class.
     self.merit: Merit = Merit.fromJSON(blockchain)
     self.transactions: Optional[Transactions] = transactions
 
     self.callbacks: Dict[int, Callable[[], None]] = dict(callbacks)
     self.everyBlock: Optional[Callable[[int], None]] = everyBlock
 
-  #Sned the DB and verify it.
+  #Send the Blockchain, as if it's being mined in real time, and verify it.
   def live(
     self,
     ignorePackets: List[bytes] = []
@@ -58,7 +48,6 @@ class Liver:
 
     #Send each Block.
     for b in range(1, len(self.merit.blockchain.blocks)):
-      #Grab the Block.
       block: Block = self.merit.blockchain.blocks[b]
 
       #Set loop variables with pending data.
@@ -75,7 +64,6 @@ class Liver:
 
       for elem in block.body.elements:
         if isinstance(elem, MeritRemoval):
-          #pylint: disable=consider-merging-isinstance
           if (
             (
               isinstance(elem.e1, Verification) or
@@ -96,10 +84,8 @@ class Liver:
           ):
             pendingTXs.append(elem.e2.hash)
 
-      #Send the Block.
       self.rpc.meros.liveBlockHeader(block.header)
 
-      #Handle sync requests.
       reqHash: bytes = bytes()
       while True:
         #If we sent every bit of data, break.
@@ -110,27 +96,21 @@ class Liver:
         msg: bytes = self.rpc.meros.sync.recv()
 
         if MessageType(msg[0]) == MessageType.BlockBodyRequest:
-          #If we already sent the body, raise.
+          reqHash = msg[1 : 33]
+
           if not pendingBody:
             raise TestError("Meros asked for the same Block Body multiple times.")
-
-          #Verify Meros asked for the right Block Body.
-          reqHash = msg[1 : 33]
-          if reqHash != block.header.hash:
+          elif reqHash != block.header.hash:
             raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
-          #Send the BlockBody.
           self.rpc.meros.blockBody(block)
-
-          #Mark the body as sent.
           pendingBody = False
 
         elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
+          reqHash = msg[1 : 33]
           if not block.body.packets:
             raise TestError("Meros asked for Sketch Hashes from a Block without any.")
-
-          reqHash = msg[1 : 33]
-          if reqHash != block.header.hash:
+          elif reqHash != block.header.hash:
             raise TestError("Meros asked for Sketch Hashes that didn't belong to the Block we just sent it.")
 
           #Create the haashes.
@@ -138,15 +118,13 @@ class Liver:
           for packet in block.body.packets:
             hashes.append(Sketch.hash(block.header.sketchSalt, packet))
 
-          #Send the Sketch Hashes.
           self.rpc.meros.sketchHashes(hashes)
 
         elif MessageType(msg[0]) == MessageType.SketchHashRequests:
+          reqHash = msg[1 : 33]
           if not block.body.packets:
             raise TestError("Meros asked for Verification Packets from a Block without any.")
-
-          reqHash = msg[1 : 33]
-          if reqHash != block.header.hash:
+          elif reqHash != block.header.hash:
             raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
 
           #Create a lookup of hash to packets.
@@ -173,8 +151,7 @@ class Liver:
 
           if self.transactions is None:
             raise TestError("Meros asked for a Transaction when we have none.")
-
-          if reqHash not in pendingTXs:
+          elif reqHash not in pendingTXs:
             raise TestError("Meros asked for a non-existent Transaction, a Transaction part of a different Block, or an already sent Transaction.")
 
           self.rpc.meros.syncTransaction(self.transactions.txs[reqHash])

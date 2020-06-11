@@ -1,20 +1,15 @@
-#Types.
 from typing import Dict, List, Tuple, Set, Any
 
-#Pylint classes.
+import re
+
 from pylint.lint import PyLinter
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IRawChecker
 
-#Regex standard lib.
-import re
-
-#Quotation marks.
 quotations: Set[str] = {'"', '\''}
-#Chars which start expandable objects.
 startChars: Set[str] = {'(', '[', '{'}
-#Chars which end expandable objects.
 endChars: Set[str] = {')', ']', '}'}
+
 #Conjunctions used to combine values.
 #If a line ends in these, it's an infix multiline expression.
 #We don't check for those.
@@ -60,13 +55,10 @@ def nested(
   lines: List[Tuple[int, str]],
   num: int,
   pos: int
-) -> int:
-  #Extract the line.
+) -> bool:
   line: str = lines[num][1]
-
-  #If the pos is the end of the line, return.
   if pos == len(line) - 1:
-    return 0
+    return False
 
   #Matching ending symbols.
   endSyms: str = ""
@@ -82,7 +74,7 @@ def nested(
 
   #If there isn't at least one other object, return false.
   if len(endSyms) < 2:
-    return 0
+    return False
 
   #Find out how many values there are.
   values: int = 1
@@ -101,12 +93,12 @@ def nested(
     endSyms += ','
   try:
     if lines[num + values][1] != endSyms:
-      return 0
+      return False
   except Exception:
-    return 0
+    return False
 
   #If we made it through that, return true.
-  return 1
+  return True
 
 #Check if an expression contains a curly bracket expression with a multiline expansion.
 def containsExpandedCurlies(
@@ -389,14 +381,9 @@ class MultilineExpansionChecker(
 
         #If this object only has one value, which is expanded, yet isn't itself, skip to said object.
         isNested: int = nested(lines, num, curr)
-        if isNested == 1:
+        if isNested:
           skipToEnd = True
           continue
-        elif isNested == 0:
-          pass
-        elif isNested == -1:
-          self.add_message("improper-multiline-expansion", line=num+1)
-          return
 
         #Check the object should've been expanded and was properly.
         #Make sure the multiline object doesn't have values on the same line.

@@ -1,21 +1,14 @@
-#Types.
 from typing import Dict, Tuple, Any
+from hashlib import blake2b
 
-#Transaction and SpamFilter classes.
+import ed25519
+
 from e2e.Classes.Transactions.Transaction import Transaction
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-#Ed25519 lib.
-import ed25519
-
-#Blake2b standard function.
-from hashlib import blake2b
-
-#Data class.
 class Data(
   Transaction
 ):
-  #Constructor.
   def __init__(
     self,
     txInput: bytes,
@@ -26,27 +19,24 @@ class Data(
     self.txInput: bytes = txInput
     self.data: bytes = data
     self.hash: bytes = blake2b(b"\3" + txInput + data, digest_size=32).digest()
-
     self.signature: bytes = signature
 
     self.proof: int = proof
     self.argon: bytes = SpamFilter.run(self.hash, self.proof)
 
-  #Transaction -> Data. Satisifes static typing requirements.
+  #Satisifes static typing requirements.
   @staticmethod
   def fromTransaction(
     tx: Transaction
   ) -> Any:
     return tx
 
-  #Sign.
   def sign(
     self,
     privKey: ed25519.SigningKey
   ) -> None:
     self.signature = privKey.sign(b"MEROS" + self.hash)
 
-  #Mine.
   def beat(
     self,
     spamFilter: SpamFilter
@@ -55,7 +45,6 @@ class Data(
     self.argon = result[0]
     self.proof = result[1]
 
-  #Serialize.
   def serialize(
     self
   ) -> bytes:
@@ -67,7 +56,6 @@ class Data(
       self.proof.to_bytes(4, "big")
     )
 
-  #Data -> JSON.
   def toJSON(
     self
   ) -> Dict[str, Any]:
@@ -78,14 +66,13 @@ class Data(
       }],
       "outputs": [],
       "hash": self.hash.hex().upper(),
-
       "data": self.data.hex().upper(),
       "signature": self.signature.hex().upper(),
+
       "proof": self.proof,
       "argon": self.argon.hex().upper()
     }
 
-  #JSON -> Data.
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
