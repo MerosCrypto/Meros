@@ -117,7 +117,7 @@ def decode_sketch(
   sketch: bytes,
   capacity: int
 ) -> List[int]:
-  withoutEvens: int = 0
+  withoutEvens: List[int] = []
   for e in range(0, len(sketch), FIELD_BYTES):
     withoutEvens.append(int.from_bytes(sketch[e : e + FIELD_BYTES], 'little'))
 
