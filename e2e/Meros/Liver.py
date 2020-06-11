@@ -65,20 +65,14 @@ class Liver:
       for elem in block.body.elements:
         if isinstance(elem, MeritRemoval):
           if (
-            (
-              isinstance(elem.e1, Verification) or
-              isinstance(elem.e1, VerificationPacket)
-            ) and
+            isinstance(elem.e1, (Verification, VerificationPacket)) and
             (elem.e1.hash not in self.rpc.meros.sentTXs) and
             (elem.e1.hash not in pendingTXs)
           ):
             pendingTXs.append(elem.e1.hash)
 
           if (
-            (
-              isinstance(elem.e2, Verification) or
-              isinstance(elem.e2, VerificationPacket)
-            ) and
+            isinstance(elem.e2, (Verification, VerificationPacket)) and
             (elem.e2.hash not in self.rpc.meros.sentTXs) and
             (elem.e2.hash not in pendingTXs)
           ):
@@ -100,7 +94,7 @@ class Liver:
 
           if not pendingBody:
             raise TestError("Meros asked for the same Block Body multiple times.")
-          elif reqHash != block.header.hash:
+          if reqHash != block.header.hash:
             raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
           self.rpc.meros.blockBody(block)
@@ -110,7 +104,7 @@ class Liver:
           reqHash = msg[1 : 33]
           if not block.body.packets:
             raise TestError("Meros asked for Sketch Hashes from a Block without any.")
-          elif reqHash != block.header.hash:
+          if reqHash != block.header.hash:
             raise TestError("Meros asked for Sketch Hashes that didn't belong to the Block we just sent it.")
 
           #Create the haashes.
@@ -124,7 +118,7 @@ class Liver:
           reqHash = msg[1 : 33]
           if not block.body.packets:
             raise TestError("Meros asked for Verification Packets from a Block without any.")
-          elif reqHash != block.header.hash:
+          if reqHash != block.header.hash:
             raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
 
           #Create a lookup of hash to packets.
@@ -151,7 +145,7 @@ class Liver:
 
           if self.transactions is None:
             raise TestError("Meros asked for a Transaction when we have none.")
-          elif reqHash not in pendingTXs:
+          if reqHash not in pendingTXs:
             raise TestError("Meros asked for a non-existent Transaction, a Transaction part of a different Block, or an already sent Transaction.")
 
           self.rpc.meros.syncTransaction(self.transactions.txs[reqHash])

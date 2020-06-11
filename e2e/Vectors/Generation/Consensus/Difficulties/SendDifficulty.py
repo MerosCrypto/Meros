@@ -33,14 +33,14 @@ block = Block(
   BlockHeader(
     0,
     blockchain.last(),
-    BlockHeader.createContents([], [sendDiff]),
+    BlockHeader.createContents([], [sendDiffs[0]]),
     1,
     bytes(4),
     bytes(32),
     0,
     blockchain.blocks[-1].header.time + 1200
   ),
-  BlockBody([], [sendDiff], sendDiff.signature)
+  BlockBody([], [sendDiffs[0]], sendDiffs[0].signature)
 )
 block.mine(blsPrivKey, blockchain.difficulty())
 blockchain.add(block)
@@ -70,14 +70,14 @@ block = Block(
   BlockHeader(
     0,
     blockchain.last(),
-    BlockHeader.createContents([], [sendDiff]),
+    BlockHeader.createContents([], [sendDiffs[1]]),
     1,
     bytes(4),
     bytes(32),
     0,
     blockchain.blocks[-1].header.time + 1200
   ),
-  BlockBody([], [sendDiff], sendDiff.signature)
+  BlockBody([], [sendDiffs[1]], sendDiffs[1].signature)
 )
 block.mine(blsPrivKey, blockchain.difficulty())
 blockchain.add(block)
@@ -86,7 +86,7 @@ print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
 #Create a MeritRemoval by reusing a nonce.
 competing: SignedSendDifficulty = SignedSendDifficulty(0, 1)
 competing.sign(0, blsPrivKey)
-mr: PartialMeritRemoval = PartialMeritRemoval(sendDiff, competing)
+mr: PartialMeritRemoval = PartialMeritRemoval(sendDiffs[1], competing)
 
 #Generate a Block containing the MeritRemoval.
 block = Block(

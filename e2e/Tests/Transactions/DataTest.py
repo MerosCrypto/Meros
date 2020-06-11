@@ -1,5 +1,3 @@
-from time import sleep
-
 import ed25519
 
 from e2e.Classes.Transactions.Data import Data

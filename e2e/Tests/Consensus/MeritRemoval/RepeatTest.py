@@ -3,7 +3,7 @@
 from typing import Dict, List, IO, Any
 import json
 
-from raises
+from pytest import raises
 
 from e2e.Classes.Merit.Block import Block
 

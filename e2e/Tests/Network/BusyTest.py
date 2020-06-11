@@ -14,7 +14,7 @@ from e2e.Tests.Errors import TestError, SuccessError
 def BusyTest(
   rpc: RPC
 ) -> None:
-  # Solely used to get the genesis Block hash.
+  #Solely used to get the genesis Block hash.
   blockchain: Blockchain = Blockchain()
 
   #Handshake with the node.
@@ -48,11 +48,7 @@ def BusyTest(
   busy: int = 0
   buf: bytes
   for _ in select.select([busyServer], [], [], 5000):
-    #Accept a new
-#Socket and select standard libs.
-import socket
-import select
- connection.
+    #Accept a new connection.
     client, _ = busyServer.accept()
 
     #Verify Meros's Handshake.

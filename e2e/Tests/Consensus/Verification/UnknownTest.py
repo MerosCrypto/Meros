@@ -3,6 +3,8 @@
 from typing import Dict, List, IO, Any
 import json
 
+from pytest import raises
+
 from e2e.Libs.Minisketch import Sketch
 
 from e2e.Classes.Merit.Block import Block

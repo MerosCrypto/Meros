@@ -39,7 +39,7 @@ for i in range(6):
   print("Generated State Block " + str(i) + ".")
 
 #Assign Miner 0 4 more Blocks of Merit.
-for _ in range(4):
+for i in range(6, 10):
   block: Block = Block(
     BlockHeader(
       0,

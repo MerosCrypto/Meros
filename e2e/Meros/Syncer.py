@@ -113,7 +113,7 @@ class Syncer:
         reqHash = msg[1 : 33]
         if (self.txs != set()) or (self.packets != {}):
           raise TestError("Meros asked for a new Block before syncing the last Block's Transactions and Packets.")
-        elif reqHash != self.blocks[-1].header.hash:
+        if reqHash != self.blocks[-1].header.hash:
           raise TestError("Meros asked for a BlockHeader other than the next Block's on the last BlockList.")
 
         self.rpc.meros.syncBlockHeader(self.blocks[-1].header)
@@ -159,7 +159,7 @@ class Syncer:
         reqHash = msg[1 : 33]
         if not self.packets:
           raise TestError("Meros asked for Verification Packets from a Block without any.")
-        elif reqHash != self.blocks[-1].header.hash:
+        if reqHash != self.blocks[-1].header.hash:
           raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
 
         #Look up each requested packet and respond accordingly.
@@ -175,9 +175,9 @@ class Syncer:
 
         if self.transactions is None:
           raise TestError("Meros asked for a Transaction when we have none.")
-        elif reqHash not in self.transactions.txs:
+        if reqHash not in self.transactions.txs:
           raise TestError("Meros asked for a Transaction we don't have.")
-        elif reqHash not in self.txs:
+        if reqHash not in self.txs:
           raise TestError("Meros asked for a Transaction we haven't mentioned.")
 
         self.rpc.meros.syncTransaction(self.transactions.txs[reqHash])

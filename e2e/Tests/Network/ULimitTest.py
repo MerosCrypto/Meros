@@ -7,7 +7,6 @@ import socket
 from e2e.Classes.Merit.Blockchain import Blockchain
 
 from e2e.Meros.Meros import MessageType, BusyError, MerosSocket
-from e2e.Meros.RPC import RPC
 
 from e2e.Tests.Errors import TestError
 

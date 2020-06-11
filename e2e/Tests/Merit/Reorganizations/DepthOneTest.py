@@ -1,7 +1,7 @@
 from typing import Dict, List, IO, Any
 import json
 
-from pytest import json
+from pytest import raises
 
 from e2e.Classes.Merit.Blockchain import Blockchain
 
