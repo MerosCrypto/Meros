@@ -1,47 +1,31 @@
-#Types.
 from typing import Dict, List, IO, Any
+from hashlib import blake2b
+import json
 
-#BLS lib.
+import ed25519
+
 from e2e.Libs.BLS import PrivateKey, PublicKey, Signature
 
-#Data class.
 from e2e.Classes.Transactions.Data import Data
 
-#Element classes.
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import SignedVerificationPacket, SignedMeritRemovalVerificationPacket
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
-
-#SpamFilter class.
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-#Blockchain classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Ed25519 lib.
-import ed25519
-
-#Blake2b standard function.
-from hashlib import blake2b
-
-#JSON standard lib.
-import json
-
-#Ed25519 Keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-#BLS Keys.
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
-#SpamFilter.
 spamFilter: SpamFilter = SpamFilter(5)
 
-#Blockchains.
 packetedChain: Blockchain = Blockchain()
 reorderedChain: Blockchain = Blockchain()
 
@@ -59,10 +43,7 @@ block = Block(
   ),
   BlockBody()
 )
-#Mine it.
 block.mine(blsPrivKey, packetedChain.difficulty())
-
-#Add it.
 packetedChain.add(block)
 reorderedChain.add(block)
 print("Generated Hundred Twenty Three Packet Block 1/2 " + str(len(packetedChain.blocks)) + ".")
@@ -98,10 +79,7 @@ block = Block(
   ),
   BlockBody([], [mr], mr.signature)
 )
-#Mine it.
 block.mine(blsPrivKey, packetedChain.difficulty())
-
-#Add it.
 packetedChain.add(block)
 print("Generated Hundred Twenty Three Packet Block 1 " + str(len(packetedChain.blocks)) + ".")
 
@@ -152,10 +130,7 @@ block = Block(
   ),
   BlockBody([], [packeted], packeted.signature)
 )
-#Mine it.
 block.mine(blsPrivKey, packetedChain.difficulty())
-
-#Add it.
 packetedChain.add(block)
 print("Generated Hundred Twenty Three Packet Block 1 " + str(len(packetedChain.blocks)) + ".")
 
@@ -173,10 +148,7 @@ block = Block(
   ),
   BlockBody([], [packeted], packeted.signature)
 )
-#Mine it.
 block.mine(blsPrivKey, reorderedChain.difficulty())
-
-#Add it.
 reorderedChain.add(block)
 print("Generated Hundred Twenty Three Packet Block 2 " + str(len(reorderedChain.blocks)) + ".")
 
@@ -229,10 +201,7 @@ block = Block(
   ),
   BlockBody([], [reordered], reordered.signature)
 )
-#Mine it.
 block.mine(blsPrivKey, reorderedChain.difficulty())
-
-#Add it.
 reorderedChain.add(block)
 print("Generated Hundred Twenty Three Packet Block 2 " + str(len(reorderedChain.blocks)) + ".")
 

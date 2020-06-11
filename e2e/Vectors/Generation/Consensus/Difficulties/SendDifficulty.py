@@ -1,40 +1,34 @@
-#Types.
 from typing import IO, Dict, List, Any
+from hashlib import blake2b
+import json
 
-#BLS lib.
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
-#SendDifficulty and MeritRemoval classes.
 from e2e.Classes.Consensus.SendDifficulty import SignedSendDifficulty
 from e2e.Classes.Consensus.MeritRemoval import PartialMeritRemoval
 
-#Blockchain classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Blake2b standard function.
-from hashlib import blake2b
-
-#JSON standard lib.
-import json
-
-#Blockchain.
 bbFile: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
 blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
 blockchain: Blockchain = Blockchain.fromJSON(blocks)
 bbFile.close()
 
-#BLS Keys.
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
-#Create a SendDifficulty.
-sendDiff: SignedSendDifficulty = SignedSendDifficulty(5, 0)
-sendDiff.sign(0, blsPrivKey)
+#Create two SendDifficulties which are different.
+sendDiffs: List[SignedSendDifficulty] = [
+  SignedSendDifficulty(3, 0),
+  SignedSendDifficulty(1, 1)
+]
+for sendDiff in sendDiffs:
+  sendDiff.sign(0, blsPrivKey)
 
-#Generate a Block containing the SendDifficulty.
+#Generate a Block containing the first SendDifficulty.
 block = Block(
   BlockHeader(
     0,
@@ -48,10 +42,7 @@ block = Block(
   ),
   BlockBody([], [sendDiff], sendDiff.signature)
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
@@ -70,16 +61,9 @@ for _ in range(24):
     ),
     BlockBody()
   )
-  #Mine it.
   block.mine(blsPrivKey, blockchain.difficulty())
-
-  #Add it.
   blockchain.add(block)
   print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
-
-#Now that we have aa vote, update our vote.
-sendDiff = SignedSendDifficulty(1, 1)
-sendDiff.sign(0, blsPrivKey)
 
 #Generate a Block containing the new SendDifficulty.
 block = Block(
@@ -95,10 +79,7 @@ block = Block(
   ),
   BlockBody([], [sendDiff], sendDiff.signature)
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
@@ -121,10 +102,7 @@ block = Block(
   ),
   BlockBody([], [mr], mr.signature)
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
 

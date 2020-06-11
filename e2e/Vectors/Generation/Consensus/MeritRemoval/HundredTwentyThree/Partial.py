@@ -1,30 +1,20 @@
-#Types.
 from typing import Dict, List, IO, Any
+from hashlib import blake2b
+import json
 
-#BLS lib.
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
-#Element classes.
 from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 from e2e.Classes.Consensus.MeritRemoval import PartialMeritRemoval, SignedMeritRemoval
 
-#Blockchain classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Blake2b standard function.
-from hashlib import blake2b
-
-#JSON standard lib.
-import json
-
-#BLS Keys.
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
-#Blockchains.
 blockchain: Blockchain = Blockchain()
 
 #Generate a Block granting the holder Merit.
@@ -41,10 +31,7 @@ block = Block(
   ),
   BlockBody()
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated Hundred Twenty Three Partial Block " + str(len(blockchain.blocks)) + ".")
 
@@ -70,10 +57,7 @@ block = Block(
   ),
   BlockBody([], [dataDiffs[0]], dataDiffs[0].signature)
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated Hundred Twenty Three Partial Block " + str(len(blockchain.blocks)) + ".")
 
@@ -94,10 +78,7 @@ block = Block(
   ),
   BlockBody([], [partial], partial.signature)
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated Hundred Twenty Three Partial Block " + str(len(blockchain.blocks)) + ".")
 
@@ -118,10 +99,7 @@ block = Block(
   ),
   BlockBody([], [mr], mr.signature)
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated Hundred Twenty Three Partial Block " + str(len(blockchain.blocks)) + ".")
 

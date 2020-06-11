@@ -1,58 +1,37 @@
-#Types.
 from typing import IO, Dict, List, Any
+from hashlib import blake2b
+import json
 
-#BLS lib.
+import ed25519
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
-#Transactions classes.
 from e2e.Classes.Transactions.Claim import Claim
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#SpamFilter class.
-from e2e.Classes.Consensus.SpamFilter import SpamFilter
-
-#SignedVerification and VerificationPacket classes.
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
+from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-#Merit classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Merit import Merit
 
-#Ed25519 lib.
-import ed25519
-
-#Blake2b standard function.
-from hashlib import blake2b
-
-#JSON standard lib.
-import json
-
-#Blank Blocks.
 bbFile: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
 blankBlocks: List[Dict[str, Any]] = json.loads(bbFile.read())
 bbFile.close()
 
-#Transactions.
 transactions: Transactions = Transactions()
-#Merit.
 merit: Merit = Merit()
-
-#SpamFilter.
 dataFilter: SpamFilter = SpamFilter(5)
 
-#Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-#BLS keys.
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
-#Add 5 Blank Blocks.
 for i in range(5):
   merit.add(Block.fromJSON(blankBlocks[i]))
 
@@ -82,14 +61,10 @@ block: Block = Block(
   BlockBody([VerificationPacket(verif.hash, [0])], [], verif.signature)
 )
 for _ in range(6):
-  #Mine it.
   block.mine(blsPrivKey, merit.blockchain.difficulty())
-
-  #Add it.
   merit.add(block)
   print("Generated Claimed Mint Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
-  #Create the next Block.
   block = Block(
     BlockHeader(
       0,

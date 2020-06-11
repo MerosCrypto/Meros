@@ -1,36 +1,27 @@
-#Types.
 from typing import IO, Dict, List, Any
 
-#BLS lib.
+from hashlib import blake2b
+import json
+
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
-#DataDifficulty and MeritRemoval classes.
 from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 from e2e.Classes.Consensus.MeritRemoval import PartialMeritRemoval
 
-#Blockchain classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Blake2b standard function.
-from hashlib import blake2b
-
-#JSON standard lib.
-import json
-
-#Blockchain.
 bbFile: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
 blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
 blockchain: Blockchain = Blockchain.fromJSON(blocks)
 bbFile.close()
 
-#BLS Keys.
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
-#Create a DataDifficulty.
+#Create two DataDifficulties which are different.
 dataDiffs: List[SignedDataDifficulty] = [
   SignedDataDifficulty(3, 0),
   SignedDataDifficulty(1, 1)
@@ -38,7 +29,7 @@ dataDiffs: List[SignedDataDifficulty] = [
 for dataDiff in dataDiffs:
   dataDiff.sign(0, blsPrivKey)
 
-#Generate a Block containing the DataDifficulty.
+#Generate a Block containing the first DataDifficulty.
 block = Block(
   BlockHeader(
     0,
@@ -52,10 +43,7 @@ block = Block(
   ),
   BlockBody([], [dataDiffs[0]], dataDiffs[0].signature)
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
@@ -78,7 +66,7 @@ for _ in range(24):
   blockchain.add(block)
   print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
-#Now that we have aa vote, update our vote.
+#Now that we have a vote, update our vote.
 block = Block(
   BlockHeader(
     0,
