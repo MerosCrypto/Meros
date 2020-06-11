@@ -5,20 +5,19 @@ from pytest import raises
 
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-from e2e.Meros.Meros import MessageType
-from e2e.Meros.RPC import RPC
+from e2e.Meros.Meros import MessageType, Meros
 
 from e2e.Tests.Errors import TestError, SuccessError
 
 #pylint: disable=too-many-statements
 def BusyTest(
-  rpc: RPC
+  meros: Meros
 ) -> None:
   #Solely used to get the genesis Block hash.
   blockchain: Blockchain = Blockchain()
 
   #Handshake with the node.
-  rpc.meros.syncConnect(blockchain.blocks[0].header.hash)
+  meros.syncConnect(blockchain.blocks[0].header.hash)
 
   #Create two new server sockets.
   def createServerSocket() -> socket.socket:
@@ -31,14 +30,14 @@ def BusyTest(
 
   #Receive Syncing until Meros asks for peers.
   while True:
-    res = rpc.meros.sync.recv()
+    res = meros.sync.recv()
     if MessageType(res[0]) == MessageType.Syncing:
-      rpc.meros.sync.send(MessageType.BlockchainTail.toByte() + blockchain.blocks[0].header.hash)
+      meros.sync.send(MessageType.BlockchainTail.toByte() + blockchain.blocks[0].header.hash)
     elif MessageType(res[0]) == MessageType.PeersRequest:
       break
 
   #Craft a Peers message of our own server.
-  rpc.meros.sync.send(
+  meros.sync.send(
     MessageType.Peers.toByte() +
     bytes.fromhex("017F000001") +
     busyServer.getsockname()[1].to_bytes(2, "big")
@@ -60,7 +59,7 @@ def BusyTest(
     if buf[1:] != (
       (254).to_bytes(1, "big") +
       (254).to_bytes(1, "big") +
-      (128).to_bytes(1, "big") + (rpc.meros.tcp).to_bytes(2, "big") +
+      (128).to_bytes(1, "big") + meros.tcp.to_bytes(2, "big") +
       blockchain.blocks[0].header.hash
     ):
       busyServer.close()
@@ -93,7 +92,7 @@ def BusyTest(
       if buf[1:] != (
         (254).to_bytes(1, "big") +
         (254).to_bytes(1, "big") +
-        (128).to_bytes(1, "big") + (rpc.meros.tcp).to_bytes(2, "big") +
+        (128).to_bytes(1, "big") + meros.tcp.to_bytes(2, "big") +
         blockchain.blocks[0].header.hash
       ):
         server.close()

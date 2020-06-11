@@ -20,16 +20,6 @@ def dataDir(
     pass
   return request.param
 
-@fixture(scope="module")
-def rpc(
-  #pylint: disable=redefined-outer-name
-  meros: Meros,
-  request: Any
-) -> RPC:
-  result: RPC = RPC(meros)
-  request.addfinalizer(result.quit)
-  return result
-
 @fixture(scope="module", params=[5132])
 def meros(
   #pylint: disable=redefined-outer-name
@@ -44,5 +34,15 @@ def meros(
   )
   #Let the instance start up.
   sleep(5)
+  request.addfinalizer(result.quit)
+  return result
+
+@fixture(scope="module")
+def rpc(
+  #pylint: disable=redefined-outer-name
+  meros: Meros,
+  request: Any
+) -> RPC:
+  result: RPC = RPC(meros)
   request.addfinalizer(result.quit)
   return result

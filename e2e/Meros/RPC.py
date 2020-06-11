@@ -71,6 +71,7 @@ class RPC:
     self
   ) -> None:
     self.call("system", "quit")
+    self.meros.calledQuit = True
 
   #Reset the Meros node, deleting its Database and rebooting it.
   #Used after caling a Liver and before calling a Syncer.
