@@ -20,7 +20,7 @@ for b in range(15):
   alt.add(Block.fromJSON(blocks[b]))
 
 #Generate an alternative five Blocks.
-for i in range(5):
+for i in range(1, 5):
   block = Block(
     BlockHeader(
       0,

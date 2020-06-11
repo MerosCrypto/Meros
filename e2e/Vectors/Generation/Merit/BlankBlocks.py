@@ -26,7 +26,7 @@ block: Block = Block(
   ),
   BlockBody()
 )
-for i in range(26):
+for i in range(1, 26):
   block.mine(privKey, blockchain.difficulty())
   blockchain.add(block)
   print("Generated Blank Block " + str(i) + ".")

@@ -22,7 +22,7 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Create two SendDifficulties which are different.
 sendDiffs: List[SignedSendDifficulty] = [
-  SignedSendDifficulty(3, 0),
+  SignedSendDifficulty(5, 0),
   SignedSendDifficulty(1, 1)
 ]
 for sendDiff in sendDiffs:

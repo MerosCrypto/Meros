@@ -20,7 +20,7 @@ privKeys: List[PrivateKey] = [
 ]
 
 #Assign every Miner Merit.
-for i in range(6):
+for i in range(1, 6):
   block: Block = Block(
     BlockHeader(
       0,
@@ -29,12 +29,12 @@ for i in range(6):
       1,
       bytes(4),
       bytes(32),
-      privKeys[i].toPublicKey().serialize(),
+      privKeys[i-1].toPublicKey().serialize(),
       blockchain.blocks[-1].header.time + 1200
     ),
     BlockBody()
   )
-  block.mine(privKeys[i], blockchain.difficulty())
+  block.mine(privKeys[i-1], blockchain.difficulty())
   blockchain.add(block)
   print("Generated State Block " + str(i) + ".")
 
