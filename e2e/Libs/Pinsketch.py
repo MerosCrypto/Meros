@@ -163,33 +163,33 @@ def decode_sketch(
 
 	# Vold is already 0 -- no need to initialize
 	# Initialize Vcur to 1
-	Vcur = setCoeff(field, Vcur, 0, 1); // Vcur = 1
+  Vcur = setCoeff(field, Vcur, 0, 1) # Vcur = 1
 
   # TODO: Use Euclid from ffinite
 	# Now run Euclid, but stop as soon as degree of Rcur drops below
 	# (d-1)/2
 	# This will take O(d^2) operations in GF(2^m)
 
-	t: int = (d-1)//2;
+  t: int = (d-1)//2
 
-	while field.FindDegree(Rcur) >= t:
-	  # Rold = Rcur*q + Rnew
+  while field.FindDegree(Rcur) >= t:
+    # Rold = Rcur*q + Rnew
     q, Rnew = field.FullDivision(Rold, Rcur, field.FindDegree(Rold), field.FindDegree(Rcur))
 
-	  // Vnew = Vold - qVcur
-	  temp = field.Multiply(q, Vcur);
-	  Vnew = field.Subtract(Vold, temp);
+    # Vnew = Vold - qVcur
+    temp = field.Multiply(q, Vcur);
+    Vnew = field.Subtract(Vold, temp);
 
     # swap everything (TODO: Simplify.)
-	  tempPointer = Rold
-	  Rold = Rcur
-	  Rcur = Rnew
-	  Rnew = tempPointer
+    tempPointer = Rold
+    Rold = Rcur
+    Rcur = Rnew
+    Rnew = tempPointer
 
-	  tempPointer = Vold
-	  Vold = Vcur
-	  Vcur = Vnew
-	  Vnew = tempPointer
+    tempPointer = Vold
+    Vold = Vcur
+    Vcur = Vnew
+    Vnew = tempPointer
 
 	# At the end of the loop, sigma(z) is Vcur
 	# (up to a constant factor, which doesn't matter,
@@ -203,7 +203,7 @@ def decode_sketch(
   answer = findRoots(field, Vcur)
 
   # take inverses of roots of sigma(z)
-  for v in answer
+  for v in answer:
     v = field.Inverse(v)
 
   return answer
