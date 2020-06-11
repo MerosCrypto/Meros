@@ -77,8 +77,8 @@ def setCoeff(
   i: int,
   a: int
 ) -> int:
-  degree: int = field.FindDegree(i)
-  result: int = result | 1 << degree  # FIXME: Works only if the bit is zero
+  degree: int = field.FindDegree(f)
+  result: int = f | 1 << i  # FIXME: Works only if the bit is zero
   #x.normalize();
   return result
 
@@ -97,7 +97,7 @@ def findRoots(field, f) -> List[int]:
     return [0]
 
   if field.FindDegree(f) == 1:
-    return f & 1
+    return [f & 1]
       
   while True:
     r = field.GetRandomElement()
@@ -117,6 +117,8 @@ def decode_sketch(
   sketch: bytes,
   capacity: int
 ) -> List[int]:
+  d = capacity  # FIXME!
+
   withoutEvens: List[int] = []
   for e in range(0, len(sketch), FIELD_BYTES):
     withoutEvens.append(int.from_bytes(sketch[e : e + FIELD_BYTES], 'little'))
@@ -152,7 +154,7 @@ def decode_sketch(
   Vcur = v2
   Vnew = v3
 
-  field: FField = FField(FIELD_BITS)
+  field: FField = FField(FIELD_BITS, FIELD_MODULUS)
 
   Rold = setCoeff(field, Rold, d-1, 1);  # Rold holds z^{d-1}
 
