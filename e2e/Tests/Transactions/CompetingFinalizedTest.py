@@ -1,29 +1,20 @@
-#Types.
 from typing import Dict, List, IO, Any
+import json
 
-#Sketch class.
+from pytest import raises
+
 from e2e.Libs.Minisketch import Sketch
 
-#Merit classes.
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Merit import Merit
-
-#VerificationPacket class.
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
-
-#Transactions class.
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#Exceptions.
-from e2e.Tests.Errors import TestError, SuccessError
-
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.Liver import Liver
 
-#JSON standard lib.
-import json
+from e2e.Tests.Errors import TestError, SuccessError
 
 #pylint: disable=too-many-statements
 def CompetingFinalizedTest(
@@ -33,9 +24,7 @@ def CompetingFinalizedTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #Merit.
   merit: Merit = Merit.fromJSON(vectors["blockchain"])
-  #Transactions.
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
   #Custom function to send the last Block and verify it errors at the right place.
@@ -43,10 +32,7 @@ def CompetingFinalizedTest(
     #This Block should cause the node to disconnect us AFTER it syncs our Transaction.
     syncedTX: bool = False
 
-    #Grab the Block.
     block: Block = merit.blockchain.blocks[-1]
-
-    #Send the Block.
     rpc.meros.liveBlockHeader(block.header)
 
     #Handle sync requests.
@@ -119,5 +105,5 @@ def CompetingFinalizedTest(
       else:
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-  #Create and execute a Liver.
-  Liver(rpc, vectors["blockchain"], transactions, callbacks={7: checkFail}).live()
+  with raises(SuccessError):
+    Liver(rpc, vectors["blockchain"], transactions, callbacks={7: checkFail}).live()

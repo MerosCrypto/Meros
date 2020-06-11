@@ -1,25 +1,19 @@
-#Types.
 from typing import Dict, List
 
-#BlockHeader, Block, and Blockchain classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#State class.
 #pylint: disable=too-few-public-methods
 class State:
-  #Constructor.
   def __init__(
     self
   ) -> None:
     self.lifetime: int = 100
-
     self.merit = 0
     self.nicks: List[bytes] = []
     self.unlocked: Dict[int, int] = {}
 
-  #Add block.
   def add(
     self,
     blockchain: Blockchain,

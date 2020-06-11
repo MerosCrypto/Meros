@@ -1,6 +1,5 @@
 #pylint: disable=unused-import
 
-#Merit.
 import e2e.Vectors.Generation.Merit.BlankBlocks
 import e2e.Vectors.Generation.Merit.StateBlocks
 import e2e.Vectors.Generation.Merit.HundredSeventyFive
@@ -9,7 +8,6 @@ import e2e.Vectors.Generation.Merit.Reorganizations.LongerChainMoreWork
 import e2e.Vectors.Generation.Merit.Reorganizations.ShorterChainMoreWork
 import e2e.Vectors.Generation.Merit.Reorganizations.DelayedMeritHolder
 
-#Transactions.
 import e2e.Vectors.Generation.Transactions.ClaimedMint
 import e2e.Vectors.Generation.Transactions.AggregatedClaim
 import e2e.Vectors.Generation.Transactions.SameInput
@@ -17,7 +15,6 @@ import e2e.Vectors.Generation.Transactions.CompetingFinalized
 import e2e.Vectors.Generation.Transactions.Fifty
 import e2e.Vectors.Generation.Transactions.PruneUnaddable
 
-#Consensus.
 import e2e.Vectors.Generation.Consensus.Verification.Parsable
 import e2e.Vectors.Generation.Consensus.Verification.Competing
 import e2e.Vectors.Generation.Consensus.Verification.HundredTwo

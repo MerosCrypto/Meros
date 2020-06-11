@@ -1,28 +1,21 @@
 #Tests proper handling of Verifications with Transactions which don't exist.
 
-#Types.
 from typing import Dict, List, IO, Any
+import json
 
-#Sketch class.
+from pytest import raises
+
 from e2e.Libs.Minisketch import Sketch
 
-#Merit classes.
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Merit import Merit
-
-#VerificationPacket class.
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 
-#Exceptions.
-from e2e.Tests.Errors import TestError, SuccessError
-
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.Liver import Liver
 
-#JSON standard lib.
-import json
+from e2e.Tests.Errors import TestError, SuccessError
 
 #pylint: disable=too-many-statements
 def VUnknownTest(
@@ -32,7 +25,6 @@ def VUnknownTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #Merit.
   merit: Merit = Merit.fromJSON(vectors["blockchain"])
 
   #Custom function to send the last Block and verify it errors at the right place.
@@ -111,5 +103,5 @@ def VUnknownTest(
       else:
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-  #Create and execute a Liver.
-  Liver(rpc, vectors["blockchain"], callbacks={1: checkFail}).live()
+  with raises(SuccessError):
+    Liver(rpc, vectors["blockchain"], callbacks={1: checkFail}).live()

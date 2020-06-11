@@ -1,50 +1,33 @@
 #https://github.com/MerosCrypto/Meros/issues/106. Specifically tests elements in Blocks (except MeritRemovals).
 
-#Types.
 from typing import Dict, List, IO, Any
+from time import sleep
+import json
 
-#Sketch class.
 from e2e.Libs.Minisketch import Sketch
 
-#Blockchain classes.
 from e2e.Classes.Merit.Blockchain import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
-
-#VerificationPacket class.
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
-
-#Transactions class.
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Meros import MessageType
 
-#TestError Exception.
 from e2e.Tests.Errors import TestError
-
-#Sleep standard function.
-from time import sleep
-
-#JSON standard lib.
-import json
 
 #pylint: disable=too-many-statements
 def HundredSixBlockElementsTest(
   rpc: RPC
 ) -> None:
-  #Load the vectors.
   file: IO[Any] = open("e2e/Vectors/Consensus/HundredSix/BlockElements.json", "r")
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #Blockchain. Solely used to get the genesis Block hash.
+  #Solely used to get the genesis Block hash.
   blockchain: Blockchain = Blockchain()
-
-  #Transactions.
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
-  #Parse the Blocks from the vectors.
   blocks: List[Block] = []
   for block in vectors["blocks"]:
     blocks.append(Block.fromJSON(block))
@@ -129,5 +112,5 @@ def HundredSixBlockElementsTest(
       else:
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-    #Reset the node.
+    #Reset the node so we can test the next invalid Block.
     rpc.reset()

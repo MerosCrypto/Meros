@@ -1,24 +1,16 @@
 #Tests proper creation and handling of multiple MeritRemovals when Meros receives multiple causes for a MeritRemoval.
 
-#Types.
 from typing import Dict, List, IO, Any
+import json
 
-#SignedMeritRemoval class.
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 from e2e.Meros.Syncer import Syncer
 
-#MeritRemoval verifier.
+from e2e.Tests.Errors import TestError
 from e2e.Tests.Consensus.Verify import verifyMeritRemoval
-
-#JSON standard lib.
-import json
 
 def MultipleTest(
   rpc: RPC
@@ -27,7 +19,6 @@ def MultipleTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #MeritRemovals.
   removals: List[SignedMeritRemoval] = [
     SignedMeritRemoval.fromSignedJSON(vectors["removals"][0]),
     SignedMeritRemoval.fromSignedJSON(vectors["removals"][1])
@@ -49,7 +40,6 @@ def MultipleTest(
   def verifyFirstMeritRemoval() -> None:
     verifyMeritRemoval(rpc, 0, 0, removals[0].holder, True)
 
-  #Create and execute a Liver to handle the Signed MeritRemovals.
   Liver(
     rpc,
     vectors["blockchain"],

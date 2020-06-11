@@ -1,40 +1,29 @@
-#Types.
 from typing import Dict, List, Optional, Any
 
-#BLS lib.
 from e2e.Libs.BLS import Signature
 
-#Element classes.
 from e2e.Classes.Consensus.Element import Element, SignedElement
-
-#SignedVerification class.
 from e2e.Classes.Consensus.Verification import SignedVerification
 
-#VerificationPacket Prefix.
 VERIFICATION_PACKET_PREFIX: bytes = b'\1'
 
-#VerificationPacket class.
 class VerificationPacket(
   Element
 ):
-  #Constructor.
   def __init__(
     self,
     txHash: bytes,
     holders: List[int]
   ) -> None:
     self.prefix: bytes = VERIFICATION_PACKET_PREFIX
-
     self.hash: bytes = txHash
     self.holders: List[int] = holders
 
-  #'Signature' serialize. Used by MeritRemovals.
   def signatureSerialize(
     self
   ) -> bytes:
     raise Exception("VerificationPacket's signatureSerialize was called.")
 
-  #Serialize.
   def serialize(
     self
   ) -> bytes:
@@ -44,13 +33,11 @@ class VerificationPacket(
     result += self.hash
     return result
 
-  #VerificationPacket -> JSON.
   def toJSON(
     self
   ) -> Dict[str, Any]:
     return {
       "descendant": "VerificationPacket",
-
       "hash": self.hash.hex().upper(),
       "holders": self.holders
     }
@@ -73,7 +60,6 @@ class MeritRemovalVerificationPacket(
     holderKeys: List[bytes]
   ) -> None:
     self.prefix: bytes = VERIFICATION_PACKET_PREFIX
-
     self.hash: bytes = txHash
     self.holderKeys: List[bytes] = holderKeys
 
@@ -93,17 +79,13 @@ class MeritRemovalVerificationPacket(
   ) -> Dict[str, Any]:
     result: Dict[str, Any] = {
       "descendant": "VerificationPacket",
-
       "hash": self.hash.hex().upper(),
       "holders": []
     }
-
     for holder in self.holderKeys:
       result["holders"].append(holder.hex().upper())
-
     return result
 
-  #JSON -> VerificationPacket.
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
@@ -117,7 +99,6 @@ class SignedVerificationPacket(
   SignedElement,
   VerificationPacket
 ):
-  #Constructor.
   def __init__(
     self,
     txHash: bytes,
@@ -127,39 +108,32 @@ class SignedVerificationPacket(
     VerificationPacket.__init__(self, txHash, holders)
     self.signature: Signature = signature
 
-  #Add a SignedVerification.
   def add(
     self,
     verif: SignedVerification
   ) -> None:
     self.holders.append(verif.holder)
-
     if self.signature.isInf():
       self.signature = verif.signature
     else:
       self.signature = Signature.aggregate([self.signature, verif.signature])
 
-  #Serialize.
   def signedSerialize(
     self
   ) -> bytes:
     return VerificationPacket.serialize(self) + self.signature.serialize()
 
-  #SignedVerificationPacket -> JSON.
   def toSignedJSON(
     self
   ) -> Dict[str, Any]:
     return {
       "descendant": "VerificationPacket",
-
       "holders": self.holders,
       "hash": self.hash.hex().upper(),
-
       "signed": True,
       "signature": self.signature.serialize().hex().upper()
     }
 
-  #JSON -> SignedVerificationPacket.
   @staticmethod
   def fromSignedJSON(
     json: Dict[str, Any]
@@ -173,7 +147,6 @@ class SignedVerificationPacket(
 class SignedMeritRemovalVerificationPacket(
   SignedVerificationPacket
 ):
-  #Constructor.
   #pylint: disable=super-init-not-called
   def __init__(
     self,
@@ -182,9 +155,7 @@ class SignedMeritRemovalVerificationPacket(
     signature: Optional[Signature]
   ) -> None:
     self.prefix: bytes = VERIFICATION_PACKET_PREFIX
-
     self.hash: bytes = packet.hash
-
     self.holderKeys: List[bytes]
     self.signature: Signature
 
@@ -196,7 +167,6 @@ class SignedMeritRemovalVerificationPacket(
       self.holderKeys = holdersOrLookup
       self.signature = signature
 
-  #'Signature' serialize. Used by MeritRemovals.
   def signatureSerialize(
     self
   ) -> bytes:
@@ -211,13 +181,11 @@ class SignedMeritRemovalVerificationPacket(
   ) -> bytes:
     raise Exception("SignedMeritRemovalVerificationPacket's signedSerialize was called.")
 
-  #SignedMeritRemovalVerificationPacket -> JSON.
   def toJSON(
     self
   ) -> Dict[str, Any]:
     result: Dict[str, Any] = {
       "descendant": "VerificationPacket",
-
       "hash": self.hash.hex().upper(),
       "holders": []
     }
@@ -235,7 +203,6 @@ class SignedMeritRemovalVerificationPacket(
     result["signature"] = self.signature.serialize().hex().upper()
     return result
 
-  #JSON -> SignedMeritRemovalVerificationPacket.
   @staticmethod
   def fromSignedJSON(
     json: Dict[str, Any]

@@ -1,53 +1,35 @@
-#Types.
 from typing import Dict, List, IO, Any
+from time import sleep
+from hashlib import blake2b
+import json
 
-#BLS lib.
 from e2e.Libs.BLS import PrivateKey, Signature
 
-#Merit classes.
 from e2e.Classes.Merit.Blockchain import BlockHeader
 from e2e.Classes.Merit.Blockchain import BlockBody
 from e2e.Classes.Merit.Blockchain import Block
 from e2e.Classes.Merit.Merit import Merit
 
-#Element classes.
 from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 
-#Merit verifiers.
+from e2e.Tests.Errors import TestError
 from e2e.Tests.Merit.Verify import verifyBlockchain
-
-#Sleep standard function.
-from time import sleep
-
-#JSON standard lib.
-import json
-
-#Blake2b standard function.
-from hashlib import blake2b
 
 #pylint: disable=too-many-locals,too-many-statements
 def TElementTest(
   rpc: RPC
 ) -> None:
-  #BLS key.
-  blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
-  blsPubKey: str = blsPrivKey.toPublicKey().serialize().hex()
-
-  #Blocks.
   file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
   blocks: List[Dict[str, Any]] = json.loads(file.read())
   file.close()
-
-  #Merit.
   merit: Merit = Merit()
+
+  blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
+  blsPubKey: str = blsPrivKey.toPublicKey().serialize().hex()
 
   #Handshake with the node.
   rpc.meros.liveConnect(merit.blockchain.blocks[0].header.hash)
@@ -67,9 +49,7 @@ def TElementTest(
       if reqHash != block.header.hash:
         raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
-      #Send the BlockBody.
       rpc.meros.blockBody(block)
-
       break
 
     else:
@@ -180,7 +160,6 @@ def TElementTest(
   block.mine(blsPrivKey, merit.blockchain.difficulty())
   merit.blockchain.add(block)
 
-  #Publish it.
   rpc.call(
     "merit",
     "publishBlock",
@@ -195,5 +174,4 @@ def TElementTest(
     ]
   )
 
-  #Verify the Blockchain.
   verifyBlockchain(rpc, merit.blockchain)

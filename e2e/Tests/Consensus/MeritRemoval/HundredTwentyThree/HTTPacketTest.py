@@ -4,35 +4,25 @@
 #2) That a VC MeritRemoval of Verification Packets where one has their holders re-ordered is identified as a repeat.
 #Also tests receiving a SignedMeritRemoval containing VerificationPackets.
 
-#Types.
 from typing import Dict, List, IO, Any
+from time import sleep
+import json
 
-#Transactions classes.
+from pytest import raises
+
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#MeritRemoval class.
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 
-#Merit classes.
 from e2e.Classes.Merit.Block import Block
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#MeritRemoval verifier.
-from e2e.Tests.Consensus.Verify import verifyMeritRemoval
-
-#TestError and SuccessError Exceptions.
 from e2e.Tests.Errors import TestError, SuccessError
-
-#Sleep standard function.
-from time import sleep
-
-#JSON standard lib.
-import json
+from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 
 def HTTPacketTest(
   rpc: RPC
@@ -126,5 +116,6 @@ def HTTPacketTest(
       }
     ).live()
 
-  for b in range(2):
-    testBlockchain(b)
+  with raises(SuccessError):
+    for b in range(2):
+      testBlockchain(b)

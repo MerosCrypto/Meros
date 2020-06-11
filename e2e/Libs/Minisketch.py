@@ -1,20 +1,12 @@
-#Types.
 from typing import List, Any
-
-#VerificationPacket class.
-from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
-
-#CTypes.
 from ctypes import cdll, c_uint64, c_uint32, c_size_t, c_char, \
            Array, c_char_p, c_void_p, create_string_buffer, byref
 
-#OS standard lib.
 import os
-
-#Blake2b standard function.
 from hashlib import blake2b
 
-#SketchError Exception. Used when a sketch has more differences than its capacity.
+from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
+
 class SketchError(
   Exception
 ):
@@ -28,7 +20,6 @@ if os.name == "nt":
 else:
   MinisketchLib = cdll.LoadLibrary("e2e/Libs/libminisketch.so")
 
-#Define the function types.
 MinisketchLib.minisketch_create.argtypes = [c_uint32, c_uint32, c_size_t]
 MinisketchLib.minisketch_create.restype = c_void_p
 
@@ -44,9 +35,7 @@ MinisketchLib.minisketch_deserialize.restype = None
 MinisketchLib.minisketch_decode.argtypes = [c_void_p, c_size_t, c_void_p]
 MinisketchLib.minisketch_decode.restype = c_size_t
 
-#Sketch class.
 class Sketch:
-  #Constructor.
   def __init__(
     self,
     capacity: int
@@ -65,7 +54,6 @@ class Sketch:
       byteorder="big"
     )
 
-  #Add a Packet.
   def add(
     self,
     sketchSalt: bytes,
@@ -73,7 +61,6 @@ class Sketch:
   ) -> None:
     MinisketchLib.minisketch_add_uint64(self.sketch, c_uint64(Sketch.hash(sketchSalt, packet)))
 
-  #Serialize a sketch.
   def serialize(
     self
   ) -> bytes:
@@ -88,7 +75,6 @@ class Sketch:
       result += b
     return result
 
-  #Merge two sketches.
   def merge(
     self,
     other: bytes
@@ -99,7 +85,7 @@ class Sketch:
       merged.append(serialized[b] ^ other[b])
     MinisketchLib.minisketch_deserialize(self.sketch, c_char_p(bytes(merged)))
 
-  #Decode a sketch's differences.
+  #Decode a merged sketch's differences.
   def decode(
     self
   ) -> List[int]:

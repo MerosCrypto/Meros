@@ -1,13 +1,13 @@
-#Types.
 from typing import Dict, Set, List, Tuple, Any
+from enum import Enum
+from subprocess import Popen
+import socket
 
-#Transactions classes.
 from e2e.Classes.Transactions.Transaction import Transaction
 from e2e.Classes.Transactions.Claim import Claim
 from e2e.Classes.Transactions.Send import Send
 from e2e.Classes.Transactions.Data import Data
 
-#Consensus classes.
 from e2e.Classes.Consensus.Element import SignedElement
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
@@ -15,23 +15,11 @@ from e2e.Classes.Consensus.SendDifficulty import SignedSendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 from e2e.Classes.Consensus.MeritRemoval import PartialMeritRemoval
 
-#Merit classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.Block import Block
 
-#NodeError and TestError Exceptions.
 from e2e.Tests.Errors import NodeError, TestError
 
-#Enum class.
-from enum import Enum
-
-#Subprocess class.
-from subprocess import Popen
-
-#Socket standard lib.
-import socket
-
-#Message Types.
 class MessageType(
   Enum
 ):
@@ -66,14 +54,10 @@ class MessageType(
   SketchHashes       = 28
   VerificationPacket = 29
 
-  #MessageType -> byte.
   def toByte(
     self
   ) -> bytes:
-    #This is totally redundant. It shouldn't exist.
-    #That said, it isn't redundant, as Mypy errors without it.
-    result: bytes = self.value.to_bytes(1, "big")
-    return result
+    return self.value.to_bytes(1, "big")
 
 #Lengths of messages.
 #An empty array means the message was just the header.
@@ -124,7 +108,7 @@ sync_lengths: Dict[MessageType, List[int]] = {
   MessageType.VerificationPacket: [2, -2, 32]
 }
 
-#Receive a message.
+#Receive a specified length from the socket, handling the errors.
 def socketRecv(
   connection: socket.socket,
   length: int
@@ -137,6 +121,7 @@ def socketRecv(
   except Exception:
     raise TestError("Meros disconnected us.")
 
+#Receive a message from this socket.
 def recv(
   connection: socket.socket,
   lengths: Dict[MessageType, List[int]]
@@ -221,7 +206,6 @@ class BusyError(
     self.handshake: bytes = handshake
 
 class MerosSocket:
-  #Constructor.
   def __init__(
     self,
     tcp: int,
@@ -230,14 +214,11 @@ class MerosSocket:
     live: bool,
     tail: bytes
   ) -> None:
-    #Save the connection type.
     self.live: bool = live
 
-    #Create the connection and connect.
     self.connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.connection.connect(("127.0.0.1", tcp))
 
-    #Send our Handshake.
     self.connection.send(
       (MessageType.Handshake.toByte() if live else MessageType.Syncing.toByte()) +
       network.to_bytes(1, "big") +
@@ -246,7 +227,6 @@ class MerosSocket:
       tail
     )
 
-    #Receive their Handshake.
     response: bytes = recv(self.connection, live_lengths if live else sync_lengths)
     if MessageType(response[0]) == MessageType.Busy:
       #Wrapped in a try/except as this will error out if Meros beats it to the punch.
@@ -258,16 +238,15 @@ class MerosSocket:
       raise BusyError("Node was busy.", response)
     if MessageType(response[0]) != (MessageType.Handshake if live else MessageType.Syncing):
       raise TestError("Node didn't send the right Handshake for this connection type.")
-    if response[1] != network:
+    elif response[1] != network:
       raise TestError("Connected to a node on a diffirent network.")
-    if response[2] != protocol:
+    elif response[2] != protocol:
       raise TestError("Connected to a node using a diffirent protocol.")
 
     #Declare lists for the messages.
     self.msgs: List[bytes] = []
     self.ress: List[bytes] = []
 
-  #Send a message.
   def send(
     self,
     msg: bytes,
@@ -276,7 +255,6 @@ class MerosSocket:
     self.ress.append(msg)
     self.connection.send(msg)
 
-  #Receive a message.
   def recv(
     self,
     save: bool = True
@@ -286,6 +264,7 @@ class MerosSocket:
     return result
 
   #Playback the connection's messages.
+  #Used to verify Meros can send as it receives.
   def playback(
     self
   ) -> None:
@@ -298,33 +277,29 @@ class MerosSocket:
         raise TestError("Meros responded with a message different than expected.")
 
 class Meros:
-  #Constructor.
   def __init__(
     self,
     test: str,
     tcp: int,
-    rpc: int
+    rpc: int,
+    dataDir: str = "./data/e2e"
   ) -> None:
-    #Save the network/protocol.
     self.network = 254
     self.protocol = 254
 
-    #Save the config.
     self.db: str = test
     self.tcp: int = tcp
     self.rpc: int = rpc
 
-    #Create the instance.
-    self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", "./data/e2e", "--log-file", test + ".log", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
+    self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", dataDir, "--log-file", test + ".log", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
 
-    #Connection variables.
     self.live: MerosSocket
     self.sync: MerosSocket
 
     #Transactions we've sent.
+    #Used by the Liver/Syncer.
     self.sentTXs: Set[bytes] = set({})
 
-  #Connect to Meros and Handshake with it.
   def syncConnect(
     self,
     tail: bytes
@@ -337,7 +312,6 @@ class Meros:
   ) -> None:
     self.live = MerosSocket(self.tcp, self.network, self.protocol, True, tail)
 
-  #Send a peers request.
   def peersRequest(
     self
   ) -> bytes:
@@ -345,7 +319,6 @@ class Meros:
     self.sync.send(res, False)
     return res
 
-  #Send peers.
   def peers(
     self,
     peers: List[Tuple[str, int]]
@@ -363,7 +336,6 @@ class Meros:
     self.sync.send(res, False)
     return res
 
-  #Send a Block List.
   def blockList(
     self,
     hashes: List[bytes]
@@ -377,7 +349,6 @@ class Meros:
     self.sync.send(res)
     return res
 
-  #Send a Data Missing.
   def dataMissing(
     self
   ) -> bytes:
@@ -385,7 +356,6 @@ class Meros:
     self.sync.send(res)
     return res
 
-  #Send a Transaction over the Sync socket.
   def syncTransaction(
     self,
     tx: Transaction
@@ -404,7 +374,6 @@ class Meros:
     self.sync.send(res)
     return res
 
-  #Send a Transaction over the Live socket.
   def liveTransaction(
     self,
     tx: Transaction
@@ -423,7 +392,6 @@ class Meros:
     self.live.send(res)
     return res
 
-  #Send a Signed Element.
   def signedElement(
     self,
     elem: SignedElement,
@@ -445,7 +413,6 @@ class Meros:
     self.live.send(res)
     return res
 
-  #Send a Block Header.
   def liveBlockHeader(
     self,
     header: BlockHeader
@@ -457,7 +424,6 @@ class Meros:
     self.live.send(res)
     return res
 
-  #Send a Block Header.
   def syncBlockHeader(
     self,
     header: BlockHeader
@@ -469,7 +435,6 @@ class Meros:
     self.sync.send(res)
     return res
 
-  #Send a Block Body.
   def blockBody(
     self,
     block: Block
@@ -481,7 +446,6 @@ class Meros:
     self.sync.send(res)
     return res
 
-  #Send sketch hashes.
   def sketchHashes(
     self,
     hashes: List[int]
@@ -492,7 +456,6 @@ class Meros:
     self.sync.send(res)
     return res
 
-  #Send a Verification Packet.
   def packet(
     self,
     packet: VerificationPacket
@@ -504,7 +467,7 @@ class Meros:
     self.sync.send(res)
     return res
 
-  #Check the return code.
+  #Quit, checking the return code.
   def quit(
     self
   ) -> None:

@@ -1,20 +1,13 @@
-#Types.
 from typing import Dict, List, Any
 
-#RandomX lib.
 from e2e.Libs.RandomX import setRandomXKey
-
-#BLS lib.
 from e2e.Libs.BLS import PublicKey
 
-#BlockHeader, BlockBody, and Block classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 
-#Blockchain class.
 class Blockchain:
-  #Constructor.
   def __init__(
     self
   ) -> None:
@@ -24,8 +17,8 @@ class Blockchain:
     setRandomXKey(self.upcomingKey)
 
     self.blockTime: int = 60
-
     self.difficulties: List[int] = [100]
+    self.keys: Dict[bytes, int] = {}
 
     self.blocks: List[Block] = [
       Block(
@@ -43,9 +36,6 @@ class Blockchain:
       )
     ]
 
-    self.keys: Dict[bytes, int] = {}
-
-  #Add a Block.
   def add(
     self,
     block: Block
@@ -90,19 +80,16 @@ class Blockchain:
     if block.header.newMiner:
       self.keys[block.header.minerKey] = len(self.keys)
 
-  #Last hash.
   def last(
     self
   ) -> bytes:
     return self.blocks[len(self.blocks) - 1].header.hash
 
-  #Current difficulty.
   def difficulty(
     self
   ) -> int:
     return self.difficulties[-1]
 
-  #Blockchain -> JSON.
   def toJSON(
     self
   ) -> List[Dict[str, Any]]:
@@ -111,7 +98,6 @@ class Blockchain:
       result.append(self.blocks[b].toJSON())
     return result
 
-  #JSON -> Blockchain.
   @staticmethod
   def fromJSON(
     blocks: List[Dict[str, Any]]

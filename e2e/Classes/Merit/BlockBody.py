@@ -1,28 +1,18 @@
-#Types.
 from typing import Dict, List, Any
+from hashlib import blake2b
 
-#BLS lib.
 from e2e.Libs.BLS import Signature
-
-#Minisketch lib.
 from e2e.Libs.Minisketch import Sketch
 
-#Element classes.
 from e2e.Classes.Consensus.Element import Element
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.SendDifficulty import SendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty
 from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
-#Merkle function.
 from e2e.Classes.Merit.BlockHeader import merkle
 
-#Blake2b standard function.
-from hashlib import blake2b
-
-#BlockBody class.
 class BlockBody:
-  #Constructor.
   def __init__(
     self,
     packets: List[VerificationPacket] = [],
@@ -42,7 +32,6 @@ class BlockBody:
     self.elements: List[Element] = list(elements)
     self.aggregate: Signature = aggregate
 
-  #Serialize.
   def serialize(
     self,
     sketchSalt: bytes,
@@ -69,7 +58,6 @@ class BlockBody:
     result += self.aggregate.serialize()
     return result
 
-  #BlockBody -> JSON.
   def toJSON(
     self
   ) -> Dict[str, Any]:
@@ -90,7 +78,6 @@ class BlockBody:
 
     return result
 
-  #JSON -> Blockbody.
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]

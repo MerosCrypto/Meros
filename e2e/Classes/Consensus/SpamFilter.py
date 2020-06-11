@@ -1,7 +1,5 @@
-#Types.
 from typing import Tuple
 
-#Argon2 lib.
 import argon2
 
 class SpamFilter:

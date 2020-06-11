@@ -1,7 +1,8 @@
-#Types.
 from typing import IO, Dict, Any
+from hashlib import blake2b
+import json
 
-#BLS lib.
+import ed25519
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
 #Transactions classes.
@@ -9,44 +10,25 @@ from e2e.Classes.Transactions.Send import Send
 from e2e.Classes.Transactions.Claim import Claim
 from e2e.Classes.Transactions.Transactions import Transactions
 
-#SpamFilter class.
-from e2e.Classes.Consensus.SpamFilter import SpamFilter
-
-#SignedVerification and VerificationPacket classes.
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
+from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-#Blockchain classes.
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-#Ed25519 lib.
-import ed25519
-
-#Blake2b standard function.
-from hashlib import blake2b
-
-#JSON standard lib.
-import json
-
 cmFile: IO[Any] = open("e2e/Vectors/Transactions/ClaimedMint.json", "r")
 cmVectors: Dict[str, Any] = json.loads(cmFile.read())
-#Transactions.
 transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
-#Blockchain.
 blockchain: Blockchain = Blockchain.fromJSON(cmVectors["blockchain"])
 cmFile.close()
-
-#SpamFilter.
 sendFilter: SpamFilter = SpamFilter(3)
 
-#Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-#BLS keys.
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
@@ -84,15 +66,10 @@ block: Block = Block(
   ),
   BlockBody([packet], [], sv.signature)
 )
-
-#Mine the Block.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add the Block.
 blockchain.add(block)
 print("Generated Same Input Block " + str(len(blockchain.blocks) - 1) + ".")
 
-#Save the vector.
 result: Dict[str, Any] = {
   "blockchain": blockchain.toJSON(),
   "transactions": transactions.toJSON()

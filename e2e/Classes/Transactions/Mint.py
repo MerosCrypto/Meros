@@ -1,14 +1,10 @@
-#Types.
 from typing import Dict, List, Tuple, Any
 
-#Transaction and SpamFilter classes.
 from e2e.Classes.Transactions.Transaction import Transaction
 
-#Mint class.
 class Mint(
   Transaction
 ):
-  #Constructor.
   def __init__(
     self,
     blockHash: bytes,
@@ -17,20 +13,18 @@ class Mint(
     self.outputs: List[Tuple[int, int]] = outputs
     self.hash = blockHash
 
-  #Transaction -> Mint. Satisifes static typing requirements.
+  #Satisifes static typing requirements.
   @staticmethod
   def fromTransaction(
     tx: Transaction
   ) -> Any:
     return tx
 
-  #Serialize.
   def serialize(
     self
   ) -> bytes:
     raise Exception("Mint serialize called.")
 
-  #Mint -> JSON.
   def toJSON(
     self
   ) -> Dict[str, Any]:
@@ -47,7 +41,6 @@ class Mint(
       })
     return result
 
-  #JSON -> Mint.
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
@@ -55,5 +48,4 @@ class Mint(
     outputs: List[Tuple[int, int]] = []
     for output in json["outputs"]:
       outputs.append((output["key"], int(output["amount"])))
-
     return Mint(bytes.fromhex(json["hash"]), outputs)

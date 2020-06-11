@@ -1,24 +1,25 @@
-#Types.
 from typing import Dict, Union, Any
 
-#BLS lib.
 from e2e.Libs.BLS import Signature
 
-#Element classes.
 from e2e.Classes.Consensus.Element import Element, SignedElement
 from e2e.Classes.Consensus.Verification import Verification, SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import MeritRemovalVerificationPacket, SignedMeritRemovalVerificationPacket
 from e2e.Classes.Consensus.SendDifficulty import SendDifficulty, SignedSendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty, SignedDataDifficulty
 
-#MeritRemoval Prefix.
+MeritRemovalElement: Any = Union[
+  SignedVerification,
+  SignedMeritRemovalVerificationPacket,
+  SignedSendDifficulty,
+  SignedDataDifficulty
+]
+
 MERIT_REMOVAL_PREFIX: bytes = b'\5'
 
-#MeritRemoval class.
 class MeritRemoval(
   Element
 ):
-  #Constructor.
   def __init__(
     self,
     e1: Element,
@@ -27,7 +28,6 @@ class MeritRemoval(
     holder: int = -1
   ) -> None:
     self.prefix: bytes = MERIT_REMOVAL_PREFIX
-
     self.e1: Element = e1
     self.e2: Element = e2
     self.partial: bool = partial
@@ -35,13 +35,11 @@ class MeritRemoval(
     if self.holder == -1:
       self.holder = self.e1.holder
 
-  #Signature Serialize.
   def signatureSerialize(
     self
   ) -> bytes:
     raise Exception("MeritRemoval's signatureSerialize was called.")
 
-  #Serialize.
   def serialize(
     self
   ) -> bytes:
@@ -52,18 +50,15 @@ class MeritRemoval(
       self.e2.signatureSerialize()
     )
 
-  #MeritRemoval -> JSON.
   def toJSON(
     self
   ) -> Dict[str, Any]:
     result: Dict[str, Any] = {
       "descendant": "MeritRemoval",
-
       "holder": self.holder,
       "partial": self.partial,
       "elements": [self.e1.toJSON(), self.e2.toJSON()]
     }
-
     if "holder" in result["elements"][0]:
       del result["elements"][0]["holder"]
     if "holder" in result["elements"][1]:
@@ -71,7 +66,6 @@ class MeritRemoval(
 
     return result
 
-  #JSON -> MeritRemoval.
   @staticmethod
   def fromJSON(
     jsonArg: Dict[str, Any]
@@ -114,30 +108,21 @@ class PartialMeritRemoval(
   SignedElement,
   MeritRemoval
 ):
-  #Constructor.
   def __init__(
     self,
     e1: Element,
-    e2: Union[
-      SignedVerification,
-      SignedMeritRemovalVerificationPacket,
-      SignedSendDifficulty,
-      SignedDataDifficulty
-    ],
+    e2: MeritRemovalElement,
     holder: int = -1
   ) -> None:
     MeritRemoval.__init__(self, e1, e2, True, holder)
-
     self.se2: SignedElement = e2
     self.signature: Signature = e2.signature
 
-  #Signed Serialize.
   def signedSerialize(
     self
   ) -> bytes:
     return MeritRemoval.serialize(self) + self.signature.serialize()
 
-  #PartialMeritRemoval -> JSON.
   def toSignedJSON(
     self
   ) -> Dict[str, Any]:
@@ -147,7 +132,6 @@ class PartialMeritRemoval(
     result["signature"] = self.signature.serialize().hex().upper()
     return result
 
-  #JSON -> PartialMeritRemoval.
   @staticmethod
   def fromSignedJSON(
     jsonArg: Dict[str, Any]
@@ -160,12 +144,7 @@ class PartialMeritRemoval(
     json["elements"][0]["holder"] = json["holder"]
     json["elements"][1]["holder"] = json["holder"]
 
-    e1: Union[
-      SignedVerification,
-      SignedMeritRemovalVerificationPacket,
-      SignedSendDifficulty,
-      SignedDataDifficulty
-    ] = SignedVerification(bytes(32), 0)
+    e1: MeritRemovalElement = SignedVerification(bytes(32), 0)
     if json["elements"][0]["descendant"] == "Verification":
       e1 = Verification.fromJSON(json["elements"][0])
     elif json["elements"][0]["descendant"] == "VerificationPacket":
@@ -175,12 +154,7 @@ class PartialMeritRemoval(
     elif json["elements"][0]["descendant"] == "DataDifficulty":
       e1 = DataDifficulty.fromJSON(json["elements"][0])
 
-    e2: Union[
-      SignedVerification,
-      SignedMeritRemovalVerificationPacket,
-      SignedSendDifficulty,
-      SignedDataDifficulty
-    ] = SignedVerification(bytes(32), 0)
+    e2: MeritRemovalElement = SignedVerification(bytes(32), 0)
     if json["elements"][1]["descendant"] == "Verification":
       e2 = SignedVerification.fromSignedJSON(json["elements"][1])
     elif json["elements"][1]["descendant"] == "VerificationPacket":
@@ -195,36 +169,22 @@ class PartialMeritRemoval(
 class SignedMeritRemoval(
   PartialMeritRemoval
 ):
-  #Constructor.
   def __init__(
     self,
-    e1: Union[
-      SignedVerification,
-      SignedMeritRemovalVerificationPacket,
-      SignedSendDifficulty,
-      SignedDataDifficulty
-    ],
-    e2: Union[
-      SignedVerification,
-      SignedMeritRemovalVerificationPacket,
-      SignedSendDifficulty,
-      SignedDataDifficulty
-    ],
+    e1: MeritRemovalElement,
+    e2: MeritRemovalElement,
     holder: int = -1
   ) -> None:
     PartialMeritRemoval.__init__(self, e1, e2, holder)
     self.partial = False
-
     self.se1: SignedElement = e1
     self.signature = Signature.aggregate([e1.signature, e2.signature])
 
-  #Signed Serialize.
   def signedSerialize(
     self
   ) -> bytes:
     return MeritRemoval.serialize(self) + self.signature.serialize()
 
-  #SignedMeritRemoval -> JSON.
   def toSignedJSON(
     self
   ) -> Dict[str, Any]:
@@ -235,7 +195,6 @@ class SignedMeritRemoval(
     result["signature"] = self.signature.serialize().hex().upper()
     return result
 
-  #JSON -> SignedMeritRemoval.
   @staticmethod
   def fromSignedJSON(
     jsonArg: Dict[str, Any]
@@ -244,16 +203,10 @@ class SignedMeritRemoval(
     json["elements"] = list(json["elements"])
     json["elements"][0] = dict(json["elements"][0])
     json["elements"][1] = dict(json["elements"][1])
-
     json["elements"][0]["holder"] = json["holder"]
     json["elements"][1]["holder"] = json["holder"]
 
-    e1: Union[
-      SignedVerification,
-      SignedMeritRemovalVerificationPacket,
-      SignedSendDifficulty,
-      SignedDataDifficulty
-    ] = SignedVerification(bytes(32), 0)
+    e1: MeritRemovalElement = SignedVerification(bytes(32), 0)
     if json["elements"][0]["descendant"] == "Verification":
       e1 = SignedVerification.fromSignedJSON(json["elements"][0])
     elif json["elements"][0]["descendant"] == "VerificationPacket":
@@ -263,12 +216,7 @@ class SignedMeritRemoval(
     elif json["elements"][0]["descendant"] == "DataDifficulty":
       e1 = SignedDataDifficulty.fromSignedJSON(json["elements"][0])
 
-    e2: Union[
-      SignedVerification,
-      SignedMeritRemovalVerificationPacket,
-      SignedSendDifficulty,
-      SignedDataDifficulty
-    ] = SignedVerification(bytes(32), 0)
+    e2: MeritRemovalElement = SignedVerification(bytes(32), 0)
     if json["elements"][1]["descendant"] == "Verification":
       e2 = SignedVerification.fromSignedJSON(json["elements"][1])
     elif json["elements"][1]["descendant"] == "VerificationPacket":

@@ -1,25 +1,19 @@
 #https://github.com/MerosCrypto/Meros/issues/123.
 #Tests that a partial MeritRemoval sent again as a non-partial MeritRemoval is rejected.
 
-#Types.
 from typing import Dict, IO, Any
+from time import sleep
+import json
 
-#Merit classes.
+from pytest import raises
+
 from e2e.Classes.Merit.Block import Block
 
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-#TestError and SuccessError Exceptions.
 from e2e.Tests.Errors import TestError, SuccessError
-
-#Sleep standard function.
-from time import sleep
-
-#JSON standard lib.
-import json
 
 def HTTPartialTest(
   rpc: RPC
@@ -74,10 +68,11 @@ def HTTPartialTest(
       else:
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-  Liver(
-    rpc,
-    vectors["blockchain"],
-    callbacks={
-      3: sendRepeatMeritRemoval
-    }
-  ).live()
+  with raises(SuccessError):
+    Liver(
+      rpc,
+      vectors["blockchain"],
+      callbacks={
+        3: sendRepeatMeritRemoval
+      }
+    ).live()

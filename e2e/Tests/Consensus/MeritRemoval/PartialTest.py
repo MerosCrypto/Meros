@@ -1,25 +1,18 @@
 #Tests proper handling of a MeritRemoval where one Element is already archived.
 
-#Types.
 from typing import Dict, IO, Any
+import json
 
-#PartialMeritRemoval class.
 from e2e.Classes.Consensus.MeritRemoval import PartialMeritRemoval
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 from e2e.Meros.Syncer import Syncer
 
-#MeritRemoval verifier.
+from e2e.Tests.Errors import TestError
 from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 
-#JSON standard lib.
-import json
 
 def PartialTest(
   rpc: RPC
@@ -28,8 +21,6 @@ def PartialTest(
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
-  #MeritRemoval.
-  #pylint: disable=no-member
   removal: PartialMeritRemoval = PartialMeritRemoval.fromSignedJSON(vectors["removal"])
 
   #Create and execute a Liver to cause a Partial MeritRemoval.

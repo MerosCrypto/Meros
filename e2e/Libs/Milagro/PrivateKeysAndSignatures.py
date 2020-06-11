@@ -1,11 +1,6 @@
-#Types.
-from typing import List, Tuple, Type, Any
-
-#OS standard lib.
-import os
-
-#CTypes.
+from typing import Type, List, Tuple, Any
 from ctypes import cdll, Structure, POINTER, c_char_p, c_int64, c_int32, c_int
+import os
 
 #Import the Milagro Curve library.
 #pylint: disable=invalid-name
@@ -16,8 +11,8 @@ else:
   MilagroCurve = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_curve_BLS381.so")
 
 #Define the structures.
-Big384 = c_int64 * 7   #type: Any
-DBig384 = c_int64 * 14 #type: Any
+Big384: Any = c_int64 * 7
+DBig384: Any = c_int64 * 14
 
 #pylint: disable=too-few-public-methods
 class OctetObj(
@@ -30,14 +25,11 @@ class OctetObj(
   ]
 Octet: Any = POINTER(OctetObj)
 
-#pylint: disable=too-few-public-methods,unneeded-multiline-expansion
+#pylint: disable=too-few-public-methods,
 class FP1Obj(
   Structure
 ):
-  _fields_: List[Tuple[str, Type[Any]]] = [
-    ("g", Big384),
-    ("XES", c_int32)
-  ]
+  _fields_: List[Tuple[str, Type[Any]]] = [("g", Big384), ("XES", c_int32)]
 FP1: Any = POINTER(FP1Obj)
 
 #pylint: disable=too-few-public-methods
@@ -51,7 +43,6 @@ class G1Obj(
   ]
 G1: Any = POINTER(G1Obj)
 
-#Define the function types.
 MilagroCurve.BIG_384_58_copy.argtypes = [Big384, Big384]
 MilagroCurve.BIG_384_58_copy.restype = None
 
@@ -100,5 +91,4 @@ MilagroCurve.ECP_BLS381_get.restype = c_int
 MilagroCurve.ECP_BLS381_mapit.argtypes = [G1, Octet]
 MilagroCurve.ECP_BLS381_mapit.restype = None
 
-#Define r.
 r: Big384 = Big384.in_dll(MilagroCurve, "CURVE_Order_BLS381")

@@ -1,74 +1,53 @@
 #https://github.com/MerosCrypto/Meros/issues/88
 
-#Types.
 from typing import Dict, List, IO, Any
+from time import sleep
+from hashlib import blake2b
+import json
 
-#BLS lib.
+import ed25519
 from e2e.Libs.BLS import PrivateKey, Signature
 
-#Merit classes.
 from e2e.Classes.Merit.Blockchain import BlockHeader
 from e2e.Classes.Merit.Blockchain import BlockBody
 from e2e.Classes.Merit.Blockchain import Block
 from e2e.Classes.Merit.Merit import Merit
 
-#Consensus classes.
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 
-#Data class.
 from e2e.Classes.Transactions.Data import Data
 
-#TestError Exception.
-from e2e.Tests.Errors import TestError
-
-#Meros classes.
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 
-#Merit verifiers.
+from e2e.Tests.Errors import TestError
 from e2e.Tests.Merit.Verify import verifyBlockchain
-
-#Ed25519 lib.
-import ed25519
-
-#Sleep standard function.
-from time import sleep
-
-#JSON standard lib.
-import json
-
-#Blake2b standard function.
-from hashlib import blake2b
 
 #pylint: disable=too-many-locals,too-many-statements
 def EightyEightTest(
   rpc: RPC
 ) -> None:
-  #Ed25519 key.
   edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
   edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-  #BLS key.
   blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
   blsPubKey: str = blsPrivKey.toPublicKey().serialize().hex()
 
-  #Blocks.
   file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
   blocks: List[Dict[str, Any]] = json.loads(file.read())
   file.close()
 
-  #Merit.
   merit: Merit = Merit()
-  #Spam Filter.
   dataFilter: SpamFilter = SpamFilter(5)
 
   #Handshake with the node.
   rpc.meros.liveConnect(merit.blockchain.blocks[0].header.hash)
   rpc.meros.syncConnect(merit.blockchain.blocks[0].header.hash)
 
-  #Send the first Block.
+  #Send the first Block.  #Spam Filter.
+
   block: Block = Block.fromJSON(blocks[0])
   merit.blockchain.add(block)
   rpc.meros.liveBlockHeader(block.header)
@@ -84,7 +63,6 @@ def EightyEightTest(
 
       #Send the BlockBody.
       rpc.meros.blockBody(block)
-
       break
 
     else:
@@ -163,7 +141,6 @@ def EightyEightTest(
   block.mine(blsPrivKey, merit.blockchain.difficulty())
   merit.blockchain.add(block)
 
-  #Publish it.
   rpc.call(
     "merit",
     "publishBlock",
@@ -178,5 +155,4 @@ def EightyEightTest(
     ]
   )
 
-  #Verify the Blockchain.
   verifyBlockchain(rpc, merit.blockchain)

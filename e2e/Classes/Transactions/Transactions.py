@@ -1,28 +1,22 @@
-#Types.
 from typing import Dict, Any
 
-#Transactions classes.
 from e2e.Classes.Transactions.Transaction import Transaction
 from e2e.Classes.Transactions.Claim import Claim
 from e2e.Classes.Transactions.Send import Send
 from e2e.Classes.Transactions.Data import Data
 
-#Transactions class.
 class Transactions:
-  #Constructor.
   def __init__(
     self
   ) -> None:
     self.txs: Dict[bytes, Transaction] = {}
 
-  #Add an Transaction.
   def add(
     self,
     tx: Transaction
   ) -> None:
     self.txs[tx.hash] = tx
 
-  #Transactions -> JSON.
   def toJSON(
     self
   ) -> Dict[str, Dict[str, Any]]:
@@ -31,7 +25,6 @@ class Transactions:
       result[tx.hex().upper()] = self.txs[tx].toJSON()
     return result
 
-  #JSON -> Transactions.
   @staticmethod
   def fromJSON(
     json: Dict[str, Dict[str, Any]]
