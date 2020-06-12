@@ -122,11 +122,8 @@ proc newHolder*(
 
   if not state.oldData:
     state.db.saveMerit(nick, 0)
-    var index: int = state.processedBlocks
-    if state.processedBlocks > state.deadBlocks:
-      inc(index)
-    state.db.appendMeritStatus(nick, index, byte(MeritStatus.Unlocked))
-    state.db.appendLastParticipation(nick, index, state.lastParticipation[nick])
+    state.db.appendMeritStatus(nick, state.processedBlocks, byte(MeritStatus.Unlocked))
+    state.db.appendLastParticipation(nick, state.processedBlocks, state.lastParticipation[nick])
 
 proc newHolder*(
   state: var State,
@@ -142,34 +139,40 @@ proc findMeritStatus*(
   nick: uint16,
   height: int
 ): MeritStatus {.forceCheck: [].} =
+  const VALUE_LEN: int = INT_LEN + BYTE_LEN
   var statuses: string = state.db.loadMeritStatuses(nick)
-  for b in countdown(statuses.len - (INT_LEN + BYTE_LEN), 0, INT_LEN + BYTE_LEN):
-    var valueHeight: int = statuses[b ..< b + INT_LEN].fromBinary()
-    if valueHeight == height:
-      result = MeritStatus(statuses[b + INT_LEN])
-    elif valueHeight < height:
-      if b == statuses.len - (INT_LEN + BYTE_LEN):
-        result = MeritStatus(statuses[b + INT_LEN])
-      else:
-        result = MeritStatus(statuses[b + (2 * INT_LEN) + BYTE_LEN])
+  while statuses.len != 0:
+    var valueHeight: int = statuses[statuses.len - VALUE_LEN ..< statuses.len - BYTE_LEN].fromBinary()
+    result = MeritStatus(statuses[^1])
+    if valueHeight <= height:
+      statuses.setLen(0)
       break
+    else:
+      statuses.setLen(statuses.len - VALUE_LEN)
+
+  #If we never found a result, return a default value.
+  #Useful for when the Consensus checks historical Merit, as well as the RPC.
+  if statuses.len != 0:
+    result = MeritStatus.Unlocked
 
 proc findLastParticipation*(
   state: State,
   nick: uint16,
   height: int
 ): int {.forceCheck: [].} =
+  const VALUE_LEN: int = INT_LEN + INT_LEN
   var participations: string = state.db.loadLastParticipations(nick)
-  for b in countdown(participations.len - (2 * INT_LEN), 0, (2 * INT_LEN)):
-    var valueHeight: int = participations[b ..< b + INT_LEN].fromBinary()
-    if valueHeight == height:
-      result = participations[b + INT_LEN ..< b + (2 * INT_LEN)].fromBinary()
-    elif valueHeight < height:
-      if b == participations.len - (2 * INT_LEN):
-        result = participations[b + INT_LEN ..< b + (2 * INT_LEN)].fromBinary()
-      else:
-        result = participations[b + (3 * INT_LEN) ..< b + (4 * INT_LEN)].fromBinary()
+  while participations.len != 0:
+    var valueHeight: int = participations[participations.len - VALUE_LEN ..< participations.len - INT_LEN].fromBinary()
+    result = participations[participations.len - INT_LEN ..< participations.len].fromBinary()
+    if valueHeight <= height:
+      participations.setLen(0)
       break
+    else:
+      participations.setLen(participations.len - VALUE_LEN)
+
+  if participations.len != 0:
+    result = 0
 
 #Get a Merit Holder's Merit.
 proc `[]`*(

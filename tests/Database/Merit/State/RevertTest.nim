@@ -93,8 +93,8 @@ suite "Revert":
     var
       copy: State
       reloaded: State
-    for s in 1 ..< states.len:
-      var revertTo: int = rand(s - 1) + 1
+    for s in 2 ..< states.len:
+      var revertTo: int = max(rand(s - 1), 1)
       copy = states[s]
       copy.revert(blockchain, states[revertTo].processedBlocks)
       compare(copy, states[revertTo])
