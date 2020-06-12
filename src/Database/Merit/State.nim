@@ -17,12 +17,14 @@ export StateObj
 proc getNickname(
   state: var State,
   blockArg: Block,
-  newBlock: bool = false
+  newBlock: bool = false,
+  callNew: bool = true
 ): uint16 {.forceCheck: [].} =
   if blockArg.header.newMiner:
     try:
       result = state.reverseLookup(blockArg.header.minerKey)
     except IndexError:
+      #Call new is only required by cacheNextRemoval which always has its miner registered.
       if newBlock:
         return state.newHolder(blockArg.header.minerKey)
       panic($blockArg.header.minerKey & " in Block " & $blockArg.header.hash & " doesn't have a nickname.")
@@ -30,7 +32,7 @@ proc getNickname(
     result = blockArg.header.minerNick
 
   #If this a holder with no Merit, who is regaining Merit, re-register them.
-  if state.merit[result] == 0:
+  if callNew and (state.merit[result] == 0):
     state.newHolder(result)
 
 #Get the next removal which will happen.
@@ -49,7 +51,7 @@ proc cacheNextRemoval(
     #Get the nickname for that Block.
     var nick: uint16
     try:
-      nick = state.getNickname(blockchain[nonce])
+      nick = state.getNickname(blockchain[nonce], callNew = false)
     except IndexError as e:
       panic("State tried to remove dead Merit yet couldn't get the old Block: " & e.msg)
 
@@ -154,7 +156,7 @@ proc processBlock*(
           state.db.saveMeritStatus(uint16(h), int(state.statuses[h]))
           state.unlocked += state.merit[h]
           #Set the lastParticipation Block to when their Merit should become unlocked again.
-          state.lastParticipation[h] = 10 - (state.processedBlocks mod 5)
+          state.lastParticipation[h] = state.processedBlocks + (10 - (state.processedBlocks mod 5))
           state.db.saveLastParticipation(uint16(h), state.lastParticipation[h])
 
       of MeritStatus.Pending:

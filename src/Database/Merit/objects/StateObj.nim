@@ -115,10 +115,12 @@ proc newHolder*(
 
   state.merit[int(nick)] = 0
   state.statuses[int(nick)] = MeritStatus.Unlocked
-  state.lastParticipation[int(nick)] = state.processedBlocks + (5 - ((state.processedBlocks + 1) mod 5))
+  state.lastParticipation[int(nick)] = state.processedBlocks + (5 - (state.processedBlocks mod 5))
 
-  state.db.saveMeritStatus(nick, int(state.statuses[int(nick)]))
-  state.db.saveLastParticipation(nick, state.lastParticipation[int(nick)])
+  if not state.oldData:
+    state.db.saveMerit(nick, 0)
+    state.db.saveMeritStatus(nick, int(state.statuses[int(nick)]))
+    state.db.saveLastParticipation(nick, state.lastParticipation[int(nick)])
 
 proc newHolder*(
   state: var State,
@@ -179,7 +181,7 @@ proc `[]=`*(
   value: int
 ) {.inline, forceCheck: [].} =
   #Get the current value.
-  var current: int = state[nick, state.processedBlocks]
+  var current: int = state.merit[nick]
   #Set their new value.
   state.merit[int(nick)] = value
   #Update unlocked accrodingly.
@@ -198,7 +200,7 @@ proc remove*(
   nick: uint16,
   nonce: int
 ) {.forceCheck: [].} =
-  state.db.remove(nick, state[nick, state.processedBlocks], nonce)
+  state.db.remove(nick, state.merit[nick], nonce)
   state[nick] = 0
   state.db.saveUnlocked(state.processedBlocks, state.unlocked)
 
