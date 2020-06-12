@@ -180,16 +180,33 @@ proc `[]`*(
   nick: uint16,
   height: int
 ): int {.forceCheck: [].} =
-  #If the nick is out of bounds, yet still positive, return 0.
+  #[
+  If the nick is out of bounds, yet still positive, return 0.
+  This should only happen with the RPC, and even then, as we can't get the key, it should error.
+  That said, there may be some kinks with reversions/reorgs which cause this?
+  Since those features work, and this would require a lot of testing to see if it can be removed...
+  Just leave it in.
+  ]#
   if nick >= uint16(state.holders.len):
     return 0
 
-  #If the Merit is locked, report it as non-existent.
-  if state.statuses[nick] == MeritStatus.Locked:
+  #Grab their status at the specified height.
+  var statusAtHeight = state.findMeritStatus(nick, height)
+  if (
+    #If the Merit is locked, don't count it.
+    (statusAtHeight == MeritStatus.Locked) or
+    #If the Merit is pending, there's two cases in which it shouldn't be counted.
+    (statusAtHeight == MeritStatus.Pending) and (
+      #If we're asking for a historical Block, which means it was pending at the time.
+      (height <= state.processedBlocks) or
+      #If we're asking for a future Block, but it's still in the buffer period waiting to become Unlocked.
+      ((height > state.processedBlocks) and ((height < state.lastParticipation[nick])))
+    )
+  ):
     return 0
 
+  #Grab the raw Merit value.
   result = state.merit[nick]
-
   #Iterate over the pending removal cache, seeing if we need to decrement at all.
   for r in 0 ..< height - state.processedBlocks:
     try:
@@ -197,13 +214,6 @@ proc `[]`*(
         dec(result)
     except IndexError as e:
       panic("Couldn't get a pending Dead Merit removal: " & e.msg)
-
-  #If their Merit is pending, return 0 if it won't be unlocked by the specified height.
-  if (
-    (state.statuses[nick] == MeritStatus.Pending) and
-    (height < state.lastParticipation[nick])
-  ):
-    return 0
 
 proc loadBlockRemovals*(
   state: State,
