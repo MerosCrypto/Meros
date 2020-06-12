@@ -1,0 +1,8 @@
+argon2-cffi
+ed25519
+pytest
+pytest-xdist
+filelock
+mypy
+pylint
+
