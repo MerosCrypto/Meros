@@ -122,18 +122,10 @@ proc processBlock*(
 
   #Update every holder's Merit Status.
   for h in 0 ..< state.statuses.len:
-    var
-      oldStatus: int = int(state.statuses[h])
-      oldParticipation: int = state.lastParticipation[h]
     if participants.contains(uint16(h)):
       #Use the higher value to handle buffer periods.
       state.lastParticipation[h] = max(state.processedBlocks, state.lastParticipation[h])
-      state.db.saveLastParticipation(
-        uint16(h),
-        state.lastParticipation[h],
-        blockchain.height,
-        oldParticipation
-      )
+      state.db.appendLastParticipation(uint16(h), blockchain.height, state.lastParticipation[h])
 
     case state.statuses[h]:
       of MeritStatus.Unlocked:
@@ -154,44 +146,25 @@ proc processBlock*(
         if state.processedBlocks - state.lastParticipation[h] == blocksOfInactivity:
           state.unlocked -= state.merit[h]
           state.statuses[h] = MeritStatus.Locked
-          state.db.saveMeritStatus(
-            uint16(h),
-            int(state.statuses[h]),
-            blockchain.height,
-            oldStatus
-          )
+          state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
 
       of MeritStatus.Locked:
         #Move their Merit to Pending if they had an Element archived.
         if participants.contains(uint16(h)):
           state.statuses[h] = MeritStatus.Pending
-          state.db.saveMeritStatus(
-            uint16(h),
-            int(state.statuses[h]),
-            blockchain.height,
-            oldStatus
-          )
+          state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
           state.unlocked += state.merit[h]
+
           #Set the lastParticipation Block to when their Merit should become unlocked again.
           state.lastParticipation[h] = state.processedBlocks + (10 - (state.processedBlocks mod 5))
-          state.db.saveLastParticipation(
-            uint16(h),
-            state.lastParticipation[h],
-            blockchain.height,
-            oldParticipation
-          )
+          state.db.appendLastParticipation(uint16(h), blockchain.height, state.lastParticipation[h])
 
       of MeritStatus.Pending:
         #If the current Block is their Block of lastParticipation, their buffer period is over.
         #That means their Merit becomes Unlocked.
         if state.lastParticipation[h] == state.processedBlocks:
           state.statuses[h] = MeritStatus.Unlocked
-          state.db.saveMeritStatus(
-            uint16(h),
-            int(state.statuses[h]),
-            blockchain.height,
-            oldStatus
-          )
+          state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
 
   #Save the amount of Unlocked Merit for the next Block.
   #This will be overwritten when we process the next Block, yet is needed for some statuses.
@@ -221,6 +194,7 @@ proc revert*(
   blockchain: Blockchain,
   height: int
 ) {.forceCheck: [].} =
+  discard """
   #Mark the State as working with old data. Prevents writing to the DB.
   state.oldData = true
 
@@ -297,3 +271,4 @@ proc revert*(
   state.pendingRemovals = initDeque[int]()
   for _ in 0 ..< 6:
     state.cacheNextRemoval(blockchain, height)
+  """

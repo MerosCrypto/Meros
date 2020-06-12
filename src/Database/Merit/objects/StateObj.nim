@@ -7,6 +7,8 @@ import ../../Filesystem/DB/MeritDB
 
 import BlockObj
 
+import ../../../Network/Serialize/SerializeCommon
+
 type
   MeritStatus* = enum
     #Fully usable.
@@ -76,8 +78,9 @@ proc newStateObj*(
   for h in 0 ..< result.holders.len:
     try:
       result.merit[h] = result.db.loadMerit(uint16(h))
-      result.statuses[h] = MeritStatus(result.db.loadMeritStatus(uint16(h)))
-      result.lastParticipation[h] = result.db.loadLastParticipation(uint16(h))
+      result.statuses[h] = MeritStatus(result.db.loadMeritStatuses(uint16(h))[^1])
+      var lastParticipations: string = result.db.loadLastParticipations(uint16(h))
+      result.lastParticipation[h] = lastParticipations[lastParticipations.len - INT_LEN ..< lastParticipations.len].fromBinary()
     except DBReadError as e:
       panic("Couldn't load a holder's Merit: " & e.msg)
 
@@ -113,22 +116,14 @@ proc newHolder*(
     state.statuses.setLen(int(nick) + 1)
     state.lastParticipation.setLen(int(nick) + 1)
 
-  var
-    oldStatus: int = int(state.statuses[nick])
-    oldParticipation: int = state.lastParticipation[nick]
   state.merit[nick] = 0
   state.statuses[nick] = MeritStatus.Unlocked
   state.lastParticipation[nick] = state.processedBlocks + (5 - (state.processedBlocks mod 5))
 
   if not state.oldData:
     state.db.saveMerit(nick, 0)
-    var index: int
-    if state.processedBlocks > state.deadBlocks:
-      index = state.processedBlocks + 1
-    else:
-      index = state.processedBlocks
-    state.db.saveMeritStatus(nick, int(MeritStatus.Unlocked), index, oldStatus)
-    state.db.saveLastParticipation(nick, state.lastParticipation[nick], index, oldParticipation)
+    state.db.appendMeritStatus(nick, state.processedBlocks, byte(MeritStatus.Unlocked))
+    state.db.appendLastParticipation(nick, state.processedBlocks, state.lastParticipation[nick])
 
 proc newHolder*(
   state: var State,

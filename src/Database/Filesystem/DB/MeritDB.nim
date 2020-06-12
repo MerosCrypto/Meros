@@ -86,24 +86,12 @@ template MERIT(
 ): string =
   nick.toBinary(NICKNAME_LEN) & "m"
 
-template MERIT_STATUS(
+template MERIT_STATUSES(
   nick: uint16
 ): string =
   nick.toBinary(NICKNAME_LEN) & "s"
 
-template OLD_MERIT_STATUS(
-  nick: uint16,
-  processed: int
-): string =
-  nick.toBinary(NICKNAME_LEN) & processed.toBinary(INT_LEN) & "s"
-
-template OLD_LAST_PARTICIPATION(
-  nick: uint16,
-  processed: int
-): string =
-  nick.toBinary(NICKNAME_LEN) & processed.toBinary(INT_LEN) & "p"
-
-template LAST_PARTICIPATION(
+template LAST_PARTICIPATIONS(
   nick: uint16
 ): string =
   nick.toBinary(NICKNAME_LEN) & "p"
@@ -273,25 +261,31 @@ proc saveMerit*(
 ) {.forceCheck: [].} =
   db.put(MERIT(nick), merit.toBinary())
 
-proc saveMeritStatus*(
+proc appendMeritStatus*(
   db: DB,
   nick: uint16,
-  status: int,
   processed: int,
-  oldStatus: int
+  status: byte
 ) {.forceCheck: [].} =
-  db.put(MERIT_STATUS(nick), status.toBinary())
-  db.put(OLD_MERIT_STATUS(nick, processed), oldStatus.toBinary())
+  var existing: string
+  try:
+    existing = db.get(MERIT_STATUSES(nick))
+  except DBReadError:
+    discard
+  db.put(MERIT_STATUSES(nick), existing & processed.toBinary(INT_LEN) & status.toBinary(BYTE_LEN))
 
-proc saveLastParticipation*(
+proc appendLastParticipation*(
   db: DB,
   nick: uint16,
-  last: int,
   processed: int,
-  oldLast: int
+  last: int
 ) {.forceCheck: [].} =
-  db.put(LAST_PARTICIPATION(nick), last.toBinary())
-  db.put(OLD_LAST_PARTICIPATION(nick, processed), oldLast.toBinary())
+  var existing: string
+  try:
+    existing = db.get(LAST_PARTICIPATIONS(nick))
+  except DBReadError:
+    discard
+  db.put(LAST_PARTICIPATIONS(nick), existing & processed.toBinary(INT_LEN) & last.toBinary(INT_LEN))
 
 proc remove*(
   db: DB,
@@ -461,49 +455,25 @@ proc loadMerit*(
   except DBReadError as e:
     raise e
 
-proc loadMeritStatus*(
+proc loadMeritStatuses*(
   db: DB,
   nick: uint16
-): int {.forceCheck: [
+): string {.forceCheck: [].} =
+  try:
+    result = db.get(MERIT_STATUSES(nick))
+  except DBReadError as e:
+    panic("Tried to get the Merit Statuses of a non-existent holder: " & $nick)
+
+proc loadLastParticipations*(
+  db: DB,
+  nick: uint16
+): string {.forceCheck: [
   DBReadError
 ].} =
   try:
-    result = db.get(MERIT_STATUS(nick)).fromBinary()
+    result = db.get(LAST_PARTICIPATIONS(nick))
   except DBReadError as e:
-    raise e
-
-proc loadLastParticipation*(
-  db: DB,
-  nick: uint16
-): int {.forceCheck: [
-  DBReadError
-].} =
-  try:
-    result = db.get(LAST_PARTICIPATION(nick)).fromBinary()
-  except DBReadError as e:
-    raise e
-
-proc loadOldStatus*(
-  db: DB,
-  nick: uint16,
-  processed: int,
-  default: int
-): int {.forceCheck: [].} =
-  try:
-    result = db.get(OLD_MERIT_STATUS(nick, processed)).fromBinary()
-  except DBReadError:
-    result = default
-
-proc loadOldParticipation*(
-  db: DB,
-  nick: uint16,
-  processed: int,
-  default: int
-): int {.forceCheck: [].} =
-  try:
-    result = db.get(OLD_LAST_PARTICIPATION(nick, processed)).fromBinary()
-  except DBReadError:
-    result = default
+    panic("Tried to get the Merit Statuses of a non-existent holder: " & $nick)
 
 proc loadBlockRemovals*(
   db: DB,
