@@ -24,8 +24,7 @@ proc getNickname(
     try:
       result = state.reverseLookup(blockArg.header.minerKey)
     except IndexError:
-      #Call new is only required by cacheNextRemoval which always has its miner registered.
-      if newBlock:
+      if callNew and newBlock:
         return state.newHolder(blockArg.header.minerKey)
       panic($blockArg.header.minerKey & " in Block " & $blockArg.header.hash & " doesn't have a nickname.")
   else:
@@ -101,7 +100,7 @@ proc processBlock*(
   #Add the miner's Merit to the State.
   var nick: uint16 = state.getNickname(newBlock, true)
   result[0] = nick
-  state[nick] = state.merit[int(nick)] + 1
+  state[nick] = state.merit[nick] + 1
 
   #If there was a removal, decrement their Merit.
   if result[1] != -1:
@@ -123,10 +122,18 @@ proc processBlock*(
 
   #Update every holder's Merit Status.
   for h in 0 ..< state.statuses.len:
+    var
+      oldStatus: int = int(state.statuses[h])
+      oldParticipation: int = state.lastParticipation[h]
     if participants.contains(uint16(h)):
       #Use the higher value to handle buffer periods.
       state.lastParticipation[h] = max(state.processedBlocks, state.lastParticipation[h])
-      state.db.saveLastParticipation(uint16(h), state.lastParticipation[h])
+      state.db.saveLastParticipation(
+        uint16(h),
+        state.lastParticipation[h],
+        blockchain.height,
+        oldParticipation
+      )
 
     case state.statuses[h]:
       of MeritStatus.Unlocked:
@@ -147,24 +154,44 @@ proc processBlock*(
         if state.processedBlocks - state.lastParticipation[h] == blocksOfInactivity:
           state.unlocked -= state.merit[h]
           state.statuses[h] = MeritStatus.Locked
-          state.db.saveMeritStatus(uint16(h), int(state.statuses[h]))
+          state.db.saveMeritStatus(
+            uint16(h),
+            int(state.statuses[h]),
+            blockchain.height,
+            oldStatus
+          )
 
       of MeritStatus.Locked:
         #Move their Merit to Pending if they had an Element archived.
         if participants.contains(uint16(h)):
           state.statuses[h] = MeritStatus.Pending
-          state.db.saveMeritStatus(uint16(h), int(state.statuses[h]))
+          state.db.saveMeritStatus(
+            uint16(h),
+            int(state.statuses[h]),
+            blockchain.height,
+            oldStatus
+          )
           state.unlocked += state.merit[h]
           #Set the lastParticipation Block to when their Merit should become unlocked again.
           state.lastParticipation[h] = state.processedBlocks + (10 - (state.processedBlocks mod 5))
-          state.db.saveLastParticipation(uint16(h), state.lastParticipation[h])
+          state.db.saveLastParticipation(
+            uint16(h),
+            state.lastParticipation[h],
+            blockchain.height,
+            oldParticipation
+          )
 
       of MeritStatus.Pending:
         #If the current Block is their Block of lastParticipation, their buffer period is over.
         #That means their Merit becomes Unlocked.
         if state.lastParticipation[h] == state.processedBlocks:
           state.statuses[h] = MeritStatus.Unlocked
-          state.db.saveMeritStatus(uint16(h), int(state.statuses[h]))
+          state.db.saveMeritStatus(
+            uint16(h),
+            int(state.statuses[h]),
+            blockchain.height,
+            oldStatus
+          )
 
   #Save the amount of Unlocked Merit for the next Block.
   #This will be overwritten when we process the next Block, yet is needed for some statuses.
@@ -194,7 +221,7 @@ proc revert*(
   blockchain: Blockchain,
   height: int
 ) {.forceCheck: [].} =
-  #Mark the State as working with old data.
+  #Mark the State as working with old data. Prevents writing to the DB.
   state.oldData = true
 
   for i in countdown(state.processedBlocks - 1, height):
@@ -213,20 +240,16 @@ proc revert*(
       state[removal.nick] = removal.merit
 
     #Grab the miner's nickname.
-    nick = state.getNickname(revertingPast)
+    nick = state.getNickname(revertingPast, callNew = false)
 
     #Remove the Merit rewarded by the Block we just reverted past.
-    state[nick] = state.merit[int(nick)] - 1
-
-    #If the miner was new to this Block, remove their nickname.
-    if revertingPast.header.newMiner:
-      state.deleteLastNickname()
+    state[nick] = state.merit[nick] - 1
 
     #If i is over the dead blocks quantity, meaning there is a historical Block to add back to the State...
     if i > state.deadBlocks:
       #Get the miner for said historical Block.
       try:
-        nick = state.getNickname(blockchain[i - state.deadBlocks])
+        nick = state.getNickname(blockchain[i - state.deadBlocks], callNew = false)
       except IndexError as e:
         panic("State couldn't get a historical Block being revived into the State: " & e.msg)
 
@@ -239,10 +262,34 @@ proc revert*(
 
       #Add back the Merit which died.
       if not removed:
-        state[nick] = state.merit[int(nick)] + 1
+        state[nick] = state.merit[nick] + 1
 
-    #Increment the amount of processed Blocks.
-    dec(state.processedBlocks)
+    #If the miner was new to this Block, remove their nickname.
+    if revertingPast.header.newMiner:
+      state.deleteLastNickname()
+
+    #Reload the old statuses/participations.
+    for h in 0 ..< state.holders.len:
+      var index: int
+      if i > state.deadBlocks:
+        index = i + 1
+      else:
+        index = i
+
+      state.statuses[h] = MeritStatus(
+        state.db.loadOldStatus(uint16(h), index, int(state.statuses[h]))
+      )
+      state.lastParticipation[h] = state.db.loadOldParticipation(
+        uint16(h),
+        index,
+        state.lastParticipation[h]
+      )
+
+    #Reload the amount of unlocked Merit.
+    state.unlocked = state.loadUnlocked(i)
+
+  #Correct the amount of processed Blocks.
+  state.processedBlocks = height
 
   state.oldData = false
 

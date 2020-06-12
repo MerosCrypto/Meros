@@ -34,13 +34,7 @@ suite "Revert":
       mining: Block
 
     #Create the initial state.
-    states.add(
-      newState(
-        db,
-        7,
-        blockchain
-      )
-    )
+    states.add(newState(db, 7, blockchain))
 
     #Iterate over 20 'rounds'.
     for _ in 1 .. 20:

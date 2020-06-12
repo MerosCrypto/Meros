@@ -113,14 +113,22 @@ proc newHolder*(
     state.statuses.setLen(int(nick) + 1)
     state.lastParticipation.setLen(int(nick) + 1)
 
-  state.merit[int(nick)] = 0
-  state.statuses[int(nick)] = MeritStatus.Unlocked
-  state.lastParticipation[int(nick)] = state.processedBlocks + (5 - (state.processedBlocks mod 5))
+  var
+    oldStatus: int = int(state.statuses[nick])
+    oldParticipation: int = state.lastParticipation[nick]
+  state.merit[nick] = 0
+  state.statuses[nick] = MeritStatus.Unlocked
+  state.lastParticipation[nick] = state.processedBlocks + (5 - (state.processedBlocks mod 5))
 
   if not state.oldData:
     state.db.saveMerit(nick, 0)
-    state.db.saveMeritStatus(nick, int(state.statuses[int(nick)]))
-    state.db.saveLastParticipation(nick, state.lastParticipation[int(nick)])
+    var index: int
+    if state.processedBlocks > state.deadBlocks:
+      index = state.processedBlocks + 1
+    else:
+      index = state.processedBlocks
+    state.db.saveMeritStatus(nick, int(MeritStatus.Unlocked), index, oldStatus)
+    state.db.saveLastParticipation(nick, state.lastParticipation[nick], index, oldParticipation)
 
 proc newHolder*(
   state: var State,
@@ -142,10 +150,10 @@ proc `[]`*(
     return 0
 
   #If the Merit is locked, report it as non-existent.
-  if state.statuses[int(nick)] == MeritStatus.Locked:
+  if state.statuses[nick] == MeritStatus.Locked:
     return 0
 
-  result = state.merit[int(nick)]
+  result = state.merit[nick]
 
   #Iterate over the pending removal cache, seeing if we need to decrement at all.
   for r in 0 ..< height - state.processedBlocks:
@@ -157,8 +165,8 @@ proc `[]`*(
 
   #If their Merit is pending, return 0 if it won't be unlocked by the specified height.
   if (
-    (state.statuses[int(nick)] == MeritStatus.Pending) and
-    (height < state.lastParticipation[int(nick)])
+    (state.statuses[nick] == MeritStatus.Pending) and
+    (height < state.lastParticipation[nick])
   ):
     return 0
 
@@ -183,12 +191,14 @@ proc `[]=`*(
   #Get the current value.
   var current: int = state.merit[nick]
   #Set their new value.
-  state.merit[int(nick)] = value
-  #Update unlocked accrodingly.
-  if value > current:
-    state.unlocked += value - current
-  else:
-    state.unlocked -= current - value
+  state.merit[nick] = value
+
+  #Update unlocked accordingly, if the user is currently contributing to unlocked.
+  if state.statuses[nick] == MeritStatus.Unlocked:
+    if value > current:
+      state.unlocked += value - current
+    else:
+      state.unlocked -= current - value
 
   #Save the updated values.
   if not state.oldData:
@@ -214,8 +224,12 @@ proc remove*(
 #Delete the last nickname from RAM.
 proc deleteLastNickname*(
   state: var State
-) {.inline, forceCheck: [].} =
-  state.holders.del(high(state.holders))
+) {.forceCheck: [].} =
+  var nick: int = high(state.holders)
+  state.holders.del(nick)
+  state.merit.del(nick)
+  state.statuses.del(nick)
+  state.lastParticipation.del(nick)
 
 #Reverse lookup for a key to nickname.
 proc reverseLookup*(
