@@ -122,8 +122,11 @@ proc newHolder*(
 
   if not state.oldData:
     state.db.saveMerit(nick, 0)
-    state.db.appendMeritStatus(nick, state.processedBlocks, byte(MeritStatus.Unlocked))
-    state.db.appendLastParticipation(nick, state.processedBlocks, state.lastParticipation[nick])
+    var index: int = state.processedBlocks
+    if state.processedBlocks > state.deadBlocks:
+      inc(index)
+    state.db.appendMeritStatus(nick, index, byte(MeritStatus.Unlocked))
+    state.db.appendLastParticipation(nick, index, state.lastParticipation[nick])
 
 proc newHolder*(
   state: var State,
@@ -133,6 +136,40 @@ proc newHolder*(
   state.holders.add(holder)
   state.db.saveHolder(holder)
   state.newHolder(result)
+
+proc findMeritStatus*(
+  state: State,
+  nick: uint16,
+  height: int
+): MeritStatus {.forceCheck: [].} =
+  var statuses: string = state.db.loadMeritStatuses(nick)
+  for b in countdown(statuses.len - (INT_LEN + BYTE_LEN), 0, INT_LEN + BYTE_LEN):
+    var valueHeight: int = statuses[b ..< b + INT_LEN].fromBinary()
+    if valueHeight == height:
+      result = MeritStatus(statuses[b + INT_LEN])
+    elif valueHeight < height:
+      if b == statuses.len - (INT_LEN + BYTE_LEN):
+        result = MeritStatus(statuses[b + INT_LEN])
+      else:
+        result = MeritStatus(statuses[b + (2 * INT_LEN) + BYTE_LEN])
+      break
+
+proc findLastParticipation*(
+  state: State,
+  nick: uint16,
+  height: int
+): int {.forceCheck: [].} =
+  var participations: string = state.db.loadLastParticipations(nick)
+  for b in countdown(participations.len - (2 * INT_LEN), 0, (2 * INT_LEN)):
+    var valueHeight: int = participations[b ..< b + INT_LEN].fromBinary()
+    if valueHeight == height:
+      result = participations[b + INT_LEN ..< b + (2 * INT_LEN)].fromBinary()
+    elif valueHeight < height:
+      if b == participations.len - (2 * INT_LEN):
+        result = participations[b + INT_LEN ..< b + (2 * INT_LEN)].fromBinary()
+      else:
+        result = participations[b + (3 * INT_LEN) ..< b + (4 * INT_LEN)].fromBinary()
+      break
 
 #Get a Merit Holder's Merit.
 proc `[]`*(

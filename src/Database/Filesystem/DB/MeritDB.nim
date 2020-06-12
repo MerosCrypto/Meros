@@ -467,9 +467,7 @@ proc loadMeritStatuses*(
 proc loadLastParticipations*(
   db: DB,
   nick: uint16
-): string {.forceCheck: [
-  DBReadError
-].} =
+): string {.forceCheck: [].} =
   try:
     result = db.get(LAST_PARTICIPATIONS(nick))
   except DBReadError as e:

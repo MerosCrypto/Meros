@@ -194,7 +194,6 @@ proc revert*(
   blockchain: Blockchain,
   height: int
 ) {.forceCheck: [].} =
-  discard """
   #Mark the State as working with old data. Prevents writing to the DB.
   state.oldData = true
 
@@ -242,33 +241,24 @@ proc revert*(
     if revertingPast.header.newMiner:
       state.deleteLastNickname()
 
-    #Reload the old statuses/participations.
-    for h in 0 ..< state.holders.len:
-      var index: int
-      if i > state.deadBlocks:
-        index = i + 1
-      else:
-        index = i
-
-      state.statuses[h] = MeritStatus(
-        state.db.loadOldStatus(uint16(h), index, int(state.statuses[h]))
-      )
-      state.lastParticipation[h] = state.db.loadOldParticipation(
-        uint16(h),
-        index,
-        state.lastParticipation[h]
-      )
-
-    #Reload the amount of unlocked Merit.
-    state.unlocked = state.loadUnlocked(i)
+  #Reload the old statuses/participations.
+  for h in 0 ..< state.holders.len:
+    var index: int = height
+    if state.processedBlocks > state.deadBlocks:
+      inc(index)
+    state.statuses[h] = state.findMeritStatus(uint16(h), index)
+    state.lastParticipation[h] = state.findLastParticipation(uint16(h), index)
 
   #Correct the amount of processed Blocks.
   state.processedBlocks = height
 
-  state.oldData = false
+  #Reload the amount of unlocked Merit.
+  state.unlocked = state.loadUnlocked(state.processedBlocks)
 
   #Regenerate the pending removals cache.
   state.pendingRemovals = initDeque[int]()
   for _ in 0 ..< 6:
-    state.cacheNextRemoval(blockchain, height)
-  """
+    state.cacheNextRemoval(blockchain, state.processedBlocks)
+
+  #Allow saving data again.
+  state.oldData = false
