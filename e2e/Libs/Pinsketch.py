@@ -32,6 +32,8 @@ FIELD_BITS: int = 64
 FIELD_BYTES: int = FIELD_BITS // 8
 FIELD_MODULUS: int = (1 << FIELD_BITS) + 27
 
+# TODO: Use the following two functions?
+
 def mul2(
   x: int
 ) -> int:
@@ -63,29 +65,152 @@ def create_sketch(
 
 #A merge function is not provided as it's literally a xor of the two sketches.
 
+## Below numbers and polynomials are messed with each other!
+
+# a^2 % f
+def sqrMod(a, f):
+  sqr = field.Multiply(a, a)
+  _, rem = field.FullDivision(sqr, f, field.FindDegree(sqr), field.FindDegree(f))
+  return rem
+
 def setCoeff(
   field: FField,
-  i: int
+  f: List[int],
+  i: int,
+  a: int
 ) -> int:
-  result: int = field.FindDegree(i)
-  #set(x.rep[i]);
-  #x.normalize();
-  return result
+  while i >= len(f):
+    f.append(0)
+  f[i] = a
+  #x.normalize()
+  while len(f) and f[-1] == 0:
+    f = f[:-1]
+  return f
+
+def traceMap(a, f):
+  res = a
+  tmp = a
+
+  for i in range(FIELD_BITS-1):
+    tmp = sqrMod(tmp, f)
+    res = field.Add(res, tmp)
+
+  return res
+
+def findRoots(field, f) -> List[int]:
+  if field.FindDegree(f) == 0:
+    return [0]
+
+  if field.FindDegree(f) == 1:
+    return [f & 1]
+      
+  while True:
+    r = field.GetRandomElement()
+    h = 0
+    h = setCoeff(field, h, 1, r)
+    h = traceMap(h, f)
+    h, _, _ = field.ExtendedEuclid(h, f, field.FindDegree(h), field.FindDegree(f))
+    if not (field.FindDegree(h) <= 0 or field.FindDegree(h) == field.FindDegree(f)):
+      break
+
+  roots = FindRoots(field, h)
+  h = field.Divide(f, h)
+  roots.extend(FindRoots(field, h))
+  return roots
 
 def decode_sketch(
   sketch: bytes,
   capacity: int
 ) -> List[int]:
+  d = capacity  # FIXME!
+
   withoutEvens: List[int] = []
   for e in range(0, len(sketch), FIELD_BYTES):
     withoutEvens.append(int.from_bytes(sketch[e : e + FIELD_BYTES], 'little'))
 
-  evened: List[int] = []
+  ss: List[int] = []
   for wE in withoutEvens:
-    evened.append(wE)
-    evened.append(mul(wE, wE))
+    ss.append(wE)
+    ss.append(mul(wE, wE))
 
-  field: FField = FField(FIELD_BITS)
-  #While the following setCoeff call is required, it shouldn't be returned.
-  #It's used to calculate what should be returned.
-  return [setCoeff(field, capacity * 2)]
+  r1: List[int] = []
+  r2: List[int] = []
+  r3: List[int] = []
+  v1: List[int] = []
+  v2: List[int] = []
+  v3: List[int] = []
+  q: List[int] = []
+  temp: List[int] = []
+
+  # TODO: Don't introduce these vars
+  Rold: List[int] = []
+  Rcur: List[int] = []
+  Rnew: List[int] = []
+  Vold: List[int] = []
+  Vcur: List[int] = []
+  Vnew: List[int] = []
+  tempPointer: List[int] = []
+
+  Rold = r1
+  Rcur = r2
+  Rnew = r3
+
+  Vold = v1
+  Vcur = v2
+  Vnew = v3
+
+  field: FField = FField(FIELD_BITS, FIELD_MODULUS)
+
+  Rold = setCoeff(field, Rold, d-1, 1)  # Rold holds z^{d-1}
+
+  # Rcur=S(z)/z where S is the syndrome poly, Rcur = \sum S_j z^{j-1}
+  # Note that because we index arrays from 0, S_j is stored in ss[j-1]
+  for i in range(d-1):
+    Rcur = setCoeff(field, Rcur, i, ss[i]);
+
+	# Vold is already 0 -- no need to initialize
+	# Initialize Vcur to 1
+  Vcur = setCoeff(field, Vcur, 0, 1) # Vcur = 1
+
+  # TODO: Use Euclid from ffinite
+	# Now run Euclid, but stop as soon as degree of Rcur drops below
+	# (d-1)/2
+	# This will take O(d^2) operations in GF(2^m)
+
+  t: int = (d-1)//2
+
+  while field.FindDegree(Rcur) >= t:
+    # Rold = Rcur*q + Rnew
+    q, Rnew = field.FullDivision(Rold, Rcur, field.FindDegree(Rold), field.FindDegree(Rcur))
+
+    # Vnew = Vold - qVcur
+    temp = field.Multiply(q, Vcur)
+    Vnew = field.Subtract(Vold, temp)
+
+    # swap everything (TODO: Simplify.)
+    tempPointer = Rold
+    Rold = Rcur
+    Rcur = Rnew
+    Rnew = tempPointer
+
+    tempPointer = Vold
+    Vold = Vcur
+    Vcur = Vnew
+    Vnew = tempPointer
+
+	# At the end of the loop, sigma(z) is Vcur
+	# (up to a constant factor, which doesn't matter,
+	# since we care about roots of sigma).
+	# The roots of sigma(z) are inverses of the points we
+	# are interested in.  
+
+  # find roots of sigma(z)
+  # this will take O(e^2 + e^{\log_2 3} m) operations in GF(2^m),
+  # where e is the degree of sigma(z)
+  answer = findRoots(field, Vcur)
+
+  # take inverses of roots of sigma(z)
+  for v in answer:
+    v = field.Inverse(v)
+
+  return answer
