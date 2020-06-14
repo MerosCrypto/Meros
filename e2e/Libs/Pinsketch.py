@@ -32,7 +32,7 @@ FIELD_BITS: int = 64
 FIELD_BYTES: int = FIELD_BITS // 8
 FIELD_MODULUS: int = (1 << FIELD_BITS) + 27
 
-# TODO: Uset the following two functions?
+# TODO: Use the following two functions?
 
 def mul2(
   x: int
@@ -65,6 +65,8 @@ def create_sketch(
 
 #A merge function is not provided as it's literally a xor of the two sketches.
 
+## Below numbers and polynomials are messed with each other!
+
 # a^2 % f
 def sqrMod(a, f):
   sqr = field.Multiply(a, a)
@@ -73,14 +75,17 @@ def sqrMod(a, f):
 
 def setCoeff(
   field: FField,
-  f: int,
+  f: List[int],
   i: int,
   a: int
 ) -> int:
-  degree: int = field.FindDegree(f)
-  result: int = f | 1 << i  # FIXME: Works only if the bit is zero
-  #x.normalize();
-  return result
+  while i >= len(f):
+    f.append(0)
+  f[i] = a
+  #x.normalize()
+  while len(f) and f[-1] == 0:
+    f = f[:-1]
+  return f
 
 def traceMap(a, f):
   res = a
@@ -102,8 +107,8 @@ def findRoots(field, f) -> List[int]:
   while True:
     r = field.GetRandomElement()
     h = 0
-    h = setCoeff(field, h, 1, r);
-    h = traceMap(h, f);
+    h = setCoeff(field, h, 1, r)
+    h = traceMap(h, f)
     h, _, _ = field.ExtendedEuclid(h, f, field.FindDegree(h), field.FindDegree(f))
     if not (field.FindDegree(h) <= 0 or field.FindDegree(h) == field.FindDegree(f)):
       break
@@ -128,23 +133,23 @@ def decode_sketch(
     ss.append(wE)
     ss.append(mul(wE, wE))
 
-  r1: int = 0
-  r2: int = 0
-  r3: int = 0
-  v1: int = 0
-  v2: int = 0
-  v3: int = 0
-  q: int = 0
-  temp: int = 0
+  r1: List[int] = []
+  r2: List[int] = []
+  r3: List[int] = []
+  v1: List[int] = []
+  v2: List[int] = []
+  v3: List[int] = []
+  q: List[int] = []
+  temp: List[int] = []
 
   # TODO: Don't introduce these vars
-  Rold: int = 0
-  Rcur: int = 0
-  Rnew: int = 0
-  Vold: int = 0
-  Vcur: int = 0
-  Vnew: int = 0
-  tempPointer: int = 0
+  Rold: List[int] = []
+  Rcur: List[int] = []
+  Rnew: List[int] = []
+  Vold: List[int] = []
+  Vcur: List[int] = []
+  Vnew: List[int] = []
+  tempPointer: List[int] = []
 
   Rold = r1
   Rcur = r2
@@ -156,7 +161,7 @@ def decode_sketch(
 
   field: FField = FField(FIELD_BITS, FIELD_MODULUS)
 
-  Rold = setCoeff(field, Rold, d-1, 1);  # Rold holds z^{d-1}
+  Rold = setCoeff(field, Rold, d-1, 1)  # Rold holds z^{d-1}
 
   # Rcur=S(z)/z where S is the syndrome poly, Rcur = \sum S_j z^{j-1}
   # Note that because we index arrays from 0, S_j is stored in ss[j-1]
@@ -179,8 +184,8 @@ def decode_sketch(
     q, Rnew = field.FullDivision(Rold, Rcur, field.FindDegree(Rold), field.FindDegree(Rcur))
 
     # Vnew = Vold - qVcur
-    temp = field.Multiply(q, Vcur);
-    Vnew = field.Subtract(Vold, temp);
+    temp = field.Multiply(q, Vcur)
+    Vnew = field.Subtract(Vold, temp)
 
     # swap everything (TODO: Simplify.)
     tempPointer = Rold
