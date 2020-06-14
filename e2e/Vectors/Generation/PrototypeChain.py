@@ -85,7 +85,10 @@ class PrototypeBlock:
     diff: int,
     privateKeys: List[PrivateKey]
   ) -> Block:
-    if keepUnlocked:
+    #Only add the Data if:
+    #1) We're supposed to make sure Merit Holders are always Unloocked
+    #2) The last Block created a Data.
+    if keepUnlocked and (prev.last != genesis):
       #Create the Data from the last Block.
       blockData: Data = Data(genesis, prev.hash)
 
@@ -98,6 +101,13 @@ class PrototypeBlock:
         verif: SignedVerification = SignedVerification(blockData.hash, i)
         verif.sign(i, privKey)
         dataSigs.append(verif.signature)
+
+      #Don't use the latest miner if they don't have Merit.
+      if isinstance(self.minerID, bytes):
+        del self.packets[-1].holders[-1]
+        del dataSigs[-1]
+
+      #Recreate the aggregate.
       self.aggregate = Signature.aggregate(dataSigs)
 
     #Create the actual Block.
@@ -117,29 +127,10 @@ class PrototypeBlock:
     result.mine(self.minerKey, diff)
     return result
 
-blankUnlockedInternal: Blockchain
-blankLockedInternal: Blockchain
-
 class PrototypeChain:
-  def __init__(
-    self,
-    blankBlocks: int = 0,
-    keepUnlocked: bool = True,
-    timeOffset: int = 1200
-  ) -> None:
-    self.blankBlocks: int = blankBlocks
-    self.keepUnlocked: bool = keepUnlocked
-    self.timeOffset: int = timeOffset
-    self.minerKeys: List[PrivateKey] = []
-    self.blocks: List[PrototypeBlock] = []
-
-  @staticmethod
-  def blankUnlocked() -> Blockchain:
-    return blankUnlockedInternal
-
-  @staticmethod
-  def blankLocked() -> Blockchain:
-    return blankLockedInternal
+  timeOffset: int
+  minerKeys: List[PrivateKey]
+  blocks: List[PrototypeBlock]
 
   def add(
     self,
@@ -149,7 +140,7 @@ class PrototypeChain:
   ) -> None:
     #Determine if this is a new miner or not.
     miner: Union[bytes, int]
-    if nick >= len(self.minerKeys):
+    if nick > len(self.minerKeys):
       raise GenerationError("Told to mine a Block with a miner nick which doesn't exist.")
     if nick == len(self.minerKeys):
       #If it is, generate the relevant key.
@@ -160,9 +151,7 @@ class PrototypeChain:
 
     timeBase: int
     if len(self.blocks) == 0:
-      #It doesn't matter if we use unlocked or locked; they share timestamps.
-      #If no blank Blocks are used, this returns the genesis time which should be the base anyways.
-      timeBase = blankUnlockedInternal.blocks[self.blankBlocks].header.time
+      timeBase = Blockchain().blocks[0].header.time
     else:
       timeBase = self.blocks[-1].time
 
@@ -180,19 +169,25 @@ class PrototypeChain:
       )
     )
 
+  def __init__(
+    self,
+    blankBlocks: int = 0,
+    keepUnlocked: bool = True,
+    timeOffset: int = 1200
+  ) -> None:
+    self.keepUnlocked: bool = keepUnlocked
+    self.timeOffset = timeOffset
+    self.minerKeys = []
+    self.blocks = []
+
+    for _ in range(blankBlocks):
+      self.add()
+
   def finish(
     self
   ) -> Blockchain:
     blockchain: Blockchain = Blockchain()
 
-    #Add the blank Blocks.
-    for b in range(1, self.blankBlocks + 1):
-      if self.keepUnlocked:
-        blockchain.add(blankUnlockedInternal.blocks[b])
-      else:
-        blockchain.add(blankLockedInternal.blocks[b])
-
-    #Mine and append each Block.
     for block in self.blocks:
       blockchain.add(
         block.finish(
@@ -205,12 +200,3 @@ class PrototypeChain:
       )
 
     return blockchain
-
-#Create 25 Blank Blocks to be used through out vectors which require a count of Blocks from the start.
-protoBlankUnlocked: PrototypeChain = PrototypeChain()
-protoBlankLocked: PrototypeChain = PrototypeChain(keepUnlocked=False)
-for _ in range(25):
-  protoBlankUnlocked.add()
-  protoBlankLocked.add()
-blankUnlockedInternal = protoBlankUnlocked.finish()
-blankLockedInternal = protoBlankLocked.finish()

@@ -9,6 +9,7 @@ from e2e.Classes.Consensus.Verification import Verification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
+from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
 
 from e2e.Meros.Meros import MessageType
@@ -59,7 +60,15 @@ class Liver:
           continue
         pendingPackets.append(packet.hash)
 
-        if packet.hash not in self.rpc.meros.sentTXs:
+        #Don't include sent Transactions or independently created Block Data.
+        if not (
+          (packet.hash in self.rpc.meros.sentTXs) or
+          (
+            packet.hash == (
+              Data(self.merit.blockchain.genesis, block.header.last).hash
+            )
+          )
+        ):
           pendingTXs.append(packet.hash)
 
       for elem in block.body.elements:

@@ -9,6 +9,7 @@ from e2e.Classes.Consensus.Verification import Verification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
+from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
 
 from e2e.Meros.Meros import MessageType
@@ -129,7 +130,17 @@ class Syncer:
         #Set the packets/transactions which should be synced.
         self.packets = {}
         for packet in self.blocks[-1].body.packets:
-          if packet.hash not in self.rpc.meros.sentTXs:
+          if not (
+            (packet.hash in self.rpc.meros.sentTXs) or
+            (
+              packet.hash == (
+                Data(
+                  self.merit.blockchain.genesis,
+                  self.blocks[-1].header.last
+                ).hash
+              )
+            )
+          ):
             self.txs.add(packet.hash)
           self.packets[Sketch.hash(self.blocks[-1].header.sketchSalt, packet)] = packet
 
@@ -170,6 +181,9 @@ class Syncer:
           self.rpc.meros.packet(self.packets[sketchHash])
           del self.packets[sketchHash]
 
+        if (self.packets == {}) and (self.txs == set()):
+          del self.blocks[-1]
+
       elif MessageType(msg[0]) == MessageType.TransactionRequest:
         reqHash = msg[1 : 33]
 
@@ -183,7 +197,7 @@ class Syncer:
         self.rpc.meros.syncTransaction(self.transactions.txs[reqHash])
         self.txs.remove(reqHash)
 
-        if self.txs == set():
+        if (self.packets == {}) and (self.txs == set()):
           del self.blocks[-1]
 
       else:
@@ -197,5 +211,9 @@ class Syncer:
       verifyTransactions(self.rpc, self.transactions)
 
     #Playback their messages.
+    #Verifies Meros can respond as it can receive.
     if self.settings["playback"]:
       self.rpc.meros.sync.playback()
+
+    #Reset the node.
+    self.rpc.reset()
