@@ -27,6 +27,7 @@ SOFTWARE.
 from typing import Optional, List, Tuple
 
 from pyfinite.ffield import FField
+from e2e.Libs.Qrt import qrt
 
 FIELD_BITS: int = 64
 FIELD_BYTES: int = FIELD_BITS // 8
@@ -193,13 +194,6 @@ def gcd(
     a = list(b)
     b = list(tmp2)
   return (a, b)
-
-def qrt(
-  val: int
-) -> int:
-  if val == 0:
-    pass
-  return 18446744073709551606
 
 def findRootsInternal(
   field: FField,
