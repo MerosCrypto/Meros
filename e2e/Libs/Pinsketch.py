@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Optional, List, Tuple
+from typing import Optional, List
 
 from e2e.Libs.Qrt import qrt
 
@@ -156,6 +156,43 @@ def polyMod(
     if term != 0:
       for x in range(len(mod) - 1):
         val[len(val) - len(mod) + 1 + x] = val[len(val) - len(mod) + 1 + x] ^ mul(mod[x], term)
+  while val and (val[-1] == 0):
+    del val[-1]
+
+def monic(
+  a: List[int]
+) -> None:
+  if a[-1] == 1:
+    return
+  invd: int = inv(a[-1])
+  a[-1] = 1
+  for i in range(len(a) - 1):
+    a[i] = mul(a[i], invd)
+
+def gcd(
+  a: List[int],
+  b: List[int]
+) -> None:
+  larger: List[int] = list(a)
+  smaller: List[int] = list(b)
+  if len(a) < len(b):
+    smaller = list(a)
+    larger = list(b)
+  while a:
+    del a[0]
+  while b:
+    del b[0]
+  while smaller:
+    if len(smaller) == 1:
+      a.append(1)
+      return
+    monic(smaller)
+    polyMod(smaller, larger)
+    tmp: List[int] = list(smaller)
+    smaller = list(larger)
+    larger = tmp
+  for x in larger:
+    a.append(x)
 
 def traceMod(
   mod: List[int],
@@ -188,38 +225,6 @@ def divMod(
     if term != 0:
       for x in range(len(mod) - 1):
         val[len(val) - len(mod) + 1 + x] = val[len(val) - len(mod) + 1 + x] ^ mul(mod[x], term)
-
-def monic(
-  field: FField,
-  a: List[int]
-) -> int:
-  if a[-1] == 1:
-    return 0
-  inv: int = field.Inverse(a[-1])
-  a[-1] = 1
-  for i in range(len(a) - 1):
-    a[i] = mul(a[i], inv)
-  return inv
-
-def gcd(
-  field: FField,
-  a: List[int],
-  b: List[int]
-) -> Tuple[List[int], List[int]]:
-  if len(a) < len(b):
-    tmp: List[int] = list(a)
-    a = list(b)
-    b = list(tmp)
-  while len(b) > 0:
-    if len(b) == 1:
-      a = [1]
-      return (a, b)
-    monic(field, b)
-    polyMod(b, a)
-    tmp2: List[int] = list(a)
-    a = list(b)
-    b = list(tmp2)
-  return (a, b)
 
 def findRootsInternal(
   stack: List[List[int]],
@@ -265,7 +270,7 @@ def findRootsInternal(
     depth += 1
     randv = mul2(randv)
     tmp = poly
-    (trace, tmp) = gcd(field, trace, tmp)
+    gcd(trace, tmp)
     if (len(trace) != len(poly)) and (len(trace) > 1):
       break
 
