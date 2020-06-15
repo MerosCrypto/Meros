@@ -1,7 +1,6 @@
 from time import sleep
 
-from e2e.Classes.Transactions.Transaction import Transaction
-from e2e.Classes.Transactions.Transactions import Transactions
+from e2e.Classes.Transactions.Transactions import Transaction, Transactions
 
 from e2e.Meros.RPC import RPC
 

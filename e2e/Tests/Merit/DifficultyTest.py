@@ -11,11 +11,11 @@ from e2e.Tests.Errors import TestError
 def DifficultyTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
+  file: IO[Any] = open("e2e/Vectors/Merit/Difficulty.json", "r")
   blocks: List[Dict[str, Any]] = json.loads(file.read())
   file.close()
 
-  #Constructed here so we can access the difficulties from this callback
+  #Constructed here so we can access the difficulties from this callback.
   blockchain: Blockchain = Blockchain.fromJSON(blocks)
 
   def checkDifficulty(

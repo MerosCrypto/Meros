@@ -1,7 +1,8 @@
 #pylint: disable=unused-import
 
-import e2e.Vectors.Generation.Merit.BlankBlocks
-import e2e.Vectors.Generation.Merit.StateBlocks
+import e2e.Vectors.Generation.Merit.ChainAdvancement
+import e2e.Vectors.Generation.Merit.State
+import e2e.Vectors.Generation.Merit.Difficulty
 import e2e.Vectors.Generation.Merit.HundredSeventyFive
 import e2e.Vectors.Generation.Merit.Reorganizations.DepthOne
 import e2e.Vectors.Generation.Merit.Reorganizations.LongerChainMoreWork

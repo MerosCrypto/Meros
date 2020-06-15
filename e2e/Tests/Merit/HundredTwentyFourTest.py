@@ -1,10 +1,7 @@
-#https://github.com/MerosCrypto/Meros/issues/124.
-
 from typing import Dict, List, IO, Any
 import json
 
-from e2e.Classes.Merit.Blockchain import Block
-from e2e.Classes.Merit.Blockchain import Blockchain
+from e2e.Classes.Merit.Blockchain import Block, Blockchain
 
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Meros import MessageType
@@ -16,23 +13,18 @@ from e2e.Tests.Merit.Verify import verifyBlockchain
 def HundredTwentyFourTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
-  vectors: List[Dict[str, Any]] = json.loads(file.read())
+  file: IO[Any] = open("e2e/Vectors/Merit/ChainAdvancement.json", "r")
+  vectors: List[Dict[str, Any]] = json.loads(file.read())[0]
   file.close()
 
-  #Solely used to get the genesis Block hash.
   blockchain: Blockchain = Blockchain()
-
-  #Parse the Blocks from the vectors.
   for i in range(2):
     blockchain.add(Block.fromJSON(vectors[i]))
 
-  #Handshake with the node.
   rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
   rpc.meros.syncConnect(blockchain.blocks[0].header.hash)
 
   def handleSync() -> None:
-    #Handle sync requests.
     reqHash: bytes = bytes()
     bH: int = 0
     bB: int = 1
@@ -82,7 +74,6 @@ def HundredTwentyFourTest(
         if reqHash != blockchain.blocks[bB].header.hash:
           raise TestError("Meros asked for a Block Body that didn't belong to the next Block.")
 
-        #Send the Block.
         rpc.meros.blockBody(blockchain.blocks[bB])
         bB += 1
 
@@ -104,7 +95,7 @@ def HundredTwentyFourTest(
 
   #Verify Meros responds with their tail (the genesis).
   if rpc.meros.live.recv() != MessageType.BlockchainTail.toByte() + blockchain.blocks[0].header.hash:
-    raise TestError("Meros didn't respond with its Blockchain's Tail.")
+    raise TestError("Meros didn't respond with the genesis.")
 
   #Handle the sync.
   handleSync()
@@ -122,5 +113,5 @@ def HundredTwentyFourTest(
     False
   )
   if rpc.meros.sync.recv() != MessageType.BlockchainTail.toByte() + blockchain.blocks[0].header.hash:
-    raise TestError("Meros didn't respond with its Blockchain's Tail.")
+    raise TestError("Meros didn't respond with the genesis.")
   handleSync()
