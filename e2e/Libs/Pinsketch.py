@@ -26,13 +26,11 @@ SOFTWARE.
 
 from typing import Optional, List, Tuple
 
-from pyfinite.ffield import FField
 from e2e.Libs.Qrt import qrt
 
 FIELD_BITS: int = 64
 FIELD_BYTES: int = FIELD_BITS // 8
 FIELD_MODULUS: int = (1 << FIELD_BITS) + 27
-
 
 def mul2(
   x: int
@@ -61,7 +59,6 @@ def createSketch(
   return b"".join(elem.to_bytes(FIELD_BYTES, "little") for elem in oddSums)
 
 def berlekampMassey(
-  field: FField,
   syndromes: List[int]
 ) -> List[int]:
   current: List[int] = [1]
@@ -79,7 +76,7 @@ def berlekampMassey(
     if discrepancy != 0:
       x: int = n + 1 - (len(current) - 1) - (len(prev) - 1)
       if bInv is None:
-        bInv = field.Inverse(b)
+        bInv = inv(b)
 
       swap: bool = 2 * (len(current) - 1) <= n
       if swap:
@@ -117,6 +114,35 @@ def square(
       mul(poly[target // 2], poly[target // 2])
     poly[target] = (target & 1)
     target -= 1
+
+def inv(
+   val: int
+) -> int:
+  if val == 0:
+    return 0
+
+  t: int = 0
+  newt: int = 1
+
+  r: int = 27
+  newr: int = val
+
+  rlen: int = 65
+  newrlen: int = newr.bit_length()
+
+  while newr != 0:
+    q: int = rlen - newrlen
+    if q < 0:
+      q = 64 + q
+    r = r ^ ((newr << q) & ((1 << 27) - 1))
+    t = t ^ (newt << q)
+
+    rlen = min(r.bit_length(), rlen - 1)
+    if r < newr:
+      (t, newt) = (newt, t)
+      (r, newr) = (newr, r)
+      (rlen, newrlen) = (newrlen, rlen)
+  return t
 
 def polyMod(
   mod: List[int],
@@ -196,7 +222,6 @@ def gcd(
   return (a, b)
 
 def findRootsInternal(
-  field: FField,
   stack: List[List[int]],
   pos: int,
   roots: List[int],
@@ -210,7 +235,7 @@ def findRootsInternal(
     return
 
   if len(ppoly) == 3:
-    tInv: int = field.Inverse(ppoly[1])
+    tInv: int = inv(ppoly[1])
     roots.append(mul(qrt(mul(ppoly[0], mul(tInv, tInv))), ppoly[1]))
     roots.append(roots[-1] ^ ppoly[1])
     return
@@ -246,25 +271,23 @@ def findRootsInternal(
 
     thisIter += 1
 
-  monic(field, trace)
+  monic(trace)
   divMod(trace, poly, tmp)
-  findRootsInternal(field, stack, pos, roots, True, depth, randv)
+  findRootsInternal(stack, pos, roots, True, depth, randv)
 
 def findRoots(
-  field: FField,
   poly: List[int]
 ) -> List[int]:
   roots: List[int] = []
   stack: List[List[int]] = [poly]
-  findRootsInternal(field, stack, 0, roots, False, 0, 1)
+  findRootsInternal(stack, 0, roots, False, 0, 1)
   return roots
 
 def decodeSketch(
   sketch: bytes
 ) -> List[int]:
-  field: FField = FField(FIELD_BITS, FIELD_MODULUS)
   elements: List[int] = []
   for e in range(0, len(sketch), FIELD_BYTES):
     elements.append(int.from_bytes(sketch[e : e + FIELD_BYTES], "little"))
     elements.append(mul(elements[e // FIELD_BYTES], elements[e // FIELD_BYTES]))
-  return findRoots(field, berlekampMassey(field, elements)[::-1])
+  return findRoots(berlekampMassey(elements)[::-1])
