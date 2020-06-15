@@ -1,11 +1,12 @@
 class FField:
   def __init__(
     self,
-    bits: int
+    bits: int,
+    modulus: int
   ) -> None:
     ...
 
-  def FindDegree(
+  def Inverse(
     self,
     value: int
   ) -> int:

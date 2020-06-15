@@ -1,5 +1,5 @@
 """
-The following, FIELD_BITS, FIELD_MODULUS, mul2, mul, and create_sketch, are licensed as such:
+The following, FIELD_BITS, FIELD_MODULUS, mul2, mul, and createSketch, are licensed as such:
 
 MIT License
 
@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import List
+from typing import Optional, List, Tuple
 
 from pyfinite.ffield import FField
 
@@ -32,185 +32,245 @@ FIELD_BITS: int = 64
 FIELD_BYTES: int = FIELD_BITS // 8
 FIELD_MODULUS: int = (1 << FIELD_BITS) + 27
 
-# TODO: Use the following two functions?
 
 def mul2(
   x: int
 ) -> int:
-  """Compute 2*x in GF(2^FIELD_BITS)"""
   return (x << 1) ^ (FIELD_MODULUS if x.bit_length() >= FIELD_BITS else 0)
 
 def mul(
   x: int,
   y: int
 ) -> int:
-  """Compute x*y in GF(2^FIELD_BITS)"""
   ret: int = 0
   for bit in [(x >> i) & 1 for i in range(x.bit_length())]:
     ret, y = ret ^ bit * y, mul2(y)
   return ret
 
-def create_sketch(
-  shortids: List[int],
+def createSketch(
+  shortIDs: List[int],
   capacity: int
 ) -> bytes:
-  """Compute the bytes of a sketch for given shortids and given capacity."""
-  odd_sums: List[int] = [0 for _ in range(capacity)]
-  for shortid in shortids:
-    squared: int = mul(shortid, shortid)
+  oddSums: List[int] = [0 for _ in range(capacity)]
+  for shortID in shortIDs:
+    squared: int = mul(shortID, shortID)
     for i in range(capacity):
-      odd_sums[i] ^= shortid
-      shortid = mul(shortid, squared)
-  return b''.join(elem.to_bytes(FIELD_BYTES, 'little') for elem in odd_sums)
+      oddSums[i] ^= shortID
+      shortID = mul(shortID, squared)
+  return b"".join(elem.to_bytes(FIELD_BYTES, "little") for elem in oddSums)
 
-#A merge function is not provided as it's literally a xor of the two sketches.
-
-## Below numbers and polynomials are messed with each other!
-
-# a^2 % f
-def sqrMod(a, f):
-  sqr = field.Multiply(a, a)
-  _, rem = field.FullDivision(sqr, f, field.FindDegree(sqr), field.FindDegree(f))
-  return rem
-
-def setCoeff(
+def berlekampMassey(
   field: FField,
-  f: List[int],
-  i: int,
-  a: int
+  syndromes: List[int]
+) -> List[int]:
+  current: List[int] = [1]
+  tmp: List[int] = []
+  prev: List[int] = [1]
+
+  b: int = 1
+  bInv: Optional[int] = 1
+
+  for n in range(len(syndromes)):
+    discrepancy: int = syndromes[n]
+
+    for i in range(1, len(current)):
+      discrepancy = discrepancy ^ mul(syndromes[n - i], current[i])
+    if discrepancy != 0:
+      x: int = n + 1 - (len(current) - 1) - (len(prev) - 1)
+      if bInv is None:
+        bInv = field.Inverse(b)
+
+      swap: bool = 2 * (len(current) - 1) <= n
+      if swap:
+        tmp = list(current)
+        while len(current) < len(prev) + x:
+          current.append(0)
+
+      for i in range(len(prev)):
+        if isinstance(bInv, int):
+          current[i + x] = current[i + x] ^ mul(mul(discrepancy, bInv), prev[i])
+        else:
+          raise Exception("The pure Python PinSketch implementation didn't set bInv.")
+
+      if swap:
+        prev = list(tmp)
+        b = discrepancy
+        bInv = None
+
+  return current
+
+def square(
+  poly: List[int]
+) -> None:
+  if len(poly) == 0:
+    return
+  target: int = (len(poly) * 2) - 1
+  while len(poly) < target:
+    poly.append(0)
+
+  target -= 1
+  while target >= 0:
+    if poly[target] & 1 == 1:
+      poly[target] = 0
+    else:
+      mul(poly[target // 2], poly[target // 2])
+    poly[target] = (target & 1)
+    target -= 1
+
+def polyMod(
+  mod: List[int],
+  val: List[int]
+) -> None:
+  if len(val) < len(mod):
+    return
+  while len(val) > len(mod):
+    term: int = val[-1]
+    del val[-1]
+    if term != 0:
+      for x in range(len(mod) - 1):
+        val[len(val) - len(mod) + 1 + x] = val[len(val) - len(mod) + 1 + x] ^ mul(mod[x], term)
+
+def traceMod(
+  mod: List[int],
+  param: int
+) -> List[int]:
+  result: List[int] = [0, param]
+  for _ in range(FIELD_BITS - 1):
+    square(result)
+    while len(result) < 2:
+      result.append(0)
+    result[1] = param
+    polyMod(mod, result)
+  return result
+
+def divMod(
+  mod: List[int],
+  val: List[int],
+  div: List[int]
+) -> None:
+  if len(val) < len(mod):
+    div = []
+    return
+
+  while len(div) < (len(val) + len(mod) + 1):
+    div.append(0)
+  while len(val) >= len(mod):
+    term: int = val[-1]
+    div[len(val) - len(mod)] = term
+    del val[-1]
+    if term != 0:
+      for x in range(len(mod) - 1):
+        val[len(val) - len(mod) + 1 + x] = val[len(val) - len(mod) + 1 + x] ^ mul(mod[x], term)
+
+def monic(
+  field: FField,
+  a: List[int]
 ) -> int:
-  while i >= len(f):
-    f.append(0)
-  f[i] = a
-  #x.normalize()
-  while len(f) and f[-1] == 0:
-    f = f[:-1]
-  return f
+  if a[-1] == 1:
+    return 0
+  inv: int = field.Inverse(a[-1])
+  a[-1] = 1
+  for i in range(len(a) - 1):
+    a[i] = mul(a[i], inv)
+  return inv
 
-def traceMap(a, f):
-  res = a
-  tmp = a
+def gcd(
+  field: FField,
+  a: List[int],
+  b: List[int]
+) -> Tuple[List[int], List[int]]:
+  if len(a) < len(b):
+    tmp: List[int] = list(a)
+    a = list(b)
+    b = list(tmp)
+  while len(b) > 0:
+    if len(b) == 1:
+      a = [1]
+      return (a, b)
+    monic(field, b)
+    polyMod(b, a)
+    tmp2: List[int] = list(a)
+    a = list(b)
+    b = list(tmp2)
+  return (a, b)
 
-  for i in range(FIELD_BITS-1):
-    tmp = sqrMod(tmp, f)
-    res = field.Add(res, tmp)
+def qrt(
+  val: int
+) -> int:
+  if val == 0:
+    pass
+  return 18446744073709551606
 
-  return res
+def findRootsInternal(
+  field: FField,
+  stack: List[List[int]],
+  pos: int,
+  roots: List[int],
+  fully_factorizable: bool,
+  depth: int,
+  randv: int,
+) -> None:
+  ppoly: List[int] = stack[pos]
+  if len(ppoly) == 2:
+    roots.append(ppoly[0])
+    return
 
-def findRoots(field, f) -> List[int]:
-  if field.FindDegree(f) == 0:
-    return [0]
+  if len(ppoly) == 3:
+    tInv: int = field.Inverse(ppoly[1])
+    roots.append(mul(qrt(mul(ppoly[0], mul(tInv, tInv))), ppoly[1]))
+    roots.append(roots[-1] ^ ppoly[1])
+    return
 
-  if field.FindDegree(f) == 1:
-    return [f & 1]
-      
+  if pos + 3 > len(stack):
+    while len(stack) < ((pos + 3) * 2):
+      stack.append([])
+
+  poly: List[int] = stack[pos]
+  stack[pos + 1] = []
+  tmp: List[int] = stack[pos + 1]
+  stack[pos + 2] = []
+  trace: List[int] = stack[pos + 2]
+  thisIter: int = 0
   while True:
-    r = field.GetRandomElement()
-    h = 0
-    h = setCoeff(field, h, 1, r)
-    h = traceMap(h, f)
-    h, _, _ = field.ExtendedEuclid(h, f, field.FindDegree(h), field.FindDegree(f))
-    if not (field.FindDegree(h) <= 0 or field.FindDegree(h) == field.FindDegree(f)):
+    trace = traceMod(poly, randv)
+
+    if (thisIter >= 1) and (not fully_factorizable):
+      tmp = trace
+      square(tmp)
+      for i in range(len(trace)):
+        tmp[i] = tmp[i] ^ trace[i]
+      while (len(tmp) != 0) and (tmp[-1] == 0):
+        del tmp[-1]
+      polyMod(poly, tmp)
+
+    depth += 1
+    randv = mul2(randv)
+    tmp = poly
+    (trace, tmp) = gcd(field, trace, tmp)
+    if (len(trace) != len(poly)) and (len(trace) > 1):
       break
 
-  roots = FindRoots(field, h)
-  h = field.Divide(f, h)
-  roots.extend(FindRoots(field, h))
+    thisIter += 1
+
+  monic(field, trace)
+  divMod(trace, poly, tmp)
+  findRootsInternal(field, stack, pos, roots, True, depth, randv)
+
+def findRoots(
+  field: FField,
+  poly: List[int]
+) -> List[int]:
+  roots: List[int] = []
+  stack: List[List[int]] = [poly]
+  findRootsInternal(field, stack, 0, roots, False, 0, 1)
   return roots
 
-def decode_sketch(
-  sketch: bytes,
-  capacity: int
+def decodeSketch(
+  sketch: bytes
 ) -> List[int]:
-  d = capacity  # FIXME!
-
-  withoutEvens: List[int] = []
-  for e in range(0, len(sketch), FIELD_BYTES):
-    withoutEvens.append(int.from_bytes(sketch[e : e + FIELD_BYTES], 'little'))
-
-  ss: List[int] = []
-  for wE in withoutEvens:
-    ss.append(wE)
-    ss.append(mul(wE, wE))
-
-  r1: List[int] = []
-  r2: List[int] = []
-  r3: List[int] = []
-  v1: List[int] = []
-  v2: List[int] = []
-  v3: List[int] = []
-  q: List[int] = []
-  temp: List[int] = []
-
-  # TODO: Don't introduce these vars
-  Rold: List[int] = []
-  Rcur: List[int] = []
-  Rnew: List[int] = []
-  Vold: List[int] = []
-  Vcur: List[int] = []
-  Vnew: List[int] = []
-  tempPointer: List[int] = []
-
-  Rold = r1
-  Rcur = r2
-  Rnew = r3
-
-  Vold = v1
-  Vcur = v2
-  Vnew = v3
-
   field: FField = FField(FIELD_BITS, FIELD_MODULUS)
-
-  Rold = setCoeff(field, Rold, d-1, 1)  # Rold holds z^{d-1}
-
-  # Rcur=S(z)/z where S is the syndrome poly, Rcur = \sum S_j z^{j-1}
-  # Note that because we index arrays from 0, S_j is stored in ss[j-1]
-  for i in range(d-1):
-    Rcur = setCoeff(field, Rcur, i, ss[i]);
-
-	# Vold is already 0 -- no need to initialize
-	# Initialize Vcur to 1
-  Vcur = setCoeff(field, Vcur, 0, 1) # Vcur = 1
-
-  # TODO: Use Euclid from ffinite
-	# Now run Euclid, but stop as soon as degree of Rcur drops below
-	# (d-1)/2
-	# This will take O(d^2) operations in GF(2^m)
-
-  t: int = (d-1)//2
-
-  while field.FindDegree(Rcur) >= t:
-    # Rold = Rcur*q + Rnew
-    q, Rnew = field.FullDivision(Rold, Rcur, field.FindDegree(Rold), field.FindDegree(Rcur))
-
-    # Vnew = Vold - qVcur
-    temp = field.Multiply(q, Vcur)
-    Vnew = field.Subtract(Vold, temp)
-
-    # swap everything (TODO: Simplify.)
-    tempPointer = Rold
-    Rold = Rcur
-    Rcur = Rnew
-    Rnew = tempPointer
-
-    tempPointer = Vold
-    Vold = Vcur
-    Vcur = Vnew
-    Vnew = tempPointer
-
-	# At the end of the loop, sigma(z) is Vcur
-	# (up to a constant factor, which doesn't matter,
-	# since we care about roots of sigma).
-	# The roots of sigma(z) are inverses of the points we
-	# are interested in.  
-
-  # find roots of sigma(z)
-  # this will take O(e^2 + e^{\log_2 3} m) operations in GF(2^m),
-  # where e is the degree of sigma(z)
-  answer = findRoots(field, Vcur)
-
-  # take inverses of roots of sigma(z)
-  for v in answer:
-    v = field.Inverse(v)
-
-  return answer
+  elements: List[int] = []
+  for e in range(0, len(sketch), FIELD_BYTES):
+    elements.append(int.from_bytes(sketch[e : e + FIELD_BYTES], "little"))
+    elements.append(mul(elements[e // FIELD_BYTES], elements[e // FIELD_BYTES]))
+  return findRoots(field, berlekampMassey(field, elements)[::-1])
