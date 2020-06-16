@@ -85,7 +85,7 @@ def generateQrtTable(
   result: List[int] = []
   i: int = 0
   while i < (1 << len(base)):
-    result.append(generateQrtElement(base, i))
+    result.append(generateQrtElement(list(base), i))
     i += 1
   return result
 
@@ -97,7 +97,7 @@ for t in range(11):
     elems = 5
   for _ in range(elems):
     subset.append(origin[0])
-    del subset[0]
+    del origin[0]
   tables.append(generateQrtTable(subset))
 
 def qrt(

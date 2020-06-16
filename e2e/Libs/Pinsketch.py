@@ -31,6 +31,7 @@ from e2e.Libs.Qrt import qrt
 FIELD_BITS: int = 64
 FIELD_BYTES: int = FIELD_BITS // 8
 FIELD_MODULUS: int = (1 << FIELD_BITS) + 27
+MASK64: int = (1 << 64) - 1
 
 def mul2(
   x: int
@@ -132,9 +133,7 @@ def inv(
 
   while newr != 0:
     q: int = rlen - newrlen
-    if q < 0:
-      q = 64 + q
-    r = r ^ ((newr << q) & ((1 << 27) - 1))
+    r = r ^ ((newr << q) & MASK64)
     t = t ^ (newt << q)
 
     rlen = min(r.bit_length(), rlen - 1)
