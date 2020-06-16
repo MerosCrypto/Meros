@@ -44,7 +44,7 @@ def mul(
 ) -> int:
   ret: int = 0
   for bit in [((x >> i) & 1) for i in range(x.bit_length())]:
-    ret, y = (ret ^ bit) * y, mul2(y)
+    ret, y = ret ^ (bit * y), mul2(y)
   return ret
 
 def sqr(
@@ -182,8 +182,8 @@ def gcd(
   a: List[int],
   b: List[int]
 ) -> None:
-  larger: List[int] = a if (len(a) >= len(b)) else b
-  smaller: List[int] = b if (len(a) >= len(b)) else a
+  larger: List[int] = list(a) if (len(a) >= len(b)) else list(b)
+  smaller: List[int] = list(b) if (len(a) >= len(b)) else list(a)
 
   while smaller:
     if len(smaller) == 1:
@@ -299,8 +299,11 @@ def findRoots(
 def decodeSketch(
   sketch: bytes
 ) -> List[int]:
+  if sketch == bytes(len(sketch)):
+    return []
+
   elements: List[int] = []
   for e in range(0, len(sketch), FIELD_BYTES):
     elements.append(int.from_bytes(sketch[e : e + FIELD_BYTES], "little"))
     elements.append(mul(elements[e // FIELD_BYTES], elements[e // FIELD_BYTES]))
-  return findRoots(berlekampMassey(elements)[::-1])
+  return sorted(findRoots(berlekampMassey(elements)[::-1]))
