@@ -109,11 +109,10 @@ def square(
 
   target -= 1
   while target >= 0:
-    if poly[target] & 1 == 1:
+    if target & 1 == 1:
       poly[target] = 0
     else:
-      mul(poly[target // 2], poly[target // 2])
-    poly[target] = (target & 1)
+      poly[target] = mul(poly[target // 2], poly[target // 2])
     target -= 1
 
 def inv(
@@ -149,7 +148,7 @@ def polyMod(
 ) -> None:
   if len(val) < len(mod):
     return
-  while len(val) > len(mod):
+  while len(val) >= len(mod):
     term: int = val[-1]
     del val[-1]
     if term != 0:
@@ -177,21 +176,20 @@ def gcd(
   if len(a) < len(b):
     smaller = list(a)
     larger = list(b)
-  while a:
-    del a[0]
-  while b:
-    del b[0]
   while smaller:
     if len(smaller) == 1:
-      a.append(1)
-      return
+      larger = [1]
+      break
     monic(smaller)
     polyMod(smaller, larger)
-    tmp: List[int] = list(smaller)
-    smaller = list(larger)
-    larger = tmp
+    (larger, smaller) = (smaller, larger)
+
+  del a[0:]
+  del b[0:]
   for x in larger:
     a.append(x)
+  for x in smaller:
+    b.append(x)
 
 def traceMod(
   mod: List[int],
@@ -229,62 +227,64 @@ def findRootsInternal(
   stack: List[List[int]],
   pos: int,
   roots: List[int],
-  fully_factorizable: bool,
-  depth: int,
-  randv: int,
+  factorizable: bool,
+  randv: int
 ) -> None:
-  ppoly: List[int] = stack[pos]
-  if len(ppoly) == 2:
-    roots.append(ppoly[0])
+  if len(stack[pos]) == 2:
+    roots.append(stack[pos][0])
     return
 
-  if len(ppoly) == 3:
-    tInv: int = inv(ppoly[1])
-    roots.append(mul(qrt(mul(ppoly[0], mul(tInv, tInv))), ppoly[1]))
-    roots.append(roots[-1] ^ ppoly[1])
+  if len(stack[pos]) == 3:
+    tInv: int = inv(stack[pos][1])
+    roots.append(mul(qrt(mul(stack[pos][0], mul(tInv, tInv))), stack[pos][1]))
+    roots.append(roots[-1] ^ stack[pos][1])
     return
 
   if pos + 3 > len(stack):
     while len(stack) < ((pos + 3) * 2):
       stack.append([])
 
-  poly: List[int] = stack[pos]
   stack[pos + 1] = []
-  tmp: List[int] = stack[pos + 1]
   stack[pos + 2] = []
-  trace: List[int] = stack[pos + 2]
+
   thisIter: int = 0
   while True:
-    trace = traceMod(poly, randv)
+    while stack[pos] and (stack[pos][-1] == 0):
+      del stack[pos][-1]
+    stack[pos + 2] = traceMod(stack[pos], randv)
 
-    if (thisIter >= 1) and (not fully_factorizable):
-      tmp = trace
-      square(tmp)
-      for i in range(len(trace)):
-        tmp[i] = tmp[i] ^ trace[i]
-      while (len(tmp) != 0) and (tmp[-1] == 0):
-        del tmp[-1]
-      polyMod(poly, tmp)
+    if (thisIter >= 1) and (not factorizable):
+      stack[pos + 1] = list(stack[pos + 2])
+      square(stack[pos + 1])
+      for i in range(len(stack[pos + 2])):
+        stack[pos + 1][i] = stack[pos + 1][i] ^ stack[pos + 2][i]
+      while stack[pos + 1] and (stack[pos + 1][-1] == 0):
+        del stack[pos + 1][-1]
+      polyMod(stack[pos], stack[pos + 1])
+      factorizable = True
 
-    depth += 1
     randv = mul2(randv)
-    tmp = poly
-    gcd(trace, tmp)
-    if (len(trace) != len(poly)) and (len(trace) > 1):
+    stack[pos + 1] = list(stack[pos])
+    gcd(stack[pos + 2], stack[pos + 1])
+    if (len(stack[pos + 2]) != len(stack[pos])) and (len(stack[pos + 2]) > 1):
       break
 
     thisIter += 1
 
-  monic(trace)
-  divMod(trace, poly, tmp)
-  findRootsInternal(stack, pos, roots, True, depth, randv)
+  monic(stack[pos + 2])
+  divMod(stack[pos + 2], stack[pos], stack[pos + 1])
+
+  (stack[pos], stack[pos + 2]) = (list(stack[pos + 2]), list(stack[pos]))
+
+  findRootsInternal(stack, pos + 1, roots, factorizable, randv)
+  findRootsInternal(stack, pos, roots, True, randv)
 
 def findRoots(
   poly: List[int]
 ) -> List[int]:
   roots: List[int] = []
   stack: List[List[int]] = [poly]
-  findRootsInternal(stack, 0, roots, False, 0, 1)
+  findRootsInternal(stack, 0, roots, False, 1)
   return roots
 
 def decodeSketch(
