@@ -1,3 +1,7 @@
+#Implements the qrt function from Minisketch.
+#It's a templated mess created out of the following "origin" list.
+#In it's own file to remain contained, to say the least.
+
 from typing import List
 
 origin: List[int] = [

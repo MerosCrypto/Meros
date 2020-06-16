@@ -47,13 +47,18 @@ def mul(
     ret, y = ret ^ bit * y, mul2(y)
   return ret
 
-def createSketch(
+def sqr(
+  x: int
+) -> int:
+  return mul(x, x)
+
+def encodeSketch(
   shortIDs: List[int],
   capacity: int
 ) -> bytes:
   oddSums: List[int] = [0 for _ in range(capacity)]
   for shortID in shortIDs:
-    squared: int = mul(shortID, shortID)
+    squared: int = sqr(shortID)
     for i in range(capacity):
       oddSums[i] ^= shortID
       shortID = mul(shortID, squared)
@@ -89,7 +94,7 @@ def berlekampMassey(
         if isinstance(bInv, int):
           current[i + x] = current[i + x] ^ mul(mul(discrepancy, bInv), prev[i])
         else:
-          raise Exception("The pure Python PinSketch implementation didn't set bInv.")
+          raise Exception("The pure Python Pinsketch implementation didn't set bInv.")
 
       if swap:
         prev = list(tmp)
@@ -112,7 +117,7 @@ def square(
     if target & 1 == 1:
       poly[target] = 0
     else:
-      poly[target] = mul(poly[target // 2], poly[target // 2])
+      poly[target] = sqr(poly[target // 2])
     target -= 1
 
 def inv(
@@ -188,8 +193,6 @@ def gcd(
   del b[0:]
   for x in larger:
     a.append(x)
-  for x in smaller:
-    b.append(x)
 
 def traceMod(
   mod: List[int],
@@ -210,10 +213,11 @@ def divMod(
   div: List[int]
 ) -> None:
   if len(val) < len(mod):
-    div = []
+    while div:
+      del div[0]
     return
 
-  while len(div) < (len(val) + len(mod) + 1):
+  while len(div) < (len(val) - len(mod) + 1):
     div.append(0)
   while len(val) >= len(mod):
     term: int = val[-1]
@@ -222,6 +226,7 @@ def divMod(
     if term != 0:
       for x in range(len(mod) - 1):
         val[len(val) - len(mod) + 1 + x] = val[len(val) - len(mod) + 1 + x] ^ mul(mod[x], term)
+        #val[len(val) - len(mod) + 1 + x] ^= mul(mod[x], term)
 
 def findRootsInternal(
   stack: List[List[int]],
@@ -229,16 +234,21 @@ def findRootsInternal(
   roots: List[int],
   factorizable: bool,
   randv: int
-) -> None:
+) -> bool:
   if len(stack[pos]) == 2:
     roots.append(stack[pos][0])
-    return
+    return True
 
   if len(stack[pos]) == 3:
     tInv: int = inv(stack[pos][1])
-    roots.append(mul(qrt(mul(stack[pos][0], mul(tInv, tInv))), stack[pos][1]))
+    inp: int = mul(stack[pos][0], mul(tInv, tInv))
+    root: int = qrt(inp)
+    roots.append(mul(root, stack[pos][1]))
+    #roots.append(
+    #  mul(qrt(mul(stack[pos][0], sqr(inv(stack[pos][1])))), stack[pos][1])
+    #)
     roots.append(roots[-1] ^ stack[pos][1])
-    return
+    return True
 
   if pos + 3 > len(stack):
     while len(stack) < ((pos + 3) * 2):
@@ -249,11 +259,9 @@ def findRootsInternal(
 
   thisIter: int = 0
   while True:
-    while stack[pos] and (stack[pos][-1] == 0):
-      del stack[pos][-1]
-    stack[pos + 2] = traceMod(stack[pos], randv)
+    stack[pos + 2] = traceMod(list(stack[pos]), randv)
 
-    if (thisIter >= 1) and (not factorizable):
+    if (thisIter != 0) and (not factorizable):
       stack[pos + 1] = list(stack[pos + 2])
       square(stack[pos + 1])
       for i in range(len(stack[pos + 2])):
@@ -261,6 +269,8 @@ def findRootsInternal(
       while stack[pos + 1] and (stack[pos + 1][-1] == 0):
         del stack[pos + 1][-1]
       polyMod(stack[pos], stack[pos + 1])
+      if stack[pos + 1]:
+        return False
       factorizable = True
 
     randv = mul2(randv)
@@ -276,8 +286,9 @@ def findRootsInternal(
 
   (stack[pos], stack[pos + 2]) = (list(stack[pos + 2]), list(stack[pos]))
 
-  findRootsInternal(stack, pos + 1, roots, factorizable, randv)
-  findRootsInternal(stack, pos, roots, True, randv)
+  if not findRootsInternal(stack, pos + 1, roots, factorizable, randv):
+    return False
+  return findRootsInternal(stack, pos, roots, True, randv)
 
 def findRoots(
   poly: List[int]
