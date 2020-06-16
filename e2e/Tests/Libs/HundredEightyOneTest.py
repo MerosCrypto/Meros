@@ -9,7 +9,7 @@ from e2e.Libs.Minisketch import MinisketchLib, Sketch
 from e2e.Tests.Errors import TestError
 
 def HundredEightyOneTest() -> None:
-  for _ in range(500):
+  for _ in range(100):
     capacity: int = getrandbits(7) + 1
     sketches: List[Sketch] = [Sketch(capacity) for _ in range(2)]
     differences: List[int] = []
