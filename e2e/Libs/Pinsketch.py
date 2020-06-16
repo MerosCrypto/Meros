@@ -1,5 +1,5 @@
 """
-The following, FIELD_BITS, FIELD_MODULUS, mul2, mul, and createSketch, are licensed as such:
+The following, FIELD_BITS, FIELD_MODULUS, mul2, mul, and encodeSketch, are licensed as such:
 
 MIT License
 
@@ -36,15 +36,15 @@ MASK64: int = (1 << 64) - 1
 def mul2(
   x: int
 ) -> int:
-  return (x << 1) ^ (FIELD_MODULUS if x.bit_length() >= FIELD_BITS else 0)
+  return (x << 1) ^ (FIELD_MODULUS if (x.bit_length() >= FIELD_BITS) else 0)
 
 def mul(
   x: int,
   y: int
 ) -> int:
   ret: int = 0
-  for bit in [(x >> i) & 1 for i in range(x.bit_length())]:
-    ret, y = ret ^ bit * y, mul2(y)
+  for bit in [((x >> i) & 1) for i in range(x.bit_length())]:
+    ret, y = (ret ^ bit) * y, mul2(y)
   return ret
 
 def sqr(
@@ -63,6 +63,12 @@ def encodeSketch(
       oddSums[i] ^= shortID
       shortID = mul(shortID, squared)
   return b"".join(elem.to_bytes(FIELD_BYTES, "little") for elem in oddSums)
+
+def normalize(
+  value: List[int]
+) -> None:
+  while value and (value[-1] == 0):
+    del value[-1]
 
 def berlekampMassey(
   syndromes: List[int]
@@ -108,6 +114,7 @@ def square(
 ) -> None:
   if len(poly) == 0:
     return
+
   target: int = (len(poly) * 2) - 1
   while len(poly) < target:
     poly.append(0)
@@ -128,10 +135,8 @@ def inv(
 
   t: int = 0
   newt: int = 1
-
   r: int = 27
   newr: int = val
-
   rlen: int = 65
   newrlen: int = newr.bit_length()
 
@@ -153,20 +158,21 @@ def polyMod(
 ) -> None:
   if len(val) < len(mod):
     return
+
   while len(val) >= len(mod):
-    term: int = val[-1]
-    del val[-1]
+    term: int = val.pop()
     if term != 0:
       for x in range(len(mod) - 1):
-        val[len(val) - len(mod) + 1 + x] = val[len(val) - len(mod) + 1 + x] ^ mul(mod[x], term)
-  while val and (val[-1] == 0):
-    del val[-1]
+        val[len(val) - len(mod) + 1 + x] ^= mul(mod[x], term)
+
+  normalize(val)
 
 def monic(
   a: List[int]
 ) -> None:
   if a[-1] == 1:
     return
+
   invd: int = inv(a[-1])
   a[-1] = 1
   for i in range(len(a) - 1):
@@ -176,11 +182,9 @@ def gcd(
   a: List[int],
   b: List[int]
 ) -> None:
-  larger: List[int] = list(a)
-  smaller: List[int] = list(b)
-  if len(a) < len(b):
-    smaller = list(a)
-    larger = list(b)
+  larger: List[int] = a if (len(a) >= len(b)) else b
+  smaller: List[int] = b if (len(a) >= len(b)) else a
+
   while smaller:
     if len(smaller) == 1:
       larger = [1]
@@ -225,8 +229,7 @@ def divMod(
     del val[-1]
     if term != 0:
       for x in range(len(mod) - 1):
-        val[len(val) - len(mod) + 1 + x] = val[len(val) - len(mod) + 1 + x] ^ mul(mod[x], term)
-        #val[len(val) - len(mod) + 1 + x] ^= mul(mod[x], term)
+        val[len(val) - len(mod) + 1 + x] ^= mul(mod[x], term)
 
 def findRootsInternal(
   stack: List[List[int]],
@@ -240,13 +243,9 @@ def findRootsInternal(
     return True
 
   if len(stack[pos]) == 3:
-    tInv: int = inv(stack[pos][1])
-    inp: int = mul(stack[pos][0], mul(tInv, tInv))
-    root: int = qrt(inp)
-    roots.append(mul(root, stack[pos][1]))
-    #roots.append(
-    #  mul(qrt(mul(stack[pos][0], sqr(inv(stack[pos][1])))), stack[pos][1])
-    #)
+    roots.append(
+      mul(qrt(mul(stack[pos][0], sqr(inv(stack[pos][1])))), stack[pos][1])
+    )
     roots.append(roots[-1] ^ stack[pos][1])
     return True
 
@@ -266,8 +265,7 @@ def findRootsInternal(
       square(stack[pos + 1])
       for i in range(len(stack[pos + 2])):
         stack[pos + 1][i] = stack[pos + 1][i] ^ stack[pos + 2][i]
-      while stack[pos + 1] and (stack[pos + 1][-1] == 0):
-        del stack[pos + 1][-1]
+      normalize(stack[pos + 1])
       polyMod(stack[pos], stack[pos + 1])
       if stack[pos + 1]:
         return False
