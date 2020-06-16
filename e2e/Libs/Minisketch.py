@@ -43,6 +43,7 @@ class Sketch:
     self.capacity: int = capacity
     if self.capacity != 0:
       self.sketch: Any = MinisketchLib.minisketch_create(c_uint32(64), c_uint32(0), c_size_t(self.capacity))
+    self.hashes: List[int] = []
 
   @staticmethod
   def hash(
@@ -59,7 +60,8 @@ class Sketch:
     sketchSalt: bytes,
     packet: VerificationPacket
   ) -> None:
-    MinisketchLib.minisketch_add_uint64(self.sketch, c_uint64(Sketch.hash(sketchSalt, packet)))
+    self.hashes.append(Sketch.hash(sketchSalt, packet))
+    MinisketchLib.minisketch_add_uint64(self.sketch, c_uint64(self.hashes[-1]))
 
   def serialize(
     self
@@ -69,11 +71,7 @@ class Sketch:
 
     serialization: Array[c_char] = create_string_buffer(self.capacity * 8)
     MinisketchLib.minisketch_serialize(self.sketch, byref(serialization))
-
-    result: bytes = bytes()
-    for b in serialization:
-      result += b
-    return result
+    return bytes(serialization)
 
   def merge(
     self,
