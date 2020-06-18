@@ -48,7 +48,7 @@ def meros(
     dataDir
   )
   #Let the instance start up.
-  sleep(5)
+  sleep(18)
   request.addfinalizer(result.quit)
   return result
 
