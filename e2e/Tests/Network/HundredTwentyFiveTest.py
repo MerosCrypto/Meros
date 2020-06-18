@@ -1,5 +1,4 @@
 import socket
-from time import sleep
 
 from pytest import raises
 

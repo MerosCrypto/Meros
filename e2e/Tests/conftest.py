@@ -1,7 +1,6 @@
 #pylint: disable=invalid-name
 
 from typing import Any
-from time import sleep
 from pathlib import Path
 import shutil
 
@@ -47,10 +46,7 @@ def meros(
     request.param + (2 * index) + 1,
     dataDir
   )
-  def quit():
-    result.quit()
-    sleep(3)
-  request.addfinalizer(quit)
+  request.addfinalizer(result.quit)
   return result
 
 @fixture(scope="module")
