@@ -2,11 +2,11 @@
 
 from typing import Any
 from time import sleep
+from pathlib import Path
 import shutil
 
-from pathlib import Path
-from pytest import fixture
 from filelock import FileLock
+from pytest import fixture
 
 from e2e.Meros.Meros import Meros
 from e2e.Meros.RPC import RPC
@@ -17,7 +17,7 @@ def dataDir(
   request: Any,
   tmp_path_factory: Any
 ) -> str:
-  # get the temp directory shared by all workers
+  #Get the temp directory shared by all workers.
   tmpDir: Path = tmp_path_factory.getbasetemp().parent
   fn: Path = tmpDir / ".clean"
   with FileLock(str(fn) + ".lock"):
@@ -43,8 +43,8 @@ def meros(
     index = int(worker_id[2:])
   result: Meros = Meros(
     request.node.module.__name__,
-    request.param + 2 * index,
-    request.param + 2 * index + 1,
+    request.param + (2 * index),
+    request.param + (2 * index) + 1,
     dataDir
   )
   #Let the instance start up.
