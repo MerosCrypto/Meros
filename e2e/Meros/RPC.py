@@ -11,24 +11,11 @@ from e2e.Tests.Errors import NodeError, TestError
 class RPC:
   def __init__(
     self,
-    meros: Meros,
-    timeout: float = 0
+    meros: Meros
   ) -> None:
     self.meros: Meros = meros
-    self._timeout: float = timeout
     self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self._connect(self._timeout)
-
-  def _connect(self, timeout):
-    while True:
-      try:
-        self.socket.connect(("127.0.0.1", self.meros.rpc))
-        break
-      except ConnectionRefusedError:
-        timeout -= 1
-        if timeout <= 0:
-          raise TimeoutError()
-        sleep(1)
+    self.socket.connect(("127.0.0.1", self.meros.rpc))
 
   def call(
     self,
@@ -83,8 +70,7 @@ class RPC:
   def quit(
     self
   ) -> None:
-    self.call("system", "quit")
-    self.meros.calledQuit = True
+    self.meros.quit()
 
   #Reset the Meros node, deleting its Database and rebooting it.
   #Used after calling a Liver and before calling a Syncer.
@@ -101,4 +87,4 @@ class RPC:
     sleep(5)
 
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self._connect(self._timeout)
+    self.socket.connect(("127.0.0.1", self.meros.rpc))

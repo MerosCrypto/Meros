@@ -59,10 +59,6 @@ def rpc(
   meros: Meros,
   request: Any
 ) -> RPC:
-  # Let the instance start up.
-  result: RPC = RPC(meros, 20)
-  def quit():
-    result.quit()
-    sleep(3)
-  request.addfinalizer(quit)
+  result: RPC = RPC(meros)
+  request.addfinalizer(result.quit)
   return result
