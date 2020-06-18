@@ -24,12 +24,18 @@ def dataDir(
 def meros(
   #pylint: disable=redefined-outer-name
   dataDir: str,
-  request: Any
+  request: Any,
+  worker_id: str
 ) -> Meros:
+  #If xdist is disabled, the worker_id will return "master" and
+  #"gw1", "gw2", ... otherwise
+  index: int = 0
+  if worker_id.startswith("gw"):
+    index = int(worker_id[2:])
   result: Meros = Meros(
     request.node.module.__name__,
-    request.param,
-    request.param + 1,
+    request.param + 2 * index,
+    request.param + 2 * index + 1,
     dataDir
   )
   #Let the instance start up.
