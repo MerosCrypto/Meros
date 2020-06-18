@@ -47,9 +47,10 @@ def meros(
     request.param + (2 * index) + 1,
     dataDir
   )
-  #Let the instance start up.
-  sleep(18)
-  request.addfinalizer(result.quit)
+  def quit():
+    result.quit()
+    sleep(3)
+  request.addfinalizer(quit)
   return result
 
 @fixture(scope="module")
@@ -58,6 +59,10 @@ def rpc(
   meros: Meros,
   request: Any
 ) -> RPC:
-  result: RPC = RPC(meros)
-  request.addfinalizer(result.quit)
+  # Let the instance start up.
+  result: RPC = RPC(meros, 20)
+  def quit():
+    result.quit()
+    sleep(3)
+  request.addfinalizer(quit)
   return result

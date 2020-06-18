@@ -1,4 +1,5 @@
 import socket
+from time import sleep
 
 from pytest import raises
 
@@ -27,7 +28,16 @@ def HundredTwentyFiveTest(
 
   #Connect to Meros.
   connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  connection.connect((lanIP, meros.tcp))
+  timeout = 20
+  while True:
+    try:
+      connection.connect((lanIP, meros.tcp))
+      break
+    except ConnectionRefusedError:
+      timeout -= 1
+      if timeout <= 0:
+        raise TimeoutError()
+      sleep(1)
 
   with raises(SuccessError):
     try:
