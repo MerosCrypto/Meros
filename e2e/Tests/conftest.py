@@ -4,7 +4,9 @@ from typing import Any
 from time import sleep
 import shutil
 
+from pathlib import Path
 from pytest import fixture
+from filelock import FileLock
 
 from e2e.Meros.Meros import Meros
 from e2e.Meros.RPC import RPC
@@ -12,12 +14,19 @@ from e2e.Meros.RPC import RPC
 #Delete the existing data directory.
 @fixture(scope="session", params=["./data/e2e"])
 def dataDir(
-  request: Any
+  request: Any,
+  tmp_path_factory: Any
 ) -> str:
-  try:
-    shutil.rmtree(request.param)
-  except FileNotFoundError:
-    pass
+  # get the temp directory shared by all workers
+  tmpDir: Path = tmp_path_factory.getbasetemp().parent
+  fn: Path = tmpDir / ".clean"
+  with FileLock(str(fn) + ".lock"):
+    if not fn.is_file():
+      try:
+        shutil.rmtree(request.param)
+      except FileNotFoundError:
+        pass
+      fn.write_text("")
   return request.param
 
 @fixture(scope="module", params=[5132])
