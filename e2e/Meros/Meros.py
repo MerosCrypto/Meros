@@ -1,6 +1,7 @@
 from typing import Dict, Set, List, Tuple, Any
 from enum import Enum
 from subprocess import Popen
+from time import sleep
 import socket
 import json
 
@@ -218,7 +219,17 @@ class MerosSocket:
     self.live: bool = live
 
     self.connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.connection.connect(("127.0.0.1", tcp))
+
+    timeout = 20
+    while True:
+      try:
+        self.connection.connect(("127.0.0.1", tcp))
+        break
+      except ConnectionRefusedError:
+        timeout -= 1
+        if timeout <= 0:
+          raise TimeoutError()
+        sleep(1)
 
     self.connection.send(
       (MessageType.Handshake.toByte() if live else MessageType.Syncing.toByte()) +
