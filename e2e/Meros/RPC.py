@@ -15,7 +15,7 @@ class RPC:
   ) -> None:
     self.meros: Meros = meros
     self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.socket.connect(("127.0.0.1", meros.rpc))
+    self.socket.connect(("127.0.0.1", self.meros.rpc))
 
   def call(
     self,
@@ -70,11 +70,10 @@ class RPC:
   def quit(
     self
   ) -> None:
-    self.call("system", "quit")
-    self.meros.calledQuit = True
+    self.meros.quit()
 
   #Reset the Meros node, deleting its Database and rebooting it.
-  #Used after caling a Liver and before calling a Syncer.
+  #Used after calling a Liver and before calling a Syncer.
   def reset(
     self
   ) -> None:

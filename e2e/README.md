@@ -6,7 +6,7 @@ End-to-End tests written in Python to test Meros's networking code and the RPC.
 
 These tests require Python 3.6+ and pip. To install the needed modules:
 
-`python3 -m pip install --user argon2-cffi ed25519 pytest`
+`python3 -m pip install --user argon2-cffi ed25519 pytest pytest-xdist filelock`
 
 They also require the Minisketch, RandomX, and Milagro shared libraries. Minisketch's should have been built as part of `mc_minisketch`.
 
@@ -49,6 +49,10 @@ Meros supports linting via Pylint (`pylint --rcfile=e2e/Pylint/pylintrc e2e`).
 From `Meros/` use the following to run all available test cases:
 
 `python3 -m pytest e2e/Tests/`
+
+Run tests in parallel with 4 workers:
+
+`python3 -m pytest e2e/Tests/ -n4`
 
 Run a specific test case:
 
