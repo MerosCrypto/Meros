@@ -1,6 +1,8 @@
-from typing import IO, Any
+from typing import IO, List, Any
 from hashlib import blake2b
 import json
+
+from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Merit.Blockchain import Blockchain
 
@@ -17,7 +19,7 @@ main: Blockchain = Blockchain.fromJSON(root.toJSON())
 main.add(
   PrototypeBlock(
     main.blocks[-1].header.time + 1200,
-    minerID: privKeys[1]
+    minerID=privKeys[1]
   ).finish(
     False,
     main.genesis,
@@ -40,7 +42,7 @@ alt.add(
 main.add(
   PrototypeBlock(
     alt.blocks[-1].header.time + 1200,
-    minerID: privKeys[1]
+    minerID=privKeys[1]
   ).finish(
     False,
     alt.genesis,

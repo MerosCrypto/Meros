@@ -1,8 +1,10 @@
-from typing import IO, Any
+from typing import IO, List, Any
 from hashlib import blake2b
 import json
 
-from e2e.Classes.Merit.Blockchain import BlockHeader, Block, Blockchain
+from e2e.Libs.BLS import PrivateKey
+
+from e2e.Classes.Merit.Blockchain import Blockchain
 
 from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock, PrototypeChain
 
@@ -41,10 +43,7 @@ while (difficulty * hashAsInt).bit_length() <= 256:
   difficulty += 1
 
 alt.add(
-  PrototypeBlock(
-    root.blocks[-1].header.time + 1200,
-    minerID = 1
-  ).finish(
+  PrototypeBlock(root.blocks[-1].header.time + 1200, minerID=1).finish(
     False,
     alt.genesis,
     alt.blocks[-1].header,

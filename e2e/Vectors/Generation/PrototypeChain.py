@@ -37,10 +37,10 @@ def signElement(
     return dataDiff.signature
 
   if isinstance(elem, MeritRemoval):
-    return Signature.aggregate([
-      signElement(key, elem.e1),
-      signElement(key, elem.e2)
-    ])
+    result: Signature = signElement(key, elem.e2)
+    if not elem.partial:
+      result = Signature.aggregate([result, signElement(key, elem.e1)])
+    return result
 
   raise GenerationError("Tried to sign an Element in a Block we didn't recognize the type of.")
 
