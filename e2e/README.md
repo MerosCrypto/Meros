@@ -4,21 +4,14 @@ End-to-End tests written in Python to test Meros's networking code and the RPC.
 
 ### Setup
 
-Update system packages and ensure virtualenv is installed:
-
-```
-sudo apt-get update
-sudo apt-get -y install python3-virtualenv
-```
-
-Create the venv and install Python dependencies
+First, ensure virtualenv is installed. Then, setup the Meros testing environment:
 
 ```
 virtualenv -p python3 ./venv
 ./venv/bin/pip install -r ./e2e/requirements.txt
 ```
 
-They also require the Minisketch, RandomX, and Milagro shared libraries. Minisketch's should have been built as part of `mc_minisketch`.
+These tests also require the Minisketch, RandomX, and Milagro shared libraries. Minisketch's should have been built as part of `mc_minisketch`.
 
 - Place `libminisketch.so` (or `minisketch.dll`) from `mc_minisketch` under `e2e/Libs`.
 
@@ -48,13 +41,16 @@ make
 
 ### Static Typing
 
-Meros supports static typing via both Pyright (`pyright -p e2e`) and MyPy
+Meros supports static typing via both Pyright and MyPy:
 
-`./venv/bin/python3 -m mypy --config-file e2e/mypy.ini e2e/`
+```
+pyright -p e2e
+./venv/bin/python3 -m mypy --config-file e2e/mypy.ini e2e/
+```
 
 ### Linting
 
-Meros supports linting via Pylint
+Meros supports linting via Pylint:
 
 `./venv/bin/python3 -m pylint --rcfile=e2e/Pylint/pylintrc e2e`
 
@@ -71,4 +67,3 @@ Run tests in parallel with 4 workers:
 Run a specific test case:
 
 `./venv/bin/python3 -m pytest e2e/Tests/ -k "ChainAdvancement"`
-
