@@ -5,7 +5,6 @@ import json
 import ed25519
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
-#Transactions classes.
 from e2e.Classes.Transactions.Send import Send
 from e2e.Classes.Transactions.Claim import Claim
 from e2e.Classes.Transactions.Transactions import Transactions

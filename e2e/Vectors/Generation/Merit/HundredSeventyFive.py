@@ -14,8 +14,7 @@ from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
 from e2e.Classes.Merit.Merit import Merit
 
-from e2e.Vectors.Generation.PrototypeChain import GenerationError, \
-                                                  PrototypeBlock, PrototypeChain
+from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock, PrototypeChain
 
 edPrivKey: SigningKey = SigningKey(blake2b(b"\0", digest_size=32).digest())
 edPubKey: bytes = edPrivKey.get_verifying_key().to_bytes()
@@ -23,14 +22,8 @@ blsPrivKey: PrivateKey = PrivateKey(blake2b((0).to_bytes(2, "big"), digest_size=
 
 spamFilter: SpamFilter = SpamFilter(3)
 
-#Create a Mint by mining 8 Blank Blocks.
-#The first grants Merit; the second creates a Data; the third verifies the Data.
-#The next 5 finalize the Data.
-#We finalize/create a Merit out of it to access the Mint.
-#We can't use the PrototypeChain directly due to the lack of actual hashes.
-merit: Merit = Merit.fromJSON(PrototypeChain(7).finish().toJSON())
-if len(merit.mints) != 1:
-  raise GenerationError("HundredSeventyFive generator created the wrong amount of Mints.")
+#Grab a Blockchain with a Mint available.
+merit: Merit = PrototypeChain.withMint()
 
 transactions: Transactions = Transactions()
 

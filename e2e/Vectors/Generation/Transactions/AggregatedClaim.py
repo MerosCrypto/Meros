@@ -18,8 +18,10 @@ from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Merit import Merit
 
-bbFile: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
-blankBlocks: List[Dict[str, Any]] = json.loads(bbFile.read())
+#This generator has been modified to work with the new generator set part of #183.
+#That said, it hasn't been reworked to Prototype* due to #203.
+bbFile: IO[Any] = open("e2e/Vectors/Merit/ChainAdvancement.json", "r")
+blankBlocks: List[Dict[str, Any]] = json.loads(bbFile.read())[0]
 bbFile.close()
 
 transactions: Transactions = Transactions()

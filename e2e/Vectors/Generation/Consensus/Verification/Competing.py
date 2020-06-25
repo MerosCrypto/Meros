@@ -3,26 +3,21 @@ from hashlib import blake2b
 import json
 
 import ed25519
-from e2e.Libs.BLS import PrivateKey, PublicKey, Signature
+from e2e.Libs.BLS import PrivateKey, PublicKey
 
 from e2e.Classes.Transactions.Claim import Claim
 from e2e.Classes.Transactions.Send import Send
 from e2e.Classes.Transactions.Transactions import Transactions
 
-from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-from e2e.Classes.Merit.BlockHeader import BlockHeader
-from e2e.Classes.Merit.BlockBody import BlockBody
-from e2e.Classes.Merit.Block import Block
-from e2e.Classes.Merit.Merit import Blockchain
+from e2e.Classes.Merit.Merit import Merit
 
-cmFile: IO[Any] = open("e2e/Vectors/Transactions/ClaimedMint.json", "r")
-cmVectors: Dict[str, Any] = json.loads(cmFile.read())
-transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
-blockchain: Blockchain = Blockchain.fromJSON(cmVectors["blockchain"])
-cmFile.close()
+from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock, PrototypeChain
+
+merit: Merit = PrototypeChain.withMint()
+transactions: Transactions = Transactions()
 
 sendFilter: SpamFilter = SpamFilter(3)
 
@@ -41,37 +36,33 @@ blsPubKeys: List[PublicKey] = [
   blsPrivKeys[1].toPublicKey()
 ]
 
-#Grab the claim hash.
-claim: bytes = blockchain.blocks[-1].body.packets[0].hash
+#Create the Claim.
+claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKeys[0].to_bytes())
+claim.sign([blsPrivKeys[0]])
+transactions.add(claim)
 
 #Give the second key pair Merit.
-block: Block = Block(
-  BlockHeader(
-    0,
-    blockchain.last(),
-    bytes(32),
-    1,
-    bytes(4),
-    bytes(32),
-    blsPubKeys[1].serialize(),
-    blockchain.blocks[-1].header.time + 1200
-  ),
-  BlockBody()
+merit.add(
+  PrototypeBlock(
+    merit.blockchain.blocks[-1].header.time + 1200,
+    minerID=blsPrivKeys[1]
+  ).finish(
+    False,
+    merit.blockchain.genesis,
+    merit.blockchain.blocks[-1].header,
+    merit.blockchain.difficulty(),
+    blsPrivKeys
+  )
 )
-block.mine(blsPrivKeys[1], blockchain.difficulty())
-blockchain.add(block)
-print("Generated Competing Block " + str(len(blockchain.blocks)) + ".")
 
 #Create two competing Sends.
 packets: List[VerificationPacket] = []
-toAggregate: List[Signature] = []
-verif: SignedVerification
 for i in range(2):
   send: Send = Send(
-    [(claim, 0)],
+    [(claim.hash, 0)],
     [(
       edPubKeys[i].to_bytes(),
-      Claim.fromTransaction(transactions.txs[claim]).amount
+      Claim.fromTransaction(transactions.txs[claim.hash]).amount
     )]
   )
   send.sign(edPrivKey)
@@ -80,47 +71,33 @@ for i in range(2):
 
   packets.append(VerificationPacket(send.hash, [i]))
 
-  verif = SignedVerification(send.hash)
-  verif.sign(i, blsPrivKeys[i])
-  toAggregate.append(verif.signature)
-
 #Archive the Packets and close the Epoch.
-block = Block(
-  BlockHeader(
-    0,
-    blockchain.last(),
-    BlockHeader.createContents(packets),
-    1,
-    bytes(4),
-    BlockHeader.createSketchCheck(bytes(4), packets),
-    0,
-    blockchain.blocks[-1].header.time + 1200
-  ),
-  BlockBody(packets, [], Signature.aggregate(toAggregate))
+merit.add(
+  PrototypeBlock(
+    merit.blockchain.blocks[-1].header.time + 1200,
+    packets=packets,
+    minerID=0
+  ).finish(
+    False,
+    merit.blockchain.genesis,
+    merit.blockchain.blocks[-1].header,
+    merit.blockchain.difficulty(),
+    blsPrivKeys
+  )
 )
 for _ in range(6):
-  block.mine(blsPrivKeys[0], blockchain.difficulty())
-  blockchain.add(block)
-  print("Generated Competing Block " + str(len(blockchain.blocks)) + ".")
-
-  #Create the next Block.
-  block = Block(
-    BlockHeader(
-      0,
-      blockchain.last(),
-      bytes(32),
-      1,
-      bytes(4),
-      bytes(32),
-      0,
-      blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody()
+  merit.add(
+    PrototypeBlock(merit.blockchain.blocks[-1].header.time + 1200).finish(
+      False,
+      merit.blockchain.genesis,
+      merit.blockchain.blocks[-1].header,
+      merit.blockchain.difficulty(),
+      blsPrivKeys
+    )
   )
 
-#Save the appended data (3 Blocks and 12 Sends).
 result: Dict[str, Any] = {
-  "blockchain": blockchain.toJSON(),
+  "blockchain": merit.blockchain.toJSON(),
   "transactions": transactions.toJSON(),
   "verified": packets[0].hash.hex().upper(),
   "beaten": packets[1].hash.hex().upper()
