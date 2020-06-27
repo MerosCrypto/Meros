@@ -14,12 +14,9 @@ from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-from e2e.Classes.Merit.BlockHeader import BlockHeader
-from e2e.Classes.Merit.BlockBody import BlockBody
-from e2e.Classes.Merit.Block import Block
-from e2e.Classes.Merit.Blockchain import Blockchain
+from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 
-blockchain: Blockchain = Blockchain()
+proto: PrototypeChain = PrototypeChain(1, False)
 
 blsPrivKey: PrivateKey = PrivateKey(0)
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
@@ -27,55 +24,33 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-#Generate a Block granting the holder Merit.
-block = Block(
-  BlockHeader(
-    0,
-    blockchain.last(),
-    bytes(32),
-    1,
-    bytes(4),
-    bytes(32),
-    blsPubKey.serialize(),
-    blockchain.blocks[-1].header.time + 1200
-  ),
-  BlockBody()
-)
-block.mine(blsPrivKey, blockchain.difficulty())
-blockchain.add(block)
-print("Generated Same Element Block " + str(len(blockchain.blocks)) + ".")
-
-#Create a SendDifficulty.
+#Create the SendDifficulty MR.
 sendDiff: SignedSendDifficulty = SignedSendDifficulty(4, 0)
 sendDiff.sign(0, blsPrivKey)
+sendDiffMR: SignedMeritRemoval = SignedMeritRemoval(sendDiff, sendDiff)
 
-#Create a DataDifficulty.
+#Create the DataDifficulty MR.
 dataDiff: SignedDataDifficulty = SignedDataDifficulty(4, 0)
 dataDiff.sign(0, blsPrivKey)
+dataDiffMR: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiff)
 
-#Create a Data.
+#Create the Verification MR.
 data: Data = Data(bytes(32), edPubKey.to_bytes())
 data.sign(edPrivKey)
 data.beat(SpamFilter(5))
-
-#Create a Verification.
 verif: SignedVerification = SignedVerification(data.hash)
 verif.sign(0, blsPrivKey)
 
-#Create a MeritRemovalVerificationPacket verifying the same Transaction as the Verification.
+#Transform the Verification to a SignedMeritRemovalVerificationPacket.
 packet: SignedMeritRemovalVerificationPacket = SignedMeritRemovalVerificationPacket(
   SignedVerificationPacket(data.hash),
   [blsPubKey.serialize()],
   verif.signature
 )
-
-#Create the three MeritRemovals.
-sendDiffMR: SignedMeritRemoval = SignedMeritRemoval(sendDiff, sendDiff)
-dataDiffMR: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiff)
 verifMR: SignedMeritRemoval = SignedMeritRemoval(verif, packet)
 
 result: Dict[str, Any] = {
-  "blockchain": blockchain.toJSON(),
+  "blockchain": proto.toJSON(),
   "removals": [
     sendDiffMR.toSignedJSON(),
     dataDiffMR.toSignedJSON(),

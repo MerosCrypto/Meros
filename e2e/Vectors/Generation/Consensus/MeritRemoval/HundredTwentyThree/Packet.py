@@ -108,7 +108,7 @@ reordered: SignedMeritRemoval = SignedMeritRemoval(
 reorderedChain.add(elements=[reordered])
 
 result: Dict[str, Any] = {
-  "blockchains": [packetedChain.finish().toJSON(), reorderedChain.finish().toJSON()],
+  "protos": [packetedChain.toJSON(), reorderedChain.toJSON()],
   "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()],
   "removals": [mr.toSignedJSON(), packeted.toSignedJSON()]
 }

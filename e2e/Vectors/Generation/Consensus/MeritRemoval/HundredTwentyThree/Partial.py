@@ -11,7 +11,7 @@ from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 blsPrivKey: PrivateKey = PrivateKey(0)
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
-blockchain: PrototypeChain = PrototypeChain(1, False)
+proto: PrototypeChain = PrototypeChain(1, False)
 
 #Create conflicting Data Difficulties.
 dataDiffs: List[SignedDataDifficulty] = [
@@ -22,18 +22,18 @@ dataDiffs[0].sign(0, blsPrivKey)
 dataDiffs[1].sign(0, blsPrivKey)
 
 #Generate a Block containing the first Data Difficulty.
-blockchain.add(elements=[dataDiffs[0]])
+proto.add(elements=[dataDiffs[0]])
 
 #Create a partial MeritRemoval out of the conflicting Data Difficulties.
 partial: PartialMeritRemoval = PartialMeritRemoval(dataDiffs[0], dataDiffs[1])
-blockchain.add(elements=[partial])
+proto.add(elements=[partial])
 
 #Create a MeritRemoval which isn't partial.
 mr: SignedMeritRemoval = SignedMeritRemoval(dataDiffs[0], dataDiffs[1])
-blockchain.add(elements=[mr])
+proto.add(elements=[mr])
 
 result: Dict[str, Any] = {
-  "blockchain": blockchain.finish().toJSON()
+  "blockchain": proto.toJSON()
 }
 vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Partial.json", "w")
 vectors.write(json.dumps(result))

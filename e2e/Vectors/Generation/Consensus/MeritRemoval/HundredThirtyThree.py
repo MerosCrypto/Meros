@@ -13,10 +13,7 @@ from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-from e2e.Classes.Merit.BlockHeader import BlockHeader
-from e2e.Classes.Merit.BlockBody import BlockBody
-from e2e.Classes.Merit.Block import Block
-from e2e.Classes.Merit.Blockchain import Blockchain
+from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
@@ -26,27 +23,8 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 spamFilter: SpamFilter = SpamFilter(5)
 
-e1Chain: Blockchain = Blockchain()
-e2Chain: Blockchain = Blockchain()
-
-#Generate a Block granting the holder Merit.
-block = Block(
-  BlockHeader(
-    0,
-    e1Chain.last(),
-    bytes(32),
-    1,
-    bytes(4),
-    bytes(32),
-    blsPubKey.serialize(),
-    e1Chain.blocks[-1].header.time + 1200
-  ),
-  BlockBody()
-)
-block.mine(blsPrivKey, e1Chain.difficulty())
-e1Chain.add(block)
-e2Chain.add(block)
-print("Generated Hundred Thirty Three Block 1/2 " + str(len(e1Chain.blocks)) + ".")
+e1Chain: PrototypeChain = PrototypeChain(1, False)
+e2Chain: PrototypeChain = PrototypeChain(1, False)
 
 #Create the initial Data and two competing Datas.
 datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
@@ -81,42 +59,11 @@ e1MR: SignedMeritRemoval = SignedMeritRemoval(verifs[1], packets[0], 0)
 e2MR: SignedMeritRemoval = SignedMeritRemoval(packets[1], verifs[2], 0)
 
 #Generate a Block containing the MeritRemoval for each chain.
-block = Block(
-  BlockHeader(
-    0,
-    e1Chain.last(),
-    BlockHeader.createContents([], [e1MR]),
-    1,
-    bytes(4),
-    bytes(32),
-    0,
-    e1Chain.blocks[-1].header.time + 1200
-  ),
-  BlockBody([], [e1MR], e1MR.signature)
-)
-block.mine(blsPrivKey, e1Chain.difficulty())
-e1Chain.add(block)
-print("Generated Hundred Twenty Three Packet Block 1 " + str(len(e1Chain.blocks)) + ".")
-
-block = Block(
-  BlockHeader(
-    0,
-    e2Chain.last(),
-    BlockHeader.createContents([], [e2MR]),
-    1,
-    bytes(4),
-    bytes(32),
-    0,
-    e2Chain.blocks[-1].header.time + 1200
-  ),
-  BlockBody([], [e2MR], e2MR.signature)
-)
-block.mine(blsPrivKey, e2Chain.difficulty())
-e2Chain.add(block)
-print("Generated Hundred Twenty Three Packet Block 2 " + str(len(e2Chain.blocks)) + ".")
+e1Chain.add(elements=[e1MR])
+e2Chain.add(elements=[e2MR])
 
 result: Dict[str, Any] = {
-  "blockchains": [e1Chain.toJSON(), e2Chain.toJSON()],
+  "protos": [e1Chain.toJSON(), e2Chain.toJSON()],
   "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()]
 }
 vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredThirtyThree.json", "w")

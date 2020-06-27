@@ -11,7 +11,7 @@ from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 blsPrivKey: PrivateKey = PrivateKey(0)
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
-blockchain: PrototypeChain = PrototypeChain(1, False)
+proto: PrototypeChain = PrototypeChain(1, False)
 
 #Create conflicting Data Difficulties.
 dataDiffs: List[SignedDataDifficulty] = [
@@ -23,14 +23,14 @@ dataDiffs[1].sign(0, blsPrivKey)
 
 #Create a MeritRemoval out of the conflicting Data Difficulties.
 mr: SignedMeritRemoval = SignedMeritRemoval(dataDiffs[0], dataDiffs[1])
-blockchain.add(elements=[mr])
+proto.add(elements=[mr])
 
 #Create a MeritRemoval with the Elements swapped.
 swapped: SignedMeritRemoval = SignedMeritRemoval(dataDiffs[1], dataDiffs[0])
-blockchain.add(elements=[swapped])
+proto.add(elements=[swapped])
 
 result: Dict[str, Any] = {
-  "blockchain": blockchain.finish().toJSON()
+  "blockchain": proto.toJSON()
 }
 vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Swap.json", "w")
 vectors.write(json.dumps(result))
