@@ -1,6 +1,6 @@
-from typing import List, Tuple, Any
+from typing import List, Tuple, Union, Any
 from ctypes import Array, c_char_p, c_char, create_string_buffer, byref
-from hashlib import shake_256
+from hashlib import blake2b, shake_256
 
 from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, OctetObj, r
 from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
@@ -298,8 +298,12 @@ class Signature:
 class PrivateKey:
   def __init__(
     self,
-    key: bytes
+    key: Union[int, bytes]
   ) -> None:
+    #If a nickname was specified, generate a consistent Private Key based on it.
+    if isinstance(key, int):
+      key = blake2b(key.to_bytes(2 if key > 255 else 1, "big"), digest_size=32).digest()
+
     key = key.rjust(48, b'\0')
     self.value: Big384 = Big384()
     MilagroCurve.BIG_384_58_fromBytesLen(self.value, c_char_p(key), 48)

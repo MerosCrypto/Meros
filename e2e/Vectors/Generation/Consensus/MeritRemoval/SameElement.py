@@ -1,5 +1,4 @@
 from typing import Dict, IO, Any
-from hashlib import blake2b
 import json
 
 import ed25519
@@ -22,7 +21,7 @@ from e2e.Classes.Merit.Blockchain import Blockchain
 
 blockchain: Blockchain = Blockchain()
 
-blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
+blsPrivKey: PrivateKey = PrivateKey(0)
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)

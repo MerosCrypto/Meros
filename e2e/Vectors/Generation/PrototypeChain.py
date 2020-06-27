@@ -2,7 +2,6 @@
 #Automatically handles keeping Merit Holders' Merit Unlocked, unless told otherwise.
 
 from typing import Union, List
-from hashlib import blake2b
 
 from e2e.Libs.BLS import PrivateKey, Signature
 
@@ -24,23 +23,22 @@ class GenerationError(
   pass
 
 def signElement(
-  key: PrivateKey,
   elem: Element
 ) -> Signature:
   if isinstance(elem, SendDifficulty):
     sendDiff: SignedSendDifficulty = SignedSendDifficulty(elem.difficulty, elem.nonce)
-    sendDiff.sign(elem.holder, key)
+    sendDiff.sign(elem.holder, PrivateKey(elem.holder))
     return sendDiff.signature
 
   if isinstance(elem, DataDifficulty):
     dataDiff: SignedDataDifficulty = SignedDataDifficulty(elem.difficulty, elem.nonce)
-    dataDiff.sign(elem.holder, key)
+    dataDiff.sign(elem.holder, PrivateKey(elem.holder))
     return dataDiff.signature
 
   if isinstance(elem, MeritRemoval):
-    result: Signature = signElement(key, elem.e2)
+    result: Signature = signElement(elem.e2)
     if not elem.partial:
-      result = Signature.aggregate([result, signElement(key, elem.e1)])
+      result = Signature.aggregate([result, signElement(elem.e1)])
     return result
 
   raise GenerationError("Tried to sign an Element in a Block we didn't recognize the type of.")
@@ -65,36 +63,36 @@ class PrototypeBlock:
   #pylint: disable=too-many-locals
   def finish(
     self,
-    keepUnlocked: bool,
-    genesis: bytes,
+    keepUnlocked: int,
     prev: BlockHeader,
-    diff: int,
-    privateKeys: List[PrivateKey]
+    diff: int
   ) -> Block:
+    genesis: bytes = Blockchain().genesis
+
     #Create the signatures for every packet/element.
     signatures: List[Signature] = []
     for packet in self.packets:
       for holder in packet.holders:
         verif: SignedVerification = SignedVerification(packet.hash, holder)
-        verif.sign(holder, privateKeys[holder])
+        verif.sign(holder, PrivateKey(holder))
         signatures.append(verif.signature)
     for element in self.elements:
-      signatures.append(signElement(privateKeys[element.holder], element))
+      signatures.append(signElement(element))
 
     #Only add the Data if:
     #1) We're supposed to make sure Merit Holders are always Unloocked
     #2) The last Block created a Data.
-    if keepUnlocked and (prev.last != genesis):
+    if (keepUnlocked != 0) and (prev.last != genesis):
       #Create the Data from the last Block.
       blockData: Data = Data(genesis, prev.hash)
 
       #Create Verifications for said Data with every Private Key.
       #Ensures no one has their Merit locked.
       #pylint: disable=unnecessary-comprehension
-      self.packets.append(VerificationPacket(blockData.hash, [i for i in range(len(privateKeys))]))
-      for i, privKey in enumerate(privateKeys):
+      self.packets.append(VerificationPacket(blockData.hash, [i for i in range(keepUnlocked)]))
+      for i in range(keepUnlocked):
         verif: SignedVerification = SignedVerification(blockData.hash, i)
-        verif.sign(i, privKey)
+        verif.sign(i, PrivateKey(i))
         signatures.append(verif.signature)
 
       #Don't use the latest miner if they don't have Merit.
@@ -126,14 +124,14 @@ class PrototypeBlock:
       BlockBody(self.packets, self.elements, aggregate)
     )
     if isinstance(self.minerID, int):
-      result.mine(privateKeys[self.minerID], diff)
+      result.mine(PrivateKey(self.minerID), diff)
     else:
       result.mine(self.minerID, diff)
     return result
 
 class PrototypeChain:
   timeOffset: int
-  minerKeys: List[PrivateKey]
+  miners: int
   blocks: List[PrototypeBlock]
 
   def add(
@@ -144,12 +142,11 @@ class PrototypeChain:
   ) -> None:
     #Determine if this is a new miner or not.
     miner: Union[PrivateKey, int]
-    if nick > len(self.minerKeys):
+    if nick > self.miners:
       raise GenerationError("Told to mine a Block with a miner nick which doesn't exist.")
-    if nick == len(self.minerKeys):
-      #If it is, generate the relevant key.
-      self.minerKeys.append(PrivateKey(blake2b(nick.to_bytes(2, "big"), digest_size=32).digest()))
-      miner = self.minerKeys[-1]
+    if nick == self.miners:
+      miner = PrivateKey(self.miners)
+      self.miners += 1
     else:
       miner = nick
 
@@ -179,7 +176,7 @@ class PrototypeChain:
   ) -> None:
     self.keepUnlocked: bool = keepUnlocked
     self.timeOffset = timeOffset
-    self.minerKeys = []
+    self.miners = 0
     self.blocks = []
 
     for _ in range(blankBlocks):
@@ -193,11 +190,9 @@ class PrototypeChain:
     for block in self.blocks:
       blockchain.add(
         block.finish(
-          self.keepUnlocked,
-          blockchain.genesis,
+          self.miners if self.keepUnlocked else 0,
           blockchain.blocks[-1].header,
-          blockchain.difficulty(),
-          self.minerKeys
+          blockchain.difficulty()
         )
       )
 

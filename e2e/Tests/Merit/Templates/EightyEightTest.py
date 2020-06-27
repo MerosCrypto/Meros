@@ -2,7 +2,6 @@
 
 from typing import Dict, List, IO, Any
 from time import sleep
-from hashlib import blake2b
 import json
 
 import ed25519
@@ -32,7 +31,7 @@ def EightyEightTest(
   edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
   edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-  blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
+  blsPrivKey: PrivateKey = PrivateKey(0)
   blsPubKey: str = blsPrivKey.toPublicKey().serialize().hex()
 
   file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")

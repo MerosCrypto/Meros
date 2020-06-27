@@ -1,9 +1,8 @@
 from typing import IO, Dict, List, Tuple, Union, Any
-from hashlib import blake2b
 import json
 
 import ed25519
-from e2e.Libs.BLS import PrivateKey, PublicKey
+from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Send import Send
 from e2e.Classes.Transactions.Claim import Claim
@@ -27,15 +26,6 @@ edPubKeys: List[ed25519.VerifyingKey] = [
   ed25519.SigningKey(b'\1' * 32).get_verifying_key()
 ]
 
-blsPrivKeys: List[PrivateKey] = [
-  PrivateKey(blake2b(b'\0', digest_size=32).digest()),
-  PrivateKey(blake2b(b'\1', digest_size=32).digest())
-]
-blsPubKeys: List[PublicKey] = [
-  blsPrivKeys[0].toPublicKey(),
-  blsPrivKeys[1].toPublicKey()
-]
-
 sendFilter: SpamFilter = SpamFilter(3)
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
@@ -44,7 +34,7 @@ edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 #Create the Claim.
 claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKeys[0].to_bytes())
 claim.amount = merit.mints[-1].outputs[0][1]
-claim.sign([blsPrivKeys[0]])
+claim.sign([PrivateKey(0)])
 transactions.add(claim)
 
 #Create 12 Sends.
@@ -70,7 +60,7 @@ orders: List[Tuple[Dict[int, List[int]], Union[PrivateKey, int]]] = [
   #Verify the first two Merit Holders.
   ({0: [0, 1]}, 0),
   #Verify 3, and then 2, while giving Merit to a second Merit Holder.
-  ({0: [3, 2]}, blsPrivKeys[1]),
+  ({0: [3, 2]}, PrivateKey(1)),
   #Verify every other TX.
   ({1: [5, 6, 9, 11, 3, 0], 0: [4, 5, 8, 7, 11, 6, 10, 9]}, 1)
 ]
@@ -90,11 +80,9 @@ for order in orders:
       list(packets.values()),
       minerID=order[1]
     ).finish(
-      False,
-      merit.blockchain.genesis,
+      0,
       merit.blockchain.blocks[-1].header,
-      merit.blockchain.difficulty(),
-      blsPrivKeys
+      merit.blockchain.difficulty()
     )
   )
 
@@ -102,11 +90,9 @@ for order in orders:
 for _ in range(5):
   merit.add(
     PrototypeBlock(merit.blockchain.blocks[-1].header.time + 1200).finish(
-      False,
-      merit.blockchain.genesis,
+      0,
       merit.blockchain.blocks[-1].header,
-      merit.blockchain.difficulty(),
-      blsPrivKeys
+      merit.blockchain.difficulty()
     )
   )
 

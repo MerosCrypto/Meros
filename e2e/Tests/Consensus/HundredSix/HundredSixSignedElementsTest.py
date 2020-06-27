@@ -2,7 +2,6 @@
 
 from typing import List
 from time import sleep
-from hashlib import blake2b
 
 from e2e.Libs.BLS import PrivateKey, Signature
 
@@ -23,7 +22,7 @@ def HundredSixSignedElementsTest(
   #Solely used to get the genesis Block hash.
   blockchain: Blockchain = Blockchain()
 
-  blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
+  blsPrivKey: PrivateKey = PrivateKey(0)
   sig: Signature = blsPrivKey.sign(bytes())
 
   #Create a Data.

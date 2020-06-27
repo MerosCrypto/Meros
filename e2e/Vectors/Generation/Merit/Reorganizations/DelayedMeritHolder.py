@@ -1,5 +1,4 @@
-from typing import IO, List, Any
-from hashlib import blake2b
+from typing import IO, Any
 import json
 
 from e2e.Libs.BLS import PrivateKey
@@ -8,10 +7,7 @@ from e2e.Classes.Merit.Blockchain import Blockchain
 
 from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock, PrototypeChain
 
-privKeys: List[PrivateKey] = [
-  PrivateKey(blake2b(b'\0', digest_size=32).digest()),
-  PrivateKey(blake2b(b'\1', digest_size=32).digest())
-]
+secondPrivKey: PrivateKey = PrivateKey(1)
 
 root: Blockchain = PrototypeChain(5, False).finish()
 
@@ -19,37 +15,23 @@ main: Blockchain = Blockchain.fromJSON(root.toJSON())
 main.add(
   PrototypeBlock(
     main.blocks[-1].header.time + 1200,
-    minerID=privKeys[1]
-  ).finish(
-    False,
-    main.genesis,
-    main.blocks[-1].header,
-    main.difficulty(),
-    privKeys
-  )
+    minerID=secondPrivKey
+  ).finish(0, main.blocks[-1].header, main.difficulty())
 )
 
 alt: Blockchain = Blockchain.fromJSON(root.toJSON())
 alt.add(
   PrototypeBlock(alt.blocks[-1].header.time + 1200).finish(
-    False,
-    alt.genesis,
+    0,
     alt.blocks[-1].header,
-    alt.difficulty(),
-    privKeys
+    alt.difficulty()
   )
 )
 main.add(
   PrototypeBlock(
     alt.blocks[-1].header.time + 1200,
-    minerID=privKeys[1]
-  ).finish(
-    False,
-    alt.genesis,
-    alt.blocks[-1].header,
-    alt.difficulty(),
-    privKeys
-  )
+    minerID=secondPrivKey
+  ).finish(0, alt.blocks[-1].header, alt.difficulty())
 )
 
 vectors: IO[Any] = open("e2e/Vectors/Merit/Reorganizations/DelayedMeritHolder.json", "w")

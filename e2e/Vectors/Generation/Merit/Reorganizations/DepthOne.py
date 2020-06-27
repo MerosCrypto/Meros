@@ -1,8 +1,5 @@
-from typing import IO, List, Any
-from hashlib import blake2b
+from typing import IO, Any
 import json
-
-from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Merit.Blockchain import Blockchain
 
@@ -10,11 +7,6 @@ from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock, PrototypeChain
 
 main: Blockchain = Blockchain()
 alt: Blockchain = Blockchain()
-
-privKeys: List[PrivateKey] = [
-  PrivateKey(blake2b(b'\0', digest_size=32).digest()),
-  PrivateKey(blake2b(b'\1', digest_size=32).digest())
-]
 
 protoRoot: PrototypeChain = PrototypeChain(1, False)
 protoRoot.add(1)
@@ -25,11 +17,9 @@ alt: Blockchain = Blockchain.fromJSON(root.toJSON())
 
 main.add(
   PrototypeBlock(root.blocks[-1].header.time + 1200).finish(
-    False,
-    main.genesis,
+    0,
     main.blocks[-1].header,
-    main.difficulty(),
-    privKeys
+    main.difficulty()
   )
 )
 
@@ -44,11 +34,9 @@ while (difficulty * hashAsInt).bit_length() <= 256:
 
 alt.add(
   PrototypeBlock(root.blocks[-1].header.time + 1200, minerID=1).finish(
-    False,
-    alt.genesis,
+    0,
     alt.blocks[-1].header,
-    difficulty,
-    privKeys
+    difficulty
   )
 )
 

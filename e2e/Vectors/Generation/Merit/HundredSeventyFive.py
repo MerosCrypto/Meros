@@ -18,7 +18,6 @@ from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock, PrototypeChain
 
 edPrivKey: SigningKey = SigningKey(blake2b(b"\0", digest_size=32).digest())
 edPubKey: bytes = edPrivKey.get_verifying_key().to_bytes()
-blsPrivKey: PrivateKey = PrivateKey(blake2b((0).to_bytes(2, "big"), digest_size=32).digest())
 
 spamFilter: SpamFilter = SpamFilter(3)
 
@@ -32,13 +31,13 @@ txs: List[Transaction] = []
 
 #Create the Claim.
 claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKey)
-claim.sign([blsPrivKey])
+claim.sign([PrivateKey(0)])
 txs.append(claim)
 transactions.add(claim)
 
 #Create a Verification for this Claim.
 verif: SignedVerification = SignedVerification(claim.hash)
-verif.sign(0, blsPrivKey)
+verif.sign(0, PrivateKey(0))
 
 #Create two Sends, so the missing packets exceeds the capacity.
 #This and the above Verification are used to actually test #175.
@@ -62,11 +61,9 @@ merit.blockchain.add(
     [VerificationPacket(tx.hash, [0]) for tx in txs]
   ).finish(
     #Don't bother verifying the Data.
-    False,
-    merit.blockchain.genesis,
+    0,
     merit.blockchain.blocks[-1].header,
-    merit.blockchain.difficulty(),
-    [blsPrivKey]
+    merit.blockchain.difficulty()
   )
 )
 

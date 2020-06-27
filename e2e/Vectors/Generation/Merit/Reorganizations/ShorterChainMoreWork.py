@@ -1,12 +1,7 @@
 from typing import IO, Any
-from hashlib import blake2b
 import json
 
-from e2e.Libs.BLS import PrivateKey
-
 from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
-
-privKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 
 main: PrototypeChain = PrototypeChain(25, False)
 alt: PrototypeChain = PrototypeChain(15, False)

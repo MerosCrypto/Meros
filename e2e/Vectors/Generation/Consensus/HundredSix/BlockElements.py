@@ -1,5 +1,4 @@
 from typing import IO, Dict, List, Any
-from hashlib import blake2b
 import json
 
 import ed25519
@@ -27,10 +26,7 @@ dataFilter: SpamFilter = SpamFilter(5)
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-blsPrivKeys: List[PrivateKey] = [
-  PrivateKey(blake2b(b'\0', digest_size=32).digest()),
-  PrivateKey(blake2b(b'\1', digest_size=32).digest())
-]
+blsPrivKey: PrivateKey = PrivateKey(0)
 
 #Generate a Data to verify for the VerificationPacket Block.
 data: Data = Data(bytes(32), edPubKey.to_bytes())
@@ -42,14 +38,8 @@ blocks.append(
   PrototypeBlock(
     blockchain.blocks[-1].header.time + 1200,
     packets=[VerificationPacket(data.hash, [1])],
-    minerID=blsPrivKeys[0]
-  ).finish(
-    False,
-    blockchain.genesis,
-    blockchain.blocks[-1].header,
-    blockchain.difficulty(),
-    blsPrivKeys
-  ).toJSON()
+    minerID=blsPrivKey
+  ).finish(0, blockchain.blocks[-1].header, blockchain.difficulty()).toJSON()
 )
 
 #Generate the SendDifficulty Block.
@@ -57,14 +47,8 @@ blocks.append(
   PrototypeBlock(
     blockchain.blocks[-1].header.time + 1200,
     elements=[SendDifficulty(0, 0, 1)],
-    minerID=blsPrivKeys[0]
-  ).finish(
-    False,
-    blockchain.genesis,
-    blockchain.blocks[-1].header,
-    blockchain.difficulty(),
-    blsPrivKeys
-  ).toJSON()
+    minerID=blsPrivKey
+  ).finish(0, blockchain.blocks[-1].header, blockchain.difficulty()).toJSON()
 )
 
 #Generate the DataDifficulty Block.
@@ -72,14 +56,8 @@ blocks.append(
   PrototypeBlock(
     blockchain.blocks[-1].header.time + 1200,
     elements=[DataDifficulty(0, 0, 1)],
-    minerID=blsPrivKeys[0]
-  ).finish(
-    False,
-    blockchain.genesis,
-    blockchain.blocks[-1].header,
-    blockchain.difficulty(),
-    blsPrivKeys
-  ).toJSON()
+    minerID=blsPrivKey
+  ).finish(0, blockchain.blocks[-1].header, blockchain.difficulty()).toJSON()
 )
 
 result: Dict[str, Any] = {

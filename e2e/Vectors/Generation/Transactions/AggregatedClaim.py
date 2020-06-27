@@ -1,5 +1,4 @@
 from typing import IO, Dict, List, Any
-from hashlib import blake2b
 import json
 
 import ed25519
@@ -31,14 +30,7 @@ dataFilter: SpamFilter = SpamFilter(5)
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-blsPrivKeys: List[PrivateKey] = [
-  PrivateKey(blake2b(b'\0', digest_size=32).digest()),
-  PrivateKey(blake2b(b'\1', digest_size=32).digest())
-]
-blsPubKeys: List[PublicKey] = [
-  blsPrivKeys[0].toPublicKey(),
-  blsPrivKeys[1].toPublicKey()
-]
+blsPubKeys: List[PublicKey] = [PrivateKey(0).toPublicKey(), PrivateKey(1).toPublicKey()]
 
 for i in range(4):
   merit.add(Block.fromJSON(blankBlocks[i]))
@@ -57,7 +49,7 @@ block: Block = Block(
   ),
   BlockBody()
 )
-block.mine(blsPrivKeys[1], merit.blockchain.difficulty())
+block.mine(PrivateKey(1), merit.blockchain.difficulty())
 merit.add(block)
 print("Generated Aggregated Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
@@ -76,7 +68,7 @@ verifs: List[List[SignedVerification]] = []
 for data in datas:
   verifs.append([SignedVerification(data.hash), SignedVerification(data.hash)])
   for v in range(2):
-    verifs[-1][v].sign(v, blsPrivKeys[v])
+    verifs[-1][v].sign(v, PrivateKey(v))
 
 #Create the packets.
 packets: List[SignedVerificationPacket] = []
@@ -104,7 +96,7 @@ for packet in packets:
     ),
     BlockBody([packet], [], packet.signature)
   )
-  block.mine(blsPrivKeys[1], merit.blockchain.difficulty())
+  block.mine(PrivateKey(1), merit.blockchain.difficulty())
   merit.add(block)
   print("Generated Aggregated Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
@@ -124,7 +116,7 @@ for _ in range(5):
     ),
     BlockBody()
   )
-  block.mine(blsPrivKeys[0], merit.blockchain.difficulty())
+  block.mine(PrivateKey(0), merit.blockchain.difficulty())
   merit.add(block)
   print("Generated Aggregated Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
@@ -152,9 +144,9 @@ claims[0].amount = merit.mints[0].outputs[0][1] + merit.mints[1].outputs[0][1]
 claims[1].amount = merit.mints[2].outputs[0][1] + merit.mints[0].outputs[1][1]
 claims[2].amount = merit.mints[3].outputs[0][1] + merit.mints[1].outputs[1][1] + merit.mints[2].outputs[1][1]
 
-claims[0].sign([blsPrivKeys[0], blsPrivKeys[0]])
-claims[1].sign([blsPrivKeys[0], blsPrivKeys[1]])
-claims[2].sign([blsPrivKeys[0], blsPrivKeys[1], blsPrivKeys[1]])
+claims[0].sign([PrivateKey(0), PrivateKey(0)])
+claims[1].sign([PrivateKey(0), PrivateKey(1)])
+claims[2].sign([PrivateKey(0), PrivateKey(1), PrivateKey(1)])
 for claim in claims:
   transactions.add(claim)
 
@@ -163,7 +155,7 @@ verifs = []
 for claim in claims:
   verifs.append([SignedVerification(claim.hash), SignedVerification(claim.hash)])
   for v in range(2):
-    verifs[-1][v].sign(v, blsPrivKeys[v])
+    verifs[-1][v].sign(v, PrivateKey(v))
 
 #Create the packets.
 packets: List[SignedVerificationPacket] = []
@@ -191,7 +183,7 @@ for packet in packets:
     ),
     BlockBody([packet], [], packet.signature)
   )
-  block.mine(blsPrivKeys[1], merit.blockchain.difficulty())
+  block.mine(PrivateKey(1), merit.blockchain.difficulty())
   merit.add(block)
   print("Generated Aggregated Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 

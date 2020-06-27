@@ -1,9 +1,7 @@
 from typing import Dict, List, IO, Any
-from hashlib import blake2b
 import json
 
 import ed25519
-
 from e2e.Libs.BLS import PrivateKey, PublicKey, Signature
 
 from e2e.Classes.Transactions.Data import Data
@@ -21,7 +19,7 @@ from e2e.Classes.Merit.Blockchain import Blockchain
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
+blsPrivKey: PrivateKey = PrivateKey(0)
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 spamFilter: SpamFilter = SpamFilter(5)
@@ -89,27 +87,27 @@ packeted: SignedMeritRemoval = SignedMeritRemoval(
     SignedVerificationPacket(verifs[1].hash),
     [
       blsPubKey.serialize(),
-      PrivateKey(blake2b(b'\1', digest_size=32).digest()).toPublicKey().serialize(),
-      PrivateKey(blake2b(b'\2', digest_size=32).digest()).toPublicKey().serialize()
+      PrivateKey(1).toPublicKey().serialize(),
+      PrivateKey(2).toPublicKey().serialize()
     ],
     Signature.aggregate([
       blsPrivKey.sign(verifs[1].signatureSerialize()),
-      PrivateKey(blake2b(b'\1', digest_size=32).digest()).sign(verifs[1].signatureSerialize()),
-      PrivateKey(blake2b(b'\2', digest_size=32).digest()).sign(verifs[1].signatureSerialize())
+      PrivateKey(1).sign(verifs[1].signatureSerialize()),
+      PrivateKey(2).sign(verifs[1].signatureSerialize())
     ])
   ),
   SignedMeritRemovalVerificationPacket(
     SignedVerificationPacket(verifs[2].hash),
     [
       blsPubKey.serialize(),
-      PrivateKey(blake2b(b'\3', digest_size=32).digest()).toPublicKey().serialize(),
-      PrivateKey(blake2b(b'\4', digest_size=32).digest()).toPublicKey().serialize()
+      PrivateKey(3).toPublicKey().serialize(),
+      PrivateKey(4).toPublicKey().serialize()
     ],
     Signature.aggregate(
       [
         blsPrivKey.sign(verifs[2].signatureSerialize()),
-        PrivateKey(blake2b(b'\3', digest_size=32).digest()).sign(verifs[2].signatureSerialize()),
-        PrivateKey(blake2b(b'\4', digest_size=32).digest()).sign(verifs[2].signatureSerialize())
+        PrivateKey(3).sign(verifs[2].signatureSerialize()),
+        PrivateKey(4).sign(verifs[2].signatureSerialize())
       ]
     )
   ),
@@ -158,29 +156,29 @@ reordered: SignedMeritRemoval = SignedMeritRemoval(
     SignedVerificationPacket(verifs[1].hash),
     [
       blsPubKey.serialize(),
-      PrivateKey(blake2b(b'\1', digest_size=32).digest()).toPublicKey().serialize(),
-      PrivateKey(blake2b(b'\2', digest_size=32).digest()).toPublicKey().serialize()
+      PrivateKey(1).toPublicKey().serialize(),
+      PrivateKey(2).toPublicKey().serialize()
     ],
     Signature.aggregate(
       [
         blsPrivKey.sign(verifs[1].signatureSerialize()),
-        PrivateKey(blake2b(b'\1', digest_size=32).digest()).sign(verifs[1].signatureSerialize()),
-        PrivateKey(blake2b(b'\2', digest_size=32).digest()).sign(verifs[1].signatureSerialize())
+        PrivateKey(1).sign(verifs[1].signatureSerialize()),
+        PrivateKey(2).sign(verifs[1].signatureSerialize())
       ]
     )
   ),
   SignedMeritRemovalVerificationPacket(
     SignedVerificationPacket(verifs[2].hash),
     [
-      PrivateKey(blake2b(b'\3', digest_size=32).digest()).toPublicKey().serialize(),
+      PrivateKey(3).toPublicKey().serialize(),
       blsPubKey.serialize(),
-      PrivateKey(blake2b(b'\4', digest_size=32).digest()).toPublicKey().serialize()
+      PrivateKey(4).toPublicKey().serialize()
     ],
     Signature.aggregate(
       [
         blsPrivKey.sign(verifs[2].signatureSerialize()),
-        PrivateKey(blake2b(b'\3', digest_size=32).digest()).sign(verifs[2].signatureSerialize()),
-        PrivateKey(blake2b(b'\4', digest_size=32).digest()).sign(verifs[2].signatureSerialize())
+        PrivateKey(3).sign(verifs[2].signatureSerialize()),
+        PrivateKey(4).sign(verifs[2].signatureSerialize())
       ]
     )
   ),

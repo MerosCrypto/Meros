@@ -2,6 +2,7 @@ from typing import IO, Any
 import json
 
 import ed25519
+from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Data, Transactions
 
@@ -27,7 +28,7 @@ data.beat(spamFilter)
 transactions.add(data)
 
 verif: SignedVerification = SignedVerification(data.hash)
-verif.sign(1, proto.minerKeys[1])
+verif.sign(1, PrivateKey(1))
 
 proto.add(packets=[VerificationPacket(data.hash, [0])])
 for _ in range(6):

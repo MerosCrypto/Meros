@@ -1,9 +1,7 @@
 from typing import Dict, IO, Any
-from hashlib import blake2b
 import json
 
 import ed25519
-
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
 from e2e.Classes.Transactions.Data import Data
@@ -23,7 +21,7 @@ blockchain: Blockchain = Blockchain()
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
+blsPrivKey: PrivateKey = PrivateKey(0)
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Generate a Block granting the holder Merit.

@@ -1,9 +1,8 @@
 from typing import IO, Dict, Any
-from hashlib import blake2b
 import json
 
 import ed25519
-from e2e.Libs.BLS import PrivateKey, PublicKey
+from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Send import Send
 from e2e.Classes.Transactions.Claim import Claim
@@ -23,12 +22,9 @@ sendFilter: SpamFilter = SpamFilter(3)
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
-blsPubKey: PublicKey = blsPrivKey.toPublicKey()
-
 claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKey.to_bytes())
 claim.amount = merit.mints[-1].outputs[0][1]
-claim.sign([blsPrivKey])
+claim.sign([PrivateKey(0)])
 transactions.add(claim)
 
 #Create a Send spending it twice.
@@ -48,11 +44,9 @@ merit.blockchain.add(
     merit.blockchain.blocks[-1].header.time + 1200,
     [VerificationPacket(send.hash, [0])]
   ).finish(
-    False,
-    merit.blockchain.genesis,
+    0,
     merit.blockchain.blocks[-1].header,
-    merit.blockchain.difficulty(),
-    [blsPrivKey]
+    merit.blockchain.difficulty()
   )
 )
 

@@ -1,5 +1,4 @@
 from typing import Dict, List, IO, Any
-from hashlib import blake2b
 import json
 
 from e2e.Libs.BLS import PrivateKey, PublicKey
@@ -12,7 +11,7 @@ from e2e.Classes.Merit.BlockBody import BlockBody
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
+blsPrivKey: PrivateKey = PrivateKey(0)
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 blockchain: Blockchain = Blockchain()

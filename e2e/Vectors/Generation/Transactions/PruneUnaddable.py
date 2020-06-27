@@ -2,6 +2,7 @@ from typing import IO, Dict, List, Any
 import json
 
 import ed25519
+from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Data import Data
 
@@ -36,7 +37,7 @@ datas[3].beat(dataFilter)
 
 #Create a SignedVerification for the descendant Data.
 descendantVerif: SignedVerification = SignedVerification(datas[1].hash)
-descendantVerif.sign(0, proto.minerKeys[0])
+descendantVerif.sign(0, PrivateKey(0))
 
 #Add the packets and close the Epochs.
 proto.add(packets=[

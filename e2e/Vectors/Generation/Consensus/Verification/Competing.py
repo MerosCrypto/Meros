@@ -1,9 +1,8 @@
 from typing import IO, Dict, List, Any
-from hashlib import blake2b
 import json
 
 import ed25519
-from e2e.Libs.BLS import PrivateKey, PublicKey
+from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Claim import Claim
 from e2e.Classes.Transactions.Send import Send
@@ -27,32 +26,21 @@ edPubKeys: List[ed25519.VerifyingKey] = [
   ed25519.SigningKey(b'\1' * 32).get_verifying_key()
 ]
 
-blsPrivKeys: List[PrivateKey] = [
-  PrivateKey(blake2b(b'\0', digest_size=32).digest()),
-  PrivateKey(blake2b(b'\1', digest_size=32).digest())
-]
-blsPubKeys: List[PublicKey] = [
-  blsPrivKeys[0].toPublicKey(),
-  blsPrivKeys[1].toPublicKey()
-]
-
 #Create the Claim.
 claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKeys[0].to_bytes())
 claim.amount = merit.mints[-1].outputs[0][1]
-claim.sign([blsPrivKeys[0]])
+claim.sign([PrivateKey(0)])
 transactions.add(claim)
 
 #Give the second key pair Merit.
 merit.add(
   PrototypeBlock(
     merit.blockchain.blocks[-1].header.time + 1200,
-    minerID=blsPrivKeys[1]
+    minerID=PrivateKey(1)
   ).finish(
-    False,
-    merit.blockchain.genesis,
+    0,
     merit.blockchain.blocks[-1].header,
-    merit.blockchain.difficulty(),
-    blsPrivKeys
+    merit.blockchain.difficulty()
   )
 )
 
@@ -79,11 +67,9 @@ merit.add(
     packets=packets,
     minerID=0
   ).finish(
-    False,
-    merit.blockchain.genesis,
+    0,
     merit.blockchain.blocks[-1].header,
-    merit.blockchain.difficulty(),
-    blsPrivKeys
+    merit.blockchain.difficulty()
   )
 )
 #As far as I can tell, this should be range(5).
@@ -94,11 +80,9 @@ merit.add(
 for _ in range(6):
   merit.add(
     PrototypeBlock(merit.blockchain.blocks[-1].header.time + 1200).finish(
-      False,
-      merit.blockchain.genesis,
+      0,
       merit.blockchain.blocks[-1].header,
-      merit.blockchain.difficulty(),
-      blsPrivKeys
+      merit.blockchain.difficulty()
     )
   )
 
