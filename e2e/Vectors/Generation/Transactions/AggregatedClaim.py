@@ -51,7 +51,6 @@ block: Block = Block(
 )
 block.mine(PrivateKey(1), merit.blockchain.difficulty())
 merit.add(block)
-print("Generated Aggregated Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 #Create the Datas.
 datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
@@ -98,7 +97,6 @@ for packet in packets:
   )
   block.mine(PrivateKey(1), merit.blockchain.difficulty())
   merit.add(block)
-  print("Generated Aggregated Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 #Generate another 5 Blocks to close the Epochs.
 #Next block should have the packet.
@@ -118,7 +116,6 @@ for _ in range(5):
   )
   block.mine(PrivateKey(0), merit.blockchain.difficulty())
   merit.add(block)
-  print("Generated Aggregated Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 #Create three Claims.
 #Other tests test the basic Claim X format.
@@ -185,7 +182,6 @@ for packet in packets:
   )
   block.mine(PrivateKey(1), merit.blockchain.difficulty())
   merit.add(block)
-  print("Generated Aggregated Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 result: Dict[str, Any] = {
   "blockchain": merit.toJSON(),

@@ -8,8 +8,8 @@ from e2e.Libs.BLS import PrivateKey, Signature
 from e2e.Classes.Transactions.Data import Data
 
 from e2e.Classes.Consensus.Element import Element
-from e2e.Classes.Consensus.Verification import SignedVerification
-from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
+from e2e.Classes.Consensus.Verification import Verification, SignedVerification
+from e2e.Classes.Consensus.VerificationPacket import VerificationPacket, SignedMeritRemovalVerificationPacket
 from e2e.Classes.Consensus.SendDifficulty import SendDifficulty, SignedSendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty, SignedDataDifficulty
 from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
@@ -25,6 +25,14 @@ class GenerationError(
 def signElement(
   elem: Element
 ) -> Signature:
+  if isinstance(elem, Verification):
+    verif: SignedVerification = SignedVerification(elem.hash, elem.holder)
+    verif.sign(elem.holder, PrivateKey(elem.holder))
+    return verif.signature
+
+  if isinstance(elem, SignedMeritRemovalVerificationPacket):
+    return elem.signature
+
   if isinstance(elem, SendDifficulty):
     sendDiff: SignedSendDifficulty = SignedSendDifficulty(elem.difficulty, elem.nonce)
     sendDiff.sign(elem.holder, PrivateKey(elem.holder))

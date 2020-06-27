@@ -2,7 +2,7 @@ from typing import IO, Any
 import json
 
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty
-from e2e.Classes.Consensus.MeritRemoval import PartialMeritRemoval
+from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
 from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 
@@ -12,8 +12,8 @@ for _ in range(24):
   proto.add(elements=[DataDifficulty(1, 1, 0)])
 
 #Create MeritRemovals by reusing nonces.
-proto.add(elements=[PartialMeritRemoval(DataDifficulty(2, 0, 0), DataDifficulty(1, 0, 0))])
-proto.add(elements=[PartialMeritRemoval(DataDifficulty(1, 1, 0), DataDifficulty(2, 1, 0))])
+proto.add(elements=[MeritRemoval(DataDifficulty(2, 0, 0), DataDifficulty(1, 0, 0), True)])
+proto.add(elements=[MeritRemoval(DataDifficulty(1, 1, 0), DataDifficulty(2, 1, 0), True)])
 
 for _ in range(50):
   proto.add()
