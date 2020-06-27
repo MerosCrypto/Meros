@@ -38,6 +38,7 @@ blsPubKeys: List[PublicKey] = [
 
 #Create the Claim.
 claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKeys[0].to_bytes())
+claim.amount = merit.mints[-1].outputs[0][1]
 claim.sign([blsPrivKeys[0]])
 transactions.add(claim)
 
@@ -85,6 +86,11 @@ merit.add(
     blsPrivKeys
   )
 )
+#As far as I can tell, this should be range(5).
+#That said, I rather have an extra Block than change the generated vector.
+#A semantic JSON diff checker can be used to verify moving to 5 is fine, as long as the output is eyed over.
+#Until someone does that, leave this as range(6).
+#-- Kayaba
 for _ in range(6):
   merit.add(
     PrototypeBlock(merit.blockchain.blocks[-1].header.time + 1200).finish(
@@ -97,7 +103,7 @@ for _ in range(6):
   )
 
 result: Dict[str, Any] = {
-  "blockchain": merit.blockchain.toJSON(),
+  "blockchain": merit.toJSON(),
   "transactions": transactions.toJSON(),
   "verified": packets[0].hash.hex().upper(),
   "beaten": packets[1].hash.hex().upper()

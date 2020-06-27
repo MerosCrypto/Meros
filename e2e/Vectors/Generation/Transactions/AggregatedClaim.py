@@ -196,7 +196,7 @@ for packet in packets:
   print("Generated Aggregated Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 result: Dict[str, Any] = {
-  "blockchain": merit.blockchain.toJSON(),
+  "blockchain": merit.toJSON(),
   "transactions": transactions.toJSON()
 }
 vectors: IO[Any] = open("e2e/Vectors/Transactions/AggregatedClaim.json", "w")
