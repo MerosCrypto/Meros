@@ -20,6 +20,6 @@ for _ in range(50):
 
 vectors: IO[Any] = open("e2e/Vectors/Consensus/Difficulties/SendDifficulty.json", "w")
 vectors.write(json.dumps({
-  "blockchain": proto.finish().toJSON()
+  "blockchain": proto.toJSON()
 }))
 vectors.close()

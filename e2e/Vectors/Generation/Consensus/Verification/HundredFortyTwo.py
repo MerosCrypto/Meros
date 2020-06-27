@@ -36,7 +36,7 @@ for _ in range(6):
 
 vectors: IO[Any] = open("e2e/Vectors/Consensus/Verification/HundredFortyTwo.json", "w")
 vectors.write(json.dumps({
-  "blockchain": proto.finish().toJSON(),
+  "blockchain": proto.toJSON(),
   "transactions": transactions.toJSON(),
   "verification": verif.toSignedJSON()
 }))

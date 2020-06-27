@@ -16,7 +16,7 @@ from e2e.Classes.Merit.Blockchain import Blockchain
 
 from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock
 
-blockchain: Blockchain = Blockchain()
+proto: Blockchain = Blockchain()
 blocks: List[Dict[str, Any]] = []
 
 transactions: Transactions = Transactions()
@@ -36,28 +36,28 @@ transactions.add(data)
 
 blocks.append(
   PrototypeBlock(
-    blockchain.blocks[-1].header.time + 1200,
+    proto.blocks[-1].header.time + 1200,
     packets=[VerificationPacket(data.hash, [1])],
     minerID=blsPrivKey
-  ).finish(0, blockchain.blocks[-1].header, blockchain.difficulty()).toJSON()
+  ).finish(0, proto.blocks[-1].header, proto.difficulty()).toJSON()
 )
 
 #Generate the SendDifficulty Block.
 blocks.append(
   PrototypeBlock(
-    blockchain.blocks[-1].header.time + 1200,
+    proto.blocks[-1].header.time + 1200,
     elements=[SendDifficulty(0, 0, 1)],
     minerID=blsPrivKey
-  ).finish(0, blockchain.blocks[-1].header, blockchain.difficulty()).toJSON()
+  ).finish(0, proto.blocks[-1].header, proto.difficulty()).toJSON()
 )
 
 #Generate the DataDifficulty Block.
 blocks.append(
   PrototypeBlock(
-    blockchain.blocks[-1].header.time + 1200,
+    proto.blocks[-1].header.time + 1200,
     elements=[DataDifficulty(0, 0, 1)],
     minerID=blsPrivKey
-  ).finish(0, blockchain.blocks[-1].header, blockchain.difficulty()).toJSON()
+  ).finish(0, proto.blocks[-1].header, proto.difficulty()).toJSON()
 )
 
 result: Dict[str, Any] = {

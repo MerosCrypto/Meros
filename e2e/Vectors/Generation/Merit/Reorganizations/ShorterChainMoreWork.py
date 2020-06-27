@@ -13,7 +13,7 @@ for _ in range(5):
 
 vectors: IO[Any] = open("e2e/Vectors/Merit/Reorganizations/ShorterChainMoreWork.json", "w")
 vectors.write(json.dumps({
-  "main": main.finish().toJSON(),
-  "alt": alt.finish().toJSON()
+  "main": main.toJSON(),
+  "alt": alt.toJSON()
 }))
 vectors.close()

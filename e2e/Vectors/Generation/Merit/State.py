@@ -24,5 +24,5 @@ for _ in range(State().lifetime * 3):
   chain.add(nextMiner)
 
 vectors: IO[Any] = open("e2e/Vectors/Merit/State.json", "w")
-vectors.write(json.dumps(chain.finish().toJSON()))
+vectors.write(json.dumps(chain.toJSON()))
 vectors.close()

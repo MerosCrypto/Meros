@@ -24,7 +24,7 @@ data.beat(dataFilter)
 proto.add(packets=[VerificationPacket(data.hash, [0])])
 vectors: IO[Any] = open("e2e/Vectors/Consensus/Verification/Parsable.json", "w")
 vectors.write(json.dumps({
-  "blockchain": proto.finish().toJSON(),
+  "blockchain": proto.toJSON(),
   "data": data.toJSON()
 }))
 vectors.close()

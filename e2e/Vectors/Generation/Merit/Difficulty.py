@@ -18,5 +18,5 @@ for _ in range(100):
   chain.add()
 
 vectors: IO[Any] = open("e2e/Vectors/Merit/Difficulty.json", "w")
-vectors.write(json.dumps(chain.finish().toJSON()))
+vectors.write(json.dumps(chain.toJSON()))
 vectors.close()

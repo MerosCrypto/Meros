@@ -49,7 +49,7 @@ proto.add(packets=[VerificationPacket(competitor.hash, [0])])
 
 vectors: IO[Any] = open("e2e/Vectors/Transactions/CompetingFinalized.json", "w")
 vectors.write(json.dumps({
-  "blockchain": proto.finish().toJSON(),
+  "blockchain": proto.toJSON(),
   "transactions": transactions.toJSON()
 }))
 vectors.close()

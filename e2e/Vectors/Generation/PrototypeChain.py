@@ -1,7 +1,7 @@
 #Simplified chain construction API.
 #Automatically handles keeping Merit Holders' Merit Unlocked, unless told otherwise.
 
-from typing import Union, List
+from typing import Union, Dict, List, Any
 
 from e2e.Libs.BLS import PrivateKey, Signature
 
@@ -185,18 +185,23 @@ class PrototypeChain:
   def finish(
     self
   ) -> Blockchain:
-    blockchain: Blockchain = Blockchain()
+    proto: Blockchain = Blockchain()
 
     for block in self.blocks:
-      blockchain.add(
+      proto.add(
         block.finish(
           self.miners if self.keepUnlocked else 0,
-          blockchain.blocks[-1].header,
-          blockchain.difficulty()
+          proto.blocks[-1].header,
+          proto.difficulty()
         )
       )
 
-    return blockchain
+    return proto
+
+  def toJSON(
+    self
+  ) -> List[Dict[str, Any]]:
+    return self.finish().toJSON()
 
   @staticmethod
   def withMint() -> Merit:
@@ -204,7 +209,7 @@ class PrototypeChain:
     #The first grants Merit; the second creates a Data; the third verifies the Data.
     #The next 5 finalize the Data.
     #We finalize/create a Merit out of it to access the Mint.
-    result: Merit = Merit.fromJSON(PrototypeChain(7).finish().toJSON())
+    result: Merit = Merit.fromJSON(PrototypeChain(7).toJSON())
     if len(result.mints) != 1:
       raise GenerationError("PrototypeChain Mint generator didn't create a Mint.")
     return result

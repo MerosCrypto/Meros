@@ -48,7 +48,7 @@ for _ in range(5):
   proto.add()
 
 result: Dict[str, Any] = {
-  "blockchain": proto.finish().toJSON(),
+  "blockchain": proto.toJSON(),
   "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON(), datas[3].toJSON()],
   "verification": descendantVerif.toSignedJSON()
 }
