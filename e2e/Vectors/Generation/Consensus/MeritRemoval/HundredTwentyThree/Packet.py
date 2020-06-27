@@ -11,10 +11,7 @@ from e2e.Classes.Consensus.VerificationPacket import SignedVerificationPacket, S
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-from e2e.Classes.Merit.BlockHeader import BlockHeader
-from e2e.Classes.Merit.BlockBody import BlockBody
-from e2e.Classes.Merit.Block import Block
-from e2e.Classes.Merit.Blockchain import Blockchain
+from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
@@ -24,27 +21,8 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 spamFilter: SpamFilter = SpamFilter(5)
 
-packetedChain: Blockchain = Blockchain()
-reorderedChain: Blockchain = Blockchain()
-
-#Generate a Block granting the holder Merit.
-block = Block(
-  BlockHeader(
-    0,
-    packetedChain.last(),
-    bytes(32),
-    1,
-    bytes(4),
-    bytes(32),
-    blsPubKey.serialize(),
-    packetedChain.blocks[-1].header.time + 1200
-  ),
-  BlockBody()
-)
-block.mine(blsPrivKey, packetedChain.difficulty())
-packetedChain.add(block)
-reorderedChain.add(block)
-print("Generated Hundred Twenty Three Packet Block 1/2 " + str(len(packetedChain.blocks)) + ".")
+packetedChain: PrototypeChain = PrototypeChain(1, False)
+reorderedChain: PrototypeChain = PrototypeChain(1, False)
 
 #Create the initial Data and two competing Datas.
 datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
@@ -54,50 +32,35 @@ for data in datas:
   data.sign(edPrivKey)
   data.beat(spamFilter)
 
-#Create Verifications for all 3.
+#Create Verifications for the competing Datas.
 verifs: List[SignedVerification] = []
-for data in datas:
-  verifs.append(SignedVerification(data.hash, 0))
+for d in range(1, len(datas)):
+  verifs.append(SignedVerification(datas[d].hash, 0))
   verifs[-1].sign(0, blsPrivKey)
 
 #Create a MeritRemoval out of the conflicting Verifications.
-mr: SignedMeritRemoval = SignedMeritRemoval(verifs[1], verifs[2])
+mr: SignedMeritRemoval = SignedMeritRemoval(verifs[0], verifs[1])
 
 #Generate a Block containing the MeritRemoval.
-block = Block(
-  BlockHeader(
-    0,
-    packetedChain.last(),
-    BlockHeader.createContents([], [mr]),
-    1,
-    bytes(4),
-    bytes(32),
-    0,
-    packetedChain.blocks[-1].header.time + 1200
-  ),
-  BlockBody([], [mr], mr.signature)
-)
-block.mine(blsPrivKey, packetedChain.difficulty())
-packetedChain.add(block)
-print("Generated Hundred Twenty Three Packet Block 1 " + str(len(packetedChain.blocks)) + ".")
+packetedChain.add(elements=[mr])
 
-#Create a MeritRemoval with random keys.
+#Create a MeritRemoval with random keys added in.
 packeted: SignedMeritRemoval = SignedMeritRemoval(
   SignedMeritRemovalVerificationPacket(
-    SignedVerificationPacket(verifs[1].hash),
+    SignedVerificationPacket(verifs[0].hash),
     [
       blsPubKey.serialize(),
       PrivateKey(1).toPublicKey().serialize(),
       PrivateKey(2).toPublicKey().serialize()
     ],
     Signature.aggregate([
-      blsPrivKey.sign(verifs[1].signatureSerialize()),
-      PrivateKey(1).sign(verifs[1].signatureSerialize()),
-      PrivateKey(2).sign(verifs[1].signatureSerialize())
+      blsPrivKey.sign(verifs[0].signatureSerialize()),
+      PrivateKey(1).sign(verifs[0].signatureSerialize()),
+      PrivateKey(2).sign(verifs[0].signatureSerialize())
     ])
   ),
   SignedMeritRemovalVerificationPacket(
-    SignedVerificationPacket(verifs[2].hash),
+    SignedVerificationPacket(verifs[1].hash),
     [
       blsPubKey.serialize(),
       PrivateKey(3).toPublicKey().serialize(),
@@ -105,106 +68,47 @@ packeted: SignedMeritRemoval = SignedMeritRemoval(
     ],
     Signature.aggregate(
       [
-        blsPrivKey.sign(verifs[2].signatureSerialize()),
-        PrivateKey(3).sign(verifs[2].signatureSerialize()),
-        PrivateKey(4).sign(verifs[2].signatureSerialize())
+        blsPrivKey.sign(verifs[1].signatureSerialize()),
+        PrivateKey(3).sign(verifs[1].signatureSerialize()),
+        PrivateKey(4).sign(verifs[1].signatureSerialize())
       ]
     )
   ),
   0
 )
 
-#Generate a Block containing the repeat MeritRemoval.
-block = Block(
-  BlockHeader(
-    0,
-    packetedChain.last(),
-    BlockHeader.createContents([], [packeted]),
-    1,
-    bytes(4),
-    bytes(32),
-    0,
-    packetedChain.blocks[-1].header.time + 1200
-  ),
-  BlockBody([], [packeted], packeted.signature)
-)
-block.mine(blsPrivKey, packetedChain.difficulty())
-packetedChain.add(block)
-print("Generated Hundred Twenty Three Packet Block 1 " + str(len(packetedChain.blocks)) + ".")
+#Add the packeted MeritRemoval to both chains.
+#Packeted already has the Verification and verifies packeting it doesn't identify as a new MeritRemoval.
+#Reordered has this packeted MR, and another one, and verifies reordered participants doesn't identify as a new MeritRemoval.
+packetedChain.add(elements=[packeted])
+reorderedChain.add(elements=[packeted])
 
-#Generate a Block containing the packeted MeritRemoval.
-block = Block(
-  BlockHeader(
-    0,
-    reorderedChain.last(),
-    BlockHeader.createContents([], [packeted]),
-    1,
-    bytes(4),
-    bytes(32),
-    0,
-    reorderedChain.blocks[-1].header.time + 1200
-  ),
-  BlockBody([], [packeted], packeted.signature)
-)
-block.mine(blsPrivKey, reorderedChain.difficulty())
-reorderedChain.add(block)
-print("Generated Hundred Twenty Three Packet Block 2 " + str(len(reorderedChain.blocks)) + ".")
-
-#Recreate the MeritRemoval with reordered keys.
+#Recreate the packeted MeritRemoval with reordered keys.
 reordered: SignedMeritRemoval = SignedMeritRemoval(
   SignedMeritRemovalVerificationPacket(
-    SignedVerificationPacket(verifs[1].hash),
+    SignedVerificationPacket(verifs[0].hash),
     [
       blsPubKey.serialize(),
       PrivateKey(1).toPublicKey().serialize(),
       PrivateKey(2).toPublicKey().serialize()
     ],
-    Signature.aggregate(
-      [
-        blsPrivKey.sign(verifs[1].signatureSerialize()),
-        PrivateKey(1).sign(verifs[1].signatureSerialize()),
-        PrivateKey(2).sign(verifs[1].signatureSerialize())
-      ]
-    )
+    packeted.se1.signature
   ),
   SignedMeritRemovalVerificationPacket(
-    SignedVerificationPacket(verifs[2].hash),
+    SignedVerificationPacket(verifs[1].hash),
     [
       PrivateKey(3).toPublicKey().serialize(),
       blsPubKey.serialize(),
       PrivateKey(4).toPublicKey().serialize()
     ],
-    Signature.aggregate(
-      [
-        blsPrivKey.sign(verifs[2].signatureSerialize()),
-        PrivateKey(3).sign(verifs[2].signatureSerialize()),
-        PrivateKey(4).sign(verifs[2].signatureSerialize())
-      ]
-    )
+    packeted.se2.signature
   ),
   0
 )
-
-#Generate a Block containing the reordered MeritRemoval.
-block = Block(
-  BlockHeader(
-    0,
-    reorderedChain.last(),
-    BlockHeader.createContents([], [reordered]),
-    1,
-    bytes(4),
-    bytes(32),
-    0,
-    reorderedChain.blocks[-1].header.time + 1200
-  ),
-  BlockBody([], [reordered], reordered.signature)
-)
-block.mine(blsPrivKey, reorderedChain.difficulty())
-reorderedChain.add(block)
-print("Generated Hundred Twenty Three Packet Block 2 " + str(len(reorderedChain.blocks)) + ".")
+reorderedChain.add(elements=[reordered])
 
 result: Dict[str, Any] = {
-  "blockchains": [packetedChain.toJSON(), reorderedChain.toJSON()],
+  "blockchains": [packetedChain.finish().toJSON(), reorderedChain.finish().toJSON()],
   "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()],
   "removals": [mr.toSignedJSON(), packeted.toSignedJSON()]
 }
