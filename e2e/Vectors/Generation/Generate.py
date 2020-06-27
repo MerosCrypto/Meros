@@ -12,8 +12,9 @@ import e2e.Vectors.Generation.Merit.Reorganizations.DelayedMeritHolder
 import e2e.Vectors.Generation.Transactions.AggregatedClaim
 import e2e.Vectors.Generation.Transactions.SameInput
 import e2e.Vectors.Generation.Transactions.CompetingFinalized
-import e2e.Vectors.Generation.Transactions.Fifty
 import e2e.Vectors.Generation.Transactions.PruneUnaddable
+import e2e.Vectors.Generation.Transactions.Fifty
+import e2e.Vectors.Generation.Transactions.HundredFortySeven
 
 import e2e.Vectors.Generation.Consensus.Verification.Parsable
 import e2e.Vectors.Generation.Consensus.Verification.Competing
