@@ -37,11 +37,7 @@ merit.add(
   PrototypeBlock(
     merit.blockchain.blocks[-1].header.time + 1200,
     minerID=PrivateKey(1)
-  ).finish(
-    0,
-    merit.blockchain.blocks[-1].header,
-    merit.blockchain.difficulty()
-  )
+  ).finish(0, merit)
 )
 
 #Create two competing Sends.
@@ -66,11 +62,7 @@ merit.add(
     merit.blockchain.blocks[-1].header.time + 1200,
     packets=packets,
     minerID=0
-  ).finish(
-    0,
-    merit.blockchain.blocks[-1].header,
-    merit.blockchain.difficulty()
-  )
+  ).finish(0, merit)
 )
 #As far as I can tell, this should be range(5).
 #That said, I rather have an extra Block than change the generated vector.
@@ -79,11 +71,9 @@ merit.add(
 #-- Kayaba
 for _ in range(6):
   merit.add(
-    PrototypeBlock(merit.blockchain.blocks[-1].header.time + 1200).finish(
-      0,
-      merit.blockchain.blocks[-1].header,
-      merit.blockchain.difficulty()
-    )
+    PrototypeBlock(
+      merit.blockchain.blocks[-1].header.time + 1200
+    ).finish(0, merit)
   )
 
 result: Dict[str, Any] = {

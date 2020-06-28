@@ -37,7 +37,7 @@ class Epochs:
     for tx in epoch:
       merit: int = 0
       for holder in epoch[tx]:
-        merit += state.unlocked[holder]
+        merit += state.balances[holder]
       if merit >= state.merit // 2 + 1:
         verified.append(tx)
 
@@ -56,7 +56,7 @@ class Epochs:
     total: int = 0
     tupleScores: List[Tuple[int, int]] = []
     for holder in scores:
-      score: int = scores[holder] * state.unlocked[holder]
+      score: int = scores[holder] * state.balances[holder]
       total += score
       tupleScores.append((holder, score))
 

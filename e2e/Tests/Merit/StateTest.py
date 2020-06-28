@@ -29,12 +29,12 @@ def StateTest(
     state.add(blockchain, block)
 
     meritSum: int = 0
-    for miner in state.unlocked:
-      meritSum += state.unlocked[miner]
+    for miner in range(len(state.balances)):
+      meritSum += state.balances[miner]
       if rpc.call("merit", "getMerit", [miner]) != {
         "unlocked": True,
         "malicious": False,
-        "merit": state.unlocked[miner]
+        "merit": state.balances[miner]
       }:
         raise TestError("Merit doesn't match.")
 

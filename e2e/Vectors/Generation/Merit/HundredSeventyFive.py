@@ -59,12 +59,7 @@ merit.blockchain.add(
   PrototypeBlock(
     merit.blockchain.blocks[-1].header.time + 1200,
     [VerificationPacket(tx.hash, [0]) for tx in txs]
-  ).finish(
-    #Don't bother verifying the Data.
-    0,
-    merit.blockchain.blocks[-1].header,
-    merit.blockchain.difficulty()
-  )
+  ).finish(0, merit)
 )
 
 vectors: IO[Any] = open("e2e/Vectors/Merit/HundredSeventyFive.json", "w")

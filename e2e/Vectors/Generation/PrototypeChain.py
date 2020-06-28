@@ -72,10 +72,11 @@ class PrototypeBlock:
   def finish(
     self,
     keepUnlocked: int,
-    prev: BlockHeader,
-    diff: int
+    existing: Merit
   ) -> Block:
-    genesis: bytes = Blockchain().genesis
+    genesis: bytes = existing.blockchain.genesis
+    prev: BlockHeader = existing.blockchain.blocks[-1].header
+    diff: int = existing.blockchain.difficulty()
 
     #Create the signatures for every packet/element.
     signatures: List[Signature] = []
@@ -87,9 +88,10 @@ class PrototypeBlock:
     for element in self.elements:
       signatures.append(signElement(element))
 
-    #Only add the Data if:
-    #1) We're supposed to make sure Merit Holders are always Unloocked
-    #2) The last Block created a Data.
+    #Only add the Data Verification if:
+    #1) We're supposed to make sure Merit Holders are always Unlocked
+    #2) The last Block created a Data
+    #3) The Merit Holder has Merit.
     if (keepUnlocked != 0) and (prev.last != genesis):
       #Create the Data from the last Block.
       blockData: Data = Data(genesis, prev.hash)
@@ -97,16 +99,23 @@ class PrototypeBlock:
       #Create Verifications for said Data with every Private Key.
       #Ensures no one has their Merit locked.
       #pylint: disable=unnecessary-comprehension
-      self.packets.append(VerificationPacket(blockData.hash, [i for i in range(keepUnlocked)]))
+      self.packets.append(VerificationPacket(blockData.hash, []))
       for i in range(keepUnlocked):
+        if (
+          #Miners who are just being created don't have Merit.
+          ((i == (keepUnlocked - 1)) and (isinstance(self.minerID, PrivateKey))) or
+          (existing.state.balances[i] == 0)
+        ):
+          continue
+
+        self.packets[-1].holders.append(i)
         verif: SignedVerification = SignedVerification(blockData.hash, i)
         verif.sign(i, PrivateKey(i))
         signatures.append(verif.signature)
 
-      #Don't use the latest miner if they don't have Merit.
-      if isinstance(self.minerID, PrivateKey):
-        del self.packets[-1].holders[-1]
-        del signatures[-1]
+      #Remove this packet if there's no holders.
+      if not self.packets[-1].holders:
+        del self.packets[-1]
 
     #Set the aggregate.
     aggregate = Signature.aggregate(signatures)
@@ -139,7 +148,7 @@ class PrototypeBlock:
 
 class PrototypeChain:
   timeOffset: int
-  miners: int
+  miners: List[int]
   blocks: List[PrototypeBlock]
 
   def add(
@@ -150,11 +159,12 @@ class PrototypeChain:
   ) -> None:
     #Determine if this is a new miner or not.
     miner: Union[PrivateKey, int]
-    if nick > self.miners:
+    self.miners.append(self.miners[-1])
+    if nick > self.miners[-1]:
       raise GenerationError("Told to mine a Block with a miner nick which doesn't exist.")
-    if nick == self.miners:
-      miner = PrivateKey(self.miners)
-      self.miners += 1
+    if nick == self.miners[-1]:
+      miner = PrivateKey(nick)
+      self.miners[-1] += 1
     else:
       miner = nick
 
@@ -184,7 +194,7 @@ class PrototypeChain:
   ) -> None:
     self.keepUnlocked: bool = keepUnlocked
     self.timeOffset = timeOffset
-    self.miners = 0
+    self.miners = [0]
     self.blocks = []
 
     for _ in range(blankBlocks):
@@ -193,18 +203,17 @@ class PrototypeChain:
   def finish(
     self
   ) -> Blockchain:
-    proto: Blockchain = Blockchain()
+    actual: Merit = Merit()
 
-    for block in self.blocks:
-      proto.add(
-        block.finish(
-          self.miners if self.keepUnlocked else 0,
-          proto.blocks[-1].header,
-          proto.difficulty()
+    for b in range(len(self.blocks)):
+      actual.add(
+        self.blocks[b].finish(
+          self.miners[b] if self.keepUnlocked else 0,
+          actual
         )
       )
 
-    return proto
+    return actual.blockchain
 
   def toJSON(
     self

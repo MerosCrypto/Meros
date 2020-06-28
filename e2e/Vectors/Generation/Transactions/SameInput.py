@@ -43,11 +43,7 @@ merit.blockchain.add(
   PrototypeBlock(
     merit.blockchain.blocks[-1].header.time + 1200,
     [VerificationPacket(send.hash, [0])]
-  ).finish(
-    0,
-    merit.blockchain.blocks[-1].header,
-    merit.blockchain.difficulty()
-  )
+  ).finish(0, merit)
 )
 
 result: Dict[str, Any] = {

@@ -12,11 +12,11 @@ from e2e.Classes.Consensus.SendDifficulty import SendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-from e2e.Classes.Merit.Blockchain import Blockchain
+from e2e.Classes.Merit.Merit import Merit
 
 from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock
 
-proto: Blockchain = Blockchain()
+merit: Merit = Merit()
 blocks: List[Dict[str, Any]] = []
 
 transactions: Transactions = Transactions()
@@ -36,28 +36,28 @@ transactions.add(data)
 
 blocks.append(
   PrototypeBlock(
-    proto.blocks[-1].header.time + 1200,
+    merit.blockchain.blocks[-1].header.time + 1200,
     packets=[VerificationPacket(data.hash, [1])],
     minerID=blsPrivKey
-  ).finish(0, proto.blocks[-1].header, proto.difficulty()).toJSON()
+  ).finish(0, merit).toJSON()
 )
 
 #Generate the SendDifficulty Block.
 blocks.append(
   PrototypeBlock(
-    proto.blocks[-1].header.time + 1200,
+    merit.blockchain.blocks[-1].header.time + 1200,
     elements=[SendDifficulty(0, 0, 1)],
     minerID=blsPrivKey
-  ).finish(0, proto.blocks[-1].header, proto.difficulty()).toJSON()
+  ).finish(0, merit).toJSON()
 )
 
 #Generate the DataDifficulty Block.
 blocks.append(
   PrototypeBlock(
-    proto.blocks[-1].header.time + 1200,
+    merit.blockchain.blocks[-1].header.time + 1200,
     elements=[DataDifficulty(0, 0, 1)],
     minerID=blsPrivKey
-  ).finish(0, proto.blocks[-1].header, proto.difficulty()).toJSON()
+  ).finish(0, merit).toJSON()
 )
 
 result: Dict[str, Any] = {

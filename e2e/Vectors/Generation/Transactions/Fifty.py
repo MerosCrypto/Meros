@@ -79,21 +79,15 @@ for order in orders:
       merit.blockchain.blocks[-1].header.time + 1200,
       list(packets.values()),
       minerID=order[1]
-    ).finish(
-      0,
-      merit.blockchain.blocks[-1].header,
-      merit.blockchain.difficulty()
-    )
+    ).finish(0, merit)
   )
 
 #Close the Epoch.
 for _ in range(5):
   merit.add(
-    PrototypeBlock(merit.blockchain.blocks[-1].header.time + 1200).finish(
-      0,
-      merit.blockchain.blocks[-1].header,
-      merit.blockchain.difficulty()
-    )
+    PrototypeBlock(
+      merit.blockchain.blocks[-1].header.time + 1200
+    ).finish(0, merit)
   )
 
 result: Dict[str, Any] = {
