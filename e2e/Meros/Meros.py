@@ -1,7 +1,9 @@
 from typing import Dict, Set, List, Tuple, Any
 from enum import Enum
 from subprocess import Popen
+from time import sleep
 import socket
+import json
 
 from e2e.Classes.Transactions.Transaction import Transaction
 from e2e.Classes.Transactions.Claim import Claim
@@ -218,7 +220,6 @@ class MerosSocket:
 
     self.connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.connection.connect(("127.0.0.1", tcp))
-
     self.connection.send(
       (MessageType.Handshake.toByte() if live else MessageType.Syncing.toByte()) +
       network.to_bytes(1, "big") +
@@ -291,7 +292,17 @@ class Meros:
     self.tcp: int = tcp
     self.rpc: int = rpc
 
+    self.calledQuit: bool = False
     self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", dataDir, "--log-file", test + ".log", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
+    while True:
+      try:
+        connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        connection.connect(("127.0.0.1", self.rpc))
+        connection.shutdown(socket.SHUT_RDWR)
+        connection.close()
+        break
+      except ConnectionRefusedError:
+        sleep(1)
 
     self.live: MerosSocket
     self.sync: MerosSocket
@@ -471,6 +482,25 @@ class Meros:
   def quit(
     self
   ) -> None:
+    if not self.calledQuit:
+      rpcConnection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      rpcConnection.connect(("127.0.0.1", self.rpc))
+      rpcConnection.send(
+        bytes(
+          json.dumps(
+            {
+              "jsonrpc": "2.0",
+              "id": 0,
+              "method": "system_quit",
+              "params": []
+            }
+          ),
+          "utf-8"
+        )
+      )
+      rpcConnection.close()
+      self.calledQuit = True
+
     while self.process.poll() == None:
       pass
 

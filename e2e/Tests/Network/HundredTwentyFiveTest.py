@@ -4,13 +4,12 @@ from pytest import raises
 
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-from e2e.Meros.Meros import MessageType
-from e2e.Meros.RPC import RPC
+from e2e.Meros.Meros import MessageType, Meros
 
 from e2e.Tests.Errors import TestError, SuccessError
 
 def HundredTwentyFiveTest(
-  rpc: RPC
+  meros: Meros
 ) -> None:
   #Meros allows connections from its own IP if they identify as 127.0.0.1.
   #We need to connect either through the LAN or through the public IP for this test to be valid.
@@ -28,7 +27,7 @@ def HundredTwentyFiveTest(
 
   #Connect to Meros.
   connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  connection.connect((lanIP, rpc.meros.tcp))
+  connection.connect((lanIP, meros.tcp))
 
   with raises(SuccessError):
     try:

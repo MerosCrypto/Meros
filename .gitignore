@@ -24,4 +24,5 @@ incubator-milagro-crypto-c
 #Nimble temp files.
 /Meros_*.nims
 
+#Virtual Python environments
 venv/

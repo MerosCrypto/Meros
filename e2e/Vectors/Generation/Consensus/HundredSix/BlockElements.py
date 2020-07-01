@@ -33,6 +33,7 @@ data: Data = Data(bytes(32), edPubKey.to_bytes())
 data.sign(edPrivKey)
 data.beat(dataFilter)
 transactions.add(data)
+packet: VerificationPacket = VerificationPacket(data.hash, [1])
 
 blocks.append(
   PrototypeBlock(
