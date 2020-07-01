@@ -34,8 +34,8 @@ def EightyEightTest(
   blsPrivKey: PrivateKey = PrivateKey(0)
   blsPubKey: str = blsPrivKey.toPublicKey().serialize().hex()
 
-  file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
-  blocks: List[Dict[str, Any]] = json.loads(file.read())
+  file: IO[Any] = open("e2e/Vectors/Merit/ChainAdvancement.json", "r")
+  blocks: List[Dict[str, Any]] = json.loads(file.read())[0]
   file.close()
 
   merit: Merit = Merit()
@@ -45,8 +45,7 @@ def EightyEightTest(
   rpc.meros.liveConnect(merit.blockchain.blocks[0].header.hash)
   rpc.meros.syncConnect(merit.blockchain.blocks[0].header.hash)
 
-  #Send the first Block.  #Spam Filter.
-
+  #Send the first Block.
   block: Block = Block.fromJSON(blocks[0])
   merit.blockchain.add(block)
   rpc.meros.liveBlockHeader(block.header)

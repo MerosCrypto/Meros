@@ -22,8 +22,8 @@ from e2e.Tests.Merit.Verify import verifyBlockchain
 def TElementTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
-  blocks: List[Dict[str, Any]] = json.loads(file.read())
+  file: IO[Any] = open("e2e/Vectors/Merit/ChainAdvancement.json", "r")
+  blocks: List[Dict[str, Any]] = json.loads(file.read())[0]
   file.close()
   merit: Merit = Merit()
 

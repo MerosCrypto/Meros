@@ -84,6 +84,7 @@ proc mainConsensus(
     consensus[].getArchivedNonce(holder)
 
   #Returns true if the hash isn't recognized.
+  #Will false positive if the Transaction doesn't exist.
   functions.consensus.hasArchivedPacket = proc (
     hash: Hash[256]
   ): bool {.forceCheck: [].} =

@@ -25,7 +25,7 @@ proto.add(elements=[dataDiffConflicting])
 result: Dict[str, Any] = {
   "blockchain": proto.toJSON(),
   "mempoolDataDiff": dataDiff.toSignedJSON(),
-  "protoDataDiff": dataDiffConflicting.toJSON()
+  "blockchainDataDiff": dataDiffConflicting.toJSON()
 }
 vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredTwenty.json", "w")
 vectors.write(json.dumps(result))

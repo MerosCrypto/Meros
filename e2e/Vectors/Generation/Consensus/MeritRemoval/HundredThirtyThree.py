@@ -63,7 +63,7 @@ e1Chain.add(elements=[e1MR])
 e2Chain.add(elements=[e2MR])
 
 result: Dict[str, Any] = {
-  "protos": [e1Chain.toJSON(), e2Chain.toJSON()],
+  "blockchains": [e1Chain.toJSON(), e2Chain.toJSON()],
   "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()]
 }
 vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredThirtyThree.json", "w")

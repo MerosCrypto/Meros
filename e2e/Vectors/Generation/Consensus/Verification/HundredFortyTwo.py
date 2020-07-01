@@ -38,6 +38,7 @@ vectors: IO[Any] = open("e2e/Vectors/Consensus/Verification/HundredFortyTwo.json
 vectors.write(json.dumps({
   "blockchain": proto.toJSON(),
   "transactions": transactions.toJSON(),
-  "verification": verif.toSignedJSON()
+  "verification": verif.toSignedJSON(),
+  "transaction": data.hash.hex().upper()
 }))
 vectors.close()
