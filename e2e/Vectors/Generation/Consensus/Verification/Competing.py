@@ -31,6 +31,12 @@ claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKeys[0].to_bytes())
 claim.amount = merit.mints[-1].outputs[0][1]
 claim.sign([PrivateKey(0)])
 transactions.add(claim)
+merit.add(
+  PrototypeBlock(
+    merit.blockchain.blocks[-1].header.time + 1200,
+    packets=[VerificationPacket(claim.hash, [0])]
+  ).finish(0, merit)
+)
 
 #Give the second key pair Merit.
 merit.add(
