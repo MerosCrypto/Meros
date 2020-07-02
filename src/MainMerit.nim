@@ -113,7 +113,10 @@ proc mainMerit(
   functions.merit.isUnlocked = proc (
     nick: uint16
   ): bool {.forceCheck: [].} =
-    true
+    (
+      (int(nick) >= merit.state.statuses.len) or
+      (merit.state.statuses[int(nick)] == MeritStatus.Unlocked)
+    )
 
   #Handle full blocks.
   functions.merit.addBlockInternal = proc (
@@ -142,7 +145,7 @@ proc mainMerit(
         panic("Failed to complete an async sleep: " & e.msg)
 
     #Print that we're adding the Block.
-    logInfo "New Block", hash = sketchyBlock.data.header.hash
+    logInfo "New Block", hash = sketchyBlock.data.header.hash, currentHeight = merit.blockchain.height
 
     #Construct a sketcher.
     var sketcher: Sketcher = sketcherArg
@@ -271,7 +274,7 @@ proc mainMerit(
     except IndexError as e:
       panic("Passing a function that could raise an IndexError raised an IndexError: " & e.msg)
 
-    logInfo "Added Block", hash = sketchyBlock.data.header.hash
+    logInfo "Added Block", hash = sketchyBlock.data.header.hash, height = merit.blockchain.height
 
     lockedBlock[] = Hash[256]()
     release(lock[])

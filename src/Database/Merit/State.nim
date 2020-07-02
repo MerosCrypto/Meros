@@ -149,6 +149,7 @@ proc processBlock*(
 
         #If the Merit Holder is inactive, lock their Merit.
         if state.processedBlocks - state.lastParticipation[h] == blocksOfInactivity:
+          logInfo "Locking Merit", holder = h
           state.unlocked -= state.merit[h]
           state.statuses[h] = MeritStatus.Locked
           state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
@@ -156,8 +157,10 @@ proc processBlock*(
       of MeritStatus.Locked:
         #Move their Merit to Pending if they had an Element archived.
         if participants.contains(uint16(h)):
+          logInfo "Starting to unlock Merit", holder = h
           state.statuses[h] = MeritStatus.Pending
           state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
+          #Start requiring a higher threshold now.
           state.unlocked += state.merit[h]
 
           #Set the lastParticipation Block to when their Merit should become unlocked again.
@@ -168,6 +171,7 @@ proc processBlock*(
         #If the current Block is their Block of lastParticipation, their buffer period is over.
         #That means their Merit becomes Unlocked.
         if state.lastParticipation[h] == state.processedBlocks:
+          logInfo "Unlocking Merit", holder = h
           state.statuses[h] = MeritStatus.Unlocked
           state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
 
