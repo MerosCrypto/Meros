@@ -34,8 +34,8 @@ def EightyEightTest(
   blsPrivKey: PrivateKey = PrivateKey(0)
   blsPubKey: str = blsPrivKey.toPublicKey().serialize().hex()
 
-  file: IO[Any] = open("e2e/Vectors/Merit/ChainAdvancement.json", "r")
-  blocks: List[Dict[str, Any]] = json.loads(file.read())[0]
+  file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
+  blocks: List[Dict[str, Any]] = json.loads(file.read())
   file.close()
 
   merit: Merit = Merit()
