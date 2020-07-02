@@ -18,8 +18,7 @@ edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 transactions: Transactions = Transactions()
 spamFilter: SpamFilter = SpamFilter(5)
 
-proto = PrototypeChain()
-proto.add()
+proto = PrototypeChain(1, False)
 proto.add(1)
 
 data: Data = Data(bytes(32), edPubKey.to_bytes())
@@ -30,9 +29,9 @@ transactions.add(data)
 verif: SignedVerification = SignedVerification(data.hash)
 verif.sign(1, PrivateKey(1))
 
-proto.add(packets=[VerificationPacket(data.hash, [0])])
-for _ in range(6):
-  proto.add()
+proto.add(1, packets=[VerificationPacket(data.hash, [0])])
+for _ in range(5):
+  proto.add(1)
 
 vectors: IO[Any] = open("e2e/Vectors/Consensus/Verification/HundredFortyTwo.json", "w")
 vectors.write(json.dumps({
