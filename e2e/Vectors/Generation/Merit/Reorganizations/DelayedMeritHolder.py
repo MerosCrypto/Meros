@@ -23,11 +23,11 @@ alt: Merit = Merit.fromJSON(root.toJSON())
 alt.add(
   PrototypeBlock(alt.blockchain.blocks[-1].header.time + 1200).finish(0, alt)
 )
-main.add(
+alt.add(
   PrototypeBlock(
     alt.blockchain.blocks[-1].header.time + 1200,
     minerID=secondPrivKey
-  ).finish(0, alt)
+  ).finish(1, alt)
 )
 
 vectors: IO[Any] = open("e2e/Vectors/Merit/Reorganizations/DelayedMeritHolder.json", "w")
