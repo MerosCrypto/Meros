@@ -44,7 +44,6 @@ def HundredFortySevenTest(
   send.sign(privKey)
   send.beat(SpamFilter(3))
 
-  #Custom function to send the last Block and verify it errors at the right place.
   def checkFail() -> None:
     #Send the Send.
     rpc.meros.liveTransaction(send)
@@ -62,4 +61,4 @@ def HundredFortySevenTest(
 
   #Create and execute a Liver.
   with raises(SuccessError):
-    Liver(rpc, vectors["blockchain"], transactions, callbacks={12: checkFail}).live()
+    Liver(rpc, vectors["blockchain"], transactions, callbacks={8: checkFail}).live()
