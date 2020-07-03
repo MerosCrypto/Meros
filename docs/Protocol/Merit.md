@@ -103,7 +103,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - sketchCheck is the result of a properly constructed Merkle tree.
 - Every Verification Packet is for an unique Transaction.
 - Every Verification Packet only contains new Verifications.
-- Every Verification Packet's Merit is greater than significant.
+- Every Verification Packet's Merit is greater than significant, where Merit is the current Merit balance ignoring its status of Unlocked/Locked/Pending.
 - Every Transaction's predecessors have Verification Packets either archived or in this Block.
 - Every Transaction either has yet to enter Epochs or is in Epochs.
 - Every Transaction doesn't compete with, or have parents which competed with and lost, finalized Transactions.

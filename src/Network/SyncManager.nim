@@ -415,7 +415,9 @@ proc sync*(
         if not status.packet.holders.contains(holder):
           raise newLoggedException(ValueError, "Block archives holders who are already archived.")
 
-      merit += state[holder, status.epoch]
+      if int(holder) >= state.merit.len:
+        raise newLoggedException(ValueError, "Block has a Verification from a non-existent holder.")
+      merit += state.merit[holder]
 
     #Verify significant.
     if merit < int(result[0].header.significant):
