@@ -62,8 +62,8 @@ class PrototypeBlock:
     minerID: Union[PrivateKey, int] = 0
   ) -> None:
     #Store all the arguments relevant to this specific Block.
-    self.packets: List[VerificationPacket] = packets
-    self.elements: List[Element] = elements
+    self.packets: List[VerificationPacket] = list(packets)
+    self.elements: List[Element] = list(elements)
     self.significant: int = significant
     self.minerID: Union[PrivateKey, int] = minerID
     self.time: int = time
