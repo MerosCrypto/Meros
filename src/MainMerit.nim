@@ -104,6 +104,14 @@ proc mainMerit(
     merit.state.unlocked
   functions.merit.getUnlockedMerit = proc (): int {.forceCheck: [].} =
     merit.state.unlocked
+
+  functions.merit.getRawMerit = proc (
+    nick: uint16
+  ): int {.forceCheck: [].} =
+    if int(nick) >= merit.state.merit.len:
+      return 0
+    result = merit.state.merit[nick]
+
   functions.merit.getMerit = proc (
     nick: uint16,
     height: int

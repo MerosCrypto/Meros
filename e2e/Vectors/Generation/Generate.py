@@ -7,6 +7,7 @@ import e2e.Vectors.Generation.Merit.HundredSeventyFive
 
 import e2e.Vectors.Generation.Merit.LockedMerit.KeepUnlocked
 import e2e.Vectors.Generation.Merit.LockedMerit.LocksUnlocks
+import e2e.Vectors.Generation.Merit.LockedMerit.PendingDieRegain
 
 import e2e.Vectors.Generation.Merit.Reorganizations.DepthOne
 import e2e.Vectors.Generation.Merit.Reorganizations.LongerChainMoreWork

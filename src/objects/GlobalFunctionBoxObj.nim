@@ -207,6 +207,11 @@ type
 
     getTotalMerit*: proc (): int {.gcsafe, raises: [].}
     getUnlockedMerit*: proc (): int {.gcsafe, raises: [].}
+
+    getRawMerit*: proc (
+      nick: uint16
+    ): int {.gcsafe, raises: [].}
+
     getMerit*: proc (
       nick: uint16,
       height: int

@@ -223,7 +223,7 @@ proc module*(
         res["result"] = %* {
           "status": if functions.merit.isUnlocked(nick): "Unlocked" elif functions.merit.isPending(nick): "Pending" else: "Locked",
           "malicious": functions.consensus.isMalicious(nick),
-          "merit": functions.merit.getMerit(nick, functions.merit.getHeight())
+          "merit": functions.merit.getRawMerit(nick)
         }
 
       "getBlockTemplate" = proc (

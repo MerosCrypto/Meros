@@ -175,6 +175,10 @@ proc processBlock*(
           state.statuses[h] = MeritStatus.Unlocked
           state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
 
+    #Provide a clean status for a Merit Holder whose Merit died/was removed.
+    if state.merit[h] == 0:
+      state.statuses[h] = MeritStatus.Unlocked
+
   #Save the amount of Unlocked Merit for the next Block.
   #This will be overwritten when we process the next Block, yet is needed for some statuses.
   state.saveUnlocked()
