@@ -100,7 +100,7 @@ The result is an string of the BLS Public Key.
 - Merit Holder Nickname (int)
 
 The result is an object, as follows:
-- `unlocked`  (bool)
+- `status`    (string): "Unlocked", "Locked", or "Pending".
 - `malicious` (bool)
 - `merit`     (int)
 

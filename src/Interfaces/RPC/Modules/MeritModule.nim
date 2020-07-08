@@ -221,7 +221,7 @@ proc module*(
 
         #Create the result.
         res["result"] = %* {
-          "unlocked": functions.merit.isUnlocked(nick),
+          "status": if functions.merit.isUnlocked(nick): "Unlocked" elif functions.merit.isPending(nick): "Pending" else: "Locked",
           "malicious": functions.consensus.isMalicious(nick),
           "merit": functions.merit.getMerit(nick, functions.merit.getHeight())
         }

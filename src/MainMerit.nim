@@ -118,6 +118,14 @@ proc mainMerit(
       (merit.state.statuses[int(nick)] == MeritStatus.Unlocked)
     )
 
+  functions.merit.isPending = proc (
+    nick: uint16
+  ): bool {.forceCheck: [].} =
+    (
+      (int(nick) < merit.state.statuses.len) and
+      (merit.state.statuses[int(nick)] == MeritStatus.Pending)
+    )
+
   #Handle full blocks.
   functions.merit.addBlockInternal = proc (
     sketchyBlock: SketchyBlock,

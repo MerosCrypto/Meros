@@ -216,6 +216,10 @@ type
       nick: uint16
     ): bool {.gcsafe, raises: [].}
 
+    isPending*: proc (
+      nick: uint16
+    ): bool {.gcsafe, raises: [].}
+
     addBlockInternal*: proc (
       newBlock: SketchyBlock,
       sketcher: Sketcher,
