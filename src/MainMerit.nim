@@ -224,19 +224,24 @@ proc mainMerit(
     #Add the Block to the Epochs and State.
     var
       epoch: Epoch
-      incd: uint16
-      decd: int
-    (epoch, incd, decd) = merit[].postProcessBlock()
+      changes: StateChanges
+    (epoch, changes) = merit[].postProcessBlock()
 
     logDebug "Archiving Block", hash = newBlock.header.hash
 
     #Archive the Epochs.
-    consensus[].archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
+    consensus[].archive(
+      merit.state,
+      newBlock.body.packets,
+      newBlock.body.elements,
+      epoch,
+      changes
+    )
 
     #Have the Consensus handle every person who suffered a MeritRemoval.
     try:
       for removee in removed.keys():
-        consensus[].remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
+        consensus[].remove(removed[removee], rewardsState.merit[removee])
     except KeyError as e:
       panic("Couldn't get the Merit Removal of a holder who just had one archived: " & e.msg)
 

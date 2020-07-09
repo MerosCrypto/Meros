@@ -47,6 +47,13 @@ type
 
     pendingRemovals*: Deque[int]
 
+  #Object returned after processing a new Block.
+  StateChanges* = object
+    incd*: uint16
+    decd*: int
+    locked*: seq[uint16]
+    pending*: seq[uint16]
+
 proc newStateObj*(
   db: DB,
   deadBlocks: int,

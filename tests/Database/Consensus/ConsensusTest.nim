@@ -44,7 +44,7 @@ suite "Consensus":
 
     #Create 100 Merit Holders.
     for h in 0 ..< 100:
-      consensus.archive(merit.state, @[], @[], newEpoch(), uint16(h), -1)
+      consensus.archive(merit.state, @[], @[], newEpoch(), StateChanges(incd: 1, decd: -1))
 
     #Iterate over 100 actions.
     for a in 0 ..< 100:
@@ -191,12 +191,11 @@ suite "Consensus":
       #Add the Block to the Epochs and State.
       var
         epoch: Epoch
-        incd: uint16
-        decd: int
-      (epoch, incd, decd) = merit.postProcessBlock()
+        changes: StateChanges
+      (epoch, changes) = merit.postProcessBlock()
 
       #Archive the Epochs.
-      consensus.archive(merit.state, mining.body.packets, mining.body.elements, epoch, incd, decd)
+      consensus.archive(merit.state, mining.body.packets, mining.body.elements, epoch, changes)
 
       #Have the Consensus handle every person who suffered a MeritRemoval.
       for removee in removed.keys():

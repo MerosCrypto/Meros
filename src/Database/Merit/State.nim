@@ -84,12 +84,11 @@ proc newState*(
 proc processBlock*(
   state: var State,
   blockchain: Blockchain
-): (uint16, int) {.forceCheck: [].} =
+): StateChanges {.forceCheck: [].} =
   logDebug "State processing Block", hash = blockchain.tail.header.hash
 
-  #Init the result to who gained Merit/who had Merit die.
   try:
-    result = (uint16(0), state.pendingRemovals.popFirst())
+    result.decd = state.pendingRemovals.popFirst()
   except IndexError as e:
     panic("Couldn't pop the pending Dead Merit removal: " & e.msg)
 
@@ -104,12 +103,12 @@ proc processBlock*(
 
   #Add the miner's Merit to the State.
   var nick: uint16 = state.getNickname(newBlock, true, true)
-  result[0] = nick
+  result.incd = nick
   state[nick] = state.merit[nick] + 1
 
   #If there was a removal, decrement their Merit.
-  if result[1] != -1:
-    state[uint16(result[1])] = state.merit[result[1]] - 1
+  if result.decd != -1:
+    state[uint16(result.decd)] = state.merit[result.decd] - 1
 
   var participants: set[uint16]
   for packet in newBlock.body.packets:
@@ -153,6 +152,7 @@ proc processBlock*(
           state.unlocked -= state.merit[h]
           state.statuses[h] = MeritStatus.Locked
           state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
+          result.locked.add(uint16(h))
 
       of MeritStatus.Locked:
         #Move their Merit to Pending if they had an Element archived.
@@ -166,6 +166,7 @@ proc processBlock*(
           #Set the lastParticipation Block to when their Merit should become unlocked again.
           state.lastParticipation[h] = state.processedBlocks + (10 - (state.processedBlocks mod 5))
           state.db.appendLastParticipation(uint16(h), blockchain.height, state.lastParticipation[h])
+          result.pending.add(uint16(h))
 
       of MeritStatus.Pending:
         #If the current Block is their Block of lastParticipation, their buffer period is over.

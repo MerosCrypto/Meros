@@ -743,8 +743,7 @@ proc archive*(
   shifted: seq[VerificationPacket],
   elements: seq[BlockElement],
   popped: Epoch,
-  incd: uint16,
-  decd: int
+  changes: StateChanges
 ) {.forceCheck: [].} =
   #Delete every mentioned hash in the Block from unmentioned.
   for packet in shifted:
@@ -843,22 +842,37 @@ proc archive*(
     consensus.close.excl(hash)
 
   #Update the filters.
-  if decd == -1:
-    consensus.filters.send.handleBlock(incd, state[incd, state.processedBlocks])
-    consensus.filters.data.handleBlock(incd, state[incd, state.processedBlocks])
-  else:
-    consensus.filters.send.handleBlock(incd, state[incd, state.processedBlocks], uint16(decd), state[uint16(decd), state.processedBlocks])
-    consensus.filters.data.handleBlock(incd, state[incd, state.processedBlocks], uint16(decd), state[uint16(decd), state.processedBlocks])
+  var difficulties: Table[uint16, uint32] = initTable[uint16, uint32]()
+  for holder in changes.pending:
+    try:
+      difficulties[holder] = consensus.db.loadSendDifficulty(holder)
+    except DBReadError:
+      discard
+  consensus.filters.send.handleBlock(state, changes, difficulties)
+
+  difficulties = initTable[uint16, uint32]()
+  for holder in changes.pending:
+    try:
+      difficulties[holder] = consensus.db.loadDataDifficulty(holder)
+    except DBReadError:
+      discard
+  consensus.filters.data.handleBlock(state, changes, difficulties)
 
   #If the holder just got their first vote, make sure their difficulty is counted.
-  if state[incd, state.processedBlocks] == 50:
+  if state[changes.incd, state.processedBlocks] == 50:
     try:
-      consensus.filters.send.update(incd, state[incd, state.processedBlocks], consensus.db.loadSendDifficulty(incd))
+      consensus.filters.send.update(
+        changes.incd,
+        state[changes.incd, state.processedBlocks], consensus.db.loadSendDifficulty(changes.incd)
+      )
     except DBReadError:
       discard
 
     try:
-      consensus.filters.data.update(incd, state[incd, state.processedBlocks], consensus.db.loadDataDifficulty(incd))
+      consensus.filters.data.update(
+        changes.incd,
+        state[changes.incd, state.processedBlocks], consensus.db.loadDataDifficulty(changes.incd)
+      )
     except DBReadError:
       discard
 
