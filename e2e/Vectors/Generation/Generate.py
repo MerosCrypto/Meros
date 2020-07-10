@@ -27,6 +27,7 @@ import e2e.Vectors.Generation.Consensus.Verification.HundredFortyTwo
 
 import e2e.Vectors.Generation.Consensus.Difficulties.SendDifficulty
 import e2e.Vectors.Generation.Consensus.Difficulties.DataDifficulty
+import e2e.Vectors.Generation.Consensus.Difficulties.LockedMeritDifficulties
 
 import e2e.Vectors.Generation.Consensus.MeritRemoval.SameNonce
 import e2e.Vectors.Generation.Consensus.MeritRemoval.VerifyCompeting
