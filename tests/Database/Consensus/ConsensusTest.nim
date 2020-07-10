@@ -42,9 +42,10 @@ suite "Consensus":
       #Currently have Merit Removals.
       malicious: Table[uint16, seq[MeritRemoval]] = initTable[uint16, seq[MeritRemoval]]()
 
-    #Create 100 Merit Holders.
-    for h in 0 ..< 100:
-      consensus.archive(merit.state, @[], @[], newEpoch(), StateChanges(incd: 1, decd: -1))
+    #Create Merit Holders.
+    for h in 0 ..< 501:
+      merit.state.merit.add(1)
+      consensus.archive(merit.state, @[], @[], newEpoch(), StateChanges(incd: uint16(high(merit.state.merit)), decd: -1))
 
     #Iterate over 100 actions.
     for a in 0 ..< 100:
@@ -76,6 +77,7 @@ suite "Consensus":
         while mr < malicious[holder].len:
           if rand(1) == 0:
             consensus.remove(malicious[holder][mr], 0)
+            merit.state.merit[int(holder)] = 0
             malicious[holder].del(mr)
             continue
           inc(mr)

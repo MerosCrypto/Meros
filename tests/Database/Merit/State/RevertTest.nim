@@ -105,7 +105,7 @@ suite "Revert":
     #Manually set the RandomX instance to null to make sure it's GC'able.
     blockchain.rx = nil
 
-  lowFuzzTest "Chained reversions.":
+  midFuzzTest "Chained reversions.":
     var
       copy: State
       reloaded: State
