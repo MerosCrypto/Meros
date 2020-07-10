@@ -160,7 +160,7 @@ The created Data happens after Block addition the rest of Block addition is comp
 
 ### Checkpoint
 
-Every Block where the remainder of the BlockHeader's nonce divided by 5 is 0 has a corresponding Checkpoint. The Checkpoint's signers must represent a majority of the Unlocked Merit and Pending Merit, and the signature is the aggregate signature of every signer's signature of the Block hash. Without a Checkpoint at the proper location, a Blockchain cannot advance.
+Every Block where the remainder of the BlockHeader's nonce divided by 5 is 0 has a corresponding Checkpoint. The Checkpoint's signers must represent a majority of the Unlocked Merit, where the signature is created by signing the Block hash. Without a Checkpoint, a Blockchain cannot advance.
 
 Even with Checkpoints, Blockchain reorganizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the Blockchain whose tail Block has the lower hash is the proper Blockchain.
 
