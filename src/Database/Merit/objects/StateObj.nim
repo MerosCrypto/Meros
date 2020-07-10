@@ -144,28 +144,32 @@ proc newHolder*(
 proc findMeritStatus*(
   state: State,
   nick: uint16,
-  height: int
+  height: int,
+  prune: bool = false
 ): MeritStatus {.forceCheck: [].} =
   const VALUE_LEN: int = INT_LEN + BYTE_LEN
   var statuses: string = state.db.loadMeritStatuses(nick)
   while statuses.len != 0:
     var valueHeight: int = statuses[statuses.len - VALUE_LEN ..< statuses.len - BYTE_LEN].fromBinary()
     result = MeritStatus(statuses[^1])
-    if valueHeight <= height:
-      statuses.setLen(0)
+    if valueHeight < height:
       break
     else:
       statuses.setLen(statuses.len - VALUE_LEN)
 
   #If we never found a result, return a default value.
   #Useful for when the Consensus checks historical Merit, as well as the RPC.
-  if statuses.len != 0:
+  if statuses.len == 0:
     result = MeritStatus.Unlocked
+
+  if prune:
+    state.db.overrideMeritStatuses(nick, statuses)
 
 proc findLastParticipation*(
   state: State,
   nick: uint16,
-  height: int
+  height: int,
+  prune: bool = false
 ): int {.forceCheck: [].} =
   const VALUE_LEN: int = INT_LEN + INT_LEN
   var participations: string = state.db.loadLastParticipations(nick)
@@ -173,13 +177,15 @@ proc findLastParticipation*(
     var valueHeight: int = participations[participations.len - VALUE_LEN ..< participations.len - INT_LEN].fromBinary()
     result = participations[participations.len - INT_LEN ..< participations.len].fromBinary()
     if valueHeight <= height:
-      participations.setLen(0)
       break
     else:
       participations.setLen(participations.len - VALUE_LEN)
 
-  if participations.len != 0:
+  if participations.len == 0:
     result = 0
+
+  if prune:
+    state.db.overrideLastParticipations(nick, participations)
 
 #Get a Merit Holder's Merit.
 proc `[]`*(

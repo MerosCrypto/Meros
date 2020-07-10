@@ -246,7 +246,7 @@ proc handleBlock*(
 ) {.forceCheck: [].} =
   #Only update votes if there's actually a Merit change.
   if (changes.decd == -1) or (changes.incd != uint16(changes.decd)):
-    var incdMerit: int = state[changes.incd, state.processedBlocks]
+    var incdMerit: int = state.merit[changes.incd]
     if (incdMerit mod 50 == 0) and (incdMerit != 0) and filter.votes.hasKey(changes.incd):
       try:
         inc(filter.votes[changes.incd].votes)
@@ -262,7 +262,7 @@ proc handleBlock*(
     if changes.decd != -1:
       var
         decd: uint16 = uint16(changes.decd)
-        decdMerit: int = state[decd, state.processedBlocks]
+        decdMerit: int = state.merit[decd]
 
       try:
         if (decdMerit mod 50 == 49) and filter.votes.hasKey(decd):

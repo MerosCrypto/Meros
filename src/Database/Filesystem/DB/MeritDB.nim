@@ -274,6 +274,13 @@ proc appendMeritStatus*(
     discard
   db.put(MERIT_STATUSES(nick), existing & processed.toBinary(INT_LEN) & status.toBinary(BYTE_LEN))
 
+proc overrideMeritStatuses*(
+  db: DB,
+  nick: uint16,
+  statuses: string
+) {.inline, forceCheck: [].} =
+  db.put(MERIT_STATUSES(nick), statuses)
+
 proc appendLastParticipation*(
   db: DB,
   nick: uint16,
@@ -286,6 +293,13 @@ proc appendLastParticipation*(
   except DBReadError:
     discard
   db.put(LAST_PARTICIPATIONS(nick), existing & processed.toBinary(INT_LEN) & last.toBinary(INT_LEN))
+
+proc overrideLastParticipations*(
+  db: DB,
+  nick: uint16,
+  participations: string
+) {.inline, forceCheck: [].} =
+  db.put(LAST_PARTICIPATIONS(nick), participations)
 
 proc remove*(
   db: DB,
