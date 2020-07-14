@@ -16,7 +16,6 @@ import ../TestDatabase
 import ../Merit/TestMerit
 import CompareConsensus
 
-
 suite "ConsensusRevert":
   setup:
     var
