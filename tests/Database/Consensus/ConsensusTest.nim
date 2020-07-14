@@ -45,6 +45,7 @@ suite "Consensus":
     #Create Merit Holders.
     for h in 0 ..< 501:
       merit.state.merit.add(1)
+      merit.state.statuses.add(MeritStatus.Unlocked)
       consensus.archive(merit.state, @[], @[], newEpoch(), StateChanges(incd: uint16(high(merit.state.merit)), decd: -1))
 
     #Iterate over 100 actions.

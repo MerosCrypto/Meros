@@ -4,7 +4,6 @@ import sequtils
 import tables
 
 import ../../../src/lib/Util
-import ../../../src/Wallet/MinerWallet
 
 import ../../../src/Database/Merit/objects/StateObj
 import ../../../src/Database/Consensus/objects/SpamFilterObj
@@ -33,15 +32,28 @@ suite "SpamFilter":
     check filter.difficulty == INITIAL_DIFFICULTY
 
   noFuzzTest "Verify adding 0 votes doesn't change the initial difficulty.":
-    filter.update(0, 49, OTHER_DIFFICULTY)
+    filter.update(
+      State(
+        merit: @[49],
+        statuses: @[MeritStatus.Unlocked]
+      ),
+      0,
+      OTHER_DIFFICULTY
+    )
     check filter.difficulty == INITIAL_DIFFICULTY
 
   noFuzzTest "Add 1 vote and remove it via a decrement.":
-    filter.update(0, 50, OTHER_DIFFICULTY)
+    filter.update(
+      State(
+        merit: @[50],
+        statuses: @[MeritStatus.Unlocked]
+      ),
+      0,
+      OTHER_DIFFICULTY
+    )
     check filter.difficulty == OTHER_DIFFICULTY
     filter.handleBlock(
       State(
-        holders: newSeq[BLSPublicKey](2),
         merit: @[49, 1],
         statuses: @[MeritStatus.Unlocked, MeritStatus.Unlocked]
       ),
@@ -58,7 +70,14 @@ suite "SpamFilter":
       filter.medianPos == -1
 
   noFuzzTest "Add 1 vote and remove it via a MeritRemoval.":
-    filter.update(0, 50, OTHER_DIFFICULTY)
+    filter.update(
+      State(
+        merit: @[50],
+        statuses: @[MeritStatus.Unlocked]
+      ),
+      0,
+      OTHER_DIFFICULTY
+    )
     check filter.difficulty == OTHER_DIFFICULTY
     filter.remove(0, 50)
     check:
@@ -71,6 +90,10 @@ suite "SpamFilter":
     #Create a random amount of holders.
     for h in 0 ..< rand(50) + 2:
       merit.add(0)
+
+    var fauxStatuses: seq[MeritStatus] = @[]
+    for _ in 0 ..< merit.len:
+      fauxStatuses.add(MeritStatus.Unlocked)
 
     #Iterate over 10000 actions.
     for a in 0 ..< 10000:
@@ -138,12 +161,15 @@ suite "SpamFilter":
           ))
 
         #Update the difficulty.
-        filter.update(holder, merit[holder], difficulty)
+        filter.update(
+          State(
+            merit: merit,
+            statuses: fauxStatuses
+          ),
+          holder,
+          difficulty
+        )
         break
-
-      var fauxStatuses: seq[MeritStatus] = @[]
-      for _ in 0 ..< merit.len:
-        fauxStatuses.add(MeritStatus.Unlocked)
 
       #Increment a holder's Merit.
       if a < 5000:
@@ -152,7 +178,6 @@ suite "SpamFilter":
 
         filter.handleBlock(
           State(
-            holders: newSeq[BLSPublicKey](merit.len),
             merit: merit,
             statuses: fauxStatuses
           ),
@@ -175,7 +200,6 @@ suite "SpamFilter":
 
         filter.handleBlock(
           State(
-            holders: newSeq[BLSPublicKey](merit.len),
             merit: merit,
             statuses: fauxStatuses
           ),

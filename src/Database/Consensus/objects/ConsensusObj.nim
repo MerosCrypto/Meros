@@ -79,14 +79,14 @@ proc newConsensusObj*(
   for h in 0 ..< state.holders.len:
     #Reload the filters.
     try:
-      result.filters.send.update(uint16(h), state[uint16(h), state.processedBlocks], result.db.loadSendDifficulty(uint16(h)))
+      result.filters.send.update(state, uint16(h), result.db.loadSendDifficulty(uint16(h)))
     except DBReadError:
       #Happens when the holder never set a SendDifficulty.
       discard
 
     #In a different block in case they set a data difficulty but not a send difficulty.
     try:
-      result.filters.data.update(uint16(h), state[uint16(h), state.processedBlocks], result.db.loadDataDifficulty(uint16(h)))
+      result.filters.data.update(state, uint16(h), result.db.loadDataDifficulty(uint16(h)))
     except DBReadError:
       discard
 

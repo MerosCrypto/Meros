@@ -174,13 +174,13 @@ proc remove*(
 #Update a holder's vote.
 proc update*(
   filter: var SpamFilter,
+  state: State,
   holder: uint16,
-  merit: int,
   difficulty: uint32
 ) {.forceCheck: [].} =
   #Calculate the holder's votes.
-  var votes: int = merit div 50
-  if votes == 0:
+  var votes: int = state.merit[holder] div 50
+  if (state.statuses[holder] == MeritStatus.Locked) or (votes == 0):
     return
 
   #If this is the first vote, set median/difficulty and return.
@@ -192,7 +192,7 @@ proc update*(
     return
 
   #Remove the holder's Merit from their existing vote.
-  filter.remove(holder, merit)
+  filter.remove(holder, state.merit[holder])
 
   #If we just removed the median, create a new one.
   if filter.medianPos == -1:
@@ -246,7 +246,9 @@ proc handleBlock*(
 ) {.forceCheck: [].} =
   #Only update votes if there's actually a Merit change.
   if (changes.decd == -1) or (changes.incd != uint16(changes.decd)):
-    var incdMerit: int = state[changes.incd, state.processedBlocks]
+    var incdMerit: int = 0
+    if state.statuses[changes.incd] != MeritStatus.Locked:
+      incdMerit = state.merit[changes.incd]
     if (incdMerit mod 50 == 0) and (incdMerit != 0) and filter.votes.hasKey(changes.incd):
       try:
         inc(filter.votes[changes.incd].votes)
@@ -262,7 +264,7 @@ proc handleBlock*(
     if changes.decd != -1:
       var
         decd: uint16 = uint16(changes.decd)
-        decdMerit: int = state[decd, state.processedBlocks]
+        decdMerit: int = state.merit[decd]
 
       try:
         if (decdMerit mod 50 == 49) and filter.votes.hasKey(decd):
@@ -285,9 +287,9 @@ proc handleBlock*(
 
   #Remove votes from Locked Merit; add back votes of no-longer-Locked Merit.
   for holder in changes.locked:
-    filter.remove(holder, state[holder, state.processedBlocks])
+    filter.remove(holder, state.merit[holder])
   for holder in changes.pending:
     try:
-      filter.update(holder, state[holder, state.processedBlocks], difficulties[holder])
+      filter.update(state, holder, difficulties[holder])
     except KeyError:
       discard
