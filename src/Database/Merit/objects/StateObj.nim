@@ -125,7 +125,9 @@ proc newHolder*(
     state.statuses.add(MeritStatus.Unlocked)
     if not state.oldData:
       state.db.saveMerit(nick, 0)
-      #Don't bother saving that they're unlocked; any untracked historical state is unloecked.
+      #Don't bother saving that they're unlocked; any untracked historical state is unlocked.
+      #This seems like a micro-optimization, yet saving it was causing DB reversion mismatches.
+      #While it shouldn't cause any bugs if left saved, we shouldn't add exceptions to the test.
       #state.db.appendMeritStatus(nick, state.processedBlocks, byte(MeritStatus.Unlocked))
 
     state.lastParticipation.add(0)
