@@ -126,6 +126,12 @@ proc processBlock*(
 
   #Update every holder's Merit Status.
   for h in 0 ..< state.statuses.len:
+    #Provide a clean status for a Merit Holder whose Merit died/was removed.
+    if state.merit[h] == 0:
+      state.statuses[h] = MeritStatus.Unlocked
+      state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
+      continue
+
     if participants.contains(uint16(h)):
       #Use the higher value to handle buffer periods.
       state.lastParticipation[h] = max(state.processedBlocks, state.lastParticipation[h])
@@ -175,11 +181,6 @@ proc processBlock*(
           logInfo "Unlocking Merit", holder = h
           state.statuses[h] = MeritStatus.Unlocked
           state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
-
-    #Provide a clean status for a Merit Holder whose Merit died/was removed.
-    if state.merit[h] == 0:
-      state.statuses[h] = MeritStatus.Unlocked
-      state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
 
   #Save the amount of Unlocked Merit for the next Block.
   #This will be overwritten when we process the next Block, yet is needed for some statuses.

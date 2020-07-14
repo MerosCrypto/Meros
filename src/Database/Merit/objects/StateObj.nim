@@ -118,18 +118,17 @@ proc newHolder*(
   state: var State,
   nick: uint16
 ) {.forceCheck: [].} =
-  if int(nick) == state.merit.len:
-    state.merit.setLen(int(nick) + 1)
-    state.statuses.setLen(int(nick) + 1)
-    state.lastParticipation.setLen(int(nick) + 1)
+  if int(nick) == state.holders.len:
+    state.merit.add(0)
+    state.statuses.add(MeritStatus.Unlocked)
+    if not state.oldData:
+      state.db.saveMerit(nick, 0)
+      state.db.appendMeritStatus(nick, state.processedBlocks, byte(MeritStatus.Unlocked))
 
-  state.merit[nick] = 0
-  state.statuses[nick] = MeritStatus.Unlocked
+    state.lastParticipation.add(0)
+
   state.lastParticipation[nick] = state.processedBlocks + (5 - (state.processedBlocks mod 5))
-
   if not state.oldData:
-    state.db.saveMerit(nick, 0)
-    state.db.appendMeritStatus(nick, state.processedBlocks, byte(MeritStatus.Unlocked))
     state.db.appendLastParticipation(nick, state.processedBlocks, state.lastParticipation[nick])
 
 proc newHolder*(
@@ -137,9 +136,11 @@ proc newHolder*(
   holder: BLSPublicKey
 ): uint16 {.forceCheck: [].} =
   result = uint16(state.holders.len)
-  state.holders.add(holder)
   state.db.saveHolder(holder)
   state.newHolder(result)
+
+  #This is placed here as the other newHolder works off state.holders.len as well.
+  state.holders.add(holder)
 
 proc findMeritStatus*(
   state: State,
@@ -147,12 +148,17 @@ proc findMeritStatus*(
   height: int,
   prune: bool = false
 ): MeritStatus {.forceCheck: [].} =
+  if int(nick) >= state.holders.len:
+    return MeritStatus.Unlocked
+  if height == state.processedBlocks:
+    return state.statuses[int(nick)]
+
   const VALUE_LEN: int = INT_LEN + BYTE_LEN
   var statuses: string = state.db.loadMeritStatuses(nick)
   while statuses.len != 0:
     var valueHeight: int = statuses[statuses.len - VALUE_LEN ..< statuses.len - BYTE_LEN].fromBinary()
     result = MeritStatus(statuses[^1])
-    if valueHeight < height:
+    if valueHeight <= height:
       break
     else:
       statuses.setLen(statuses.len - VALUE_LEN)
@@ -171,6 +177,11 @@ proc findLastParticipation*(
   height: int,
   prune: bool = false
 ): int {.forceCheck: [].} =
+  if int(nick) >= state.holders.len:
+    return 0
+  if height == state.processedBlocks:
+    return state.lastParticipation[int(nick)]
+
   const VALUE_LEN: int = INT_LEN + INT_LEN
   var participations: string = state.db.loadLastParticipations(nick)
   while participations.len != 0:
@@ -204,7 +215,7 @@ proc `[]`*(
     return 0
 
   #Grab their status at the specified height.
-  var statusAtHeight = state.findMeritStatus(nick, height)
+  var statusAtHeight: MeritStatus = state.findMeritStatus(nick, height)
   if (
     #If the Merit is locked, don't count it.
     (statusAtHeight == MeritStatus.Locked) or

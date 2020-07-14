@@ -88,7 +88,7 @@ func nextMedian*(
   filter.difficulties[filter.medianPos + 1]
 
 #Remove a difficulty.
-#Used explicitly when a MeritRemoval occurs.
+#Used when a Merit Holder loses all Unlocked Merit.
 func remove(
   filter: var SpamFilter,
   difficulty: VotedDifficulty
@@ -246,7 +246,7 @@ proc handleBlock*(
 ) {.forceCheck: [].} =
   #Only update votes if there's actually a Merit change.
   if (changes.decd == -1) or (changes.incd != uint16(changes.decd)):
-    var incdMerit: int = state.merit[changes.incd]
+    var incdMerit: int = state[changes.incd, state.processedBlocks]
     if (incdMerit mod 50 == 0) and (incdMerit != 0) and filter.votes.hasKey(changes.incd):
       try:
         inc(filter.votes[changes.incd].votes)
@@ -262,7 +262,7 @@ proc handleBlock*(
     if changes.decd != -1:
       var
         decd: uint16 = uint16(changes.decd)
-        decdMerit: int = state.merit[decd]
+        decdMerit: int = state[decd, state.processedBlocks]
 
       try:
         if (decdMerit mod 50 == 49) and filter.votes.hasKey(decd):
@@ -285,9 +285,9 @@ proc handleBlock*(
 
   #Remove votes from Locked Merit; add back votes of no-longer-Locked Merit.
   for holder in changes.locked:
-    filter.remove(holder, state.merit[holder])
+    filter.remove(holder, state[holder, state.processedBlocks])
   for holder in changes.pending:
     try:
-      filter.update(holder, state.merit[holder], difficulties[holder])
+      filter.update(holder, state[holder, state.processedBlocks], difficulties[holder])
     except KeyError:
       discard

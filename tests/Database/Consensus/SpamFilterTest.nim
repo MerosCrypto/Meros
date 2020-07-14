@@ -4,6 +4,7 @@ import sequtils
 import tables
 
 import ../../../src/lib/Util
+import ../../../src/Wallet/MinerWallet
 
 import ../../../src/Database/Merit/objects/StateObj
 import ../../../src/Database/Consensus/objects/SpamFilterObj
@@ -40,6 +41,7 @@ suite "SpamFilter":
     check filter.difficulty == OTHER_DIFFICULTY
     filter.handleBlock(
       State(
+        holders: newSeq[BLSPublicKey](2),
         merit: @[49, 1],
         statuses: @[MeritStatus.Unlocked, MeritStatus.Unlocked]
       ),
@@ -150,6 +152,7 @@ suite "SpamFilter":
 
         filter.handleBlock(
           State(
+            holders: newSeq[BLSPublicKey](merit.len),
             merit: merit,
             statuses: fauxStatuses
           ),
@@ -172,6 +175,7 @@ suite "SpamFilter":
 
         filter.handleBlock(
           State(
+            holders: newSeq[BLSPublicKey](merit.len),
             merit: merit,
             statuses: fauxStatuses
           ),
