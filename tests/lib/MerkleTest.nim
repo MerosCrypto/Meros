@@ -7,7 +7,6 @@ import ../Fuzzed
 suite "Merkle":
   noFuzzTest "`nil` Merkle trees.":
     check:
-      newMerkle().isLeaf
       newMerkle().hash == "".pad(32).toHash[:256]()
 
   noFuzzTest "Leaves.":
@@ -20,8 +19,6 @@ suite "Merkle":
 
     added.add("".pad(32).toHash[:256]())
     check:
-      created.isLeaf
-      added.isLeaf
       added.hash == created.hash
 
   highFuzzTest "Verify.":
