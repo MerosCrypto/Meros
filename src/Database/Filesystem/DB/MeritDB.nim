@@ -278,8 +278,11 @@ proc overrideMeritStatuses*(
   db: DB,
   nick: uint16,
   statuses: string
-) {.inline, forceCheck: [].} =
-  db.put(MERIT_STATUSES(nick), statuses)
+) {.forceCheck: [].} =
+  if statuses.len <= (INT_LEN + BYTE_LEN):
+    db.del(MERIT_STATUSES(nick))
+  else:
+    db.put(MERIT_STATUSES(nick), statuses)
 
 proc appendLastParticipation*(
   db: DB,
@@ -298,8 +301,11 @@ proc overrideLastParticipations*(
   db: DB,
   nick: uint16,
   participations: string
-) {.inline, forceCheck: [].} =
-  db.put(LAST_PARTICIPATIONS(nick), participations)
+) {.forceCheck: [].} =
+  if participations.len <= (INT_LEN + INT_LEN):
+    db.del(LAST_PARTICIPATIONS(nick))
+  else:
+    db.put(LAST_PARTICIPATIONS(nick), participations)
 
 proc remove*(
   db: DB,
@@ -475,8 +481,8 @@ proc loadMeritStatuses*(
 ): string {.forceCheck: [].} =
   try:
     result = db.get(MERIT_STATUSES(nick))
-  except DBReadError as e:
-    panic("Tried to get the Merit Statuses of a non-existent holder: " & $nick)
+  except DBReadError:
+    discard
 
 proc loadLastParticipations*(
   db: DB,
@@ -484,8 +490,8 @@ proc loadLastParticipations*(
 ): string {.forceCheck: [].} =
   try:
     result = db.get(LAST_PARTICIPATIONS(nick))
-  except DBReadError as e:
-    panic("Tried to get the Merit Statuses of a non-existent holder: " & $nick)
+  except DBReadError:
+    discard
 
 proc loadBlockRemovals*(
   db: DB,

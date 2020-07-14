@@ -12,7 +12,7 @@ import objects/BlockchainObj
 import BlockHeader, Block
 
 import objects/StateObj
-export StateObj
+export MeritStatus, StateObj.State, StateChanges, `[]`, reverseLookup, loadUnlocked
 
 proc getNickname(
   state: var State,
@@ -259,8 +259,8 @@ proc revert*(
 
   #Reload the old statuses/participations.
   for h in 0 ..< state.holders.len:
-    state.statuses[h] = state.findMeritStatus(uint16(h), height) #, true)
-    state.lastParticipation[h] = state.findLastParticipation(uint16(h), height) #, true)
+    state.statuses[h] = state.findMeritStatus(uint16(h), height)
+    state.lastParticipation[h] = state.findLastParticipation(uint16(h), height)
 
   #Reload the amount of unlocked Merit.
   state.unlocked = state.loadUnlocked(height)
@@ -275,3 +275,11 @@ proc revert*(
 
   #Allow saving data again.
   state.oldData = false
+
+proc pruneStatusesAndParticipations*(
+  state: State,
+  oldAmountOfHolders: int
+) {.forceCheck: [].} =
+  for h in 0 ..< oldAmountOfHolders:
+    discard state.findMeritStatus(uint16(h), state.processedBlocks, true)
+    discard state.findLastParticipation(uint16(h), state.processedBlocks, true)

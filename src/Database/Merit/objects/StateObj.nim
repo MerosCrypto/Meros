@@ -85,7 +85,9 @@ proc newStateObj*(
   for h in 0 ..< result.holders.len:
     try:
       result.merit[h] = result.db.loadMerit(uint16(h))
-      result.statuses[h] = MeritStatus(result.db.loadMeritStatuses(uint16(h))[^1])
+      var statuses: string = result.db.loadMeritStatuses(uint16(h))
+      if statuses.len != 0:
+        result.statuses[h] = MeritStatus(statuses[^1])
       var lastParticipations: string = result.db.loadLastParticipations(uint16(h))
       result.lastParticipation[h] = lastParticipations[lastParticipations.len - INT_LEN ..< lastParticipations.len].fromBinary()
     except DBReadError as e:
@@ -123,7 +125,8 @@ proc newHolder*(
     state.statuses.add(MeritStatus.Unlocked)
     if not state.oldData:
       state.db.saveMerit(nick, 0)
-      state.db.appendMeritStatus(nick, state.processedBlocks, byte(MeritStatus.Unlocked))
+      #Don't bother saving that they're unlocked; any untracked historical state is unloecked.
+      #state.db.appendMeritStatus(nick, state.processedBlocks, byte(MeritStatus.Unlocked))
 
     state.lastParticipation.add(0)
 
@@ -148,9 +151,7 @@ proc findMeritStatus*(
   height: int,
   prune: bool = false
 ): MeritStatus {.forceCheck: [].} =
-  if int(nick) >= state.holders.len:
-    return MeritStatus.Unlocked
-  if height == state.processedBlocks:
+  if (not prune) and (height == state.processedBlocks):
     return state.statuses[int(nick)]
 
   const VALUE_LEN: int = INT_LEN + BYTE_LEN
@@ -177,9 +178,7 @@ proc findLastParticipation*(
   height: int,
   prune: bool = false
 ): int {.forceCheck: [].} =
-  if int(nick) >= state.holders.len:
-    return 0
-  if height == state.processedBlocks:
+  if (not prune) and (height == state.processedBlocks):
     return state.lastParticipation[int(nick)]
 
   const VALUE_LEN: int = INT_LEN + INT_LEN
