@@ -54,8 +54,8 @@ def ULimitTest(
     for lSocket in sockets:
       lSocket.send(
         MessageType.Handshake.toByte() +
-        (254).to_bytes(1, "big") +
-        (254).to_bytes(1, "big") +
+        (254).to_bytes(1, "little") +
+        (254).to_bytes(1, "little") +
         b'\0\0\0' +
         blockchain.blocks[0].header.hash
       )

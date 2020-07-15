@@ -50,10 +50,10 @@ class Data(
   ) -> bytes:
     return (
       self.txInput +
-      (len(self.data) - 1).to_bytes(1, "big") +
+      (len(self.data) - 1).to_bytes(1, "little") +
       self.data +
       self.signature +
-      self.proof.to_bytes(4, "big")
+      self.proof.to_bytes(4, "little")
     )
 
   def toJSON(

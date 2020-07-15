@@ -227,7 +227,7 @@ proc save*(
   work: StUInt[128]
 ) {.forceCheck: [].} =
   var workStr: string
-  for b in work.toByteArrayBE():
+  for b in work.toBytesLE():
     workStr &= char(b)
   db.put(CHAIN_WORK(hash), workStr)
 
@@ -322,7 +322,7 @@ proc loadChainWork*(
   hash: Hash[256]
 ): StUInt[128] {.forceCheck: [].} =
   try:
-    result = StUInt[128].fromBytesBE(cast[seq[byte]](db.get(CHAIN_WORK(hash))))
+    result = StUInt[128].fromBytesLE(cast[seq[byte]](db.get(CHAIN_WORK(hash))))
   except Exception as e:
     panic("Failed to get the chain work of a Block: " & e.msg)
 

@@ -35,7 +35,7 @@ class Claim(
       privKeys[0].sign(
         b'\1' +
         self.inputs[0][0] +
-        self.inputs[0][1].to_bytes(1, "big") +
+        self.inputs[0][1].to_bytes(1, "little") +
         self.output
       )
     ]
@@ -45,7 +45,7 @@ class Claim(
         privKeys[i].sign(
           b'\1' +
           self.inputs[i][0] +
-          self.inputs[i][1].to_bytes(1, "big") +
+          self.inputs[i][1].to_bytes(1, "little") +
           self.output
         )
       )
@@ -56,9 +56,9 @@ class Claim(
   def serialize(
     self
   ) -> bytes:
-    result: bytes = len(self.inputs).to_bytes(1, "big")
+    result: bytes = len(self.inputs).to_bytes(1, "little")
     for txInput in self.inputs:
-      result += txInput[0] + txInput[1].to_bytes(1, "big")
+      result += txInput[0] + txInput[1].to_bytes(1, "little")
     result += self.output + self.signature
     return result
 

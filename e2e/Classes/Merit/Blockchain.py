@@ -11,7 +11,7 @@ class Blockchain:
   def __init__(
     self
   ) -> None:
-    self.genesis: bytes = b"MEROS_DEVELOPER_NETWORK".rjust(32, b'\0')
+    self.genesis: bytes = b"MEROS_DEVELOPER_NETWORK".ljust(32, b'\0')
 
     self.upcomingKey: bytes = self.genesis
     setRandomXKey(self.upcomingKey)

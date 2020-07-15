@@ -27,9 +27,9 @@ class VerificationPacket(
   def serialize(
     self
   ) -> bytes:
-    result: bytes = len(self.holders).to_bytes(2, "big")
+    result: bytes = len(self.holders).to_bytes(2, "little")
     for holder in sorted(self.holders):
-      result += holder.to_bytes(2, "big")
+      result += holder.to_bytes(2, "little")
     result += self.hash
     return result
 
@@ -67,7 +67,7 @@ class MeritRemovalVerificationPacket(
   def signatureSerialize(
     self
   ) -> bytes:
-    result: bytes = self.prefix + len(self.holderKeys).to_bytes(2, "big")
+    result: bytes = self.prefix + len(self.holderKeys).to_bytes(2, "little")
     for holder in self.holderKeys:
       result += holder
     result += self.hash
@@ -170,7 +170,7 @@ class SignedMeritRemovalVerificationPacket(
   def signatureSerialize(
     self
   ) -> bytes:
-    result: bytes = self.prefix + len(self.holderKeys).to_bytes(2, "big")
+    result: bytes = self.prefix + len(self.holderKeys).to_bytes(2, "little")
     for holder in self.holderKeys:
       result += holder
     result += self.hash

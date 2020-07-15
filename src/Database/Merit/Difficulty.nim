@@ -67,6 +67,6 @@ proc calculateNextDifficulty*(
 
   #Convert it from an StUInt[128] to an uint64.
   result = max(
-    uint64(cast[string](newDifficulty.toByteArrayBE()[8 ..< 16]).fromBinary()),
+    uint64(cast[string](newDifficulty.toBytesLE()[0 ..< 8]).fromBinary()),
     uint64(1)
   )

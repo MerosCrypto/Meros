@@ -59,7 +59,7 @@ class MessageType(
   def toByte(
     self
   ) -> bytes:
-    return self.value.to_bytes(1, "big")
+    return self.value.to_bytes(1, "little")
 
 #Lengths of messages.
 #An empty array means the message was just the header.
@@ -139,7 +139,7 @@ def recv(
     if length < 0:
       length = int.from_bytes(
         result[-lengths[header][l - 1]:],
-        byteorder="big"
+        byteorder="little"
       ) * abs(length)
     elif length == 0:
       if header == MessageType.SignedMeritRemoval:
@@ -147,7 +147,7 @@ def recv(
           length = 32
         elif result[-1] == 1:
           result += socketRecv(connection, 2)
-          length = (int.from_bytes(result[-2:], byteorder="big") * 96) + 32
+          length = (int.from_bytes(result[-2:], byteorder="little") * 96) + 32
         elif result[-1] == 2:
           length = 8
         elif result[-1] == 3:
@@ -162,7 +162,7 @@ def recv(
           length = 2
 
       elif header == MessageType.BlockBody:
-        elementsLen: int = int.from_bytes(result[-4:], byteorder="big")
+        elementsLen: int = int.from_bytes(result[-4:], byteorder="little")
         for _ in range(elementsLen):
           result += socketRecv(connection, 1)
           if result[-1] == 2:
@@ -178,7 +178,7 @@ def recv(
                 result += socketRecv(connection, 32)
               elif result[-1] == 1:
                 result += socketRecv(connection, 2)
-                result += socketRecv(connection, (int.from_bytes(result[-2:], byteorder="big") * 96) + 32)
+                result += socketRecv(connection, (int.from_bytes(result[-2:], byteorder="little") * 96) + 32)
               elif result[-1] == 2:
                 result += socketRecv(connection, 8)
               elif result[-1] == 3:
@@ -222,8 +222,8 @@ class MerosSocket:
     self.connection.connect(("127.0.0.1", tcp))
     self.connection.send(
       (MessageType.Handshake.toByte() if live else MessageType.Syncing.toByte()) +
-      network.to_bytes(1, "big") +
-      protocol.to_bytes(1, "big") +
+      network.to_bytes(1, "little") +
+      protocol.to_bytes(1, "little") +
       b'\0\0\0' +
       tail
     )
@@ -338,11 +338,11 @@ class Meros:
     for peer in peers:
       ipParts: List[str] = peer[0].split(".")
       res += (
-        int(ipParts[0]).to_bytes(1, byteorder="big") +
-        int(ipParts[1]).to_bytes(1, byteorder="big") +
-        int(ipParts[2]).to_bytes(1, byteorder="big") +
-        int(ipParts[3]).to_bytes(1, byteorder="big") +
-        peer[1].to_bytes(2, byteorder="big")
+        int(ipParts[0]).to_bytes(1, byteorder="little") +
+        int(ipParts[1]).to_bytes(1, byteorder="little") +
+        int(ipParts[2]).to_bytes(1, byteorder="little") +
+        int(ipParts[3]).to_bytes(1, byteorder="little") +
+        peer[1].to_bytes(2, byteorder="little")
       )
     self.sync.send(res, False)
     return res
@@ -353,7 +353,7 @@ class Meros:
   ) -> bytes:
     res: bytes = (
       MessageType.BlockList.toByte() +
-      (len(hashes) - 1).to_bytes(1, byteorder="big")
+      (len(hashes) - 1).to_bytes(1, byteorder="little")
     )
     for blockHash in hashes:
       res += blockHash
@@ -461,9 +461,9 @@ class Meros:
     self,
     hashes: List[int]
   ) -> bytes:
-    res: bytes = MessageType.SketchHashes.toByte() + len(hashes).to_bytes(4, byteorder="big")
+    res: bytes = MessageType.SketchHashes.toByte() + len(hashes).to_bytes(4, byteorder="little")
     for sketchHash in hashes:
-      res += sketchHash.to_bytes(8, byteorder="big")
+      res += sketchHash.to_bytes(8, byteorder="little")
     self.sync.send(res)
     return res
 

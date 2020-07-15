@@ -14,16 +14,17 @@ import objects/ErrorObjs
 proc getTime*(): uint32 {.inline, forceCheck: [].} =
   uint32(times.getTime().toUnix())
 
-#Left-pads data, with a char or string, until the data is a certain length.
+#Right pads data, with a char or string, until the data is a certain length.
 func pad*(
   data: string,
   len: int,
-  prefix: char or string = char(0)
+  suffix: char or string = char(0)
 ): string {.forceCheck: [].} =
   result = $data
-
-  while result.len < len:
-    result = prefix & result
+  var startLen: int = result.len
+  result.setLen(max(result.len, len))
+  for i in startLen ..< result.len:
+    result[i] = suffix
 
 #Reverse a string.
 func reverse*(
@@ -38,24 +39,15 @@ func toBinary*(
   number: SomeNumber,
   length: int = 0
 ): string {.forceCheck: [].} =
-  #Get the amount of bytes the number actually uses.
   var used: int = 0
   if number != 0:
     used = sizeof(number) - (countLeadingZeroBits(number) div 8)
+  result = newString(max(length, used))
 
-  #Add filler bytes to the final result is at least length.
-  #If the amount of bytes needed is more than the length, the result will be the amount needed.
-  result = newString(max(length - used, 0))
-
-  #Shift counters.
-  var
-    mask: uint = 255
-    fromEnd: int = (used - 1) * 8
-
-  #Iterate over each byte.
-  while fromEnd >= 0:
-    result &= char((uint64(number) and uint64(mask shl fromEnd)) shr fromEnd)
-    fromEnd -= 8
+  var c: int = 0
+  while c < used:
+    result[c] = char((number shr (c * 8)) and 0b11111111)
+    inc(c)
 
 #Convert a char/string to a number.
 func fromBinary*(
@@ -66,10 +58,10 @@ func fromBinary*(
 func fromBinary*(
   number: string
 ): int {.forceCheck: [].} =
-  #Iterate over each byte.
-  for b in 0 ..< number.len:
-    #Add the byte after it's been properly shifted.
-    result += int(number[b]) shl ((number.len - b - 1) * 8)
+  var counter: int = 0
+  for c in number:
+    result += int(c) shl counter
+    counter += 8
 
 #Extract a set of bits.
 func extractBits*(

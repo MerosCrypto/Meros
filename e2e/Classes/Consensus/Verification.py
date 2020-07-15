@@ -26,7 +26,7 @@ class Verification(
   def serialize(
     self
   ) -> bytes:
-    return self.holder.to_bytes(2, "big") + self.hash
+    return self.holder.to_bytes(2, "little") + self.hash
 
   def toJSON(
     self

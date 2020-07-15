@@ -54,7 +54,7 @@ verifs[0].sign(0, blsPrivKey)
 
 #Create two competing Datas yet only verify the first.
 for d in range(2):
-  datas.append(Data(datas[0].hash, d.to_bytes(1, "big")))
+  datas.append(Data(datas[0].hash, d.to_bytes(1, "little")))
   datas[1 + d].sign(edPrivKey)
   datas[1 + d].beat(dataFilter)
 
@@ -62,7 +62,7 @@ verifs.append(SignedVerification(datas[1].hash))
 verifs[1].sign(0, blsPrivKey)
 
 #Create a Data that's a descendant of the Data which will be beaten.
-datas.append(Data(datas[2].hash, (2).to_bytes(1, "big")))
+datas.append(Data(datas[2].hash, (2).to_bytes(1, "little")))
 datas[3].sign(edPrivKey)
 datas[3].beat(dataFilter)
 

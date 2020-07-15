@@ -90,8 +90,8 @@ def VUnknownTest(
           packets[Sketch.hash(block.header.sketchSalt, packet)] = packet
 
         #Look up each requested packet and respond accordingly.
-        for h in range(int.from_bytes(msg[33 : 37], byteorder="big")):
-          sketchHash: int = int.from_bytes(msg[37 + (h * 8) : 45 + (h * 8)], byteorder="big")
+        for h in range(int.from_bytes(msg[33 : 37], byteorder="little")):
+          sketchHash: int = int.from_bytes(msg[37 + (h * 8) : 45 + (h * 8)], byteorder="little")
           if sketchHash not in packets:
             raise TestError("Meros asked for a non-existent Sketch Hash.")
           rpc.meros.packet(packets[sketchHash])

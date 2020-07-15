@@ -44,11 +44,11 @@ def HundredSeventySevenTest(
       0,
       template["header"][4 : 36],
       template["header"][36 : 68],
-      int.from_bytes(template["header"][68 : 70], byteorder="big"),
+      int.from_bytes(template["header"][68 : 70], byteorder="little"),
       template["header"][70 : 74],
       template["header"][74 : 106],
       0,
-      int.from_bytes(template["header"][-4:], byteorder="big")
+      int.from_bytes(template["header"][-4:], byteorder="little")
     )
     if b == 0:
       header.newMiner = True
@@ -74,7 +74,7 @@ def HundredSeventySevenTest(
         template["id"],
         (
           template["header"] +
-          header.proof.to_bytes(4, byteorder="big") +
+          header.proof.to_bytes(4, byteorder="little") +
           header.signature +
           bytes.fromhex(template["body"])
         ).hex()

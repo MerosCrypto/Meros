@@ -16,7 +16,7 @@ class SpamFilter:
   ) -> bytes:
     result: bytes = argon2.low_level.hash_secret_raw(
       data,
-      nonce.to_bytes(8, "big"),
+      nonce.to_bytes(8, "little"),
       1,
       8,
       1,
