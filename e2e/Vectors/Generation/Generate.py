@@ -9,7 +9,7 @@ import e2e.Vectors.Generation.Merit.Reorganizations.ShorterChainMoreWork
 import e2e.Vectors.Generation.Merit.Reorganizations.DelayedMeritHolder
 
 import e2e.Vectors.Generation.Transactions.ClaimedMint
-import e2e.Vectors.Generation.Transactions.MultiInputClaimTest
+import e2e.Vectors.Generation.Transactions.MultiInputClaim
 import e2e.Vectors.Generation.Transactions.SameInput
 import e2e.Vectors.Generation.Transactions.CompetingFinalized
 import e2e.Vectors.Generation.Transactions.Fifty
