@@ -8,6 +8,14 @@ from e2e.Classes.Transactions.Transaction import Transaction
 class Claim(
   Transaction
 ):
+  def serializeInputs(
+    self
+  ) -> bytes:
+    result: bytes = len(self.inputs).to_bytes(1, "little")
+    for txInput in self.inputs:
+      result += txInput[0] + txInput[1].to_bytes(1, "little")
+    return result
+
   def __init__(
     self,
     inputs: List[Tuple[bytes, int]],
@@ -17,8 +25,13 @@ class Claim(
     self.inputs: List[Tuple[bytes, int]] = inputs
     self.output: bytes = output
     self.amount: int = 0
+    self.hash = blake2b(
+      b'\1' +
+      self.serializeInputs() +
+      output,
+      digest_size=32
+    ).digest()
     self.signature: bytes = signature
-    self.hash = blake2b(b'\1' + self.signature, digest_size=32).digest()
 
   #Satisifes static typing requirements.
   @staticmethod
@@ -29,36 +42,14 @@ class Claim(
 
   def sign(
     self,
-    privKeys: List[PrivateKey]
+    privKey: PrivateKey
   ) -> None:
-    signatures: List[Signature] = [
-      privKeys[0].sign(
-        b'\1' +
-        self.inputs[0][0] +
-        self.inputs[0][1].to_bytes(1, "little") +
-        self.output
-      )
-    ]
-
-    for i in range(1, len(self.inputs)):
-      signatures.append(
-        privKeys[i].sign(
-          b'\1' +
-          self.inputs[i][0] +
-          self.inputs[i][1].to_bytes(1, "little") +
-          self.output
-        )
-      )
-
-    self.signature = Signature.aggregate(signatures).serialize()
-    self.hash = blake2b(b'\1' + self.signature, digest_size=32).digest()
+    self.signature = privKey.sign(self.hash).serialize()
 
   def serialize(
     self
   ) -> bytes:
-    result: bytes = len(self.inputs).to_bytes(1, "little")
-    for txInput in self.inputs:
-      result += txInput[0] + txInput[1].to_bytes(1, "little")
+    result: bytes = self.serializeInputs()
     result += self.output + self.signature
     return result
 

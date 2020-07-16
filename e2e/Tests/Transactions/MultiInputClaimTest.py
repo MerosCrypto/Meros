@@ -7,10 +7,10 @@ from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 from e2e.Meros.Syncer import Syncer
 
-def AggregatedClaimTest(
+def MultiInputClaimTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Transactions/AggregatedClaim.json", "r")
+  file: IO[Any] = open("e2e/Vectors/Transactions/MultiInputClaim.json", "r")
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 

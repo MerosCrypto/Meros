@@ -91,7 +91,7 @@ def HundredSeventySevenTest(
       mint: Mint = Mint(header.hash, [(0, 50000)])
 
       claim: Claim = Claim([(mint.hash, 0)], bytes(32))
-      claim.sign([blsPrivKey])
+      claim.sign(blsPrivKey)
       if rpc.meros.live.recv()[0 : -80] != (MessageType.Claim.toByte() + claim.serialize())[0 : -80]:
         raise TestError("Meros didn't claim its Mint.")
 

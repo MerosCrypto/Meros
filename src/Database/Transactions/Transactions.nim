@@ -43,7 +43,7 @@ proc add*(
     discard
 
   var
-    claimers: seq[BLSPublicKey] = newSeq[BLSPublicKey]()
+    claimer: BLSPublicKey
 
     #Set of spent inputs.
     inputSet: HashSet[string] = initHashSet[string]()
@@ -75,15 +75,19 @@ proc add*(
       key = lookup(output.key)
     except IndexError as e:
       panic("Created a Mint to a non-existent Merit Holder: " & e.msg)
+    if claimer.isInf():
+      claimer = key
+    else:
+      if claimer != key:
+        raise newLoggedException(ValueError, "Claim spends Mint outputs to different Merit Holders.")
 
-    claimers.add(key)
     amount += output.amount
 
   #Set the Claim's output amount to the amount.
   claim.outputs[0].amount = amount
 
   #Verify the signature.
-  if not claim.verify(claimers):
+  if not claim.verify(claimer):
     raise newLoggedException(ValueError, "Claim has an invalid Signature.")
 
   #Add the Claim.

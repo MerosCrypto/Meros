@@ -32,39 +32,43 @@ edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
-for i in range(5):
+for i in range(4):
   merit.add(Block.fromJSON(blankBlocks[i]))
 
-#Create the Data.
-data: Data = Data(bytes(32), edPubKey.to_bytes())
-data.sign(edPrivKey)
-data.beat(dataFilter)
-transactions.add(data)
+#Create the Datas.
+datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
+datas.append(Data(datas[-1].hash, bytes(1)))
+for data in datas:
+  data.sign(edPrivKey)
+  data.beat(dataFilter)
+  transactions.add(data)
 
-#Verify it.
-verif: SignedVerification = SignedVerification(data.hash)
-verif.sign(0, blsPrivKey)
+#Verify them in unique Blocks.
+packet: List[VerificationPacket]
+for data in datas:
+  verif: SignedVerification = SignedVerification(data.hash)
+  verif.sign(0, blsPrivKey)
+  packet = [VerificationPacket(data.hash, [0])]
 
-#Generate another 6 Blocks.
-#Next block should have a packet.
-block: Block = Block(
-  BlockHeader(
-    0,
-    merit.blockchain.last(),
-    BlockHeader.createContents([VerificationPacket(verif.hash, [0])]),
-    1,
-    bytes(4),
-    BlockHeader.createSketchCheck(bytes(4), [VerificationPacket(verif.hash, [0])]),
-    0,
-    merit.blockchain.blocks[-1].header.time + 1200
-  ),
-  BlockBody([VerificationPacket(verif.hash, [0])], [], verif.signature)
-)
-for _ in range(6):
+  block = Block(
+    BlockHeader(
+      0,
+      merit.blockchain.last(),
+      BlockHeader.createContents(packet),
+      1,
+      bytes(4),
+      BlockHeader.createSketchCheck(bytes(4), packet),
+      0,
+      merit.blockchain.blocks[-1].header.time + 1200
+    ),
+    BlockBody(packet, [], verif.signature)
+  )
   block.mine(blsPrivKey, merit.blockchain.difficulty())
   merit.add(block)
-  print("Generated Claimed Mint Block " + str(len(merit.blockchain.blocks) - 1) + ".")
+  print("Generated Multi-Input Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
+#Generate another 5 Blocks to close the Epochs.
+for _ in range(5):
   block = Block(
     BlockHeader(
       0,
@@ -78,39 +82,45 @@ for _ in range(6):
     ),
     BlockBody()
   )
+  block.mine(blsPrivKey, merit.blockchain.difficulty())
+  merit.add(block)
+  print("Generated Multi-Input Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
-#Claim the new Mint.
-claim: Claim = Claim([(merit.mints[0].hash, 0)], edPubKey.to_bytes())
-claim.amount = merit.mints[0].outputs[0][1]
+#Create the Claim.
+claim: Claim = Claim(
+  [(merit.mints[0].hash, 0), (merit.mints[1].hash, 0)],
+  edPubKey.to_bytes()
+)
+claim.amount = merit.mints[0].outputs[0][1] + merit.mints[1].outputs[0][1]
 claim.sign(blsPrivKey)
 transactions.add(claim)
 
-#Verify the Claim.
-verif = SignedVerification(claim.hash)
+#Archive it on the Blockchain.
+verif: SignedVerification = SignedVerification(claim.hash)
 verif.sign(0, blsPrivKey)
 
-#Mine one more Block.
+packet: List[VerificationPacket] = [VerificationPacket(claim.hash, [0])]
 block = Block(
   BlockHeader(
     0,
     merit.blockchain.last(),
-    BlockHeader.createContents([VerificationPacket(verif.hash, [0])]),
+    BlockHeader.createContents(packet),
     1,
     bytes(4),
-    BlockHeader.createSketchCheck(bytes(4), [VerificationPacket(verif.hash, [0])]),
+    BlockHeader.createSketchCheck(bytes(4), packet),
     0,
     merit.blockchain.blocks[-1].header.time + 1200
   ),
-  BlockBody([VerificationPacket(verif.hash, [0])], [], verif.signature)
+  BlockBody(packet, [], verif.signature)
 )
 block.mine(blsPrivKey, merit.blockchain.difficulty())
 merit.add(block)
-print("Generated Claimed Mint Block " + str(len(merit.blockchain.blocks) - 1) + ".")
+print("Generated Multi-Input Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 result: Dict[str, Any] = {
   "blockchain": merit.blockchain.toJSON(),
   "transactions": transactions.toJSON()
 }
-vectors: IO[Any] = open("e2e/Vectors/Transactions/ClaimedMint.json", "w")
+vectors: IO[Any] = open("e2e/Vectors/Transactions/MultiInputClaim.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()

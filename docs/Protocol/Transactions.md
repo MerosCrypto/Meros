@@ -34,11 +34,11 @@ Claim Transactions are created in response to a Mint, and have the following add
 
 - signature: BLS Signature that proves the Merit Holder which earned the newly minted Meros wants this person to receive their reward.
 
-Every Claim must have at least 1 input. Claim inputs must be Mints, where the specified output is to the sender. The Claim's singular output is to an Ed25519 Public Key with the amount being the sum of the input amounts. The specified key does not need to be a valid Ed25519 Public Key.
+Every Claim must have at least 1 input. Claim inputs must be Mint outputs who all output to the same sender. The Claim's singular output is to an Ed25519 Public Key with the amount being the sum of the input amounts. The specified key does not need to be a valid Ed25519 Public Key.
 
-signature must be the BLS signature produced by the Mint's designated claimee signing `"\1" + mint.hash + mint.index + claim.output.key`, where `mint.hash` takes 32 bytes, `mint.index` takes 1 byte, and `claim.output.key` takes 32 bytes, for every input, and then aggregating the produced signatures (if there's more than one). If the Mints are for different BLS Public Keys, the designated claimee is the aggregated BLS Public Key.
+Claim hashes are defined as `Blake2b-256("\1" + inputs.length + inputs[0] + ... + inputs[n] + output)`, where the amount of inputs takes up 1 byte, every input takes up 33 bytes (the 32-byte hash and 1-byte output index), and the output key takes up 32 bytes.
 
-Claim hashes are defined as `Blake2b-256("\1" + signature)`, where signature takes up 48 bytes.
+signature must be the BLS signature produced by the Mints' designated claimee signing the hash.
 
 `Claim` has a variable message length; the 1-byte amount of inputs, the inputs (each 33 bytes), the 32-byte output key, and the 48-byte BLS signature.
 
