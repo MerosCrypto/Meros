@@ -593,7 +593,7 @@ proc mainMerit(
     ValueError
   ].} =
     if header.last != merit.blockchain.tail.header.hash:
-      raise newException(ValueError, "Trying to add a Block which isn't after our current tail.")
+      raise newLoggedException(ValueError, "Trying to add a Block which isn't after our current tail.")
 
     try:
       testBlockHeader(

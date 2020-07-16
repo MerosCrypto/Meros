@@ -37,7 +37,7 @@ proc module*(
           (params.len != 1) or
           (params[0].kind != JString)
         ):
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         #Extract the parameter.
         var hash: Hash[256]

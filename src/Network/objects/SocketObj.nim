@@ -60,11 +60,11 @@ proc send*(
 ], async.} =
   try:
     if (await socket.stream.write(data)) != data.len:
-      raise newException(SocketError, "Couldn't send the full message.")
+      raise newLoggedException(SocketError, "Couldn't send the full message.")
   except SocketError as e:
     raise e
   except Exception as e:
-    raise newException(SocketError, "Couldn't send to this socket: " & e.msg)
+    raise newLoggedException(SocketError, "Couldn't send to this socket: " & e.msg)
 
 proc recv*(
   socket: Socket,
@@ -79,7 +79,7 @@ proc recv*(
   try:
     result = cast[string](await socket.stream.read(len))
   except Exception as e:
-    raise newException(SocketError, "Couldn't read from this socket: " & e.msg)
+    raise newLoggedException(SocketError, "Couldn't read from this socket: " & e.msg)
 
 proc closed*(
   socket: Socket

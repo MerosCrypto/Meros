@@ -167,7 +167,7 @@ proc module*(
       ].} =
         #Verify the parameters length.
         if params.len != 1:
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         #Get the Block.
         if params[0].kind == JInt:
@@ -188,7 +188,7 @@ proc module*(
           except ValueError:
             raise newJSONRPCError(-3, "Invalid hash")
         else:
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
       "getTotalMerit" = proc (
         res: JSONNode,
@@ -214,7 +214,7 @@ proc module*(
           (params[0].kind != JInt) or
           (params[0].getInt() >= 65536)
         ):
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         #Extract the parameter.
         var nick: uint16 = uint16(params[0].getInt())
@@ -235,7 +235,7 @@ proc module*(
       ].} =
         #Verify and extract the parameter.
         if (params.len != 1) or (params[0].kind != JString):
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         var miner: BLSPublicKey
         try:
@@ -359,7 +359,7 @@ proc module*(
           (params[0].kind != JInt) or
           (params[1].kind != JString)
         ):
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         var sketchyBlock: SketchyBlock
         try:

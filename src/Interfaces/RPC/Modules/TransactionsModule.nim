@@ -101,7 +101,7 @@ proc module*(
           (params.len != 1) or
           (params[0].kind != JString)
         ):
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         #Get the Transaction.
         try:
@@ -125,7 +125,7 @@ proc module*(
           (params.len != 1) or
           (params[0].kind != JString)
         ):
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         #Get the UTXOs.
         var
@@ -134,7 +134,7 @@ proc module*(
         try:
           decodedAddy = Address.getEncodedData(params[0].getStr())
         except ValueError:
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         case decodedAddy.addyType:
           of AddressType.PublicKey:

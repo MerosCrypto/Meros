@@ -25,11 +25,11 @@ proc module*(
       ].} =
         #Verify the params len.
         if params.len > 2:
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
         #Verify the params' types.
         for param in params:
           if param.kind != JString:
-            raise newLoggedException(ParamError, "")
+            raise newException(ParamError, "")
 
         #Fill in optional params.
         while params.len < 2:
@@ -66,7 +66,7 @@ proc module*(
           (params[0].kind != JInt) or
           (params[1].kind != JBool)
         ):
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         #Get the account in question.
         var wallet: HDWallet = functions.personal.getWallet()
@@ -103,7 +103,7 @@ proc module*(
           (params[0].kind != JString) or
           (params[1].kind != JString)
         ):
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         try:
           res["result"] = % $functions.personal.send(params[0].getStr(), params[1].getStr())
@@ -124,7 +124,7 @@ proc module*(
           (params.len != 1) or
           (params[0].kind != JString)
         ):
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         try:
           res["result"] = % $functions.personal.data(params[0].getStr())
