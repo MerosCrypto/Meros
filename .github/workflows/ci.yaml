@@ -29,7 +29,7 @@ jobs:
           key: ${{ runner.os }}-nimble-stable
       - uses: jiro4989/setup-nim-action@v1.0.2
         with:
-          nim-version: '1.2.0'
+          nim-version: '1.2.4'
       - name: Install dependencies
         run: nimble install --depsOnly -Y
       - name: Run tests
@@ -54,7 +54,7 @@ jobs:
           key: ${{ runner.os }}-nimble-stable
       - uses: jiro4989/setup-nim-action@v1.0.2
         with:
-          nim-version: '1.2.0'
+          nim-version: '1.2.4'
       - name: Build Meros
         run: nimble build -Y
       - uses: actions/upload-artifact@v1
