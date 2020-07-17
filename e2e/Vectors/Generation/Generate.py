@@ -20,6 +20,7 @@ import e2e.Vectors.Generation.Transactions.SameInput.SIClaim
 
 import e2e.Vectors.Generation.Consensus.Verification.Parsable
 import e2e.Vectors.Generation.Consensus.Verification.Competing
+import e2e.Vectors.Generation.Consensus.Verification.PartialArchive
 import e2e.Vectors.Generation.Consensus.Verification.HundredTwo
 import e2e.Vectors.Generation.Consensus.Verification.HundredFortyTwo
 
