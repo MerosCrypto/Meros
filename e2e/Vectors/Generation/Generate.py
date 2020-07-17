@@ -41,4 +41,5 @@ import e2e.Vectors.Generation.Consensus.MeritRemoval.HundredThirtyFive
 
 import e2e.Vectors.Generation.Consensus.HundredSix.BlockElements
 
+import e2e.Vectors.Generation.Consensus.OutOfOrderInclusionInBlock
 import e2e.Vectors.Generation.Consensus.TwoHundredFour
