@@ -1,6 +1,4 @@
-#Tests the proper handling of Transactions which spend the same input twice.
-
-from typing import Dict, List, IO, Any
+from typing import Dict, IO, Any
 import json
 
 from pytest import raises
@@ -18,11 +16,10 @@ from e2e.Meros.Liver import Liver
 
 from e2e.Tests.Errors import TestError, SuccessError
 
-#pylint: disable=too-many-statements
 def SameInputTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Transactions/SameInput.json", "r")
+  file: IO[Any] = open("e2e/Vectors/Transactions/SameInput/Claim.json", "r")
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
@@ -31,59 +28,23 @@ def SameInputTest(
 
   #Custom function to send the last Block and verify it errors at the right place.
   def checkFail() -> None:
-    #This Block should cause the node to disconnect us AFTER it syncs our Transaction.
-    syncedTX: bool = False
-
     #Grab the Block.
-    block: Block = merit.blockchain.blocks[13]
+    block: Block = merit.blockchain.blocks[8]
 
     #Send the Block.
     rpc.meros.liveBlockHeader(block.header)
 
     #Handle sync requests.
-    reqHash: bytes = bytes()
     while True:
-      if syncedTX:
-        #Try receiving from the Live socket, where Meros sends keep-alives.
-        try:
-          if len(rpc.meros.live.recv()) != 0:
-            raise Exception()
-        except TestError:
-          raise SuccessError("Node disconnected us after we sent an invalid Transaction.")
-        except Exception:
-          raise TestError("Meros sent a keep-alive.")
-
       msg: bytes = rpc.meros.sync.recv()
       if MessageType(msg[0]) == MessageType.BlockBodyRequest:
-        reqHash = msg[1 : 33]
-        if reqHash != block.header.hash:
+        if msg[1 : 33] != block.header.hash:
           raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
-        #Send the BlockBody.
         rpc.meros.blockBody(block)
 
-      elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
-        if not block.body.packets:
-          raise TestError("Meros asked for Sketch Hashes from a Block without any.")
-
-        reqHash = msg[1 : 33]
-        if reqHash != block.header.hash:
-          raise TestError("Meros asked for Sketch Hashes that didn't belong to the Block we just sent it.")
-
-        #Create the haashes.
-        hashes: List[int] = []
-        for packet in block.body.packets:
-          hashes.append(Sketch.hash(block.header.sketchSalt, packet))
-
-        #Send the Sketch Hashes.
-        rpc.meros.sketchHashes(hashes)
-
       elif MessageType(msg[0]) == MessageType.SketchHashRequests:
-        if not block.body.packets:
-          raise TestError("Meros asked for Verification Packets from a Block without any.")
-
-        reqHash = msg[1 : 33]
-        if reqHash != block.header.hash:
+        if msg[1 : 33] != block.header.hash:
           raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
 
         #Create a lookup of hash to packets.
@@ -99,16 +60,23 @@ def SameInputTest(
           rpc.meros.packet(packets[sketchHash])
 
       elif MessageType(msg[0]) == MessageType.TransactionRequest:
-        reqHash = msg[1 : 33]
-
+        reqHash: bytes = msg[1 : 33]
         if reqHash not in transactions.txs:
           raise TestError("Meros asked for a non-existent Transaction.")
 
         rpc.meros.syncTransaction(transactions.txs[reqHash])
-        syncedTX = True
+
+        #Try receiving from the Live socket, where Meros sends keep-alives.
+        try:
+          if len(rpc.meros.live.recv()) != 0:
+            raise Exception()
+        except TestError:
+          raise SuccessError("Node disconnected us after we sent an invalid Transaction.")
+        except Exception:
+          raise TestError("Meros sent a keep-alive.")
 
       else:
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
   with raises(SuccessError):
-    Liver(rpc, vectors["blockchain"], transactions, callbacks={12: checkFail}).live()
+    Liver(rpc, vectors["blockchain"], transactions, callbacks={7: checkFail}).live()

@@ -74,6 +74,6 @@ result: Dict[str, Any] = {
   "blockchain": blockchain.toJSON(),
   "transactions": transactions.toJSON()
 }
-vectors: IO[Any] = open("e2e/Vectors/Transactions/SameInput.json", "w")
+vectors: IO[Any] = open("e2e/Vectors/Transactions/SameInput/Send.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()
