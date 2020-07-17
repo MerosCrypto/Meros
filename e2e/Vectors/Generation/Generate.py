@@ -10,6 +10,7 @@ import e2e.Vectors.Generation.Merit.Reorganizations.DelayedMeritHolder
 
 import e2e.Vectors.Generation.Transactions.ClaimedMint
 import e2e.Vectors.Generation.Transactions.MultiInputClaim
+import e2e.Vectors.Generation.Transactions.DifferentMeritHolderClaim
 import e2e.Vectors.Generation.Transactions.CompetingFinalized
 import e2e.Vectors.Generation.Transactions.Fifty
 import e2e.Vectors.Generation.Transactions.PruneUnaddable
