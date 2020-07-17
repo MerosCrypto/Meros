@@ -59,9 +59,9 @@ def PartialArchiveTest(
       sig = key.sign(initial).serialize()
       final: bytes = RandomX(initial + sig)
       if (
-        int.from_bytes(final, "big") *
+        int.from_bytes(final, "little") *
         difficulty
-      ) < int.from_bytes(bytes.fromhex("FF" * 32), "big"):
+      ) < int.from_bytes(bytes.fromhex("FF" * 32), "little"):
         break
       proof += 1
 

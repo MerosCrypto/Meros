@@ -26,11 +26,15 @@ proc overflows*(
   hash: HashCommon.Hash[256],
   factor: uint32 or uint64
 ): bool {.raises: [].} =
-  var original: StUInt[512]
-  original.initFromBytesBE(hash.data)
-
-  var product: array[64, byte] = (original * stuint(factor, 512)).toByteArrayBE()
+  var
+    hashCopy: array[64, byte]
+    original: StUInt[512]
   for b in 0 ..< 32:
+    hashCopy[b] = hash.data[b]
+  original = StUInt[512].fromBytesLE(hashCopy)
+
+  var product: array[64, byte] = (original * stuint(factor, 512)).toBytesLE()
+  for b in 32 ..< 64:
     if product[b] != 0:
       return true
 

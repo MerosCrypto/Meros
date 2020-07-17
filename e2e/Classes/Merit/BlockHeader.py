@@ -133,7 +133,7 @@ class BlockHeader:
     self.proof = -1
     while (
       (self.proof == -1) or
-      ((int.from_bytes(self.hash, "big") * difficulty) > int.from_bytes(bytes.fromhex("FF" * 32), "big"))
+      ((int.from_bytes(self.hash, "little") * difficulty) > int.from_bytes(bytes.fromhex("FF" * 32), "little"))
     ):
       self.proof += 1
       self.hash = RandomX(self.serializeHash())
