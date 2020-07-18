@@ -24,7 +24,7 @@ edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKey.to_bytes())
 claim.amount = merit.mints[-1].outputs[0][1]
-claim.sign([PrivateKey(0)])
+claim.sign(PrivateKey(0))
 transactions.add(claim)
 merit.add(
   PrototypeBlock(
