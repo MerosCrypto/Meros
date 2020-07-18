@@ -279,7 +279,7 @@ proc overrideMeritStatuses*(
   nick: uint16,
   statuses: string
 ) {.forceCheck: [].} =
-  if statuses.len <= (INT_LEN + BYTE_LEN):
+  if statuses.len == 0:
     db.del(MERIT_STATUSES(nick))
   else:
     db.put(MERIT_STATUSES(nick), statuses)
@@ -302,7 +302,7 @@ proc overrideLastParticipations*(
   nick: uint16,
   participations: string
 ) {.forceCheck: [].} =
-  if participations.len <= (INT_LEN + INT_LEN):
+  if participations.len == 0:
     db.del(LAST_PARTICIPATIONS(nick))
   else:
     db.put(LAST_PARTICIPATIONS(nick), participations)

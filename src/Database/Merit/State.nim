@@ -280,6 +280,10 @@ proc pruneStatusesAndParticipations*(
   state: State,
   oldAmountOfHolders: int
 ) {.forceCheck: [].} =
-  for h in 0 ..< oldAmountOfHolders:
+  for h in 0 ..< state.holders.len:
     discard state.findMeritStatus(uint16(h), state.processedBlocks, true)
     discard state.findLastParticipation(uint16(h), state.processedBlocks, true)
+
+  for h in state.holders.len ..< oldAmountOfHolders:
+    state.db.overrideMeritStatuses(uint16(h), "")
+    state.db.overrideLastParticipations(uint16(h), "")
