@@ -211,6 +211,39 @@ proc mainMerit(
 
     logDebug "Archiving Block", hash = newBlock.header.hash
 
+    #Implement https://github.com/MerosCrypto/Meros/issues/120.
+    var mrs: seq[SignedMeritRemoval] = @[]
+    for elem in elements:
+      var
+        existing: BlockElement
+        sig: BLSSignature
+      try:
+        case elem:
+          of SendDifficulty as sd:
+            existing = consensus.db.load(sd.holder, sd.nonce)
+            sig = consensus.db.loadSignature(sd.holder, sd.nonce)
+          of DataDifficulty as dd:
+            existing = consensus.db.load(dd.holder, dd.nonce)
+            sig = consensus.db.loadSignature(dd.holder, dd.nonce)
+          of MeritRemoval as _:
+            continue
+          else:
+            panic("The code implemented for issue #120 was handed an Element it doesn't recognize.")
+      except DBReadError:
+        continue
+
+      if existing.hashForMeritRemovalReason() != elem.hashForMeritRemovalReason():
+        mrs.add(
+          newSignedMeritRemoval(
+            elem.holder,
+            true,
+            elem,
+            existing,
+            sig,
+            merit[].state.holders()
+          )
+        )
+
     #Archive the Epochs.
     consensus[].archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
 
@@ -312,6 +345,17 @@ proc mainMerit(
           asyncCheck verify(wallet, functions, merit[], consensus, blockData)
         except Exception as e:
           panic("Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+
+    #Add the MeritRemovals as part of #120.
+    for mr in mrs:
+      try:
+        await functions.consensus.addSignedMeritRemoval(mr)
+      except ValueError as e:
+        panic("Created an invalid MeritRemoval out of an existing Element and an Element from a Block: " & e.msg)
+      except DataExists:
+        discard
+      except Exception as e:
+        panic("Awaiting addSignedMeritRemoval raised an Exception: " & e.msg)
 
   functions.merit.addBlock = proc (
     sketchyBlock: SketchyBlock,
