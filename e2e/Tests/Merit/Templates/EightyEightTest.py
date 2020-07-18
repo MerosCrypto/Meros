@@ -120,7 +120,7 @@ def EightyEightTest(
       template["header"][-43 : -39],
       BlockHeader.createSketchCheck(template["header"][-43 : -39], packets),
       0,
-      int.from_bytes(template["header"][-4:], byteorder="big")
+      int.from_bytes(template["header"][-4:], byteorder="little")
     ),
     BlockBody(
       packets,
@@ -146,7 +146,7 @@ def EightyEightTest(
       template["id"],
       (
         template["header"] +
-        block.header.proof.to_bytes(4, byteorder="big") +
+        block.header.proof.to_bytes(4, byteorder="little") +
         block.header.signature +
         block.body.serialize(block.header.sketchSalt, len(packets))
       ).hex()

@@ -302,7 +302,7 @@ class PrivateKey:
   ) -> None:
     #If a nickname was specified, generate a consistent Private Key based on it.
     if isinstance(key, int):
-      key = blake2b(key.to_bytes(2 if key > 255 else 1, "big"), digest_size=32).digest()
+      key = blake2b(key.to_bytes(2 if key > 255 else 1, "little"), digest_size=32).digest()
 
     key = key.rjust(48, b'\0')
     self.value: Big384 = Big384()

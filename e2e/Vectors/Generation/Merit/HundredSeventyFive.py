@@ -31,7 +31,7 @@ txs: List[Transaction] = []
 
 #Create the Claim.
 claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKey)
-claim.sign([PrivateKey(0)])
+claim.sign(PrivateKey(0))
 txs.append(claim)
 transactions.add(claim)
 

@@ -47,9 +47,9 @@ class BlockBody:
 
     result: bytes = (
       self.packetsContents +
-      capacity.to_bytes(4, "big") +
+      capacity.to_bytes(4, "little") +
       sketch.serialize() +
-      len(self.elements).to_bytes(4, "big")
+      len(self.elements).to_bytes(4, "little")
     )
 
     for elem in self.elements:

@@ -23,12 +23,12 @@ class DataDifficulty(
   def signatureSerialize(
     self
   ) -> bytes:
-    return DATA_DIFFICULTY_PREFIX + self.nonce.to_bytes(4, "big") + self.difficulty.to_bytes(4, "big")
+    return DATA_DIFFICULTY_PREFIX + self.nonce.to_bytes(4, "little") + self.difficulty.to_bytes(4, "little")
 
   def serialize(
     self
   ) -> bytes:
-    return self.holder.to_bytes(2, "big") + self.nonce.to_bytes(4, "big") + self.difficulty.to_bytes(4, "big")
+    return self.holder.to_bytes(2, "little") + self.nonce.to_bytes(4, "little") + self.difficulty.to_bytes(4, "little")
 
   def toJSON(
     self

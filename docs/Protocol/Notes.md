@@ -2,7 +2,7 @@
 
 - This documentation surrounds message types in `code brackets` and capitalizes DataTypes.
 
-- All data is serialized in big endian format.
+- All numbers are formatted as little-endian.
 - A message length limit of 8 MiB is enforced.
 
 - Ed25519 Signatures are created with a prefix of "MEROS" before the signed data. This is to stop transaction replays across networks.

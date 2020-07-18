@@ -44,7 +44,7 @@ class MeritRemoval(
     self
   ) -> bytes:
     return (
-      self.holder.to_bytes(2, "big") +
+      self.holder.to_bytes(2, "little") +
       (b'\1' if self.partial else b'\0') +
       self.e1.signatureSerialize() +
       self.e2.signatureSerialize()

@@ -79,7 +79,7 @@ def TElementTest(
       template["header"][-43 : -39],
       BlockHeader.createSketchCheck(template["header"][-43 : -39], []),
       0,
-      int.from_bytes(template["header"][-4:], byteorder="big"),
+      int.from_bytes(template["header"][-4:], byteorder="little"),
     ),
     BlockBody([], [dataDiff], dataDiff.signature)
   )
@@ -99,7 +99,7 @@ def TElementTest(
       template["id"],
       (
         template["header"] +
-        block.header.proof.to_bytes(4, byteorder="big") +
+        block.header.proof.to_bytes(4, byteorder="little") +
         block.header.signature +
         block.body.serialize(block.header.sketchSalt)
       ).hex()
@@ -147,7 +147,7 @@ def TElementTest(
       template["header"][-43 : -39],
       BlockHeader.createSketchCheck(template["header"][-43 : -39], []),
       0,
-      int.from_bytes(template["header"][-4:], byteorder="big")
+      int.from_bytes(template["header"][-4:], byteorder="little")
     ),
     BlockBody([], [mr], Signature.aggregate(signatures))
   )
@@ -166,7 +166,7 @@ def TElementTest(
       template["id"],
       (
         template["header"] +
-        block.header.proof.to_bytes(4, byteorder="big") +
+        block.header.proof.to_bytes(4, byteorder="little") +
         block.header.signature +
         block.body.serialize(block.header.sketchSalt)
       ).hex()

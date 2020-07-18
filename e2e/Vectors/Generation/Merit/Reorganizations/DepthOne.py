@@ -20,7 +20,7 @@ main.add(
 #Since the difficulty is fixed at the start, they're guaranteed to have the same amount of work.
 #Because of that, we can't just mine the Block; we need to mine it until it has a lower hash than the above Block.
 #Calculate a custom difficulty guaranteed to beat the above Block.
-hashAsInt: int = int.from_bytes(main.blockchain.blocks[-1].header.hash, "big")
+hashAsInt: int = int.from_bytes(main.blockchain.blocks[-1].header.hash, "little")
 alt.blockchain.difficulties[-1] = 0
 while (alt.blockchain.difficulties[-1] * hashAsInt).bit_length() <= 256:
   alt.blockchain.difficulties[-1] += 1

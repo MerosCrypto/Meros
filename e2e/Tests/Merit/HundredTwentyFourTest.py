@@ -86,8 +86,8 @@ def HundredTwentyFourTest(
   #Send another Handshake with the latest block as the tip.
   rpc.meros.live.send(
     MessageType.Handshake.toByte() +
-    (254).to_bytes(1, "big") +
-    (254).to_bytes(1, "big") +
+    (254).to_bytes(1, "little") +
+    (254).to_bytes(1, "little") +
     b'\0\0\0' +
     blockchain.last(),
     False
@@ -106,8 +106,8 @@ def HundredTwentyFourTest(
   rpc.meros.syncConnect(blockchain.blocks[0].header.hash)
   rpc.meros.sync.send(
     MessageType.Syncing.toByte() +
-    (254).to_bytes(1, "big") +
-    (254).to_bytes(1, "big") +
+    (254).to_bytes(1, "little") +
+    (254).to_bytes(1, "little") +
     b'\0\0\0' +
     blockchain.last(),
     False

@@ -1,5 +1,5 @@
 """
-The following, FIELD_BITS, FIELD_MODULUS, mul2, mul, and encodeSketch, are licensed as such:
+The following FIELD_BITS, FIELD_MODULUS, mul2, mul, and encodeSketch, are licensed as such:
 
 MIT License
 

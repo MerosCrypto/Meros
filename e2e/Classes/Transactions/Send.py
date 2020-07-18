@@ -18,7 +18,7 @@ class Send(
   ) -> bytes:
     result: bytes = bytes()
     for txInput in self.inputs:
-      result += txInput[0] + txInput[1].to_bytes(1, "big")
+      result += txInput[0] + txInput[1].to_bytes(1, "little")
     return result
 
   def serializeOutputs(
@@ -26,7 +26,7 @@ class Send(
   ) -> bytes:
     result: bytes = bytes()
     for output in self.outputs:
-      result += output[0] + output[1].to_bytes(8, "big")
+      result += output[0] + output[1].to_bytes(8, "little")
     return result
 
   def __init__(
@@ -41,9 +41,9 @@ class Send(
     self.hash: bytes = blake2b(
       (
         b"\2" +
-        len(self.inputs).to_bytes(1, "big") +
+        len(self.inputs).to_bytes(1, "little") +
         self.serializeInputs() +
-        len(self.outputs).to_bytes(1, "big") +
+        len(self.outputs).to_bytes(1, "little") +
         self.serializeOutputs()
       ),
       digest_size=32
@@ -78,12 +78,12 @@ class Send(
     self
   ) -> bytes:
     return (
-      len(self.inputs).to_bytes(1, "big") +
+      len(self.inputs).to_bytes(1, "little") +
       self.serializeInputs() +
-      len(self.outputs).to_bytes(1, "big") +
+      len(self.outputs).to_bytes(1, "little") +
       self.serializeOutputs() +
       self.signature +
-      self.proof.to_bytes(4, "big")
+      self.proof.to_bytes(4, "little")
     )
 
   def toJSON(

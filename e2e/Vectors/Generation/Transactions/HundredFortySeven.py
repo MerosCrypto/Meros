@@ -18,7 +18,7 @@ transactions: Transactions = Transactions()
 
 claim: Claim = Claim([(merit.mints[-1].hash, 0)], ed25519.SigningKey(b'\0' * 32).get_verifying_key().to_bytes())
 claim.amount = merit.mints[-1].outputs[0][1]
-claim.sign([PrivateKey(0)])
+claim.sign(PrivateKey(0))
 transactions.add(claim)
 
 merit.add(

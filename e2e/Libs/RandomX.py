@@ -1,7 +1,8 @@
-from typing import Any
+from typing import Dict, Any
 from ctypes import cdll, c_int, c_char, \
            Array, c_char_p, c_void_p, create_string_buffer, byref
 
+from threading import currentThread
 import os
 
 #Import the RandomX library.
@@ -31,23 +32,28 @@ RandomXLib.randomx_calculate_hash.argtypes = [c_void_p, c_char_p, c_int, c_void_
 RandomXLib.randomx_calculate_hash.restype = None
 
 flags: c_int = RandomXLib.randomx_get_flags()
-cache: c_void_p = RandomXLib.randomx_alloc_cache(flags)
-RandomXLib.randomx_init_cache(cache, None, 0)
-vm: c_void_p = RandomXLib.randomx_create_vm(flags, cache, None)
+
+caches: Dict[str, c_void_p] = {}
+vms: Dict[str, c_void_p] = {}
 
 def setRandomXKey(
   key: bytes
 ) -> None:
-  RandomXLib.randomx_init_cache(cache, c_char_p(key), c_int(len(key)))
-  RandomXLib.randomx_vm_set_cache(vm, cache)
+  name: str = currentThread().name
+  if name not in caches:
+    caches[name] = RandomXLib.randomx_alloc_cache(flags)
+    vms[name] = RandomXLib.randomx_create_vm(flags, caches[name], None)
+
+  RandomXLib.randomx_init_cache(caches[name], c_char_p(key), c_int(len(key)))
+  RandomXLib.randomx_vm_set_cache(vms[name], caches[name])
 
 def RandomX(
   data: bytes
 ) -> bytes:
-  hashResult: Array[c_char] = create_string_buffer(32)
-  RandomXLib.randomx_calculate_hash(vm, c_char_p(data), c_int(len(data)), byref(hashResult))
+  name: str = currentThread().name
+  if name not in caches:
+    raise Exception("RandomX hash called before this thread set a key.")
 
-  result: bytes = bytes()
-  for b in hashResult:
-    result += b
-  return result
+  hashResult: Array[c_char] = create_string_buffer(32)
+  RandomXLib.randomx_calculate_hash(vms[name], c_char_p(data), c_int(len(data)), byref(hashResult))
+  return bytes(hashResult)

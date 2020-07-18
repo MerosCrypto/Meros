@@ -52,7 +52,7 @@ class Sketch:
   ) -> int:
     return int.from_bytes(
       blake2b(sketchSalt + packet.serialize(), digest_size=8).digest(),
-      byteorder="big"
+      byteorder="little"
     )
 
   def add(

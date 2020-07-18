@@ -29,7 +29,7 @@ edPubKeys: List[ed25519.VerifyingKey] = [
 #Create the Claim.
 claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKeys[0].to_bytes())
 claim.amount = merit.mints[-1].outputs[0][1]
-claim.sign([PrivateKey(0)])
+claim.sign(PrivateKey(0))
 transactions.add(claim)
 merit.add(
   PrototypeBlock(

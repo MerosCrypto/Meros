@@ -1,4 +1,4 @@
-#Tests the proper handling of Transactions which spend the same input twice.
+#Tests the proper handling of Sends which spend the same input twice.
 
 from typing import Dict, List, IO, Any
 import json
@@ -22,7 +22,7 @@ from e2e.Tests.Errors import TestError, SuccessError
 def SameInputTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Transactions/SameInput.json", "r")
+  file: IO[Any] = open("e2e/Vectors/Transactions/SameInput/Send.json", "r")
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 
@@ -92,8 +92,8 @@ def SameInputTest(
           packets[Sketch.hash(block.header.sketchSalt, packet)] = packet
 
         #Look up each requested packet and respond accordingly.
-        for h in range(int.from_bytes(msg[33 : 37], byteorder="big")):
-          sketchHash: int = int.from_bytes(msg[37 + (h * 8) : 45 + (h * 8)], byteorder="big")
+        for h in range(int.from_bytes(msg[33 : 37], byteorder="little")):
+          sketchHash: int = int.from_bytes(msg[37 + (h * 8) : 45 + (h * 8)], byteorder="little")
           if sketchHash not in packets:
             raise TestError("Meros asked for a non-existent Sketch Hash.")
           rpc.meros.packet(packets[sketchHash])

@@ -27,9 +27,9 @@ def LANPeersTest(
   serverConnection.connect(("127.0.0.1", meros.tcp))
   serverConnection.send(
     MessageType.Syncing.toByte() +
-    (254).to_bytes(1, "big") +
-    (254).to_bytes(1, "big") +
-    (128).to_bytes(1, "big") + (6000).to_bytes(2, "big") +
+    (254).to_bytes(1, "little") +
+    (254).to_bytes(1, "little") +
+    (128).to_bytes(1, "little") + (6000).to_bytes(2, "little") +
     blockchain.blocks[0].header.hash,
     False
   )

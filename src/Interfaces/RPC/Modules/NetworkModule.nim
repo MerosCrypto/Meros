@@ -22,17 +22,17 @@ proc module*(
       ], async.} =
         #Verify the parameters length.
         if (params.len != 1) and (params.len != 2):
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         #Verify the paramters types.
         if params[0].kind != JString:
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         #Supply the optional port argument if needed.
         if params.len == 1:
           params.add(% DEFAULT_PORT)
         if params[1].kind != JInt:
-          raise newLoggedException(ParamError, "")
+          raise newException(ParamError, "")
 
         try:
           await functions.network.connect(params[0].getStr(), params[1].getInt())

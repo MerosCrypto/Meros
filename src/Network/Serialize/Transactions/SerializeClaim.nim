@@ -10,9 +10,11 @@ export SerializeTransaction
 
 method serializeHash*(
   claim: Claim
-): string {.inline, forceCheck: [].} =
-  "\1" &
-  claim.signature.serialize()
+): string {.forceCheck: [].} =
+  result = "\1" & $char(claim.inputs.len)
+  for input in claim.inputs:
+    result &= input.hash.serialize() & char(cast[FundedInput](input).nonce)
+  result &= cast[SendOutput](claim.outputs[0]).key.serialize()
 
 method serialize*(
   claim: Claim

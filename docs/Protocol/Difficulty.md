@@ -19,7 +19,7 @@ def spam(
     memory = 8,
     parallelism = 1,
     data = hash,
-    salt = proof left padded to be 8 bytes long
+    salt = proof right padded to be 8 bytes long
   ) * difficulty <= max
 ```
 

@@ -14,7 +14,6 @@ from e2e.Meros.Liver import Liver
 from e2e.Tests.Errors import TestError
 from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 
-
 def HundredTwentyTest(
   rpc: RPC
 ) -> None:
@@ -53,7 +52,7 @@ def HundredTwentyTest(
       raise TestError("Meros didn't create the partial Merit Removal.")
 
     #Verify Meros didn't just broadcast it, yet also added it.
-    verifyMeritRemoval(rpc, 1, 1, 0, False)
+    verifyMeritRemoval(rpc, 2, 2, 0, True)
 
   Liver(
     rpc,

@@ -68,7 +68,7 @@ class BlockHeader:
     #Hash each sketch hash to leaf length.
     leaves: List[bytes] = []
     for sketchHash in sketchHashes:
-      leaves.append(blake2b(sketchHash.to_bytes(8, byteorder="big"), digest_size=32).digest())
+      leaves.append(blake2b(sketchHash.to_bytes(8, byteorder="little"), digest_size=32).digest())
 
     return merkle(leaves)
 
@@ -76,16 +76,16 @@ class BlockHeader:
     self
   ) -> bytes:
     return (
-      self.version.to_bytes(4, "big") +
+      self.version.to_bytes(4, "little") +
       self.last +
       self.contents +
-      self.significant.to_bytes(2, "big") +
+      self.significant.to_bytes(2, "little") +
       self.sketchSalt +
       self.sketchCheck +
-      (1 if self.newMiner else 0).to_bytes(1, "big") +
-      (self.minerKey if self.newMiner else self.minerNick.to_bytes(2, "big")) +
-      self.time.to_bytes(4, "big") +
-      self.proof.to_bytes(4, "big")
+      (1 if self.newMiner else 0).to_bytes(1, "little") +
+      (self.minerKey if self.newMiner else self.minerNick.to_bytes(2, "little")) +
+      self.time.to_bytes(4, "little") +
+      self.proof.to_bytes(4, "little")
     )
 
   def rehash(
@@ -133,7 +133,7 @@ class BlockHeader:
     self.proof = -1
     while (
       (self.proof == -1) or
-      ((int.from_bytes(self.hash, "big") * difficulty) > int.from_bytes(bytes.fromhex("FF" * 32), "big"))
+      ((int.from_bytes(self.hash, "little") * difficulty) > int.from_bytes(bytes.fromhex("FF" * 32), "little"))
     ):
       self.proof += 1
       self.hash = RandomX(self.serializeHash())

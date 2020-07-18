@@ -14,6 +14,16 @@ import ../../../Network/Serialize/Consensus/[
   SerializeMeritRemoval
 ]
 
+proc hashForMeritRemovalReason*(
+  elem: Element
+): Hash[256] {.forceCheck: [].} =
+  if elem of MeritRemovalVerificationPacket:
+    result = Blake256(
+      cast[MeritRemovalVerificationPacket](elem).serializeAsVerificationWithoutHolder()
+    )
+  else:
+    result = Blake256(elem.serializeWithoutHolder())
+
 #Calculate a hash representing the reason for a MeritRemoval.
 #By making sure every Merit Removal
 # - No matter what the sub-element is packeted with.
@@ -25,22 +35,8 @@ proc calculateMeritRemovalReason*(
   element2: Element
 ): Hash[256] {.forceCheck: [].} =
   var
-    e1: Hash[256]
-    e2: Hash[256]
-
-  if element1 of MeritRemovalVerificationPacket:
-    e1 = Blake256(
-      cast[MeritRemovalVerificationPacket](element1).serializeAsVerificationWithoutHolder()
-    )
-  else:
-    e1 = Blake256(element1.serializeWithoutHolder())
-
-  if element2 of MeritRemovalVerificationPacket:
-    e2 = Blake256(
-      cast[MeritRemovalVerificationPacket](element2).serializeAsVerificationWithoutHolder()
-    )
-  else:
-    e2 = Blake256(element2.serializeWithoutHolder())
+    e1: Hash[256] = element1.hashForMeritRemovalReason()
+    e2: Hash[256] = element2.hashForMeritRemovalReason()
 
   if e2 < e1:
     var temp: Hash[256] = e2

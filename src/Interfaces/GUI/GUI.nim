@@ -44,6 +44,9 @@ proc newGUI*(
     gui = newGUIObj(toRPC, toGUI, newWebView("Meros", "", width, height))
   except Exception as e:
     panic("Couldn't create the WebView: " & e.msg)
+  if gui.webview.isNil:
+    echo "This system doesn't support running Meros with its GUI. Please start Meros with the `--no-gui` flag to continue."
+    quit(1)
 
   #Add the Bindings.
   gui.createBindings(newLoop(gui, fromMain))

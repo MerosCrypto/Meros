@@ -8,7 +8,7 @@
 - autoconf / automake / libtool _(for Minisketch)_
 - Python 3.6 and Pip _(for the tests)_
 - choosenim
-- Nim 1.2.0
+- Nim 1.2.4
 
 To install every prerequisite, run:
 
@@ -17,7 +17,7 @@ xcode-select --install
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install git cmake autoconf automake libtool python
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
-choosenim 1.2.0
+choosenim 1.2.4
 ```
 
 You will have to update your path, as according to choosenim, before running any Nim-related commands.

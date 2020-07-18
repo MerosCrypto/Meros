@@ -13,10 +13,11 @@ proc parseVerificationPacket*(
   #Amount of Verifiers | Verifiers' Nicknames | Transaction Hash
 
   #Verify the data length.
-  var verifiers: int
   if packet.len < NICKNAME_LEN:
     raise newLoggedException(ValueError, "parseVerificationPacket not handed enough data to get the amount of verifiers.")
-  verifiers = packet[0 ..< NICKNAME_LEN].fromBinary()
+  var verifiers: int = packet[0 ..< NICKNAME_LEN].fromBinary()
+  if verifiers == 0:
+    raise newLoggedException(ValueError, "Verification Packet has no Merit Holders.")
   if packet.len != NICKNAME_LEN + (verifiers * NICKNAME_LEN) + HASH_LEN:
     raise newLoggedException(ValueError, "parseVerificationPacket not handed enough data to get the verifiers and hash.")
 
@@ -37,10 +38,11 @@ proc parseMeritRemovalVerificationPacket*(
   #Amount of Verifiers | Verifiers | Transaction Hash
 
   #Verify the data length.
-  var verifiers: int
   if packet.len < NICKNAME_LEN:
     raise newLoggedException(ValueError, "parseMeritRemovalVerificationPacket not handed enough data to get the amount of verifiers.")
-  verifiers = packet[0 ..< NICKNAME_LEN].fromBinary()
+  var verifiers: int = packet[0 ..< NICKNAME_LEN].fromBinary()
+  if verifiers == 0:
+    raise newLoggedException(ValueError, "Merit Removal Verification Packet has no Merit Holders.")
   if packet.len != NICKNAME_LEN + (verifiers * BLS_PUBLIC_KEY_LEN) + HASH_LEN:
     raise newLoggedException(ValueError, "parseMeritRemovalVerificationPacket not handed enough data to get the verifiers and hash.")
 

@@ -11,6 +11,7 @@ import lib/[Errors, Util, Hash, Sketcher]
 import Wallet/[MinerWallet, Wallet]
 
 import Database/Filesystem/DB/DB
+import Database/Filesystem/DB/ConsensusDB
 import Database/Filesystem/Wallet/WalletDB
 
 import Database/Transactions/Transactions as TransactionsFile

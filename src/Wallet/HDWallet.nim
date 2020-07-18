@@ -93,7 +93,7 @@ proc derive*(
     pPublicKey: string = wallet.publicKey.serialize()
 
     #Child index, in little endian.
-    child: string = childArg.toBinary(INT_LEN).reverse()
+    child: string = childArg.toBinary(INT_LEN)
     #Is this a Hardened derivation?
     hardened: bool = childArg >= (uint32(2) ^ 31)
   for i in 0 ..< 32:
@@ -173,7 +173,7 @@ proc derive*(
   try:
     result = wallet.derive(path[0])
     for i in path[1 ..< path.len]:
-        result = result.derive(i)
+      result = result.derive(i)
   except ValueError as e:
     raise e
 
