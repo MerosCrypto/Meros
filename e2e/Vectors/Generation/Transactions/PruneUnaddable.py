@@ -17,7 +17,7 @@ dataFilter: SpamFilter = SpamFilter(5)
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-proto: PrototypeChain = PrototypeChain(1)
+proto: PrototypeChain = PrototypeChain(1, keepUnlocked=False)
 
 #Create the original Data.
 datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]

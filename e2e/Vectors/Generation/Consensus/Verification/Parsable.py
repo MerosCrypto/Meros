@@ -15,7 +15,7 @@ dataFilter: SpamFilter = SpamFilter(5)
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-proto: PrototypeChain = PrototypeChain(1)
+proto: PrototypeChain = PrototypeChain(1, keepUnlocked=False)
 
 data: Data = Data(bytes(32), edPubKey.to_bytes())
 data.signature = edPrivKey.sign(b"INVALID")
