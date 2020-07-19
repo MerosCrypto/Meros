@@ -16,7 +16,6 @@ import ../TestDatabase
 import ../Merit/TestMerit
 import CompareConsensus
 
-
 suite "ConsensusRevert":
   setup:
     var
@@ -308,12 +307,11 @@ suite "ConsensusRevert":
       var
         rewardsState: State = merit.state
         epoch: Epoch
-        incd: uint16
-        decd: int
-      (epoch, incd, decd) = merit.postProcessBlock()
+        changes: StateChanges
+      (epoch, changes) = merit.postProcessBlock()
 
       #Archive the Epochs.
-      consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
+      consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, changes)
       for tx in epoch.keys():
         finalizedStatuses[tx] = consensus.getStatus(tx)
 
@@ -626,12 +624,11 @@ suite "ConsensusRevert":
         var
           rewardsState: State = merit.state
           epoch: Epoch
-          incd: uint16
-          decd: int
-        (epoch, incd, decd) = merit.postProcessBlock()
+          changes: StateChanges
+        (epoch, changes) = merit.postProcessBlock()
 
         #Archive the Epochs.
-        consensus.archive(merit.state, blocks[b].body.packets, blocks[b].body.elements, epoch, incd, decd)
+        consensus.archive(merit.state, blocks[b].body.packets, blocks[b].body.elements, epoch, changes)
 
         #Have the Consensus handle every person who suffered a MeritRemoval.
         for removee in removed.keys():

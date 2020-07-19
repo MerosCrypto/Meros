@@ -2,83 +2,70 @@ from typing import List, IO, Any
 from hashlib import blake2b
 import json
 
-import ed25519
-from e2e.Libs.BLS import PrivateKey, PublicKey, Signature
+from ed25519 import SigningKey
+from e2e.Libs.BLS import PrivateKey
 
-from e2e.Classes.Merit.Block import Block
-from e2e.Classes.Merit.BlockBody import BlockBody
-from e2e.Classes.Merit.BlockHeader import BlockHeader
-from e2e.Classes.Merit.Blockchain import Blockchain
+from e2e.Classes.Transactions.Transactions import Transaction, Claim, Send, \
+                                                  Transactions
 
-from e2e.Classes.Consensus.SpamFilter import SpamFilter
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
+from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
-from e2e.Classes.Transactions.Data import Data
-from e2e.Classes.Transactions.Transactions import Transactions
+from e2e.Classes.Merit.Merit import Merit
 
-blockchain: Blockchain = Blockchain()
-dataFilter: SpamFilter = SpamFilter(5)
+from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock, PrototypeChain
+
+edPrivKey: SigningKey = SigningKey(blake2b(b"\0", digest_size=32).digest())
+edPubKey: bytes = edPrivKey.get_verifying_key().to_bytes()
+
+spamFilter: SpamFilter = SpamFilter(3)
+
+#Grab a Blockchain with a Mint available.
+merit: Merit = PrototypeChain.withMint()
+
 transactions: Transactions = Transactions()
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+#Used to get the most recent output to spend.
+txs: List[Transaction] = []
 
-blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
-blsPubKey: PublicKey = blsPrivKey.toPublicKey()
+#Create the Claim.
+claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKey)
+claim.sign(PrivateKey(0))
+txs.append(claim)
+transactions.add(claim)
 
-block: Block = Block(
-  BlockHeader(
-    0,
-    blockchain.last(),
-    bytes(32),
-    1,
-    bytes(4),
-    bytes(32),
-    blsPubKey.serialize(),
-    blockchain.blocks[-1].header.time + 1200
-  ),
-  BlockBody()
+#Create a Verification for this Claim.
+verif: SignedVerification = SignedVerification(claim.hash)
+verif.sign(0, PrivateKey(0))
+
+#Create two Sends, so the missing packets exceeds the capacity.
+#This and the above Verification are used to actually test #175.
+for s in range(2):
+  send: Send = Send(
+    [(txs[-1].hash, 0)],
+    [(edPubKey, merit.mints[-1].outputs[0][1])]
+  )
+  send.sign(edPrivKey)
+  send.beat(spamFilter)
+  txs.append(send)
+  transactions.add(send)
+
+#Manually add the next Block.
+#This wouldn't be needed if we could convert the Merit to a PrototypeChain.
+#That said, this is easier than writing that algorithm.
+#This remains true despite multiple generators needing this.
+merit.blockchain.add(
+  PrototypeBlock(
+    merit.blockchain.blocks[-1].header.time + 1200,
+    [VerificationPacket(tx.hash, [0]) for tx in txs]
+  ).finish(0, merit)
 )
-block.mine(blsPrivKey, blockchain.difficulty())
-blockchain.add(block)
-
-data = Data(b"", b"")
-svs: List[SignedVerification] = []
-packets: List[VerificationPacket] = []
-for d in range(0, 3):
-  if d == 0:
-    data = Data(bytes(32), edPubKey.to_bytes())
-  else:
-    data = Data(data.hash, edPubKey.to_bytes())
-  data.sign(edPrivKey)
-  data.beat(dataFilter)
-  transactions.add(data)
-
-  svs.append(SignedVerification(data.hash))
-  svs[-1].sign(0, blsPrivKey)
-  packets.append(VerificationPacket(data.hash, [0]))
-
-block = Block(
-  BlockHeader(
-    0,
-    blockchain.last(),
-    BlockHeader.createContents(packets),
-    1,
-    bytes(4),
-    BlockHeader.createSketchCheck(bytes(4), packets),
-    0,
-    blockchain.blocks[-1].header.time + 1200
-  ),
-  BlockBody(packets, [], Signature.aggregate([svs[0].signature, svs[1].signature, svs[2].signature]))
-)
-block.mine(blsPrivKey, blockchain.difficulty())
-blockchain.add(block)
 
 vectors: IO[Any] = open("e2e/Vectors/Merit/HundredSeventyFive.json", "w")
 vectors.write(json.dumps({
-  "blockchain": blockchain.toJSON(),
+  "blockchain": merit.toJSON(),
   "transactions": transactions.toJSON(),
-  "verification": svs[0].toSignedJSON()
+  "verification": verif.toSignedJSON()
 }))
 vectors.close()

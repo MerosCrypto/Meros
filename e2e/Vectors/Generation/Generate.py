@@ -1,20 +1,26 @@
 #pylint: disable=unused-import
 
 import e2e.Vectors.Generation.Merit.BlankBlocks
-import e2e.Vectors.Generation.Merit.StateBlocks
+import e2e.Vectors.Generation.Merit.State
+import e2e.Vectors.Generation.Merit.Difficulty
 import e2e.Vectors.Generation.Merit.HundredSeventyFive
 import e2e.Vectors.Generation.Merit.HundredEightySeven
+
+import e2e.Vectors.Generation.Merit.LockedMerit.KeepUnlocked
+import e2e.Vectors.Generation.Merit.LockedMerit.LocksUnlocks
+import e2e.Vectors.Generation.Merit.LockedMerit.PendingDieRegain
+
 import e2e.Vectors.Generation.Merit.Reorganizations.DepthOne
 import e2e.Vectors.Generation.Merit.Reorganizations.LongerChainMoreWork
 import e2e.Vectors.Generation.Merit.Reorganizations.ShorterChainMoreWork
 import e2e.Vectors.Generation.Merit.Reorganizations.DelayedMeritHolder
 
-import e2e.Vectors.Generation.Transactions.ClaimedMint
 import e2e.Vectors.Generation.Transactions.MultiInputClaim
 import e2e.Vectors.Generation.Transactions.DifferentMeritHolderClaim
 import e2e.Vectors.Generation.Transactions.CompetingFinalized
-import e2e.Vectors.Generation.Transactions.Fifty
 import e2e.Vectors.Generation.Transactions.PruneUnaddable
+import e2e.Vectors.Generation.Transactions.Fifty
+import e2e.Vectors.Generation.Transactions.HundredFortySeven
 
 import e2e.Vectors.Generation.Transactions.SameInput.SISend
 import e2e.Vectors.Generation.Transactions.SameInput.SIClaim
@@ -27,6 +33,7 @@ import e2e.Vectors.Generation.Consensus.Verification.HundredFortyTwo
 
 import e2e.Vectors.Generation.Consensus.Difficulties.SendDifficulty
 import e2e.Vectors.Generation.Consensus.Difficulties.DataDifficulty
+import e2e.Vectors.Generation.Consensus.Difficulties.LockedMeritDifficulties
 
 import e2e.Vectors.Generation.Consensus.MeritRemoval.SameNonce
 import e2e.Vectors.Generation.Consensus.MeritRemoval.VerifyCompeting

@@ -29,7 +29,6 @@ for b in range(1, 3):
   )
   block.mine(privKey, blockchain.difficulty())
   blockchain.add(block)
-  print("Generated Hundred Eighty Seven Block " + str(b) + ".")
 
 vectors: IO[Any] = open("e2e/Vectors/Merit/HundredEightySeven.json", "w")
 vectors.write(json.dumps(blockchain.toJSON()))

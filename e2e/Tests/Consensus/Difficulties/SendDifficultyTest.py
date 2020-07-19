@@ -21,7 +21,7 @@ def SendDifficultyTest(
 
   #Verify functions.
   vddStarting: Callable[[], None] = lambda: verifySendDifficulty(rpc, 3)
-  vddEarnedVote: Callable[[], None] = lambda: verifySendDifficulty(rpc, 5)
+  vddEarnedVote: Callable[[], None] = lambda: verifySendDifficulty(rpc, 2)
   vddVoted: Callable[[], None] = lambda: verifySendDifficulty(rpc, 1)
   def vmr() -> None:
     verifyMeritRemoval(rpc, 52, 52, 0, False)

@@ -46,7 +46,6 @@ for h in range(2):
   )
   block.mine(blsPrivKeys[h], blockchain.difficulty())
   blockchain.add(block)
-  print("Generated Partial Archive Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a Data and two Signed Verifications.
 data: Data = Data(bytes(32), edPubKey.to_bytes())
@@ -77,7 +76,6 @@ block = Block(
 )
 block.mine(blsPrivKeys[0], blockchain.difficulty())
 blockchain.add(block)
-print("Generated Partial Archive Block " + str(len(blockchain.blocks)) + ".")
 
 vectors: IO[Any] = open("e2e/Vectors/Consensus/Verification/PartialArchive.json", "w")
 vectors.write(json.dumps({

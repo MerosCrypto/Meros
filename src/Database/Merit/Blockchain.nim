@@ -118,7 +118,9 @@ proc revert*(
   state: var State,
   height: int
 ) {.forceCheck: [].} =
+  var oldAmountOfHolders: int = state.holders.len
   state.revert(blockchain, height)
+  state.pruneStatusesAndParticipations(oldAmountOfHolders)
 
   #Miners we changed the Merit of.
   var changedMerit: HashSet[uint16] = initHashSet[uint16]()

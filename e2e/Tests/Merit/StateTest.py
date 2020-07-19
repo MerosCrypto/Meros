@@ -1,3 +1,7 @@
+#Tests incremental Merit addition/death over time.
+#These are the most fundamental part of the State and required by both codebases to work perfectly.
+#Doesn't test Merit Removals or any MeritStatus other than Unlocked.
+
 from typing import Dict, List, IO, Any
 import json
 
@@ -12,7 +16,7 @@ from e2e.Tests.Errors import TestError
 def StateTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/StateBlocks.json", "r")
+  file: IO[Any] = open("e2e/Vectors/Merit/State.json", "r")
   blocks: List[Dict[str, Any]] = json.loads(file.read())
   file.close()
 
@@ -24,12 +28,17 @@ def StateTest(
   ) -> None:
     state.add(blockchain, block)
 
-    for miner in state.unlocked:
+    meritSum: int = 0
+    for miner in range(len(state.balances)):
+      meritSum += state.balances[miner]
       if rpc.call("merit", "getMerit", [miner]) != {
-        "unlocked": True,
+        "status": "Unlocked",
         "malicious": False,
-        "merit": state.unlocked[miner]
+        "merit": state.balances[miner]
       }:
         raise TestError("Merit doesn't match.")
+
+    if meritSum != min(block, state.lifetime):
+      raise TestError("Merit sum is invalid.")
 
   Liver(rpc, blocks, everyBlock=checkState).live()

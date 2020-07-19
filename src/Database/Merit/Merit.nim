@@ -46,12 +46,12 @@ proc processBlock*(
 #Updates the State and Epochs. Needed due to how the TX/Consensus DAG flow.
 proc postProcessBlock*(
   merit: Merit
-): (Epoch, uint16, int) {.forceCheck: [].} =
+): (Epoch, StateChanges) {.forceCheck: [].} =
   #Have the Epochs process the Block and return the popped Epoch.
   result[0] = merit.epochs.shift(merit.blockchain.tail)
 
-  #Have the state process the block.
-  (result[1], result[2]) = merit.state.processBlock(merit.blockchain)
+  #Have the State process the block.
+  result[1] = merit.state.processBlock(merit.blockchain)
 
 #Theoretically revert the chain, returning the affected miners/holders.
 proc revertMinersAndHolders*(

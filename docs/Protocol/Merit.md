@@ -70,7 +70,7 @@ The genesis Block on the Meros mainnet Blockchain has a:
 
 ### Checkpoint Data Type
 
-Checkpoints mitigate 51% attacks. By requiring the majority of Merit Holders, by weight, to agree on every 5th block, and not allowing the Blockchain to advance without a Checkpoint, a 51% attack would need to have not just 51% of the hash power, but 51% of the Merit. In order to obtain that much Merit, an attacker would need to sustain the attack for an entire year. Checkpoints do not stop chain reorganizations.
+Checkpoints mitigate 51% attacks. By requiring the majority of Merit Holders, by weight, to agree on every 5th block (including the genesis), and not allowing the Blockchain to advance without a Checkpoint, a 51% attack would need to have not just 51% of the hash power, but 51% of the Merit. In order to obtain that much Merit, an attacker would need to sustain the attack for an entire year. Checkpoints do not stop chain reorganizations.
 
 Checkpoints have the following fields:
 
@@ -103,7 +103,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - sketchCheck is the result of a properly constructed Merkle tree.
 - Every Verification Packet is for an unique Transaction.
 - Every Verification Packet only contains new Verifications.
-- Every Verification Packet's Merit is greater than significant.
+- Every Verification Packet's Merit is greater than significant, where Merit is the current Merit balance ignoring its status of Unlocked/Locked/Pending.
 - Every Transaction's predecessors have Verification Packets either archived or in this Block.
 - Every Transaction either has yet to enter Epochs or is in Epochs.
 - Every Transaction doesn't compete with, or have parents which competed with and lost, finalized Transactions.
@@ -149,7 +149,7 @@ for holder in scores:
 
 If any scores happen to be 0, they are removed. If the sum of every score is less than 1000, the Merit Holder with the top score receives the difference between 1000 and the sum of the scores. A negative sigmoid which uses the Block’s difficulty for its x value produces a multiplier. Mints are then queued for each Merit Holder, in order, with an amount of `score * multiplier`. After 10 more Blocks, the mints are added to the Transactions.
 
-After Mints are decided, the Block's miner gets 1 Merit. If this is the miner's initial Merit, this is Unlocked Merit. If a Merit Holder loses all their Merit and then regains Merit, the regained Merit counts as "initial" Merit. If the new Merit Holder doesn't publish any Elements which get archived in a Block, for an entire Checkpoint period, not including the Checkpoint period in which they get their initial Merit, their Merit is locked. To restore their Merit to unlocked, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Unlocked Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Unlocked Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 52560 Merit.
+After Mints are decided, the Block's miner gets 1 Merit. If this is the miner's initial Merit, this is Unlocked Merit. If a Merit Holder loses all their Merit and then regains Merit, the regained Merit counts as initial Merit. If a Merit Holder, whose Merit is unlocked, doesn't publish any Elements which get archived for an entire Checkpoint period, not including the Checkpoint period in which they gain their initial Merit, their Merit becomes locked. To restore their Merit to unlocked, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Unlocked Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Unlocked Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 52560 Merit.
 
 The created Data happens after Block addition the rest of Block addition is completed, using an input of the genesis hash and the new Block's hash as its data. It gets no special status in how its verified/placed into Epochs/finalized. That said, it cannot compete with other Datas created from Block addition, and has no value in being broadcasted, as every node will create a Data with the same hash. The purpose of this is to make sure Merit Holders always have something to verify, which is important for two reasons:
 
@@ -160,7 +160,7 @@ The created Data happens after Block addition the rest of Block addition is comp
 
 ### Checkpoint
 
-Every Block where the remainder of the BlockHeader's nonce divided by 5 is 0 has a corresponding Checkpoint. The Checkpoint's signers must represent a majority of the Unlocked Merit and Pending Merit, and the signature is the aggregate signature of every signer's signature of the Block hash. Without a Checkpoint at the proper location, a Blockchain cannot advance.
+Every Block whose height modulo 5 is 0 has a corresponding Checkpoint. The Checkpoint's signers must represent a majority of the Unlocked and Pending Merit, where the signature is created by signing the Block hash. Without a Checkpoint, a Blockchain cannot advance.
 
 Even with Checkpoints, Blockchain reorganizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the Blockchain whose tail Block has the lower hash is the proper Blockchain.
 

@@ -34,7 +34,6 @@ blank: Block = Block(
 )
 blank.mine(blsPrivKey, blockchain.difficulty())
 blockchain.add(blank)
-print("Generated Two Hundred Four Block 1.")
 
 #Generate a Block which has a VP with no holders.
 vp: VerificationPacket = VerificationPacket(b'z' * 32, [])
@@ -54,7 +53,6 @@ blocks.append(
   )
 )
 blocks[-1].mine(blsPrivKey, blockchain.difficulty())
-print("Generated Two Hundred Four Block 2.")
 
 #Generate a Block which has a MR VP with no holders.
 mr: MeritRemoval = MeritRemoval(
@@ -79,7 +77,6 @@ blocks.append(
   )
 )
 blocks[-1].mine(blsPrivKey, blockchain.difficulty())
-print("Generated Two Hundred Four Block 3.")
 
 result: Dict[str, Any] = {
   "blank": blank.toJSON(),

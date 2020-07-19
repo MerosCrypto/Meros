@@ -65,7 +65,6 @@ for data in datas:
   )
   block.mine(blsPrivKey, merit.blockchain.difficulty())
   merit.add(block)
-  print("Generated Multi-Input Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 #Generate another 5 Blocks to close the Epochs.
 for _ in range(5):
@@ -84,7 +83,6 @@ for _ in range(5):
   )
   block.mine(blsPrivKey, merit.blockchain.difficulty())
   merit.add(block)
-  print("Generated Multi-Input Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 #Create the Claim.
 claim: Claim = Claim(
@@ -115,7 +113,6 @@ block = Block(
 )
 block.mine(blsPrivKey, merit.blockchain.difficulty())
 merit.add(block)
-print("Generated Multi-Input Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 result: Dict[str, Any] = {
   "blockchain": merit.blockchain.toJSON(),

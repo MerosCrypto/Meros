@@ -79,14 +79,14 @@ proc newConsensusObj*(
   for h in 0 ..< state.holders.len:
     #Reload the filters.
     try:
-      result.filters.send.update(uint16(h), state[uint16(h), state.processedBlocks], result.db.loadSendDifficulty(uint16(h)))
+      result.filters.send.update(state, uint16(h), result.db.loadSendDifficulty(uint16(h)))
     except DBReadError:
       #Happens when the holder never set a SendDifficulty.
       discard
 
     #In a different block in case they set a data difficulty but not a send difficulty.
     try:
-      result.filters.data.update(uint16(h), state[uint16(h), state.processedBlocks], result.db.loadDataDifficulty(uint16(h)))
+      result.filters.data.update(state, uint16(h), result.db.loadDataDifficulty(uint16(h)))
     except DBReadError:
       discard
 
@@ -332,7 +332,7 @@ proc calculateMerit*(
     The protocol 'threshold' is whatever transaction has the most Merit out of all that spend an input.
     ]#
     if status.merit != -1:
-      threshold = state.protocolThresholdAt(state.processedBlocks)
+      threshold = state.protocolThreshold()
     #Grab the node's threshold.
     else:
       threshold = state.nodeThresholdAt(status.epoch)
@@ -437,7 +437,7 @@ proc finalize*(
   The Transaction with the most Merit out of associated Transactions (Transactions which spend the same inputs) is verified.
   If it's not actually verified, correct this.
   ]#
-  if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):
+  if (status.verified) and (status.merit < state.protocolThreshold()):
     #If it's now unverified, unverify the tree.
     consensus.unverify(hash, status)
   #If it wasn't verified, run calculateMerit.

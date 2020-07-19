@@ -34,13 +34,7 @@ suite "Revert":
       mining: Block
 
     #Create the initial state.
-    states.add(
-      newState(
-        db,
-        7,
-        blockchain
-      )
-    )
+    states.add(newState(db, 7, blockchain))
 
     #Iterate over 20 'rounds'.
     for _ in 1 .. 20:
@@ -99,8 +93,8 @@ suite "Revert":
     var
       copy: State
       reloaded: State
-    for s in 1 ..< states.len:
-      var revertTo: int = rand(s - 1) + 1
+    for s in 2 ..< states.len:
+      var revertTo: int = max(rand(s - 1), 1)
       copy = states[s]
       copy.revert(blockchain, states[revertTo].processedBlocks)
       compare(copy, states[revertTo])
@@ -111,7 +105,7 @@ suite "Revert":
     #Manually set the RandomX instance to null to make sure it's GC'able.
     blockchain.rx = nil
 
-  lowFuzzTest "Chained reversions.":
+  midFuzzTest "Chained reversions.":
     var
       copy: State
       reloaded: State

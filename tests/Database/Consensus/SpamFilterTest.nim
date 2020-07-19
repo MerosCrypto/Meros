@@ -5,6 +5,7 @@ import tables
 
 import ../../../src/lib/Util
 
+import ../../../src/Database/Merit/objects/StateObj
 import ../../../src/Database/Consensus/objects/SpamFilterObj
 
 import ../../Fuzzed
@@ -22,7 +23,7 @@ suite "SpamFilter":
   setup:
     var
       #Holder -> Merit.
-      merit: Table[uint16, int]
+      merit: seq[int]
       #List of Difficulties in play, along with their summed votes.
       difficulties: seq[VotedDifficultyTest] = @[]
       filter: SpamFilter = newSpamFilterObj(INITIAL_DIFFICULTY)
@@ -31,13 +32,37 @@ suite "SpamFilter":
     check filter.difficulty == INITIAL_DIFFICULTY
 
   noFuzzTest "Verify adding 0 votes doesn't change the initial difficulty.":
-    filter.update(0, 49, OTHER_DIFFICULTY)
+    filter.update(
+      State(
+        merit: @[49],
+        statuses: @[MeritStatus.Unlocked]
+      ),
+      0,
+      OTHER_DIFFICULTY
+    )
     check filter.difficulty == INITIAL_DIFFICULTY
 
   noFuzzTest "Add 1 vote and remove it via a decrement.":
-    filter.update(0, 50, OTHER_DIFFICULTY)
+    filter.update(
+      State(
+        merit: @[50],
+        statuses: @[MeritStatus.Unlocked]
+      ),
+      0,
+      OTHER_DIFFICULTY
+    )
     check filter.difficulty == OTHER_DIFFICULTY
-    filter.handleBlock(1, 1, 0, 49)
+    filter.handleBlock(
+      State(
+        merit: @[49, 1],
+        statuses: @[MeritStatus.Unlocked, MeritStatus.Unlocked]
+      ),
+      StateChanges(
+        incd: 1,
+        decd: 0
+      ),
+      initTable[uint16, uint32]()
+    )
     check:
       filter.difficulty == INITIAL_DIFFICULTY
       filter.left == 0
@@ -45,7 +70,14 @@ suite "SpamFilter":
       filter.medianPos == -1
 
   noFuzzTest "Add 1 vote and remove it via a MeritRemoval.":
-    filter.update(0, 50, OTHER_DIFFICULTY)
+    filter.update(
+      State(
+        merit: @[50],
+        statuses: @[MeritStatus.Unlocked]
+      ),
+      0,
+      OTHER_DIFFICULTY
+    )
     check filter.difficulty == OTHER_DIFFICULTY
     filter.remove(0, 50)
     check:
@@ -57,7 +89,11 @@ suite "SpamFilter":
   highFuzzTest "Verify.":
     #Create a random amount of holders.
     for h in 0 ..< rand(50) + 2:
-      merit[uint16(h)] = 0
+      merit.add(0)
+
+    var fauxStatuses: seq[MeritStatus] = @[]
+    for _ in 0 ..< merit.len:
+      fauxStatuses.add(MeritStatus.Unlocked)
 
     #Iterate over 10000 actions.
     for a in 0 ..< 10000:
@@ -67,7 +103,7 @@ suite "SpamFilter":
         var
           holder: uint16 = uint16(rand(merit.len - 1))
           difficulty: uint32
-        if merit[uint16(holder)] < 50:
+        if merit[int(holder)] < 50:
           continue
 
         #Remove the holder from the existing difficulty.
@@ -84,11 +120,11 @@ suite "SpamFilter":
               difficulties[d].holders.del(h)
               continue
 
-            if merit[difficulties[d].holders[h]] div 50 == 0:
+            if merit[int(difficulties[d].holders[h])] div 50 == 0:
               difficulties[d].holders.del(h)
               continue
 
-            diffVotes += merit[difficulties[d].holders[h]] div 50
+            diffVotes += merit[int(difficulties[d].holders[h])] div 50
             inc(h)
 
           if diffVotes == 0:
@@ -125,26 +161,54 @@ suite "SpamFilter":
           ))
 
         #Update the difficulty.
-        filter.update(holder, merit[uint16(holder)], difficulty)
+        filter.update(
+          State(
+            merit: merit,
+            statuses: fauxStatuses
+          ),
+          holder,
+          difficulty
+        )
         break
 
       #Increment a holder's Merit.
       if a < 5000:
         var incd: uint16 = uint16(rand(merit.len - 1))
-        merit[incd] += 1
+        merit[int(incd)] += 1
 
-        filter.handleBlock(incd, merit[incd])
+        filter.handleBlock(
+          State(
+            merit: merit,
+            statuses: fauxStatuses
+          ),
+          StateChanges(
+            incd: incd,
+            decd: -1
+          ),
+          initTable[uint16, uint32]()
+        )
+
       #Increment and decrement holders' Merit.
       else:
         var
           incd: uint16 = uint16(rand(merit.len - 1))
-          decd: uint16 = uint16(rand(merit.len - 1))
+          decd: int = rand(merit.len - 1)
         while merit[decd] == 0:
-          decd = uint16(rand(merit.len - 1))
-        merit[incd] += 1
+          decd = rand(merit.len - 1)
+        merit[int(incd)] += 1
         merit[decd] -= 1
 
-        filter.handleBlock(incd, merit[incd], decd, merit[decd])
+        filter.handleBlock(
+          State(
+            merit: merit,
+            statuses: fauxStatuses
+          ),
+          StateChanges(
+            incd: incd,
+            decd: decd
+          ),
+          initTable[uint16, uint32]()
+        )
 
         #Remove holders/difficulties which no longer have votes.
         var
@@ -155,11 +219,11 @@ suite "SpamFilter":
           h = 0
           diffVotes = 0
           while h < difficulties[d].holders.len:
-            if merit[difficulties[d].holders[h]] div 50 == 0:
+            if merit[int(difficulties[d].holders[h])] div 50 == 0:
               difficulties[d].holders.del(h)
               continue
 
-            diffVotes += merit[difficulties[d].holders[h]] div 50
+            diffVotes += merit[int(difficulties[d].holders[h])] div 50
             inc(h)
 
           if diffVotes == 0:
@@ -170,8 +234,8 @@ suite "SpamFilter":
       #Remove Merit from a holder.
       if rand(1000) == 0:
         var holder: uint16 = uint16(rand(merit.len - 1))
-        filter.remove(holder, merit[holder])
-        merit[holder] = 0
+        filter.remove(holder, merit[int(holder)])
+        merit[int(holder)] = 0
 
         block removeHolder:
           var
@@ -212,7 +276,7 @@ suite "SpamFilter":
       for d in 0 ..< difficulties.len:
         var sum: int = 0
         for h in difficulties[d].holders:
-          sum += merit[h] div 50
+          sum += merit[int(h)] div 50
 
         for _ in 0 ..< sum:
           unweighted.add(difficulties[d].difficulty)

@@ -57,7 +57,6 @@ block: Block = Block(
 )
 block.mine(blsPrivKeys[1], merit.blockchain.difficulty())
 merit.add(block)
-print("Generated Different Merit Holder Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 #Create a Data.
 data: Data = Data(bytes(32), edPubKey.to_bytes())
@@ -93,7 +92,6 @@ block = Block(
 )
 block.mine(blsPrivKeys[0], merit.blockchain.difficulty())
 merit.add(block)
-print("Generated Different Merit Holder Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 #Generate another 5 Blocks to close the Epochs.
 for _ in range(5):
@@ -112,7 +110,6 @@ for _ in range(5):
   )
   block.mine(blsPrivKeys[1], merit.blockchain.difficulty())
   merit.add(block)
-  print("Generated Different Merit Holder Claim Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 #Split the chain at this point.
 #One Blockchain should use a Claim signed by key 0.
@@ -150,7 +147,6 @@ for m in range(2):
   )
   block.mine(blsPrivKeys[0], merit.blockchain.difficulty())
   merits[m].add(block)
-  print("Generated Different Merit Holder Claim Block " + str(len(merit.blockchain.blocks) + m) + ".")
 
 result: Dict[str, Any] = {
   "blockchains": [merits[0].toJSON(), merits[1].toJSON()],

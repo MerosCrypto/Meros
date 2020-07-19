@@ -1,3 +1,5 @@
+import deques
+
 #Hash is imported so we can print them in error messages; not because we mutate or check them.
 import ../../lib/[Errors, Hash]
 import ../../Wallet/MinerWallet
@@ -10,22 +12,32 @@ import objects/BlockchainObj
 import BlockHeader, Block
 
 import objects/StateObj
-export StateObj
+export MeritStatus, StateObj.State, StateChanges, `[]`, reverseLookup, loadCounted
 
 proc getNickname(
   state: var State,
   blockArg: Block,
-  newBlock: bool = false
+  newBlock: bool = false,
+  callNew: bool = false
 ): uint16 {.forceCheck: [].} =
   if blockArg.header.newMiner:
     try:
       result = state.reverseLookup(blockArg.header.minerKey)
     except IndexError:
+      #Call new is not used here because we always want to create a holder when dealing with a new key.
       if newBlock:
-        return state.newHolder(blockArg.header.minerKey)
+        result = state.newHolder(blockArg.header.minerKey)
+        return
       panic($blockArg.header.minerKey & " in Block " & $blockArg.header.hash & " doesn't have a nickname.")
   else:
     result = blockArg.header.minerNick
+
+  #If this a holder with no Merit, who is regaining Merit, re-register them.
+  if callNew and (state.merit[result] == 0):
+    #Work around for the fact getNickname is called before we increase processedBlocks.
+    inc(state.processedBlocks)
+    state.newHolder(result)
+    dec(state.processedBlocks)
 
 #Get the next removal which will happen.
 proc cacheNextRemoval(
@@ -51,14 +63,14 @@ proc cacheNextRemoval(
     var removals: seq[int] = state.loadHolderRemovals(nick)
     for removal in removals:
       if (removal < height) and (removal >= nonce):
-        state.pendingRemovals.add(-1)
+        state.pendingRemovals.addLast(-1)
         return
 
     #Add the nickname.
-    state.pendingRemovals.add(int(nick))
+    state.pendingRemovals.addLast(int(nick))
   #Else, mark that there isn't a removal.
   else:
-    state.pendingRemovals.add(-1)
+    state.pendingRemovals.addLast(-1)
 
 proc newState*(
   db: DB,
@@ -72,49 +84,128 @@ proc newState*(
 proc processBlock*(
   state: var State,
   blockchain: Blockchain
-): (uint16, int) {.forceCheck: [].} =
+): StateChanges {.forceCheck: [].} =
   logDebug "State processing Block", hash = blockchain.tail.header.hash
 
-  #Init the result.
-  result = (uint16(0), int(state.pendingRemovals[0]))
+  try:
+    result.decd = state.pendingRemovals.popFirst()
+  except IndexError as e:
+    panic("Couldn't pop the pending Dead Merit removal: " & e.msg)
 
-  #Get the next pending removal and delete the current one.
+  #Get the next Merit about to die.
   state.cacheNextRemoval(blockchain, blockchain.height)
-  state.pendingRemovals.delete(0)
 
   #Grab the new Block.
   var newBlock: Block = blockchain.tail
 
-  #Save the amount of Unlocked Merit.
-  state.saveUnlocked()
+  #Save the Merit amounts.
+  state.saveMerits()
 
   #Add the miner's Merit to the State.
-  var nick: uint16 = state.getNickname(newBlock, true)
-  result[0] = nick
-  state[nick] = state[nick, state.processedBlocks] + 1
+  var nick: uint16 = state.getNickname(newBlock, true, true)
+  result.incd = nick
+  state[nick] = state.merit[nick] + 1
+  inc(state.total)
+  if state.statuses[nick] != MeritStatus.Locked:
+    inc(state.counted)
+    if state.statuses[nick] == MeritStatus.Pending:
+      inc(state.pending)
 
   #If there was a removal, decrement their Merit.
-  if result[1] != -1:
-    state[uint16(result[1])] = state[uint16(result[1]), state.processedBlocks] - 1
+  if result.decd != -1:
+    state[uint16(result.decd)] = state.merit[result.decd] - 1
+    dec(state.total)
+    if state.statuses[nick] != MeritStatus.Locked:
+      dec(state.counted)
+      if state.statuses[nick] == MeritStatus.Pending:
+        dec(state.pending)
+
+  var participants: set[uint16]
+  for packet in newBlock.body.packets:
+    for holder in packet.holders:
+      participants.incl(holder)
 
   #Remove Merit from Merit Holders who had their Merit Removals archived in this Block.
   for elem in newBlock.body.elements:
+    participants.incl(elem.holder)
     if elem of MeritRemoval:
       state.remove(elem.holder, blockchain.height - 1)
 
   #Increment the amount of processed Blocks.
   inc(state.processedBlocks)
 
-  #Save the amount of Unlocked Merit for the next Block.
+  #Update every holder's Merit Status.
+  for h in 0 ..< state.statuses.len:
+    #Provide a clean status for a Merit Holder whose Merit died/was removed.
+    if state.merit[h] == 0:
+      state.statuses[h] = MeritStatus.Unlocked
+      state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
+      continue
+
+    if participants.contains(uint16(h)):
+      #Use the higher value to handle buffer periods.
+      state.lastParticipation[h] = max(state.processedBlocks, state.lastParticipation[h])
+      state.db.appendLastParticipation(uint16(h), blockchain.height, state.lastParticipation[h])
+
+    case state.statuses[h]:
+      of MeritStatus.Unlocked:
+        #[
+        Their Merit becomes locked if it's been a complete Checkpoint period.
+        This doesn't mean 5 Blocks; it means a whole unique period.
+        ]#
+        var blocksOfInactivity: int = 10 - (state.lastParticipation[h] mod 5)
+        #[
+        If a Merit Holder participated in Block 5, which created a Checkpoint,
+        and Block 10 passes, that'a difference of 5 and an entire period of inactivity.
+        We could also use a mod 5 + 5, but this is cleaner.
+        ]#
+        if blocksOfInactivity == 10:
+          blocksOfInactivity = 5
+
+        #If the Merit Holder is inactive, lock their Merit.
+        if state.processedBlocks - state.lastParticipation[h] == blocksOfInactivity:
+          logInfo "Locking Merit", holder = h
+          state.counted -= state.merit[h]
+          state.statuses[h] = MeritStatus.Locked
+          state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
+          result.locked.add(uint16(h))
+
+      of MeritStatus.Locked:
+        #Move their Merit to Pending if they had an Element archived.
+        if participants.contains(uint16(h)):
+          logInfo "Starting to unlock Merit", holder = h
+          state.statuses[h] = MeritStatus.Pending
+          state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
+          state.pending += state.merit[h]
+          #Start requiring a higher threshold now.
+          state.counted += state.merit[h]
+
+          #Set the lastParticipation Block to when their Merit should become unlocked again.
+          state.lastParticipation[h] = state.processedBlocks + (10 - (state.processedBlocks mod 5))
+          state.db.appendLastParticipation(uint16(h), blockchain.height, state.lastParticipation[h])
+          result.pending.add(uint16(h))
+
+      of MeritStatus.Pending:
+        #If the current Block is their Block of lastParticipation, their buffer period is over.
+        #That means their Merit becomes Unlocked.
+        if state.lastParticipation[h] == state.processedBlocks:
+          logInfo "Unlocking Merit", holder = h
+          state.pending -= state.merit[h]
+          state.statuses[h] = MeritStatus.Unlocked
+          state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
+
+  #Save the Merit amounts for the next Block.
   #This will be overwritten when we process the next Block, yet is needed for some statuses.
-  state.saveUnlocked()
+  state.saveMerits()
 
 #Calculate the Verification threshold for an Epoch that ends on the specified Block.
-proc protocolThresholdAt*(
-  state: State,
-  height: int
+proc protocolThreshold*(
+  state: State
 ): int {.inline, forceCheck: [].} =
-  state.loadUnlocked(height) div 2 + 1
+  (
+    state.loadCounted(state.processedBlocks) -
+    state.loadPending(state.processedBlocks)
+  ) div 2 + 1
 
 #[
 Calculate the threshold for an Epoch that ends on the specified Block.
@@ -126,14 +217,14 @@ proc nodeThresholdAt*(
   state: State,
   height: int
 ): int {.inline, forceCheck: [].} =
-  (max(state.loadUnlocked(height), 5) div 5 * 4) + 1
+  (max(state.loadCounted(height), 5) div 5 * 4) + 1
 
 proc revert*(
   state: var State,
   blockchain: Blockchain,
   height: int
 ) {.forceCheck: [].} =
-  #Mark the State as working with old data.
+  #Mark the State as working with old data. Prevents writing to the DB.
   state.oldData = true
 
   for i in countdown(state.processedBlocks - 1, height):
@@ -155,11 +246,7 @@ proc revert*(
     nick = state.getNickname(revertingPast)
 
     #Remove the Merit rewarded by the Block we just reverted past.
-    state[nick] = state[nick, state.processedBlocks] - 1
-
-    #If the miner was new to this Block, remove their nickname.
-    if revertingPast.header.newMiner:
-      state.deleteLastNickname()
+    state[nick] = state.merit[nick] - 1
 
     #If i is over the dead blocks quantity, meaning there is a historical Block to add back to the State...
     if i > state.deadBlocks:
@@ -178,14 +265,44 @@ proc revert*(
 
       #Add back the Merit which died.
       if not removed:
-        state[nick] = state[nick, state.processedBlocks] + 1
+        state[nick] = state.merit[nick] + 1
 
-    #Increment the amount of processed Blocks.
-    dec(state.processedBlocks)
+    #If the miner was new to this Block, remove their nickname.
+    if revertingPast.header.newMiner:
+      state.deleteLastNickname()
 
-  state.oldData = false
+  #Reload the old statuses/participations.
+  for h in 0 ..< state.holders.len:
+    state.statuses[h] = state.findMeritStatus(uint16(h), height)
+    state.lastParticipation[h] = state.findLastParticipation(uint16(h), height)
+
+  #Reload the Merit amounts.
+  try:
+    state.total = state.db.loadTotal(height - 1)
+    state.pending = state.db.loadPending(height)
+    state.counted = state.db.loadCounted(height - 1)
+  except DBReadError as e:
+    panic("Couldn't load a historical Merit amount: " & e.msg)
+
+  #Correct the amount of processed Blocks.
+  state.processedBlocks = height
 
   #Regenerate the pending removals cache.
-  state.pendingRemovals = @[]
+  state.pendingRemovals = initDeque[int]()
   for _ in 0 ..< 6:
-    state.cacheNextRemoval(blockchain, height)
+    state.cacheNextRemoval(blockchain, state.processedBlocks)
+
+  #Allow saving data again.
+  state.oldData = false
+
+proc pruneStatusesAndParticipations*(
+  state: State,
+  oldAmountOfHolders: int
+) {.forceCheck: [].} =
+  for h in 0 ..< state.holders.len:
+    discard state.findMeritStatus(uint16(h), state.processedBlocks, true)
+    discard state.findLastParticipation(uint16(h), state.processedBlocks, true)
+
+  for h in state.holders.len ..< oldAmountOfHolders:
+    state.db.overrideMeritStatuses(uint16(h), "")
+    state.db.overrideLastParticipations(uint16(h), "")

@@ -1,4 +1,6 @@
-from typing import Dict, List
+from typing import List
+
+from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.Block import Block
@@ -10,9 +12,9 @@ class State:
     self
   ) -> None:
     self.lifetime: int = 100
-    self.merit = 0
+    self.merit: int = 0
     self.nicks: List[bytes] = []
-    self.unlocked: Dict[int, int] = {}
+    self.balances: List[int] = []
 
   def add(
     self,
@@ -25,10 +27,10 @@ class State:
     if block.header.newMiner:
       miner = len(self.nicks)
       self.nicks.append(block.header.minerKey)
-      self.unlocked[miner] = 0
+      self.balances.append(0)
     else:
       miner = block.header.minerNick
-    self.unlocked[miner] += 1
+    self.balances[miner] += 1
     self.merit += 1
 
     if b > self.lifetime:
@@ -37,5 +39,9 @@ class State:
         miner = blockchain.keys[oldHeader.minerKey]
       else:
         miner = oldHeader.minerNick
-      self.unlocked[miner] -= 1
+      self.balances[miner] -= 1
       self.merit -= 1
+
+    for elem in block.body.elements:
+      if isinstance(elem, MeritRemoval):
+        self.balances[elem.holder] = 0

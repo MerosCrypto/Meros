@@ -94,17 +94,32 @@ proc compare*(
   s2: State
 ) =
   check:
+    s1.oldData == s2.oldData
+
     s1.deadBlocks == s2.deadBlocks
-    s1.unlocked == s2.unlocked
+
+    s1.total == s2.total
+    s1.pending == s2.pending
+    s1.counted == s2.counted
+
     s1.processedBlocks == s2.processedBlocks
+
     s1.holders.len == s2.holders.len
-    s1.pendingRemovals == s2.pendingRemovals
+    s1.merit == s2.merit
+    s1.statuses == s2.statuses
+    s1.lastParticipation == s2.lastParticipation
+
+    s1.pendingRemovals.len == 6
+    s1.pendingRemovals.len == s2.pendingRemovals.len
+
+  for p in 0 ..< s1.pendingRemovals.len:
+    check s1.pendingRemovals[p] == s2.pendingRemovals[p]
 
   for h in 0 ..< s1.holders.len:
     check:
       s1.holders[h] == s2.holders[h]
       uint16(h) == s1.reverseLookup(s1.holders[h])
-      s1[uint16(h), s1.processedBlocks] == s2[uint16(h), s1.processedBlocks]
+      uint16(h) == s2.reverseLookup(s2.holders[h])
 
 proc compare*(
   e1Arg: Epochs,

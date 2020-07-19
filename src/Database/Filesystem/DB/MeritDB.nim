@@ -31,10 +31,20 @@ template TIP(): string =
 template HOLDERS(): string =
   "n" #"N"icks, since "h" is taken.
 
-template TOTAL_UNLOCKED_MERIT(
+template TOTAL_MERIT(
   blockNum: int
 ): string =
-  blockNum.toBinary(INT_LEN) & "m"
+  blockNum.toBinary(INT_LEN) & "t"
+
+template PENDING_MERIT(
+  blockNum: int
+): string =
+  blockNum.toBinary(INT_LEN) & "p"
+
+template COUNTED_MERIT(
+  blockNum: int
+): string =
+  blockNum.toBinary(INT_LEN) & "c"
 
 template INTERIM_HASH(
   hash: Hash[256]
@@ -85,6 +95,16 @@ template MERIT(
   nick: uint16
 ): string =
   nick.toBinary(NICKNAME_LEN) & "m"
+
+template MERIT_STATUSES(
+  nick: uint16
+): string =
+  nick.toBinary(NICKNAME_LEN) & "s"
+
+template LAST_PARTICIPATIONS(
+  nick: uint16
+): string =
+  nick.toBinary(NICKNAME_LEN) & "p"
 
 template BLOCK_REMOVALS(
   blockNum: int
@@ -204,12 +224,16 @@ proc save*(
 ) {.forceCheck: [].} =
   db.put(DIFFICULTY(hash), difficulty.toBinary())
 
-proc saveUnlocked*(
+proc saveMerits*(
   db: DB,
   blockNum: int,
-  merit: int
+  total: int,
+  pending: int,
+  counted: int
 ) {.forceCheck: [].} =
-  db.put(TOTAL_UNLOCKED_MERIT(blockNum), merit.toBinary())
+  db.put(TOTAL_MERIT(blockNum), total.toBinary())
+  db.put(PENDING_MERIT(blockNum), pending.toBinary())
+  db.put(COUNTED_MERIT(blockNum), counted.toBinary())
 
 proc save*(
   db: DB,
@@ -250,6 +274,52 @@ proc saveMerit*(
   merit: int
 ) {.forceCheck: [].} =
   db.put(MERIT(nick), merit.toBinary())
+
+proc appendMeritStatus*(
+  db: DB,
+  nick: uint16,
+  processed: int,
+  status: byte
+) {.forceCheck: [].} =
+  var existing: string
+  try:
+    existing = db.get(MERIT_STATUSES(nick))
+  except DBReadError:
+    discard
+  db.put(MERIT_STATUSES(nick), existing & processed.toBinary(INT_LEN) & status.toBinary(BYTE_LEN))
+
+proc overrideMeritStatuses*(
+  db: DB,
+  nick: uint16,
+  statuses: string
+) {.forceCheck: [].} =
+  if statuses.len == 0:
+    db.del(MERIT_STATUSES(nick))
+  else:
+    db.put(MERIT_STATUSES(nick), statuses)
+
+proc appendLastParticipation*(
+  db: DB,
+  nick: uint16,
+  processed: int,
+  last: int
+) {.forceCheck: [].} =
+  var existing: string
+  try:
+    existing = db.get(LAST_PARTICIPATIONS(nick))
+  except DBReadError:
+    discard
+  db.put(LAST_PARTICIPATIONS(nick), existing & processed.toBinary(INT_LEN) & last.toBinary(INT_LEN))
+
+proc overrideLastParticipations*(
+  db: DB,
+  nick: uint16,
+  participations: string
+) {.forceCheck: [].} =
+  if participations.len == 0:
+    db.del(LAST_PARTICIPATIONS(nick))
+  else:
+    db.put(LAST_PARTICIPATIONS(nick), participations)
 
 proc remove*(
   db: DB,
@@ -326,14 +396,36 @@ proc loadChainWork*(
   except Exception as e:
     panic("Failed to get the chain work of a Block: " & e.msg)
 
-proc loadUnlocked*(
+proc loadTotal*(
   db: DB,
   blockNum: int
 ): int {.forceCheck: [
   DBReadError
 ].} =
   try:
-    result = db.get(TOTAL_UNLOCKED_MERIT(blockNum)).fromBinary()
+    result = db.get(TOTAL_MERIT(blockNum)).fromBinary()
+  except DBReadError as e:
+    raise e
+
+proc loadPending*(
+  db: DB,
+  blockNum: int
+): int {.forceCheck: [
+  DBReadError
+].} =
+  try:
+    result = db.get(PENDING_MERIT(blockNum)).fromBinary()
+  except DBReadError as e:
+    raise e
+
+proc loadCounted*(
+  db: DB,
+  blockNum: int
+): int {.forceCheck: [
+  DBReadError
+].} =
+  try:
+    result = db.get(COUNTED_MERIT(blockNum)).fromBinary()
   except DBReadError as e:
     raise e
 
@@ -419,6 +511,24 @@ proc loadMerit*(
   except DBReadError as e:
     raise e
 
+proc loadMeritStatuses*(
+  db: DB,
+  nick: uint16
+): string {.forceCheck: [].} =
+  try:
+    result = db.get(MERIT_STATUSES(nick))
+  except DBReadError:
+    discard
+
+proc loadLastParticipations*(
+  db: DB,
+  nick: uint16
+): string {.forceCheck: [].} =
+  try:
+    result = db.get(LAST_PARTICIPATIONS(nick))
+  except DBReadError:
+    discard
+
 proc loadBlockRemovals*(
   db: DB,
   blockNum: int
@@ -484,7 +594,9 @@ proc deleteBlock*(
   db.del(BLOCK_HASH(hash))
   db.del(DIFFICULTY(hash))
   db.del(CHAIN_WORK(hash))
-  db.del(TOTAL_UNLOCKED_MERIT(nonce))
+  db.del(TOTAL_MERIT(nonce))
+  db.del(PENDING_MERIT(nonce))
+  db.del(COUNTED_MERIT(nonce))
   db.del(BLOCK_REMOVALS(nonce))
 
   for elem in elements:

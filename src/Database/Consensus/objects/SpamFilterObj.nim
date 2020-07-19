@@ -9,6 +9,7 @@ That said, this is an extremely low priority.
 import tables
 
 import ../../../lib/Errors
+import ../../Merit/objects/StateObj
 
 type
   VotedDifficulty* = ref object
@@ -87,7 +88,7 @@ func nextMedian*(
   filter.difficulties[filter.medianPos + 1]
 
 #Remove a difficulty.
-#Used explicitly when a MeritRemoval occurs.
+#Used when a Merit Holder loses all Unlocked Merit.
 func remove(
   filter: var SpamFilter,
   difficulty: VotedDifficulty
@@ -142,68 +143,6 @@ func recalculate(
   #Update the difficulty.
   filter.difficulty = filter.median.difficulty
 
-#Handle the Merit change that comes with a new Block.
-proc handleBlock*(
-  filter: var SpamFilter,
-  incd: uint16,
-  incdMerit: int
-) {.forceCheck: [].} =
-  if (incdMerit mod 50 == 0) and (incdMerit != 0) and filter.votes.hasKey(incd):
-    try:
-      inc(filter.votes[incd].votes)
-      if filter.votes[incd].difficulty < filter.difficulty:
-        inc(filter.left)
-      elif filter.votes[incd] == filter.median:
-        discard
-      else:
-        inc(filter.right)
-    except KeyError as e:
-      panic("Couldn't get a value by a key we confirmed we have: " & e.msg)
-
-    filter.recalculate()
-
-#Same as above, yet supporting Merit dying over time.
-proc handleBlock*(
-  filter: var SpamFilter,
-  incd: uint16,
-  incdMerit: int,
-  decd: uint16,
-  decdMerit: int
-) {.forceCheck: [].} =
-  if incd == decd:
-    return
-
-  try:
-    if (incdMerit mod 50 == 0) and (incdMerit != 0) and filter.votes.hasKey(incd):
-      inc(filter.votes[incd].votes)
-      if filter.votes[incd].difficulty < filter.difficulty:
-        inc(filter.left)
-      elif filter.votes[incd] == filter.median:
-        discard
-      else:
-        inc(filter.right)
-  except KeyError as e:
-    panic("Couldn't get a value by a key we confirmed we have: " & e.msg)
-
-  try:
-    if (decdMerit mod 50 == 49) and filter.votes.hasKey(decd):
-      dec(filter.votes[decd].votes)
-      if filter.votes[decd].difficulty < filter.difficulty:
-        dec(filter.left)
-      elif filter.votes[decd] == filter.median:
-        discard
-      else:
-        dec(filter.right)
-
-      if filter.votes[decd].votes == 0:
-        filter.remove(filter.votes[decd])
-      if decdMerit div 50 == 0:
-        filter.votes.del(decd)
-  except KeyError as e:
-    panic("Couldn't get a value by a key we confirmed we have: " & e.msg)
-
-  filter.recalculate()
-
 #Remove a holder's vote.
 proc remove*(
   filter: var SpamFilter,
@@ -235,13 +174,13 @@ proc remove*(
 #Update a holder's vote.
 proc update*(
   filter: var SpamFilter,
+  state: State,
   holder: uint16,
-  merit: int,
   difficulty: uint32
 ) {.forceCheck: [].} =
   #Calculate the holder's votes.
-  var votes: int = merit div 50
-  if votes == 0:
+  var votes: int = state.merit[holder] div 50
+  if (state.statuses[holder] == MeritStatus.Locked) or (votes == 0):
     return
 
   #If this is the first vote, set median/difficulty and return.
@@ -253,7 +192,7 @@ proc update*(
     return
 
   #Remove the holder's Merit from their existing vote.
-  filter.remove(holder, merit)
+  filter.remove(holder, state.merit[holder])
 
   #If we just removed the median, create a new one.
   if filter.medianPos == -1:
@@ -298,3 +237,59 @@ proc update*(
 
   #Recalculate the median.
   filter.recalculate()
+
+proc handleBlock*(
+  filter: var SpamFilter,
+  state: State,
+  changes: StateChanges,
+  difficulties: Table[uint16, uint32]
+) {.forceCheck: [].} =
+  #Only update votes if there's actually a Merit change.
+  if (changes.decd == -1) or (changes.incd != uint16(changes.decd)):
+    var incdMerit: int = 0
+    if state.statuses[changes.incd] != MeritStatus.Locked:
+      incdMerit = state.merit[changes.incd]
+    if (incdMerit mod 50 == 0) and (incdMerit != 0) and filter.votes.hasKey(changes.incd):
+      try:
+        inc(filter.votes[changes.incd].votes)
+        if filter.votes[changes.incd].difficulty < filter.difficulty:
+          inc(filter.left)
+        elif filter.votes[changes.incd] == filter.median:
+          discard
+        else:
+          inc(filter.right)
+      except KeyError as e:
+        panic("Couldn't get a value by a key we confirmed we have: " & e.msg)
+
+    if changes.decd != -1:
+      var
+        decd: uint16 = uint16(changes.decd)
+        decdMerit: int = state.merit[decd]
+
+      try:
+        if (decdMerit mod 50 == 49) and filter.votes.hasKey(decd):
+          dec(filter.votes[decd].votes)
+          if filter.votes[decd].difficulty < filter.difficulty:
+            dec(filter.left)
+          elif filter.votes[decd] == filter.median:
+            discard
+          else:
+            dec(filter.right)
+
+          if filter.votes[decd].votes == 0:
+            filter.remove(filter.votes[decd])
+          if decdMerit div 50 == 0:
+            filter.votes.del(decd)
+      except KeyError as e:
+        panic("Couldn't get a value by a key we confirmed we have: " & e.msg)
+
+  filter.recalculate()
+
+  #Remove votes from Locked Merit; add back votes of no-longer-Locked Merit.
+  for holder in changes.locked:
+    filter.remove(holder, state.merit[holder])
+  for holder in changes.pending:
+    try:
+      filter.update(state, holder, difficulties[holder])
+    except KeyError:
+      discard

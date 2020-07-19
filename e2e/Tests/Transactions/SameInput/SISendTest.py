@@ -35,7 +35,7 @@ def SameInputTest(
     syncedTX: bool = False
 
     #Grab the Block.
-    block: Block = merit.blockchain.blocks[13]
+    block: Block = merit.blockchain.blocks[9]
 
     #Send the Block.
     rpc.meros.liveBlockHeader(block.header)
@@ -111,4 +111,4 @@ def SameInputTest(
         raise TestError("Unexpected message sent: " + msg.hex().upper())
 
   with raises(SuccessError):
-    Liver(rpc, vectors["blockchain"], transactions, callbacks={12: checkFail}).live()
+    Liver(rpc, vectors["blockchain"], transactions, callbacks={8: checkFail}).live()

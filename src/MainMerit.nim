@@ -101,9 +101,17 @@ proc mainMerit(
       raise newLoggedException(IndexError, e.msg)
 
   functions.merit.getTotalMerit = proc (): int {.forceCheck: [].} =
-    merit.state.unlocked
+    merit.state.total
   functions.merit.getUnlockedMerit = proc (): int {.forceCheck: [].} =
-    merit.state.unlocked
+    merit.state.counted - merit.state.pending
+
+  functions.merit.getRawMerit = proc (
+    nick: uint16
+  ): int {.forceCheck: [].} =
+    if int(nick) >= merit.state.merit.len:
+      return 0
+    result = merit.state.merit[nick]
+
   functions.merit.getMerit = proc (
     nick: uint16,
     height: int
@@ -113,7 +121,18 @@ proc mainMerit(
   functions.merit.isUnlocked = proc (
     nick: uint16
   ): bool {.forceCheck: [].} =
-    true
+    (
+      (int(nick) >= merit.state.statuses.len) or
+      (merit.state.statuses[int(nick)] == MeritStatus.Unlocked)
+    )
+
+  functions.merit.isPending = proc (
+    nick: uint16
+  ): bool {.forceCheck: [].} =
+    (
+      (int(nick) < merit.state.statuses.len) and
+      (merit.state.statuses[int(nick)] == MeritStatus.Pending)
+    )
 
   #Handle full blocks.
   functions.merit.addBlockInternal = proc (
@@ -142,7 +161,7 @@ proc mainMerit(
         panic("Failed to complete an async sleep: " & e.msg)
 
     #Print that we're adding the Block.
-    logInfo "New Block", hash = sketchyBlock.data.header.hash
+    logInfo "New Block", hash = sketchyBlock.data.header.hash, currentHeight = merit.blockchain.height
 
     #Construct a sketcher.
     var sketcher: Sketcher = sketcherArg
@@ -205,9 +224,8 @@ proc mainMerit(
     #Add the Block to the Epochs and State.
     var
       epoch: Epoch
-      incd: uint16
-      decd: int
-    (epoch, incd, decd) = merit[].postProcessBlock()
+      changes: StateChanges
+    (epoch, changes) = merit[].postProcessBlock()
 
     logDebug "Archiving Block", hash = newBlock.header.hash
 
@@ -240,17 +258,23 @@ proc mainMerit(
             elem,
             existing,
             sig,
-            merit[].state.holders()
+            merit[].state.holders
           )
         )
 
     #Archive the Epochs.
-    consensus[].archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
+    consensus[].archive(
+      merit.state,
+      newBlock.body.packets,
+      newBlock.body.elements,
+      epoch,
+      changes
+    )
 
     #Have the Consensus handle every person who suffered a MeritRemoval.
     try:
       for removee in removed.keys():
-        consensus[].remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
+        consensus[].remove(removed[removee], rewardsState.merit[removee])
     except KeyError as e:
       panic("Couldn't get the Merit Removal of a holder who just had one archived: " & e.msg)
 
@@ -304,7 +328,7 @@ proc mainMerit(
     except IndexError as e:
       panic("Passing a function that could raise an IndexError raised an IndexError: " & e.msg)
 
-    logInfo "Added Block", hash = sketchyBlock.data.header.hash
+    logInfo "Added Block", hash = sketchyBlock.data.header.hash, height = merit.blockchain.height
 
     lockedBlock[] = Hash[256]()
     release(lock[])

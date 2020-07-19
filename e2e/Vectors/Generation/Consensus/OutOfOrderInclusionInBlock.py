@@ -37,7 +37,6 @@ for _ in range(24):
   )
   block.mine(blsPrivKey, blockchain.difficulty())
   blockchain.add(block)
-  print("Generated Out Of Order Inclusion In Block Block " + str(len(blockchain.blocks)) + ".")
 
 #Now that we have a vote, submit a Block which has two DataDifficulty updates in the same Block.
 #The first Element should have a higher nonce than the second.
@@ -68,7 +67,6 @@ for _ in range(2):
   )
   block.mine(blsPrivKey, blockchain.difficulty())
   blockchain.add(block)
-  print("Generated Out Of Order Inclusion In Block Block " + str(len(blockchain.blocks)) + ".")
 
   #To verify the nonce isn't improperly set, add one more Data Difficulty with a nonce of 2.
   dataDiffs = [SignedDataDifficulty(4, 2)]

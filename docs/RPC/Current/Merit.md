@@ -78,7 +78,7 @@ The result is an object, as follows:
 - Merit Holder Nickname (int)
 
 The result is an object, as follows:
-- `unlocked`  (bool)
+- `status`    (string): "Unlocked", "Locked", or "Pending".
 - `malicious` (bool)
 - `merit`     (int)
 

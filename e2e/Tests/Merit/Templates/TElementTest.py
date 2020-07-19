@@ -1,6 +1,5 @@
 from typing import Dict, List, IO, Any
 from time import sleep
-from hashlib import blake2b
 import json
 
 from e2e.Libs.BLS import PrivateKey, Signature
@@ -28,7 +27,7 @@ def TElementTest(
   file.close()
   merit: Merit = Merit()
 
-  blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
+  blsPrivKey: PrivateKey = PrivateKey(0)
   blsPubKey: str = blsPrivKey.toPublicKey().serialize().hex()
 
   #Handshake with the node.

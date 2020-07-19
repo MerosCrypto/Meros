@@ -1,8 +1,8 @@
 from typing import Dict, IO, Any
 import json
 
+from e2e.Classes.Transactions.Transactions import Claim, Transactions
 from e2e.Classes.Consensus.Verification import SignedVerification
-from e2e.Classes.Transactions.Transactions import Transactions
 
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
@@ -18,6 +18,8 @@ def HundredSeventyFiveTest(
 
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
   verif: SignedVerification = SignedVerification.fromSignedJSON(vectors["verification"])
+  #Correct the Claim's output amount.
+  Claim.fromTransaction(transactions.txs[verif.hash]).amount = 50000
 
   def sendDatasAndVerif() -> None:
     for tx in transactions.txs:
@@ -32,6 +34,6 @@ def HundredSeventyFiveTest(
     vectors["blockchain"],
     transactions,
     callbacks={
-      1: sendDatasAndVerif
+      7: sendDatasAndVerif
     }
   ).live([verif.hash])

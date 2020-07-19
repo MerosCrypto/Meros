@@ -9,8 +9,8 @@ def ChainAdvancementTest(
   rpc: RPC
 ) -> None:
   file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
-  blocks: List[Dict[str, Any]] = json.loads(file.read())
+  chain: List[Dict[str, Any]] = json.loads(file.read())
   file.close()
 
-  Liver(rpc, blocks).live()
-  Syncer(rpc, blocks).sync()
+  Liver(rpc, chain).live()
+  Syncer(rpc, chain).sync()

@@ -35,7 +35,7 @@ def verifyMeritRemoval(
     raise TestError("Total Merit doesn't match.")
 
   if rpc.call("merit", "getMerit", [holder]) != {
-    "unlocked": True,
+    "status": "Unlocked",
     "malicious": pending,
     "merit": merit if pending else 0
   }:
