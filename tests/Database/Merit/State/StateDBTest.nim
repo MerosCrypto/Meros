@@ -39,7 +39,7 @@ suite "StateDB":
     #Iterate over 80 'rounds'.
     for r in 1 .. 80:
       #Add the current Node Threshold to thresholds.
-      thresholds.add(state.protocolThresholdAt(r))
+      thresholds.add(state.nodeThresholdAt(r))
 
       #Remove Merit from a random amount of Merit Holders every few Blocks.
       if rand(3) == 0:
@@ -94,20 +94,16 @@ suite "StateDB":
 
     check:
       #Check that the State saved it had 0 Merit at the start.
-      state.loadUnlocked(1) == 0
-      #Check the threshold is just plus one.
-      state.protocolThresholdAt(1) == 1
+      state.loadCounted(1) == 0
+      #Check the threshold is just five.
+      state.nodeThresholdAt(1) == 5
 
     #Check every existing threshold.
     for t in 1 .. thresholds.len:
-      check state.protocolThresholdAt(t) == thresholds[t - 1]
+      check state.nodeThresholdAt(t) == thresholds[t - 1]
 
     #Checking loading the Merit for the latest Block returns the State's Merit.
-    check state.loadUnlocked(blockchain.height) == state.unlocked
-
-    #Check future thresholds.
-    for t in len(thresholds) + 2 ..< len(thresholds) + 82:
-      check state.protocolThresholdAt(t) == min(state.unlocked + (t - 81), state.deadBlocks) div 2 + 1
+    check state.loadCounted(blockchain.height) == state.counted
 
     #Manually set the RandomX instance to null to make sure it's GC'able.
     blockchain.rx = nil

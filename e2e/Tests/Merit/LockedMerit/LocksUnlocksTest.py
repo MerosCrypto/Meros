@@ -17,6 +17,11 @@ def LocksUnlocksTest(
   def verifyCorrectlyLocked(
     height: int
   ) -> None:
+    if rpc.call("merit", "getTotalMerit") != height:
+      raise TestError("Meros didn't return the correct amount of total Merit.")
+    if rpc.call("merit", "getUnlockedMerit") != height if ((height < 9) or (height == 19)) else 0:
+      raise TestError("Meros didn't return the correct amount of Unlocked Merit.")
+
     if height < 9:
       if rpc.call("merit", "getMerit", [0])["status"] != "Unlocked":
         raise TestError("Merit was locked early.")

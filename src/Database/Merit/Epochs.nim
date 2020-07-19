@@ -110,7 +110,7 @@ proc calculate*(
       panic("Couldn't grab the verifiers for a hash in the Epoch grabbed from epoch.keys(): " & e.msg)
 
     #Make sure the Transaction was verified.
-    if weight < ((state.unlocked div 2) + 1):
+    if weight < state.protocolThreshold():
       continue
 
     #If it was, increment every verifier's score.

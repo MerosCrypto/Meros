@@ -332,7 +332,7 @@ proc calculateMerit*(
     The protocol 'threshold' is whatever transaction has the most Merit out of all that spend an input.
     ]#
     if status.merit != -1:
-      threshold = state.protocolThresholdAt(state.processedBlocks)
+      threshold = state.protocolThreshold()
     #Grab the node's threshold.
     else:
       threshold = state.nodeThresholdAt(status.epoch)
@@ -437,7 +437,7 @@ proc finalize*(
   The Transaction with the most Merit out of associated Transactions (Transactions which spend the same inputs) is verified.
   If it's not actually verified, correct this.
   ]#
-  if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):
+  if (status.verified) and (status.merit < state.protocolThreshold()):
     #If it's now unverified, unverify the tree.
     consensus.unverify(hash, status)
   #If it wasn't verified, run calculateMerit.

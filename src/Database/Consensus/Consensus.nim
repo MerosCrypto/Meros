@@ -258,7 +258,7 @@ proc flag*(
           if not consensus.malicious.hasKey(holder):
             merit += state[holder, status.epoch]
 
-        if merit < state.protocolThresholdAt(status.epoch):
+        if merit < state.nodeThresholdAt(status.epoch):
           consensus.unverify(packet.hash, status)
 
   #Recalculate the affected Transactions not yet in Epochs.
@@ -274,7 +274,7 @@ proc flag*(
         if not consensus.malicious.hasKey(holder):
           merit += state[holder, status.epoch]
 
-      if merit < state.protocolThresholdAt(status.epoch):
+      if merit < state.nodeThresholdAt(status.epoch):
         consensus.unverify(hash, status)
 
 #Get a holder's nonce.
@@ -770,7 +770,7 @@ proc archive*(
       merit += state[holder, status.epoch]
 
     #If it's not, unverify it.
-    if merit < state.protocolThresholdAt(status.epoch):
+    if merit < state.nodeThresholdAt(status.epoch):
       consensus.unverify(hash, status)
 
     #Make sure the hash is included in unmentioned.

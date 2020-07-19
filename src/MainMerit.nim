@@ -101,9 +101,9 @@ proc mainMerit(
       raise newLoggedException(IndexError, e.msg)
 
   functions.merit.getTotalMerit = proc (): int {.forceCheck: [].} =
-    merit.state.unlocked
+    merit.state.total
   functions.merit.getUnlockedMerit = proc (): int {.forceCheck: [].} =
-    merit.state.unlocked
+    merit.state.counted - merit.state.pending
 
   functions.merit.getRawMerit = proc (
     nick: uint16

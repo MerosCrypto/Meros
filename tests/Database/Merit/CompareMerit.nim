@@ -97,7 +97,10 @@ proc compare*(
     s1.oldData == s2.oldData
 
     s1.deadBlocks == s2.deadBlocks
-    s1.unlocked == s2.unlocked
+
+    s1.total == s2.total
+    s1.pending == s2.pending
+    s1.counted == s2.counted
 
     s1.processedBlocks == s2.processedBlocks
 

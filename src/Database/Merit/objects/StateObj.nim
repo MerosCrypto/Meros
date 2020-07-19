@@ -24,7 +24,10 @@ type
     oldData*: bool
 
     deadBlocks*: int
-    unlocked*: int
+
+    total*: int
+    pending*: int
+    counted*: int
 
     processedBlocks*: int
 
@@ -64,16 +67,21 @@ proc newStateObj*(
     oldData: false,
 
     deadBlocks: deadBlocks,
-    unlocked: 0,
+
+    total: 0,
+    pending: 0,
+    counted: 0,
 
     processedBlocks: blockchainHeight,
 
     pendingRemovals: initDeque[int](8)
   )
 
-  #Load the amount of Unlocked Merit.
+  #Load the Merit amounts.
   try:
-    result.unlocked = result.db.loadUnlocked(result.processedBlocks - 1)
+    result.total = result.db.loadTotal(result.processedBlocks - 1)
+    result.pending = result.db.loadPending(result.processedBlocks - 1)
+    result.counted = result.db.loadCounted(result.processedBlocks - 1)
   except DBReadError:
     discard
 
@@ -93,25 +101,39 @@ proc newStateObj*(
     except DBReadError as e:
       panic("Couldn't load a holder's Merit: " & e.msg)
 
-proc saveUnlocked*(
-  state: State
+proc saveMerits*(
+  state: State,
 ) {.inline, forceCheck: [].} =
-  state.db.saveUnlocked(state.processedBlocks - 1, state.unlocked)
+  state.db.saveMerits(state.processedBlocks - 1, state.total, state.pending, state.counted)
 
-proc loadUnlocked*(
+proc loadCounted*(
   state: State,
   height: int,
 ): int {.forceCheck: [].} =
   #If the Block is in the future, return the amount it will be (without Merit Removals).
   if height >= state.processedBlocks:
     result = min(
-      (height - state.processedBlocks) + state.unlocked,
+      (height - state.processedBlocks) + state.counted,
       state.deadBlocks
     )
-  #Load the amount of Unlocked Merit at the specified Block.
+  #Load the amount of counted Merit at the specified Block.
   else:
     try:
-      result = state.db.loadUnlocked(height - 1)
+      result = state.db.loadCounted(height - 1)
+    except DBReadError:
+      panic("Couldn't load the Unlocked Merit for a Block below the `processedBlocks`.")
+
+proc loadPending*(
+  state: State,
+  height: int,
+): int {.forceCheck: [].} =
+  if height > state.processedBlocks:
+    panic("Can't predict the amount of pending Merit.")
+  elif height == state.processedBlocks:
+    result = state.pending
+  else:
+    try:
+      result = state.db.loadPending(height - 1)
     except DBReadError:
       panic("Couldn't load the Unlocked Merit for a Block below the `processedBlocks`.")
 
@@ -257,20 +279,8 @@ proc `[]=`*(
   state: var State,
   nick: uint16,
   value: int
-) {.inline, forceCheck: [].} =
-  #Get the current value.
-  var current: int = state.merit[nick]
-  #Set their new value.
+) {.forceCheck: [].} =
   state.merit[nick] = value
-
-  #Update unlocked accordingly, if the user is currently contributing to unlocked.
-  if state.statuses[nick] == MeritStatus.Unlocked:
-    if value > current:
-      state.unlocked += value - current
-    else:
-      state.unlocked -= current - value
-
-  #Save the updated values.
   if not state.oldData:
     state.db.saveMerit(nick, value)
 
@@ -281,8 +291,14 @@ proc remove*(
   nonce: int
 ) {.forceCheck: [].} =
   state.db.remove(nick, state.merit[nick], nonce)
+
+  state.total -= state.merit[nick]
+  if state.statuses[nick] != MeritStatus.Locked:
+    state.counted -= state.merit[nick]
+    if state.statuses[nick] == MeritStatus.Pending:
+      state.pending -= state.merit[nick]
+  state.db.saveMerits(state.processedBlocks, state.total, state.pending, state.counted)
   state[nick] = 0
-  state.db.saveUnlocked(state.processedBlocks, state.unlocked)
 
   try:
     for p in 0 ..< state.pendingRemovals.len:

@@ -154,6 +154,15 @@ suite "Epochs":
       rewards = epochs.shift(newBlock).calculate(state, initTable[uint16, MeritRemoval]())
       check rewards.len == 0
 
+    #Manually rig the State to be 100% Unlocked.
+    var total: int = 0
+    for s in 0 ..< state.statuses.len:
+      state.statuses[s] = MeritStatus.Unlocked
+      total += state.merit[s]
+    state.total = total
+    state.pending = 0
+    state.counted = total
+
     #Next shift should result in a Rewards of 0: 334, 1: 333, and 2: 333.
     rewards = epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]())
 

@@ -12,7 +12,7 @@ import objects/BlockchainObj
 import BlockHeader, Block
 
 import objects/StateObj
-export MeritStatus, StateObj.State, StateChanges, `[]`, reverseLookup, loadUnlocked
+export MeritStatus, StateObj.State, StateChanges, `[]`, reverseLookup, loadCounted
 
 proc getNickname(
   state: var State,
@@ -98,17 +98,27 @@ proc processBlock*(
   #Grab the new Block.
   var newBlock: Block = blockchain.tail
 
-  #Save the amount of Unlocked Merit.
-  state.saveUnlocked()
+  #Save the Merit amounts.
+  state.saveMerits()
 
   #Add the miner's Merit to the State.
   var nick: uint16 = state.getNickname(newBlock, true, true)
   result.incd = nick
   state[nick] = state.merit[nick] + 1
+  inc(state.total)
+  if state.statuses[nick] != MeritStatus.Locked:
+    inc(state.counted)
+    if state.statuses[nick] == MeritStatus.Pending:
+      inc(state.pending)
 
   #If there was a removal, decrement their Merit.
   if result.decd != -1:
     state[uint16(result.decd)] = state.merit[result.decd] - 1
+    dec(state.total)
+    if state.statuses[nick] != MeritStatus.Locked:
+      dec(state.counted)
+      if state.statuses[nick] == MeritStatus.Pending:
+        dec(state.pending)
 
   var participants: set[uint16]
   for packet in newBlock.body.packets:
@@ -155,7 +165,7 @@ proc processBlock*(
         #If the Merit Holder is inactive, lock their Merit.
         if state.processedBlocks - state.lastParticipation[h] == blocksOfInactivity:
           logInfo "Locking Merit", holder = h
-          state.unlocked -= state.merit[h]
+          state.counted -= state.merit[h]
           state.statuses[h] = MeritStatus.Locked
           state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
           result.locked.add(uint16(h))
@@ -166,8 +176,9 @@ proc processBlock*(
           logInfo "Starting to unlock Merit", holder = h
           state.statuses[h] = MeritStatus.Pending
           state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
+          state.pending += state.merit[h]
           #Start requiring a higher threshold now.
-          state.unlocked += state.merit[h]
+          state.counted += state.merit[h]
 
           #Set the lastParticipation Block to when their Merit should become unlocked again.
           state.lastParticipation[h] = state.processedBlocks + (10 - (state.processedBlocks mod 5))
@@ -179,19 +190,22 @@ proc processBlock*(
         #That means their Merit becomes Unlocked.
         if state.lastParticipation[h] == state.processedBlocks:
           logInfo "Unlocking Merit", holder = h
+          state.pending -= state.merit[h]
           state.statuses[h] = MeritStatus.Unlocked
           state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
 
-  #Save the amount of Unlocked Merit for the next Block.
+  #Save the Merit amounts for the next Block.
   #This will be overwritten when we process the next Block, yet is needed for some statuses.
-  state.saveUnlocked()
+  state.saveMerits()
 
 #Calculate the Verification threshold for an Epoch that ends on the specified Block.
-proc protocolThresholdAt*(
-  state: State,
-  height: int
+proc protocolThreshold*(
+  state: State
 ): int {.inline, forceCheck: [].} =
-  state.loadUnlocked(height) div 2 + 1
+  (
+    state.loadCounted(state.processedBlocks) -
+    state.loadPending(state.processedBlocks)
+  ) div 2 + 1
 
 #[
 Calculate the threshold for an Epoch that ends on the specified Block.
@@ -203,7 +217,7 @@ proc nodeThresholdAt*(
   state: State,
   height: int
 ): int {.inline, forceCheck: [].} =
-  (max(state.loadUnlocked(height), 5) div 5 * 4) + 1
+  (max(state.loadCounted(height), 5) div 5 * 4) + 1
 
 proc revert*(
   state: var State,
@@ -262,8 +276,13 @@ proc revert*(
     state.statuses[h] = state.findMeritStatus(uint16(h), height)
     state.lastParticipation[h] = state.findLastParticipation(uint16(h), height)
 
-  #Reload the amount of unlocked Merit.
-  state.unlocked = state.loadUnlocked(height)
+  #Reload the Merit amounts.
+  try:
+    state.total = state.db.loadTotal(height - 1)
+    state.pending = state.db.loadPending(height)
+    state.counted = state.db.loadCounted(height - 1)
+  except DBReadError as e:
+    panic("Couldn't load a historical Merit amount: " & e.msg)
 
   #Correct the amount of processed Blocks.
   state.processedBlocks = height
