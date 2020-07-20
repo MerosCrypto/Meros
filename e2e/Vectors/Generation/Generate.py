@@ -1,57 +1,46 @@
+from typing import List, Any
+from importlib import import_module
+
+from multiprocessing import Process, Manager
+from os import listdir, path
+
 #pylint: disable=unused-import
-
+#Required until we move every generator to PrototypeChain.
 import e2e.Vectors.Generation.Merit.BlankBlocks
-import e2e.Vectors.Generation.Merit.State
-import e2e.Vectors.Generation.Merit.Difficulty
-import e2e.Vectors.Generation.Merit.HundredSeventyFive
-import e2e.Vectors.Generation.Merit.HundredEightySeven
 
-import e2e.Vectors.Generation.Merit.LockedMerit.KeepUnlocked
-import e2e.Vectors.Generation.Merit.LockedMerit.LocksUnlocks
-import e2e.Vectors.Generation.Merit.LockedMerit.PendingDieRegain
+folderQueue: List[List[str]] = [["e2e", "Vectors", "Generation"]]
+generators: List[str] = []
 
-import e2e.Vectors.Generation.Merit.Reorganizations.DepthOne
-import e2e.Vectors.Generation.Merit.Reorganizations.LongerChainMoreWork
-import e2e.Vectors.Generation.Merit.Reorganizations.ShorterChainMoreWork
-import e2e.Vectors.Generation.Merit.Reorganizations.DelayedMeritHolder
+while folderQueue:
+  currFolder: List[str] = folderQueue.pop()
+  for entry in listdir(path.join(*currFolder)):
+    if entry in {
+      "Generate.py",
+      "BlankBlocks.py",
+      "__pycache__"
+    }:
+      continue
 
-import e2e.Vectors.Generation.Transactions.MultiInputClaim
-import e2e.Vectors.Generation.Transactions.DifferentMeritHolderClaim
-import e2e.Vectors.Generation.Transactions.CompetingFinalized
-import e2e.Vectors.Generation.Transactions.PruneUnaddable
-import e2e.Vectors.Generation.Transactions.Fifty
-import e2e.Vectors.Generation.Transactions.HundredFortySeven
+    if path.isfile(path.join(*currFolder, entry)):
+      if entry[-3:] != ".py":
+        continue
+      generators.append(".".join(currFolder + [entry[:-3]]))
+    else:
+      folderQueue.append(currFolder + [entry])
 
-import e2e.Vectors.Generation.Transactions.SameInput.SISend
-import e2e.Vectors.Generation.Transactions.SameInput.SIClaim
+def runGenerator(
+  generatorsProxy: Any
+) -> None:
+  while generatorsProxy:
+    import_module(generatorsProxy.pop())
 
-import e2e.Vectors.Generation.Consensus.Verification.Parsable
-import e2e.Vectors.Generation.Consensus.Verification.Competing
-import e2e.Vectors.Generation.Consensus.Verification.PartialArchive
-import e2e.Vectors.Generation.Consensus.Verification.HundredTwo
-import e2e.Vectors.Generation.Consensus.Verification.HundredFortyTwo
+with Manager() as manager:
+  mpGenerators: Any = manager.list(generators)
 
-import e2e.Vectors.Generation.Consensus.Difficulties.SendDifficulty
-import e2e.Vectors.Generation.Consensus.Difficulties.DataDifficulty
-import e2e.Vectors.Generation.Consensus.Difficulties.LockedMeritDifficulties
+  processes: List[Process] = []
+  for _ in range(4):
+    processes.append(Process(target=runGenerator, args=[mpGenerators]))
+    processes[-1].start()
 
-import e2e.Vectors.Generation.Consensus.MeritRemoval.SameNonce
-import e2e.Vectors.Generation.Consensus.MeritRemoval.VerifyCompeting
-import e2e.Vectors.Generation.Consensus.MeritRemoval.InvalidCompeting
-import e2e.Vectors.Generation.Consensus.MeritRemoval.Partial
-import e2e.Vectors.Generation.Consensus.MeritRemoval.Repeat
-import e2e.Vectors.Generation.Consensus.MeritRemoval.SameElement
-import e2e.Vectors.Generation.Consensus.MeritRemoval.Multiple
-import e2e.Vectors.Generation.Consensus.MeritRemoval.HundredTwenty
-
-import e2e.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.Partial
-import e2e.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.Swap
-import e2e.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.Packet
-
-import e2e.Vectors.Generation.Consensus.MeritRemoval.HundredThirtyThree
-import e2e.Vectors.Generation.Consensus.MeritRemoval.HundredThirtyFive
-
-import e2e.Vectors.Generation.Consensus.HundredSix.BlockElements
-
-import e2e.Vectors.Generation.Consensus.OutOfOrderInclusionInBlock
-import e2e.Vectors.Generation.Consensus.TwoHundredFour
+  for process in processes:
+    process.join()
