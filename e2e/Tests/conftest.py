@@ -14,18 +14,22 @@ from e2e.Meros.RPC import RPC
 @fixture(scope="session", params=["./data/e2e"])
 def dataDir(
   request: Any,
-  tmp_path_factory: Any
+  tmp_path_factory: Any,
+  worker_id: str
 ) -> str:
   #Get the temp directory shared by all workers.
   tmpDir: Path = tmp_path_factory.getbasetemp().parent
   fn: Path = tmpDir / ".clean"
-  with FileLock(str(fn) + ".lock"):
-    if not fn.is_file():
-      try:
-        shutil.rmtree(request.param)
-      except FileNotFoundError:
-        pass
-      fn.write_text("")
+  try:
+    if worker_id == "master":
+      shutil.rmtree(request.param)
+    else:
+      with FileLock(str(fn) + ".lock"):
+        if not fn.is_file():
+          shutil.rmtree(request.param)
+          fn.write_text("")
+  except FileNotFoundError:
+    pass
   return request.param
 
 @fixture(scope="module", params=[5132])
