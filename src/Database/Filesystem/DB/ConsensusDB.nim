@@ -132,36 +132,38 @@ proc del(
   db.consensus.cache.del(key)
 
 proc commit*(
-  db: DB
+  db: DB,
+  tx: LMDBTransaction
 ) {.forceCheck: [].} =
   for key in db.consensus.deleted:
     try:
-      db.lmdb.delete("consensus", key)
-    except Exception:
-      #If we delete something before it's committed, it'll throw.
-      discard
+      discard db.lmdb.get("consensus", key)
+      db.lmdb.delete(tx, "consensus", key)
+    except KeyError:
+      panic("Tried to grab a key from a Database which doesn't exist.")
+    except DBError:
+      continue
   db.consensus.deleted = initHashSet[string]()
 
-  var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.consensus.cache.len + 1)
   try:
-    var i: int = 0
     for key in db.consensus.cache.keys():
-      items[i] = (key: key, value: db.consensus.cache[key])
-      inc(i)
+      db.lmdb.put(tx, "consensus", key, db.consensus.cache[key])
   except KeyError as e:
-    panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+    panic("Couldn't get a value from the table despiting getting the key from .keys() OR trying to write to a Database which doesn't exist: " & e.msg)
+  except DBError as e:
+    panic("Couldn't write to a Database: " & e.msg)
 
   #Save the unmentioned hashes.
   var unmentioned: string
   for hash in db.consensus.unmentioned:
     unmentioned &= hash.serialize()
-  items[^1] = (key: UNMENTIONED(), value: unmentioned)
-  db.consensus.unmentioned = initHashSet[Hash[256]]()
-
   try:
-    db.lmdb.put("consensus", items)
-  except Exception as e:
-    panic("Couldn't save data to the Database: " & e.msg)
+    db.lmdb.put(tx, "consensus", UNMENTIONED(), unmentioned)
+  except KeyError as e:
+    panic("Tried to write to a Database which doesn't exist: " & e.msg)
+  except DBError as e:
+    panic("Couldn't write to a Database: " & e.msg)
+  db.consensus.unmentioned = initHashSet[Hash[256]]()
 
   db.consensus.cache = initTable[string, string]()
 

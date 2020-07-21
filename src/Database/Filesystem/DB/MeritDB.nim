@@ -157,24 +157,26 @@ proc del(
 
 proc commit*(
   db: DB,
+  tx: LMDBTransaction,
   height: int
 ) {.forceCheck: [].} =
   for key in db.merit.deleted:
     try:
-      db.lmdb.delete("merit", key)
-    except Exception:
-      #If we delete something before it's committed, it'll throw.
-      discard
+      discard db.lmdb.get("merit", key)
+      db.lmdb.delete(tx, "merit", key)
+    except KeyError:
+      panic("Tried to grab a key from a Database which doesn't exist.")
+    except DBError:
+      continue
   db.merit.deleted = initHashSet[string]()
 
-  var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.merit.cache.len)
   try:
-    var i: int = 0
     for key in db.merit.cache.keys():
-      items[i] = (key: key, value: db.merit.cache[key])
-      inc(i)
+      db.lmdb.put(tx, "merit", key, db.merit.cache[key])
   except KeyError as e:
-    panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+    panic("Couldn't get a value from the table despiting getting the key from .keys() OR trying to write to a Database which doesn't exist: " & e.msg)
+  except DBError as e:
+    panic("Couldn't write to a Database: " & e.msg)
 
   var removals: string = ""
   try:
@@ -182,14 +184,15 @@ proc commit*(
       removals &= nick.toBinary(NICKNAME_LEN) & db.merit.removals[nick].toBinary(INT_LEN)
   except KeyError as e:
     panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
-  if removals != "":
-    items.add((key: BLOCK_REMOVALS(height - 1), value: removals))
-    db.merit.removals = initTable[uint16, int]()
 
-  try:
-    db.lmdb.put("merit", items)
-  except Exception as e:
-    panic("Couldn't save data to the Database: " & e.msg)
+  if removals != "":
+    try:
+      db.lmdb.put(tx, "merit", BLOCK_REMOVALS(height - 1), removals)
+    except KeyError as e:
+      panic("Tried to write to a Database which doesn't exist: " & e.msg)
+    except DBError as e:
+      panic("Couldn't write to a Database: " & e.msg)
+    db.merit.removals = initTable[uint16, int]()
 
   db.merit.cache = initTable[string, string]()
 

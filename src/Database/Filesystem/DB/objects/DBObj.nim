@@ -1,11 +1,13 @@
 import sets, tables
 
 import mc_lmdb
-export put, get, delete
+export newTransaction, put, get, delete, commit
 
 import ../../../../lib/[Errors, Hash]
 
 type
+  LMDBTransaction* = Transaction
+
   TransactionsDB* = ref object
     cache*: Table[string, string]
     deleted*: HashSet[string]

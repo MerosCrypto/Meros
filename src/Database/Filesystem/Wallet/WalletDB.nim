@@ -42,26 +42,30 @@ template ELEMENT_NONCE(): string =
 template USING_ELEMENT_NONCE(): string =
   "u"
 
-type WalletDB* = ref object
-  genesis: Hash[256]
+type
+  LMDBTransaction = mc_lmdb.Transaction.Transaction
+  MerosTransaction = TransactionObj.Transaction
 
-  lmdb: LMDB
+  WalletDB* = ref object
+    genesis: Hash[256]
 
-  wallet*: Wallet
-  miner*: MinerWallet
+    lmdb: LMDB
 
-  when defined(merosTests):
-    finalizedNonces*: int
-    unfinalizedNonces*: int
-    verified*: Table[string, int]
+    wallet*: Wallet
+    miner*: MinerWallet
 
-    elementNonce*: int
-  else:
-    finalizedNonces: int
-    unfinalizedNonces: int
-    verified: Table[string, int]
+    when defined(merosTests):
+      finalizedNonces*: int
+      unfinalizedNonces*: int
+      verified*: Table[string, int]
 
-    elementNonce: int
+      elementNonce*: int
+    else:
+      finalizedNonces: int
+      unfinalizedNonces: int
+      verified: Table[string, int]
+
+      elementNonce: int
 
 proc put(
   db: WalletDB,
@@ -69,7 +73,9 @@ proc put(
   val: string
 ) {.forceCheck: [].} =
   try:
-    db.lmdb.put("", @[(key, val)])
+    var tx: LMDBTransaction = db.lmdb.newTransaction()
+    db.lmdb.put(tx, "", key, val)
+    tx.commit()
   except Exception as e:
     panic("Couldn't save data to the Database: " & e.msg)
 
@@ -78,7 +84,10 @@ proc put(
   items: seq[tuple[key: string, value: string]]
 ) {.forceCheck: [].} =
   try:
-    db.lmdb.put("", items)
+    var tx: LMDBTransaction = db.lmdb.newTransaction()
+    for item in items:
+      db.lmdb.put(tx, "", item.key, item.value)
+    tx.commit()
   except Exception as e:
     panic("Couldn't save data to the Database: " & e.msg)
 
@@ -98,7 +107,9 @@ proc del(
   key: string
 ) {.forceCheck: [].} =
   try:
-    db.lmdb.delete("", key)
+    var tx: LMDBTransaction = db.lmdb.newTransaction()
+    db.lmdb.delete(tx, "", key)
+    tx.commit()
   except Exception as e:
     panic("Couldn't delete data from the Database: " & e.msg)
 
@@ -107,14 +118,14 @@ proc commit*(
   popped: Epoch,
   getTransaction: proc (
     hash: Hash[256]
-  ): Transaction {.gcsafe, raises: [
+  ): MerosTransaction {.gcsafe, raises: [
     IndexError
   ].}
 ) {.forceCheck: [].} =
   #Mark all inputs of all finalized Transactions as finalized.
   var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]]()
   for hash in popped.keys():
-    var tx: Transaction
+    var tx: MerosTransaction
     try:
       tx = getTransaction(hash)
     except IndexError as e:
@@ -285,7 +296,7 @@ proc loadDataTip*(
 #If the function doesn't complete, none of its data is written.
 proc verifyTransaction*(
   db: WalletDB,
-  tx: Transaction
+  tx: MerosTransaction
 ) {.forceCheck: [
   ValueError
 ].} =

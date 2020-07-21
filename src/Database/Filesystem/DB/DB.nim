@@ -9,6 +9,11 @@ proc commit*(
   db: DB,
   height: int
 ) {.forceCheck: [].} =
-  TransactionsDB.commit(db)
-  ConsensusDB.commit(db)
-  MeritDB.commit(db, height)
+  try:
+    var tx: LMDBTransaction = db.lmdb.newTransaction()
+    TransactionsDB.commit(db, tx)
+    ConsensusDB.commit(db, tx)
+    MeritDB.commit(db, tx, height)
+    tx.commit()
+  except DBError as e:
+    panic("Failed to commit a Transaction to LMDB: " & e.msg)

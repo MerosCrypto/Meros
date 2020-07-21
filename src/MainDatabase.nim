@@ -18,7 +18,9 @@ proc mainDatabase(
   #If this fails because this is a brand new DB, save the current version.
   except Exception:
     try:
-      database.lmdb.put("merit", "version", DB_VERSION.toBinary())
+      var tx: LMDBTransaction = database.lmdb.newTransaction()
+      database.lmdb.put(tx, "merit", "version", DB_VERSION.toBinary())
+      tx.commit()
     except Exception as e:
       panic("Couldn't save the DB version: " & e.msg)
 

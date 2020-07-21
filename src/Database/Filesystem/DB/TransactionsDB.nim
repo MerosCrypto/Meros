@@ -100,34 +100,38 @@ proc del(
   db.transactions.cache.del(key)
 
 proc commit*(
-  db: DB
+  db: DB,
+  tx: LMDBTransaction
 ) {.forceCheck: [].} =
   for key in db.transactions.deleted:
     try:
-      db.lmdb.delete("transactions", key)
-    except Exception:
-      #If we delete something before it's committed, it'll throw.
-      discard
+      #If the key doesn't exist, this TX will error.
+      discard db.lmdb.get("transactions", key)
+      #If we waited for this TX to error, it'd kill the batch.
+      db.lmdb.delete(tx, "transactions", key)
+    except KeyError:
+      panic("Tried to grab a key from a Database which doesn't exist.")
+    except DBError:
+      continue
   db.transactions.deleted = initHashSet[string]()
 
-  var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.transactions.cache.len + 1)
   try:
-    var i: int = 0
     for key in db.transactions.cache.keys():
-      items[i] = (key: key, value: db.transactions.cache[key])
-      inc(i)
+      db.lmdb.put(tx, "transactions", key, db.transactions.cache[key])
   except KeyError as e:
-    panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+    panic("Couldn't get a value from the table despiting getting the key from .keys() OR trying to write to a Database which doesn't exist: " & e.msg)
+  except DBError as e:
+    panic("Couldn't write to a Database: " & e.msg)
 
   var unmentioned: string
   for hash in db.transactions.unmentioned:
     unmentioned &= hash.serialize()
-  items[^1] = (key: UNMENTIONED_TRANSACTIONS(), value: unmentioned)
-
   try:
-    db.lmdb.put("transactions", items)
-  except Exception as e:
-    panic("Couldn't save data to the Database: " & e.msg)
+    db.lmdb.put(tx, "transactions", UNMENTIONED_TRANSACTIONS(), unmentioned)
+  except KeyError as e:
+    panic("Tried to write to a Database which doesn't exist: " & e.msg)
+  except DBError as e:
+    panic("Couldn't write to a Database: " & e.msg)
 
   db.transactions.cache = initTable[string, string]()
 
