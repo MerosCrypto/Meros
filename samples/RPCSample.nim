@@ -31,6 +31,7 @@ const ARGUMENTS: Table[string, seq[char]] = {
 
   "personal_getMiner":    @[],
   "personal_setMnemonic": @['b', 'b'],
+  "personal_getMnemonic": @[],
   "personal_getAddress":  @[],
 
   "personal_send": @['s', 's'],
