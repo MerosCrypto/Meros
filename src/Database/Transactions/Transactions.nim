@@ -327,22 +327,31 @@ proc revert*(
     except IndexError as e:
       panic("Failed to get a Block we're reverting past: " & e.msg)
 
-    #Make sure the Block created a Mint.
-    #It won't in the case there are no verifications.
-    #This should never happen in practice, yet is a potential edge case.
-    try:
-      discard transactions[mint]
-    except IndexError:
-      continue
-
     var
-      #Discover the tree.
-      tree: seq[Hash[256]] = transactions.discoverTree(mint)
+      #Tree of Transactions we want to prune.
+      tree: seq[Hash[256]]
       #Create a set of pruned Transactions as the tree will have duplicates.
       pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
 
+    #Set the tree to the Mint's tree if a Mint was created.
+    #Practically, every Block will have a Mint.
+    #That said, technically, this isn't guaranteed to be true.
+    try:
+      discard transactions[mint]
+      tree = transactions.discoverTree(mint)
+    except IndexError:
+      discard
+
+    #Add the Block's Data.
+    try:
+      tree.add(newData(blockchain.genesis, blockchain[b].header.hash.serialize()).hash)
+    except IndexError as e:
+      panic("Failed to get a Block we're reverting past: " & e.msg)
+    except ValueError as e:
+      panic("Transactions failed to mark the Block Data for pruning: " & e.msg)
+
     #Prune the tree, from the children to the parents.
-    #This guarantees the relevant input/output data is available.
+    #This guarantees the relevant input/output data is available as we prune.
     for h in countdown(tree.len - 1, 0):
       if pruned.contains(tree[h]):
         continue

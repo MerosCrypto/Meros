@@ -68,7 +68,7 @@ proc add*(
 
   if save:
     #Save the TX.
-    transactions.db.save(tx, transactions.genesis)
+    transactions.db.save(tx)
 
     #If this is a Data, save the sender as well.
     if tx of Data:

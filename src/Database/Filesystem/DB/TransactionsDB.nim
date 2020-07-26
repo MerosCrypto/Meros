@@ -143,13 +143,12 @@ proc saveDataWallet*(
 
 proc save*(
   db: DB,
-  tx: Transaction,
-  genesis: Hash[256]
+  tx: Transaction
 ) {.forceCheck: [].} =
   db.put(TRANSACTION(tx.hash), tx.serialize())
   db.transactions.unmentioned.incl(tx.hash)
 
-  if not ((tx of Data) and (cast[Data](tx).isFirstData or (tx.inputs[0].hash == genesis))):
+  if not ((tx of Data) and cast[Data](tx).isFirstData):
     for input in tx.inputs:
       try:
         db.put(OUTPUT_SPENDERS(input), db.get(OUTPUT_SPENDERS(input)) & tx.hash.serialize())

@@ -394,38 +394,39 @@ proc add*(
     raise newLoggedException(ValueError, "Unknown Verification.")
 
   #Check if this holder verified a competing Transaction.
-  for input in tx.inputs:
-    var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
-    for spender in spenders:
-      if spender == verif.hash:
-        continue
+  if not ((tx of Data) and (tx.inputs[0].hash == consensus.genesis)):
+    for input in tx.inputs:
+      var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
+      for spender in spenders:
+        if spender == verif.hash:
+          continue
 
-      #Get the spender's status.
-      var status: TransactionStatus
-      try:
-        status = consensus.getStatus(spender)
-      except IndexError as e:
-        panic("Couldn't get the status of a Transaction: " & e.msg)
-
-      if status.holders.contains(verif.holder):
+        #Get the spender's status.
+        var status: TransactionStatus
         try:
-          var partial: bool = not status.signatures.hasKey(verif.holder)
-          raise newMaliciousMeritHolder(
-            "Verifier verified competing Transactions.",
-            newSignedMeritRemoval(
-              verif.holder,
-              partial,
-              newVerificationObj(spender),
-              verif,
-              if partial:
-                verif.signature
-              else:
-                @[status.signatures[verif.holder], verif.signature].aggregate()
-              , state.holders
+          status = consensus.getStatus(spender)
+        except IndexError as e:
+          panic("Couldn't get the status of a Transaction: " & e.msg)
+
+        if status.holders.contains(verif.holder):
+          try:
+            var partial: bool = not status.signatures.hasKey(verif.holder)
+            raise newMaliciousMeritHolder(
+              "Verifier verified competing Transactions.",
+              newSignedMeritRemoval(
+                verif.holder,
+                partial,
+                newVerificationObj(spender),
+                verif,
+                if partial:
+                  verif.signature
+                else:
+                  @[status.signatures[verif.holder], verif.signature].aggregate()
+                , state.holders
+              )
             )
-          )
-        except KeyError as e:
-          panic("Couldn't get a holder's unarchived Verification signature: " & e.msg)
+          except KeyError as e:
+            panic("Couldn't get a holder's unarchived Verification signature: " & e.msg)
 
   #Get the status.
   var status: TransactionStatus
@@ -913,6 +914,12 @@ proc revert*(
       aboutToBePruned = transactions.discoverUnorderedTree(revertedBlock.header.hash, aboutToBePruned)
     except IndexError:
       discard
+    try:
+      aboutToBePruned.incl(newData(blockchain.genesis, blockchain[b].header.hash.serialize()).hash)
+    except IndexError as e:
+      panic("Failed to get a Block we're reverting past: " & e.msg)
+    except ValueError as e:
+      panic("Consensus failed to mark the Block Data for pruning: " & e.msg)
 
     for elem in revertedBlock.body.elements:
       case elem:

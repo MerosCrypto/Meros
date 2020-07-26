@@ -58,6 +58,9 @@ proc send*(
 ) {.forceCheck: [
   SocketError
 ], async.} =
+  if socket.isNil:
+    raise newLoggedException(SocketError, "Socket is null.")
+
   try:
     if (await socket.stream.write(data)) != data.len:
       raise newLoggedException(SocketError, "Couldn't send the full message.")

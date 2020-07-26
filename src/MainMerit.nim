@@ -506,13 +506,16 @@ proc mainMerit(
               header
             )
           except ValueError as e:
+            release(lock[])
             raise e
           except DataMissing as e:
+            release(lock[])
             raise e
           except Exception as e:
             panic("Reorganizing the chain raised an Exception despite catching all Exceptions: " & e.msg)
+          finally:
+            lockedBlock[] = Hash[256]()
 
-          lockedBlock[] = Hash[256]()
           for header in altHeaders:
             try:
               await functions.merit.addBlockByHeaderInternal(header, true, innerBlockLock)
