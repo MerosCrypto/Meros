@@ -1,6 +1,5 @@
-import math
-import strutils
 import tables
+import strutils
 
 import chronos
 
@@ -45,8 +44,8 @@ proc verifyAddress(
     if (
       (not network.lastLocalPeer.isNil) and
       (
-        ((handshake == MessageType.Handshake) and (network.lastLocalPeer.live.isNil or network.lastLocalPeer.live.closed)) or
-        ((handshake == MessageType.Syncing) and (network.lastLocalPeer.sync.isNil or network.lastLocalPeer.sync.closed))
+        ((handshake == MessageType.Handshake) and network.lastLocalPeer.live.closed) or
+        ((handshake == MessageType.Syncing) and network.lastLocalPeer.sync.closed)
       )
     ):
       result.ip = network.lastLocalPeer.ip
@@ -227,11 +226,7 @@ proc handle(
     #Check if we have the file to handle this socket.
     if network.fileTracker.allocateSocket() == PeerStatus.Busy:
       var
-        peers: seq[Peer] = network.peers.getPeers(
-          min(network.peers.len, 4),
-          0,
-          server = true
-        )
+        peers: seq[Peer] = network.peers.getPeers(server = true, sqrt = false)
         busy: Message = newMessage(MessageType.Busy, peers.len.toBinary(BYTE_LEN))
       for peer in peers:
         busy.message &= peer.ip[0 ..< IP_LEN] & peer.port.toBinary(PORT_LEN)
@@ -394,14 +389,7 @@ proc broadcast*(
   msg: Message
 ) {.forceCheck: [], async.} =
   #Peers we're broadcasting to.
-  var recipients: seq[Peer] = network.peers.getPeers(
-    max(
-      min(network.peers.len, 3),
-      int(ceil(sqrt(float(network.peers.len))))
-    ),
-    -1,
-    live = true
-  )
+  var recipients: seq[Peer] = network.peers.getPeers(live = true)
 
   for recipient in recipients:
     try:

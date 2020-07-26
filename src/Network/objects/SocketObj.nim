@@ -87,14 +87,14 @@ proc recv*(
 proc closed*(
   socket: Socket
 ): bool {.inline, forceCheck: [].} =
-  socket.stream.closed
+  socket.isNil or socket.alreadyClosed or socket.stream.closed
 
 #Safely close a socket.
 proc safeClose*(
   socket: Socket,
   reason: string
 ) {.forceCheck: [].} =
-  if socket.isNil or socket.alreadyClosed or socket.closed:
+  if socket.closed:
     return
   socket.alreadyClosed = true
 
