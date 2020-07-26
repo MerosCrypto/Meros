@@ -70,7 +70,7 @@ proc getPeers*(
   live: bool = false,
   #Only get peers who are servers. Used when asked for peers to connect to.
   server: bool = false,
-  #If the requested amount of peers is min(sqrt(peers.len), X) or min(peers.len, Y).
+  #If the requested amount of peers is max(sqrt(peers.len), X) or Y.
   sqrt: static[bool] = true
 ): seq[Peer] {.forceCheck: [].} =
   if peers.len == 0:
@@ -86,16 +86,13 @@ proc getPeers*(
     result.add(peer)
 
   when sqrt:
-    var req: int = max(
-      min(result.len, 3),
-      int(ceil(math.sqrt(float(peers.len))))
-    )
+    var req: int = max(int(ceil(math.sqrt(float(peers.len)))), 3)
   else:
-    #Use a higher minimum if we don't have sqrt available to raise the amount.
+    #Use a higher value if we don't have sqrt available to raise the amount.
     #As of the time of this commit, this is only used for peer finding.
     #4 is a reasonable number for that, but in the future, we should consider raising it further.
     #4 only remains reasonable when the network is samll.
-    var req: int = min(result.len, 4)
+    var req: int = 4
 
   while result.len > req:
     result.del(rand(high(result)))
