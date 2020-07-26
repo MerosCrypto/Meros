@@ -133,9 +133,9 @@ proc newNetwork*(
         doAssert(false, "Failed to get a peer we have an ID for: " & e.msg)
 
       #Exclude closed sockets from live/sync.
-      if peer.live.isNil or peer.live.closed:
+      if peer.live.closed:
         network.live.del(peer.ip)
-      if peer.sync.isNil or peer.sync.closed:
+      if peer.sync.closed:
         network.sync.del(peer.ip)
 
       #Close Peers who have been inactive for half a minute.
@@ -151,7 +151,7 @@ proc newNetwork*(
       if peer.last + 20 <= getTime():
         #Send the Handshake.
         try:
-          if (not peer.live.isNil) and (not peer.live.closed):
+          if not peer.live.closed:
             asyncCheck peer.sendLive(
               newMessage(
                 MessageType.Handshake,

@@ -288,11 +288,7 @@ proc handle*(
             panic("Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         of MessageType.PeersRequest:
-          var peers: seq[Peer] = manager.peers.getPeers(
-            min(manager.peers.len, 4),
-            msg.peer,
-            server = true
-          )
+          var peers: seq[Peer] = manager.peers.getPeers(msg.peer, server = true, sqrt = false)
 
           res = newMessage(MessageType.Peers, peers.len.toBinary(BYTE_LEN))
           for peer in peers:

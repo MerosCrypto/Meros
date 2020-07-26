@@ -1,5 +1,6 @@
-import random
 import locks
+import math
+import random
 import tables
 
 import ../../lib/[Errors, Util]
@@ -49,11 +50,7 @@ proc newPeer*(
 func isClosed*(
   peer: Peer
 ): bool {.inline, forceCheck: [].} =
-  (
-    peer.live.isNil or peer.live.closed
-  ) and (
-    peer.sync.isNil or peer.sync.closed
-  )
+  peer.live.closed and peer.sync.closed
 
 proc close*(
   peer: Peer,
@@ -67,34 +64,38 @@ proc close*(
 #Get random peers which meet the specified criteria.
 proc getPeers*(
   peers: TableRef[int, Peer],
-  reqArg: int,
   #Peer to skip. Used when rebroadcasting and we don't want to rebroadcast back to the source.
   skip: int = 0,
   #Only get peers with a live socket.
   live: bool = false,
   #Only get peers who are servers. Used when asked for peers to connect to.
-  server: bool = false
+  server: bool = false,
+  #If the requested amount of peers is min(sqrt(peers.len), X) or min(peers.len, Y).
+  sqrt: static[bool] = true
 ): seq[Peer] {.forceCheck: [].} =
   if peers.len == 0:
     return
 
-  var
-    #Copied so we can mutate req.
-    req: int = reqArg
-    peersLeft: int = peers.len
-
   for peer in peers.values():
-    if rand(peersLeft - 1) < req:
-      dec(peersLeft)
-      if server and (not peer.server):
-        continue
+    if (
+      (server and (not peer.server)) or
+      (live and peer.live.closed) or
+      (peer.id == skip)
+    ):
+      continue
+    result.add(peer)
 
-      if live and (peer.live.isNil or peer.live.closed):
-        continue
+  when sqrt:
+    var req: int = max(
+      min(result.len, 3),
+      int(ceil(math.sqrt(float(peers.len))))
+    )
+  else:
+    #Use a higher minimum if we don't have sqrt available to raise the amount.
+    #As of the time of this commit, this is only used for peer finding.
+    #4 is a reasonable number for that, but in the future, we should consider raising it further.
+    #4 only remains reasonable when the network is samll.
+    var req: int = min(result.len, 4)
 
-      if peer.id == skip:
-        continue
-
-      #Add the peer to the result and lower the amount of requested peers.
-      result.add(peer)
-      dec(req)
+  while result.len > req:
+    result.del(rand(high(result)))
