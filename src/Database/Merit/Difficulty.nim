@@ -3,7 +3,6 @@ import algorithm
 import stint
 
 import ../../lib/[Errors, Util]
-import algorithm
 
 proc calculateWindowLength*(
   height: int
