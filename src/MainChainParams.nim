@@ -80,3 +80,6 @@ proc newChainParams(
     else:
       echo "Invalid network specified."
       quit(0)
+
+#Create the Function Box globally so the CTRL-C hook has access.
+var functionsGlobal: GlobalFunctionBox = newGlobalFunctionBox()

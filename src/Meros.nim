@@ -32,7 +32,11 @@ proc main() {.thread.} =
     #Reload the Config due to the threading rules.
     config: Config = newConfig()
     params: ChainParams = newChainParams(config.network)
-    functions: GlobalFunctionBox = newGlobalFunctionBox()
+
+    #Copy of the Function Box ref.
+    #Since it's a global, we can't access the ref without gcsafe pragmas, which are annoying at scale.
+    #That said, we can create a 'safe' local variable, and use gcsafe to copy into it.
+    functions: GlobalFunctionBox
 
     database: DB
     wallet: WalletDB
@@ -52,8 +56,13 @@ proc main() {.thread.} =
 
     rpc: RPC
 
+  {.gcsafe.}:
+    functions = functionsGlobal
+
   #Function to safely shut down all elements of the node.
   functions.system.quit = proc () {.forceCheck: [].} =
+    echo "Shutting down..."
+
     #Shutdown the GUI.
     try:
       fromMain.send("shutdown")
@@ -63,10 +72,13 @@ proc main() {.thread.} =
       echo "Couldn't shutdown the GUI due to an Exception: " & e.msg
 
     #Shutdown the RPC.
-    rpc.shutdown()
+    #This can cause a segfault if the node is still booting when quit is called, hence the null check.
+    if not rpc.isNil:
+      rpc.shutdown()
 
     #Shut down the Network.
-    network[].shutdown()
+    if not network[].isNil:
+      network[].shutdown()
 
     #Shut down the databases.
     try:
@@ -77,6 +89,13 @@ proc main() {.thread.} =
 
     #Quit.
     quit(0)
+
+  #This could be at the top-level without gcsafe.
+  #That said, having it right below the quit function definition is orderly.
+  {.gcsafe.}:
+    proc safeQuit() {.noconv.} =
+      functionsGlobal.system.quit()
+    setControlCHook(safeQuit)
 
   initLock(blockLock[])
   initLock(innerBlockLock[])
