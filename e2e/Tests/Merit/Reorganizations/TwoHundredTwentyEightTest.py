@@ -63,8 +63,8 @@ def TwoHundredTwentyEightTest(
     sleep(35)
 
     #Reconnect.
-    rpc.meros.live = MerosSocket(5132, 254, 254, True, main.blocks[15].header.hash)
-    rpc.meros.sync = MerosSocket(5132, 254, 254, False, main.blocks[15].header.hash)
+    rpc.meros.live = MerosSocket(rpc.meros.tcp, 254, 254, True, main.blocks[15].header.hash)
+    rpc.meros.sync = MerosSocket(rpc.meros.tcp, 254, 254, False, main.blocks[15].header.hash)
 
     #The Liver will now send Block 16 again. The trick is whether or not it can add 16.
     #If it can't, because it didn't prune the Data, this issue is still valid.
