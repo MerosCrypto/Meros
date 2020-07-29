@@ -61,7 +61,7 @@ proc main() {.thread.} =
 
   #Function to safely shut down all elements of the node.
   functions.system.quit = proc () {.forceCheck: [].} =
-    echo "Shutting down..."
+    logInfo "Shutting down..."
 
     #Shutdown the GUI.
     try:
