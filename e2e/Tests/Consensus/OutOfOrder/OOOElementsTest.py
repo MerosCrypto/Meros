@@ -7,10 +7,10 @@ from e2e.Meros.Syncer import Syncer
 
 from e2e.Tests.Consensus.Verify import verifyDataDifficulty
 
-def OutOfOrderInclusionInBlockTest(
+def OOOElementsTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/OutOfOrderInclusionInBlock.json", "r")
+  file: IO[Any] = open("e2e/Vectors/Consensus/OutOfOrder/Elements.json", "r")
   vectors: List[Dict[str, Any]] = json.loads(file.read())
   file.close()
 
