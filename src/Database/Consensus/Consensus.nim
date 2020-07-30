@@ -1139,4 +1139,4 @@ proc postRevert*(
     try:
       consensus.setStatus(hash, revertedStatuses[hash])
     except KeyError as e:
-      doAssert(false, "Couldn't get a status with a key from keys: " & e.msg)
+      panic("Couldn't get a status with a key from keys: " & e.msg)

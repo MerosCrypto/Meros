@@ -145,7 +145,7 @@ proc module*(
           try:
             balance += cast[SendOutput](functions.transactions.getTransaction(utxo.hash).outputs[utxo.nonce]).amount
           except IndexError as e:
-            doAssert(false, "Failed to get a Transaction which was a spendable UTXO: " & e.msg)
+            panic("Failed to get a Transaction which was a spendable UTXO: " & e.msg)
         res["result"] = % $balance
   except Exception as e:
     panic("Couldn't create the Transactions Module: " & e.msg)
