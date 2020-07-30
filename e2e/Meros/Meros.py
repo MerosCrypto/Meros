@@ -288,12 +288,14 @@ class Meros:
     self.network = 254
     self.protocol = 254
 
+    self.dataDir: str = dataDir
     self.db: str = test
+    self.log: str = test + ".log"
     self.tcp: int = tcp
     self.rpc: int = rpc
 
     self.calledQuit: bool = False
-    self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", dataDir, "--log-file", test + ".log", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
+    self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", dataDir, "--log-file", self.log, "--db", self.db, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
     while True:
       try:
         connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -501,7 +503,7 @@ class Meros:
       rpcConnection.close()
       self.calledQuit = True
 
-    while self.process.poll() == None:
+    while self.process.poll() is None:
       pass
 
     if self.process.returncode != 0:

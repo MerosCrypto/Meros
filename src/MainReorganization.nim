@@ -151,6 +151,7 @@ proc reorganize(
     database.commit(merit.blockchain.height)
     transactions[] = newTransactions(database, merit.blockchain)
     consensus[].postRevert(merit.blockchain, merit.state, transactions[])
+    database.commit(merit.blockchain.height)
     logInfo "Reverted"
 
     #We now return the headers so MainMerit adds the alternate Blocks.

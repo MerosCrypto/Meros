@@ -541,9 +541,6 @@ suite "ConsensusRevert":
         except KeyError:
           discard
 
-      #Commit the database so reloading the Consensus works.
-      db.commit(merit.blockchain.height)
-
       #Reload and compare the Consensus DAGs.
       compare(consensus, newConsensus(
         functions,
@@ -799,6 +796,7 @@ suite "ConsensusRevert":
       db.commit(merit.blockchain.height)
       transactions = newTransactions(db, merit.blockchain)
       consensus.postRevert(merit.blockchain, merit.state, transactions)
+      db.commit(merit.blockchain.height)
       verify()
 
     #Back up the reverted Consensus DAG.
@@ -814,6 +812,7 @@ suite "ConsensusRevert":
     db.commit(merit.blockchain.height)
     transactions = newTransactions(db, merit.blockchain)
     consensus.postRevert(merit.blockchain, merit.state, transactions)
+    db.commit(merit.blockchain.height)
     verify()
     compare(consensus, reverted)
 
