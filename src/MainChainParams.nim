@@ -39,7 +39,7 @@ proc newChainParams(
 
     of "testnet":
       result = ChainParams(
-        GENESIS: "MEROS_DEVELOPER_TESTNET_5",
+        GENESIS: "MEROS_DEVELOPER_TESTNET_5.1",
 
         #The following is a temporary value for before the mainnet launches.
         BLOCK_TIME: 120,
