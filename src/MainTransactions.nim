@@ -20,7 +20,7 @@ proc verify(
     return
 
   #Make sure we're a Miner with Merit.
-  if wallet.miner.initiated and (merit.state[wallet.miner.nick, status.epoch] > 0):
+  if wallet.miner.initiated and (merit.state.merit[wallet.miner.nick] > 0):
     #Inform the WalletDB were verifying a Transaction.
     try:
       wallet.verifyTransaction(transaction)
