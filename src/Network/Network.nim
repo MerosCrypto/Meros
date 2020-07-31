@@ -11,7 +11,7 @@ import ../Database/Consensus/Elements/Elements
 import objects/[MessageObj, SocketObj, SketchyBlockObj, LiveManagerObj, NetworkObj]
 export MessageObj, SketchyBlockObj, NetworkObj
 
-import FileLimitTracker, Peer, SyncManager
+import FileLimitTracker, Peer, SyncManager, DNSResolver
 export Peer, SyncManager
 
 import Serialize/SerializeCommon
@@ -101,10 +101,30 @@ proc isOurPublicIP(
 
 proc connect*(
   network: Network,
-  address: string,
+  addressArg: string,
   port: int
 ) {.forceCheck: [], async.} =
-  logDebug "Connecting", address = address, port = port
+  logDebug "Connecting", address = addressArg, port = port
+
+  var
+    address: string = addressArg
+    tAddy: TransportAddress
+  try:
+    tAddy = initTAddress(address, port)
+  except TransportAddressError:
+    #If this isn't a valid IP, try to run it through the DNS resolver.
+    try:
+      address = await resolveIP(address, port)
+    except Exception as e:
+      panic("Couldn't resolve an IP: " & e.msg)
+
+    #Retry creating the TAddress.
+    try:
+      tAddy = initTAddress(address, port)
+    except TransportAddressError:
+      logDebug "Invalid address ", address = addressArg
+      return
+    logDebug "Resolved address", address = address
 
   #Lock the IP to stop multiple connections from happening at once.
   #We unlock the IP where we call connect.
@@ -115,20 +135,13 @@ proc connect*(
   except Exception as e:
     panic("Locking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
-  #Create a TransportAddress and verify it.
-  var
-    tAddy: TransportAddress
-    verified: tuple[
-      ip: string,
-      valid: bool,
-      hasLive: bool,
-      hasSync: bool
-    ]
-  try:
-    tAddy = initTAddress(address, port)
-  except TransportAddressError:
-    return
-  verified = network.verifyAddress(tAddy, MessageType.End)
+  #Verify the TransportAddress.
+  var verified: tuple[
+    ip: string,
+    valid: bool,
+    hasLive: bool,
+    hasSync: bool
+  ] = network.verifyAddress(tAddy, MessageType.End)
   if not verified.valid:
     try:
       await network.unlockIP(address)
