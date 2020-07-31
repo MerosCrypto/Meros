@@ -11,7 +11,7 @@ import ../Database/Consensus/Elements/Elements
 import objects/[MessageObj, SocketObj, SketchyBlockObj, LiveManagerObj, NetworkObj]
 export MessageObj, SketchyBlockObj, NetworkObj
 
-import FileLimitTracker, Peer, SyncManager, DNSResolver
+import FileLimitTracker, Peer, SyncManager
 export Peer, SyncManager
 
 import Serialize/SerializeCommon
@@ -106,25 +106,24 @@ proc connect*(
 ) {.forceCheck: [], async.} =
   logDebug "Connecting", address = addressArg, port = port
 
-  var
-    address: string = addressArg
-    tAddy: TransportAddress
+  var tAddy: TransportAddress
   try:
-    tAddy = initTAddress(address, port)
+    tAddy = resolveTAddress(addressArg, Port(port))[0]
   except TransportAddressError:
-    #If this isn't a valid IP, try to run it through the DNS resolver.
-    try:
-      address = await resolveIP(address, port)
-    except Exception as e:
-      panic("Couldn't resolve an IP: " & e.msg)
+    logDebug "Invalid address", address = addressArg
+    return
+  if tAddy.family != AddressFamily.IPv4:
+    logInfo "Only IPv4 IPs are supported when connecting to peers."
+    return
 
-    #Retry creating the TAddress.
-    try:
-      tAddy = initTAddress(address, port)
-    except TransportAddressError:
-      logDebug "Invalid address ", address = addressArg
-      return
-    logDebug "Resolved address", address = address
+  var address: string = (
+    ($tAddy.address_v4[0]) & "." &
+    ($tAddy.address_v4[1]) & "." &
+    ($tAddy.address_v4[2]) & "." &
+    ($tAddy.address_v4[3])
+  )
+  if addressArg != address:
+    logInfo "Resolved address", address = address
 
   #Lock the IP to stop multiple connections from happening at once.
   #We unlock the IP where we call connect.
