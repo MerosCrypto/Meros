@@ -423,7 +423,7 @@ proc listen*(
 ) {.forceCheck: [], async.} =
   #Create the server.
   try:
-    rpc.server = createStreamServer(initTAddress("127.0.0.1", config.rpcPort), handle(rpc), {ReuseAddr})
+    rpc.server = createStreamServer(initTAddress("0.0.0.0", config.rpcPort), handle(rpc), {ReuseAddr})
   except OSError as e:
     panic("Couldn't create the RPC server due to an OSError: " & e.msg)
   except TransportAddressError as e:
