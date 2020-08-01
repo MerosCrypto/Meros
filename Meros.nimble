@@ -2,7 +2,7 @@ import algorithm
 import sequtils
 import os
 
-version     = "0.6.0"
+version     = "0.8.1"
 author      = "Luke Parker"
 description = "Meros Cryptocurrency"
 license     = "MIT"
