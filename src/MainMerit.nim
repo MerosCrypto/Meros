@@ -511,6 +511,9 @@ proc mainMerit(
           except DataMissing as e:
             release(lock[])
             raise e
+          except NotEnoughWork:
+            release(lock[])
+            return
           except Exception as e:
             panic("Reorganizing the chain raised an Exception despite catching all Exceptions: " & e.msg)
           finally:

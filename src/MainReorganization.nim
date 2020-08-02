@@ -11,7 +11,8 @@ proc reorganize(
   tail: BlockHeader
 ): Future[seq[BlockHeader]] {.forceCheck: [
   ValueError,
-  DataMissing
+  DataMissing,
+  NotEnoughWork
 ], async.} =
   logInfo "Considering a reorganization", current = merit.blockchain.tail.header.hash, alternate = tail.hash, lastCommon = lastCommonBlock
 
@@ -160,3 +161,4 @@ proc reorganize(
     result.delete(high(result))
   else:
     logInfo "Not reorganizing", oldWork = oldWorkStr, newWork = newWorkStr
+    raise newException(NotEnoughWork, "Chain didn't have enough work to be worth reorganizing to.")

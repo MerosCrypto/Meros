@@ -33,7 +33,8 @@ type
     element*: Element
 
   #Database/Merit Statuses.
-  NotInEpochs*  = object of CatchableError #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
+  NotInEpochs*   = object of CatchableError #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
+  NotEnoughWork* = object of CatchableError #Used when we consider an alternate chain, yet decline it due to a lack of work required to trigger a reorg.
 
   #Network Errors.
   SocketError* = object of CatchableError #Used when a socket breaks.
