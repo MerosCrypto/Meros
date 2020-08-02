@@ -80,9 +80,9 @@ proc collides*(
     #Hash the packet.
     hash = sketchHash(salt, elem.packet)
 
-    #If there's a collision, return false.
+    #If there's a collision, return true.
     if hashes.contains(hash):
-      return false
+      return true
     hashes.incl(hash)
 
 #Convert a Sketcher to a Sketch.

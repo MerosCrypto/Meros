@@ -274,18 +274,12 @@ proc module*(
               pending.packets
             )
 
-            discard sketchers[id].serialize(
-              pending.packets.len,
-              0,
-              sketchSaltNum.toBinary(INT_LEN)
-            )
-
-            break
+            sketchSalt = sketchSaltNum.toBinary(INT_LEN)
+            if not sketchers[id].collides(sketchSalt):
+              break
+            inc(sketchSaltNum)
           except KeyError as e:
             panic("Couldn't get a Sketcher we just created: " & e.msg)
-          except SaltError:
-            inc(sketchSaltNum)
-        sketchSalt = sketchSaltNum.toBinary(INT_LEN)
 
         #Delete the sketcher from 5 templates ago.
         sketchers.del(id - 5)
