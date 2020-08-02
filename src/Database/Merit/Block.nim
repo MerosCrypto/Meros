@@ -22,11 +22,11 @@ import ../../Network/Serialize/Consensus/[
 
 proc verifySketchCheck*(
   sketchCheck: Hash[256],
-  sketchHashes: seq[uint64]
+  sketchHashesArg: seq[uint64]
 ) {.raises: [
   ValueError
 ].} =
-  var sketchHashes: seq[uint64] = sorted(sketchHashes)
+  var sketchHashes: seq[uint64] = sorted(sketchHashesArg)
 
   var calculated: Hash[256]
   if sketchHashes.len != 0:

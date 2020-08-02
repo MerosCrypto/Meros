@@ -142,7 +142,9 @@ proc module*(
 ): RPCFunctions {.forceCheck: [].} =
   #Table of usable Sketcher objects.
   #Shared between the getBlockTemplate/publishBlock routes.
-  var sketchers: Table[int, Sketcher] = initTable[int, Sketcher]()
+  var
+    sketchers: Table[int, Sketcher] = initTable[int, Sketcher]()
+    sketchID: int = 0
 
   try:
     newRPCFunctions:
@@ -254,11 +256,12 @@ proc module*(
           ] = functions.consensus.getPending()
 
           #ID for this Sketcher.
-          id: int = sketchers.len
+          id: int = sketchID
           #Sketch salt we're using with the packets.
           sketchSaltNum: uint32 = 0
           #Actual sketch salt.
           sketchSalt: string
+        inc(sketchID)
 
         #Verify the packets don't collide with our salt.
         while true:
@@ -268,7 +271,7 @@ proc module*(
                 proc (
                   nick: uint16
                 ): int {.raises: [].} =
-                  functions.merit.getMerit(nick, functions.merit.getHeight())
+                  functions.merit.getRawMerit(nick)
               ),
               functions.consensus.isMalicious,
               pending.packets

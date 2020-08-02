@@ -171,7 +171,7 @@ proc mainMerit(
           proc (
             nick: uint16
           ): int {.raises: [].} =
-            functions.merit.getMerit(nick, functions.merit.getHeight())
+            functions.merit.getRawMerit(nick)
         ),
         functions.consensus.isMalicious,
         cast[seq[VerificationPacket]](consensus[].getPending().packets)
