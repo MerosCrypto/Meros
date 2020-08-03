@@ -463,15 +463,16 @@ proc mainMerit(
             keyHeight: int = merit.blockchain.getHeightOf(header.last) - 11
             actualKey: string
           try:
-            actualKey = merit.blockchain[(keyHeight - (keyHeight mod 384)) - 1].header.hash.serialize()
-          except IndexError as e:
-            panic("Couldn't get a Block Header we confirmed we have by its height: " & e.msg)
+            actualKey = merit.blockchain[max((keyHeight - (keyHeight mod 384)) - 1, 0)].header.hash.serialize()
+          except IndexError:
+            actualKey = merit.blockchain.genesis.serialize()
           if keyBackup != actualKey:
             merit.blockchain.rx.setCacheKey(actualKey)
-            merit.blockchain.rx.hash(header)
-            merit.blockchain.rx.setCacheKey(keyBackup)
+          merit.blockchain.rx.hash(header)
           if merit.blockchain.hasBlock(header.hash):
             raise newLoggedException(DataExists, "Block was already added.")
+          if keyBackup != actualKey:
+            merit.blockchain.rx.setCacheKey(keyBackup)
 
         var
           increment: int = 32
@@ -508,14 +509,14 @@ proc mainMerit(
             except Exception as e:
               panic("requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
 
-          #Remove every Block we have from the queue's tail.
-          lastCommonBlock = merit.blockchain.tail.header.hash
-          for i in countdown(queue.len - 1, 1):
-            if merit.blockchain.hasBlock(queue[i]):
-              lastCommonBlock = queue[i]
-              queue.del(i)
-            else:
-              break
+        #Remove every Block we have from the queue's tail.
+        lastCommonBlock = merit.blockchain.tail.header.hash
+        for i in countdown(queue.len - 1, 0):
+          if merit.blockchain.hasBlock(queue[i]):
+            lastCommonBlock = queue[i]
+            queue.del(i)
+          else:
+            break
 
         #If the last Block on its chains isn't our tail, this is a potentially a chain with more work.
         if lastCommonBlock != merit.blockchain.tail.header.hash:
