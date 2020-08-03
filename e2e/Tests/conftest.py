@@ -41,9 +41,9 @@ def meros(
 ) -> Meros:
   #If xdist is disabled, the worker_id will return "master" and
   #"gw1", "gw2", ... otherwise
-  index: int = 0
+  index: int = 1
   if worker_id.startswith("gw"):
-    index = int(worker_id[2:])
+    index += int(worker_id[2:])
   result: Meros = Meros(
     request.node.module.__name__,
     request.param + (2 * index),
