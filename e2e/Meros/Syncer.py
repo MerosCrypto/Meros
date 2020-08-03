@@ -80,6 +80,8 @@ class Syncer:
         reqHash = msg[3 : 35]
         for b in range(len(self.merit.blockchain.blocks)):
           if self.merit.blockchain.blocks[b].header.hash == reqHash:
+            if self.blocks[-1].header.hash != reqHash:
+              self.blocks.append(self.merit.blockchain.blocks[b])
             blockList: List[bytes] = []
             for bl in range(1, msg[2] + 2):
               if msg[1] == 0:

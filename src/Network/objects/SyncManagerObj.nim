@@ -556,12 +556,9 @@ proc handle*(
                 ValueError
               ].} =
                 try:
-                  result = manager.functions.merit.getRandomX().parseBlockHeader(serialization)
+                  result = parseBlockHeaderWithoutHashing(serialization)
                 except ValueError as e:
                   raise e
-
-                if result.hash != check:
-                  raise newLoggedException(ValueError, "Peer sent the wrong BlockHeader.")
             )
           except ValueError as e:
             panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)

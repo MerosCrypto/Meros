@@ -29,11 +29,11 @@ def DelayedMeritHolderTest(
     req: bytes = rpc.meros.sync.recv()
     if MessageType(req[0]) != MessageType.BlockListRequest:
       raise TestError("Meros didn't request the list of previous BlockHeaders.")
-    if req[3 : 35] != alt.blocks[-1].header.hash:
+    if req[3 : 35] != alt.blocks[-2].header.hash:
       raise TestError("Meros didn't request the list of previous BlockHeaders for THIS header.")
 
     blockList: List[bytes] = []
-    b: int = len(alt.blocks) - 2
+    b: int = len(alt.blocks) - 3
     while b != -1:
       blockList.append(alt.blocks[b].header.hash)
       b -= 1

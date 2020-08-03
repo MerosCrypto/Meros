@@ -19,7 +19,8 @@ proc parseBlock*(
     body: SketchyBlockBody
 
   try:
-    header = rx.parseBlockHeader(blockStr)
+    header = parseBlockHeaderWithoutHashing(blockStr)
+    rx.hash(header)
     body = blockStr.substr(
       BLOCK_HEADER_DATA_LEN +
       (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +

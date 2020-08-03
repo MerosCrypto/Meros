@@ -441,22 +441,48 @@ proc mainMerit(
         await sleepAsync(milliseconds(10))
       except Exception as e:
         panic("Failed to complete an async sleep: " & e.msg)
-    lockedBlock[] = header.hash
+
+    #[
+    This function doesn't know the BlockHeader's hash.
+    It can't without the context of the RandomX key, which isn't knowable at this time.
+    That said, what we can do is check if we have the required history.
+    If we do, we know the RandomX key.
+    If we don't, we can iterate up the history in an ordered matter and find out any RandomX key used.
+    ]#
+    var headerBlake: Hash[256] = Blake256(header.serializeHash())
+    lockedBlock[] = headerBlake
 
     var sketchyBlock: SketchyBlock
     try:
-      #Return if we already have this Block.
-      if merit.blockchain.hasBlock(header.hash):
-        raise newLoggedException(DataExists, "Block was already added.")
-
       #Sync previous Blocks if this header isn't connected.
       if merit.blockchain.tail.header.hash != header.last:
+        #If we have the last header already, and it isn't our current last Block, there's a good chance we already have this Block.
+        if merit.blockchain.hasBlock(header.last):
+          var
+            keyBackup: string = merit.blockchain.rx.cacheKey
+            keyHeight: int = merit.blockchain.getHeightOf(header.last) - 11
+            actualKey: string
+          try:
+            actualKey = merit.blockchain[(keyHeight - (keyHeight mod 384)) - 1].header.hash.serialize()
+          except IndexError as e:
+            panic("Couldn't get a Block Header we confirmed we have by its height: " & e.msg)
+          if keyBackup != actualKey:
+            merit.blockchain.rx.setCacheKey(actualKey)
+            merit.blockchain.rx.hash(header)
+            merit.blockchain.rx.setCacheKey(keyBackup)
+          if merit.blockchain.hasBlock(header.hash):
+            raise newLoggedException(DataExists, "Block was already added.")
+
         var
           increment: int = 32
-          queue: seq[Hash[256]] = @[header.hash]
+          queue: seq[Hash[256]] = @[header.last]
           #Malformed size used for the first loop iteration.
           size: int = queue.len - increment
           lastCommonBlock: Hash[256] = header.last
+
+        #If we don't have its last, this is a future chain (which may or may not be a reorg).
+        #If we do have its last, it's only potentially a depth-one reorg.
+        #Only in this first case do we need info about the preceding blocks.
         if not merit.blockchain.hasBlock(header.last):
           while not merit.blockchain.hasBlock(queue[^1]):
             #If we ran out of Blocks, raise.
@@ -491,7 +517,7 @@ proc mainMerit(
             else:
               break
 
-        #If the last Block on both chains isn't our tail, this is a potentially longer chain.
+        #If the last Block on its chains isn't our tail, this is a potentially a chain with more work.
         if lastCommonBlock != merit.blockchain.tail.header.hash:
           var altHeaders: seq[BlockHeader]
           try:
@@ -533,12 +559,13 @@ proc mainMerit(
             except Exception as e:
               panic("addBlockByHashInternal threw an Exception despite catching all Exceptions: " & e.msg)
           logInfo "Reorganized"
+        #Simply a multi-Block addition to our chain.
         else:
           #Clear the locked Block.
           lockedBlock[] = Hash[256]()
 
           #Add every previous Block.
-          for h in countdown(queue.len - 1, 1):
+          for h in countdown(queue.len - 1, 0):
             try:
               await functions.merit.addBlockByHashInternal(queue[h], true, innerBlockLock)
             except ValueError as e:
@@ -551,7 +578,12 @@ proc mainMerit(
               panic("addBlockByHashInternal threw an Exception despite catching all Exceptions: " & e.msg)
 
         #Set back the locked Block.
-        lockedBlock[] = header.hash
+        lockedBlock[] = headerBlake
+
+      #Return if we already have this Block.
+      merit.blockchain.rx.hash(header)
+      if merit.blockchain.hasBlock(header.hash):
+        raise newLoggedException(DataExists, "Block was already added.")
 
       if header.last != merit.blockchain.tail.header.hash:
         panic("Trying to add a Block which isn't after our current tail, despite calling reorganize and adding previous blocks.")
@@ -633,7 +665,7 @@ proc mainMerit(
       #https://github.com/nim-lang/Nim/issues/13815 is the reason why.
       #That said, even when the issue is fixed, it'll be a while before 1.0.8.
       #This longer code will last until at least then.
-      var header: BlockHeader = await syncAwait network.syncManager.syncBlockHeader(hash)
+      var header: BlockHeader = await syncAwait network.syncManager.syncBlockHeaderWithoutHashing(hash)
       await functions.merit.addBlockByHeaderInternal(header, syncing, lock)
     except ValueError as e:
       raise e

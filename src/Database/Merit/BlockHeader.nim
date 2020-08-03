@@ -22,7 +22,7 @@ import ../../Network/Serialize/Merit/SerializeBlockHeader
 proc hash*(
   rx: RandomX,
   miner: MinerWallet,
-  header: var BlockHeader,
+  header: BlockHeader,
   proof: uint32
 ) {.forceCheck: [].} =
   header.proof = proof
@@ -31,7 +31,7 @@ proc hash*(
 #Hash the header.
 proc hash*(
   rx: RandomX,
-  header: var BlockHeader
+  header: BlockHeader
 ) {.forceCheck: [].} =
   rx.hash(
     header,

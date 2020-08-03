@@ -68,24 +68,7 @@ proc parseBlockHeader*(
   result.interimHash = interimHash
   result.hash = hash
 
-proc parseBlockHeader*(
-  rx: RandomX,
-  headerStr: string
-): BlockHeader {.forceCheck: [
-  ValueError
-].} =
-  try:
-    result = parseBlockHeader(headerStr, "", Hash[256]())
-  except ValueError as e:
-    raise e
-
-  #Set the BlockHeader's actual hash.
-  rx.hash(
-    result,
-    headerStr[0 ..< (
-        BLOCK_HEADER_DATA_LEN +
-        (if result.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +
-        INT_LEN + INT_LEN
-      )
-    ]
-  )
+template parseBlockHeaderWithoutHashing*(
+  header: string
+): BlockHeader =
+  parseBlockHeader(header, "", Hash[256]())

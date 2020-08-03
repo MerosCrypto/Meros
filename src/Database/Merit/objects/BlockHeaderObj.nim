@@ -94,7 +94,7 @@ func newBlockHeaderObj*(
 proc hash*(
   rx: RandomX,
   miner: MinerWallet,
-  header: var BlockHeader,
+  header: BlockHeader,
   serialized: string,
   proof: uint32
 ) {.forceCheck: [].} =
@@ -106,7 +106,7 @@ proc hash*(
 #Hash the header via a passed in serialization.
 proc hash*(
   rx: RandomX,
-  header: var BlockHeader,
+  header: BlockHeader,
   serialized: string
 ) {.forceCheck: [].} =
   header.interimHash = rx.hash(serialized).serialize()

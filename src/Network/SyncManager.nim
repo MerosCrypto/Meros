@@ -542,7 +542,7 @@ proc syncBlockBody*(
     except Exception as e:
       panic("Couldn't send a BlockBodySyncRequest to a Peer: " & e.msg)
 
-proc syncBlockHeader*(
+proc syncBlockHeaderWithoutHashing*(
   manager: SyncManager,
   hash: Hash[256]
 ): SyncFuture[BlockHeader] {.forceCheck: [].} =
@@ -556,7 +556,7 @@ proc syncBlockHeader*(
   result = newSyncFuture[BlockHeader](
     manager,
     id,
-    newFuture[BlockHeader]("syncBlockHeader"),
+    newFuture[BlockHeader]("syncBlockHeaderWithoutHashing"),
     5
   )
 
