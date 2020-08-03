@@ -54,9 +54,9 @@ proc mainNetwork(
       if network.peers.len >= 8:
         return
 
-      var peers: seq[tuple[ip: string, port: int]]
+      var peers: seq[tuple[ip: string, port: int]] = params.SEEDS
       try:
-        peers = await syncAwait network.syncManager.syncPeers(params.SEEDS)
+        peers &= await syncAwait network.syncManager.syncPeers()
       except Exception as e:
         panic("requestPeers threw an Exception despite not actually throwing any: " & e.msg)
 
