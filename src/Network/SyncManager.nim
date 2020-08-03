@@ -604,27 +604,13 @@ proc syncBlockList*(
       panic("Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)
 
 proc syncPeers*(
-  manager: SyncManager,
-  seeds: seq[tuple[ip: string, port: int]]
+  manager: SyncManager
 ): SyncFuture[seq[tuple[ip: string, port: int]]] {.forceCheck: [].} =
   #Get an ID.
   var id: int = manager.id
   inc(manager.id)
 
   logDebug "Syncing Peers", id = id
-
-  if manager.peers.len == 0:
-    result = newSyncFuture[seq[tuple[ip: string, port: int]]](
-      manager,
-      0,
-      newFuture[seq[tuple[ip: string, port: int]]]("syncPeers"),
-      3
-    )
-    try:
-      result.future.complete(seeds)
-    except Exception as e:
-      panic("Failed to complete a future: " & e.msg)
-    return
 
   #Create the future.
   result = newSyncFuture[seq[tuple[ip: string, port: int]]](
