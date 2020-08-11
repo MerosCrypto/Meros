@@ -9,3 +9,4 @@
 - BLSError: -4
 - AddressError: -5
 - ClientError: -6
+- Spam: -7

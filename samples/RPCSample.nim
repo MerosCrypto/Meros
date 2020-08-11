@@ -24,7 +24,9 @@ const ARGUMENTS: Table[string, seq[char]] = {
   "consensus_getStatus":         @['b'],
 
   "transactions_getTransaction": @['b'],
+  "transactions_getUTXOs":       @['s'],
   "transactions_getBalance":     @['s'],
+  "transactions_publishSend"     @['s'],
 
   "network_connect":  @['s', 'i'],
   "network_getPeers": @[],
