@@ -3,8 +3,8 @@
 1. Be concise, but never implicit.
 2. Use a 2-space ident.
 
-3. For `var`/`let`, use pascalCase for naming.
-4. For `type` values, use CamelCase.
+3. For `var`/`let`, use camelCase for naming.
+4. For `type` values, use PascalCase.
 5. For `const`, use ALL_CAPS, with underscores between words.
 6. Use a single `var`/`let`/`type` block when defining things next to each other.
 7. Always define the type of your `var`s, `let`s, and `proc` arguments INDIVIDUALLY (don’t group multiple arguments with a single type).
