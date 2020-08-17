@@ -1,4 +1,4 @@
-#Tests proper handling of a MeritRemoval created from Difficulty/Gas Price Updates sharing nonces.
+#Tests proper handling of a MeritRemoval created from Difficulty updates sharing nonces.
 
 from typing import Dict, IO, Any
 import json

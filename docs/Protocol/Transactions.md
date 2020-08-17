@@ -15,10 +15,8 @@ The Transaction sub-types are as follows:
 - Claim
 - Send
 - Data
-- Lock
-- Unlock
 
-When a new Transaction is received via a `Claim`, `Send`, `Data`, `Lock`, or `Unlock` message, it's added to the Transactions DAG, as long as it has at least one input and the checks imposed by the sub-type pass.
+When a new Transaction is received via a `Claim`, `Send`, or `Data` message, it's added to the Transactions DAG, as long as it has at least one input and the checks imposed by the sub-type pass.
 
 ### Mint
 
@@ -82,11 +80,3 @@ The data must be less than 256 bytes long (enforced by only providing a single b
 The proof should cause the Data to beat the difficulty, as described in the Consensus and Difficulty documentation.
 
 `Data` has a variable message length; the 32-byte input, the 1-byte data length (where the length is the byte's value plus one), the variable-length data, the 64-byte Ed25519 signature, and the 4-byte proof.
-
-### Lock
-
-### Unlock
-
-### Violations in Meros
-
-- Meros doesn't support Lock or Unlock Transactions.

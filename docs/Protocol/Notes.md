@@ -12,7 +12,6 @@
 - 1 Meros is equivalent to 10,000,000,000 Meri, and Meri is the lowest denomination of Meros. This means Meros has 10 decimals.
 
 - The Argon parameters used in the spam function will be changed before mainnet.
-- `Locks`/`Unlocks` are not specified as the MerosScript specification is still under development.
 - The negative sigmoid used for reward calculation is not specified as it is not finalized.
 
 - All violations between the Meros codebase and the Meros protocol will be resolved before mainnet.

@@ -26,13 +26,13 @@ The message types are as follows (with their list number being their byte header
 <li><code>Claim</code></li>
 <li><code>Send</code></li>
 <li><code>Data</code></li>
-<li><code>Lock</code></li>
-<li><code>Unlock</code></li>
+<li>Reserved</li>
+<li>Reserved</li>
 <br>
 <li><code>SignedVerification</code></li>
 <li><code>SignedSendDifficulty</code></li>
 <li><code>SignedDataDifficulty</code></li>
-<li><code>SignedGasPrice</code></li>
+<li>Reserved</li>
 <li><code>SignedMeritRemoval</code></li>
 <br>
 <li><code>Checkpoint</code></li>

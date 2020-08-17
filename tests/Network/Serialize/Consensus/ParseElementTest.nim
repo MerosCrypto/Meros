@@ -5,13 +5,11 @@ This test tests every single case getLength may have to handle.
 
 SendDifficulty
 DataDifficulty
-GasPrice
 
 MeritRemoval V/*
 MeritRemoval VP/*
 MeritRemoval SD/*
 MeritRemoval DD/*
-MeritRemoval GP/*
 ]#
 
 import random
@@ -23,7 +21,6 @@ import ../../../../src/Network/Serialize/SerializeCommon
 import ../../../../src/Network/Serialize/Consensus/[
   SerializeSendDifficulty,
   SerializeDataDifficulty,
-  #SerializeGasPrize,
   SerializeMeritRemoval,
   ParseElement
 ]
@@ -36,7 +33,6 @@ suite "ParseElement":
     var
       sendDiff: SendDifficulty = newRandomSendDifficulty()
       dataDiff: DataDifficulty = newRandomDataDifficulty()
-      #gasPrice: GasPrice = newRandomGasPrice()
 
     check:
       sendDiff.serialize().len == {
@@ -46,10 +42,6 @@ suite "ParseElement":
       dataDiff.serialize().len == {
         byte(DATA_DIFFICULTY_PREFIX)
       }.getLength(char(DATA_DIFFICULTY_PREFIX))
-
-      #[gasPrice.serialize().len == {
-        byte(GAS_PRICE_PREFIX)
-      }.getLength(char(GAS_PRICE_PREFIX))]#
 
     for first in 0 ..< 5:
       var

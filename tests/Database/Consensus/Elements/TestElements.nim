@@ -71,7 +71,6 @@ proc newRandomElement*(
   packet: bool = true,
   sendDifficulty: bool = true,
   dataDifficulty: bool = true,
-  gasPrice: bool = true,
   removal: bool = true
 ): Element =
   var
@@ -83,7 +82,6 @@ proc newRandomElement*(
   if packet: possibilities.incl(1)
   if sendDifficulty: possibilities.incl(2)
   if dataDifficulty: possibilities.incl(3)
-  #if gasPrice: possibilities.incl(4)
   if removal: possibilities.incl(5)
 
   #Until r is a valid possibility, randomize it.
@@ -126,8 +124,6 @@ proc newRandomMeritRemoval*(
         signatures.add(cast[SignedSendDifficulty](sd).signature)
       of DataDifficulty as dd:
         signatures.add(cast[SignedDataDifficulty](dd).signature)
-      #of GasPrice as gp:
-      #  signatures.add(cast[SignedGasPrice](gp).signature)
       of MeritRemoval as mr:
         check false
       else:
@@ -142,8 +138,6 @@ proc newRandomMeritRemoval*(
       signatures.add(cast[SignedSendDifficulty](sd).signature)
     of DataDifficulty as dd:
       signatures.add(cast[SignedDataDifficulty](dd).signature)
-    #of GasPrice as gp:
-    #  signatures.add(cast[SignedGasPrice](gp).signature)
     of MeritRemoval as mr:
       check false
     else:
@@ -161,7 +155,6 @@ proc newRandomMeritRemoval*(
 proc newRandomBlockElement*(
   sendDifficulty: bool = true,
   dataDifficulty: bool = true,
-  gasPrice: bool = true,
   removal: bool = true
 ): BlockElement =
   var
@@ -171,7 +164,6 @@ proc newRandomBlockElement*(
   #Include all possibilities in the set.
   if sendDifficulty: possibilities.incl(0)
   if dataDifficulty: possibilities.incl(1)
-  #if gasPrice: possibilities.incl(2)
   if removal: possibilities.incl(3)
 
   #Until r is a valid possibility, randomize it.
