@@ -123,18 +123,47 @@ proc mainConsensus(
   ) {.forceCheck: [
     ValueError,
     DataExists
-  ].} =
+  ], async.} =
     logInfo "New Verification", holder = verif.holder, hash = verif.hash
 
     var mr: bool
     try:
-      consensus[].add(merit.state, verif)
-    #Invalid signature.
+      try:
+        consensus[].add(merit.state, verif)
+      except DataMissing:
+        var tx: Transaction
+        try:
+          tx = await syncAwait network.syncManager.syncTransaction(verif.hash)
+        except DataMissing:
+          raise newException(ValueError, "Verification is of a non-existent Transaction.")
+        except Exception as e:
+          panic("syncTransaction threw an error despite catching all errors: " & e.msg)
+        try:
+          case tx:
+            of Mint as _:
+              panic("Synced a Mint. We should never have parsed it.")
+            of Claim as claim:
+              functions.transactions.addClaim(claim)
+            of Send as send:
+              functions.transactions.addSend(send)
+            of Data as data:
+              functions.transactions.addData(data)
+        #[
+        Swallow DataExists errors.
+        Stops this Transaction add from causing the signed verification to fail.
+        While the Transaction didn't exist when we checked, it could've been added by another async process in this time.
+        ]#
+        except DataExists:
+          discard
+
+        #Try again.
+        try:
+          consensus[].add(merit.state, verif)
+        except DataMissing:
+          panic("Transaction in a Verification was missing despite just syncing it.")
+    #Invalid signature/transaction.
     except ValueError as e:
       raise e
-    #Unknown Transaction.
-    except DataMissing:
-      return
     #Already added.
     except DataExists as e:
       raise e

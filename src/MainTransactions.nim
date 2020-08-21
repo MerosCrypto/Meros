@@ -34,11 +34,13 @@ proc verify(
 
     #Add the Verification, which calls broadcast.
     try:
-      functions.consensus.addSignedVerification(verif)
+      await functions.consensus.addSignedVerification(verif)
     except ValueError as e:
       panic("Created a Verification with an invalid signature: " & e.msg)
     except DataExists as e:
       panic("Created a Verification which already exists: " & e.msg)
+    except Exception as e:
+      panic("addSignedVerification threw an exception despite catching all errors: " & e.msg)
 
 proc mainTransactions(
   database: DB,

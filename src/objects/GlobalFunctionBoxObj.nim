@@ -121,10 +121,7 @@ type
 
     addSignedVerification*: proc (
       verif: SignedVerification
-    ) {.gcsafe, raises: [
-      ValueError,
-      DataExists
-    ].}
+    ): Future[void] {.gcsafe.}
 
     addVerificationPacket*: proc (
       packet: VerificationPacket
