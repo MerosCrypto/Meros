@@ -16,7 +16,6 @@ import ../../Database/Consensus/Elements/objects/ElementObj
 
 type
   #lib Errors.
-  RandomError* = object of CatchableError #Used when the RNG fails.
   SaltError*   = object of CatchableError #Used when a sketch salt causes a collision.
 
   #Database/common Statuses.

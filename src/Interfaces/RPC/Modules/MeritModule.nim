@@ -258,9 +258,12 @@ proc module*(
           #ID for this Sketcher.
           id: int = sketchID
           #Sketch salt we're using with the packets.
-          sketchSaltNum: uint32 = 0
+          sketchSaltNum: uint32
           #Actual sketch salt.
           sketchSalt: string
+        sketchSalt = newString(4)
+        randomFill(sketchSalt)
+        sketchSaltNum = cast[uint32](sketchSalt.fromBinary())
         inc(sketchID)
 
         #Verify the packets don't collide with our salt.
@@ -280,7 +283,11 @@ proc module*(
             sketchSalt = sketchSaltNum.toBinary(INT_LEN)
             if not sketchers[id].collides(sketchSalt):
               break
+
+            #This shouldn't be needed as sketchSaltNum is a uint32.
+            {.push checks: off.}
             inc(sketchSaltNum)
+            {.pop.}
           except KeyError as e:
             panic("Couldn't get a Sketcher we just created: " & e.msg)
 

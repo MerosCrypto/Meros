@@ -58,10 +58,13 @@ func fromBinary*(
 func fromBinary*(
   number: string
 ): int {.forceCheck: [].} =
+  #Disable checks so this can be used with unsigned numbers (with a binary casted result).
+  {.push checks: off.}
   var counter: int = 0
   for c in number:
     result += int(c) shl counter
     counter += 8
+  {.pop.}
 
 #Extract a set of bits.
 func extractBits*(
@@ -81,11 +84,10 @@ func extractBits*(
 #Securely generates X random bytes,
 proc randomFill*[T](
   arr: var openArray[T]
-) {.forceCheck: [
-  RandomError
-].} =
+) {.forceCheck: [].} =
   try:
     if randomBytes(arr) != arr.len:
       raise newException(Exception, "")
   except Exception:
-    raise newException(RandomError, "Couldn't randomly fill the passed array.")
+    #Can't panic due to only importing ErrorObjs.
+    doAssert(false, "Couldn't randomly fill the passed array.")
