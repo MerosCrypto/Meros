@@ -79,8 +79,14 @@ class RPC:
     self.quit()
     sleep(3)
 
-    remove("./data/e2e/devnet-" + self.meros.db)
-    remove("./data/e2e/devnet-" + self.meros.db + "-lock")
+    try:
+      remove("./data/e2e/devnet-" + self.meros.db)
+    except FileNotFoundError:
+      pass
+    try:
+      remove("./data/e2e/devnet-" + self.meros.db + "-lock")
+    except FileNotFoundError:
+      pass
 
     self.meros = Meros(self.meros.db, self.meros.tcp, self.meros.rpc)
     sleep(5)

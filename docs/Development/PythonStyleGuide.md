@@ -3,8 +3,8 @@
 1. Be concise, but never implicit.
 2. Use a 2-space ident.
 
-3. For variables/class attributes, use pascalCase for naming.
-4. For classes/enum attributes, use CamelCase.
+3. For variables/class attributes, use camelCase for naming.
+4. For classes/enum attributes, use PascalCase.
 5. Use type hints for everything.
 
 6. Every function definition should place each argument on their own line.

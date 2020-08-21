@@ -367,6 +367,7 @@ proc add*(
   verif: SignedVerification
 ) {.forceCheck: [
   ValueError,
+  DataMissing,
   DataExists,
   MaliciousMeritHolder
 ].} =
@@ -391,7 +392,7 @@ proc add*(
   try:
     tx = consensus.functions.transactions.getTransaction(verif.hash)
   except IndexError:
-    raise newLoggedException(ValueError, "Unknown Verification.")
+    raise newLoggedException(DataMissing, "Unknown Verification.")
 
   #Check if this holder verified a competing Transaction.
   if not ((tx of Data) and (tx.inputs[0].hash == consensus.genesis)):
@@ -668,7 +669,7 @@ proc remove*(
   consensus.filters.send.remove(mr.holder, merit)
   consensus.filters.data.remove(mr.holder, merit)
 
-  #If the removed MeritRemoval involved a SendDifficulty, DataDifficulty, or GasDifficulty, we need to:
+  #If the removed MeritRemoval involved a SendDifficulty or DataDifficulty, we need to:
   #- Save that the nonce was used.
   #- Update the difficulties.
   var usedNonces: HashSet[int] = consensus.db.loadMeritRemovalNonces(mr.holder)

@@ -3,7 +3,7 @@
 Merit is a blockchain used to:
 
 - Archive Transactions and their Verifications, providing a complete overview of the network's contents.
-- Coordinate the Difficulties and Gas Price.
+- Coordinate the Difficulties.
 - Mint Merit and Meros.
 
 ### BlockHeader Data Type
@@ -109,7 +109,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - Every Transaction doesn't compete with, or have parents which competed with and lost, finalized Transactions.
 - The sketch is properly constructed from the same data used to construct the Merkle.
 - Only new and unique Elements are archived.
-- No SendDifficulty, DataDifficulty, or GasPrice skips a nonce for their Merit Holder. That said, the Block may skip a nonce if the skipped nonce is present later in the Block.
+- No SendDifficulty or DataDifficulty skips a nonce for their Merit Holder. That said, the Block may skip a nonce if the skipped nonce is present later in the Block.
 - Every Element is valid and doesn't cause a MeritRemoval when combined with another Element either already on the Blockchain or in the same Block. That said, the Verification Packets still can as long as the matching MeritRemoval is included in the Block.
 - The aggregate signature is formed with the following algorithm:
 

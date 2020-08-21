@@ -187,7 +187,14 @@ proc handle*(
 
         of MessageType.SignedVerification:
           var verif: SignedVerification = msg.message.parseSignedVerification()
-          manager.functions.consensus.addSignedVerification(verif)
+          try:
+            await manager.functions.consensus.addSignedVerification(verif)
+          except ValueError as e:
+            raise e
+          except DataExists as e:
+            raise e
+          except Exception as e:
+            panic("addSignedVerification threw an exception despite catching all errors: " & e.msg)
 
         of MessageType.SignedSendDifficulty:
           var sendDiff: SignedSendDifficulty = msg.message.parseSignedSendDifficulty()

@@ -18,10 +18,7 @@ type Mnemonic* = object
 proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
   #Create the entropy.
   result.entropy = newString(32)
-  try:
-    randomFill(result.entropy)
-  except RandomError as e:
-    panic("Couldn't generate entropy for a mnemonic: " & e.msg)
+  randomFill(result.entropy)
 
   #Calculate the checksum.
   result.checksum = $char(SHA2_256(result.entropy).data[0])

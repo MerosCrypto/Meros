@@ -4,7 +4,16 @@ import mc_ed25519
 
 import ../lib/[Errors, Util, Hash]
 
-import mc_ed25519
+#Block 0 public keys from being signed for.
+#Allows creation of a single, consolidated burn address.
+#Also skips over an extremely feasible mistake.
+const ZERO_KEY: array[32, cuchar] = [
+  #Generally, we'd only need to cast the first array entry. Unfortunately, cuchar doesn't have this property.
+  cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0),
+  cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0),
+  cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0),
+  cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0), cuchar(0)
+]
 
 #SIGN_PREFIX applied to every message, stopping cross-network replays.
 const SIGN_PREFIX {.strdefine.}: string = "MEROS"
@@ -69,6 +78,9 @@ func verify*(
   msgArg: string,
   sigArg: EdSignature
 ): bool {.forceCheck: [].} =
+  if keyArg.data == ZERO_KEY:
+    return false
+
   #Extract the argsuments.
   var
     key: EdPublicKey = keyArg

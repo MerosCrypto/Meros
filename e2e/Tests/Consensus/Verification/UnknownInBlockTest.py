@@ -18,7 +18,7 @@ from e2e.Meros.Liver import Liver
 from e2e.Tests.Errors import TestError, SuccessError
 
 #pylint: disable=too-many-statements
-def VUnknownTest(
+def VUnknownInBlockTest(
   rpc: RPC
 ) -> None:
   file: IO[Any] = open("e2e/Vectors/Consensus/Verification/Parsable.json", "r")

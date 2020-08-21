@@ -50,8 +50,8 @@ The result is an array of objects, each as follows:
 
 ### `getBalance`
 
-`getBalance` replies with the balance of the specified Public Key. It takes in one argument:
-- Hash (string)
+`getBalance` replies with the balance of the specified address. It takes in one argument:
+- address (string)
 
 The result is a string of the balance.
 
@@ -60,18 +60,18 @@ The result is a string of the balance.
 `publishClaim` parses the serialized Claim, adds it to the local Transactions DAG, and if it's valid, publishes it. It takes in one argument.
 - Claim (string)
 
-The result is a bool of true.
+The result is a bool of if the transaction was successfully added. This will return true if the transaction is valid but already exists, yet it will NOT be published in that case.
 
 ### `publishSend`
 
 `publishSend` parses the serialized Send, adds it to the local Transactions DAG, and if it's valid, publishes it. It takes in one argument.
 - Send (string)
 
-The result is a bool of true.
+The result is a bool of if the transaction was successfully added. This will return true if the transaction is valid but already exists, yet it will NOT be published in that case.
 
 ### `publishData`
 
 `publishData` parses the serialized Data, adds it to the local Transactions DAG, and if it's valid, publishes it. It takes in one argument.
 - Data (string)
 
-The result is a bool of true.
+The result is a bool of if the transaction was successfully added. This will return true if the transaction is valid but already exists, yet it will NOT be published in that case.

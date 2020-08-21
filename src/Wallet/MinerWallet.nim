@@ -26,16 +26,11 @@ proc newMinerWallet*(
     raise e
 
 proc newMinerWallet*(): MinerWallet {.forceCheck: [
-  RandomError,
   BLSError
 ].} =
   #Create a Private Key.
   var privKey: string = newString(G1_LEN)
-  #Use nimcrypto to fill the Private Key with random bytes.
-  try:
-    randomFill(privKey)
-  except RandomError:
-    raise newException(RandomError, "Couldn't randomly fill the BLS Private Key.")
+  randomFill(privKey)
 
   try:
     result = newMinerWallet(privKey)

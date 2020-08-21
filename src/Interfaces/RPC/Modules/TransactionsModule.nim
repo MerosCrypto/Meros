@@ -8,6 +8,8 @@ import ../../../Wallet/Address
 
 import ../../../Database/Transactions/Transactions
 
+import ../../../Network/Serialize/Transactions/ParseSend
+
 import ../../../objects/GlobalFunctionBoxObj
 
 import ../objects/RPCObj
@@ -114,6 +116,42 @@ proc module*(
         except ValueError:
           raise newJSONRPCError(-3, "Invalid hash")
 
+      "getUTXOs" = proc (
+        res: JSONNode,
+        params: JSONNode
+      ) {.forceCheck: [
+        ParamError
+      ].} =
+        #Verify the parameters.
+        if (
+          (params.len != 1) or
+          (params[0].kind != JString)
+        ):
+          raise newException(ParamError, "")
+
+        #Get the UTXOs.
+        var
+          decodedAddy: Address
+          utxos: seq[FundedInput]
+        try:
+          decodedAddy = Address.getEncodedData(params[0].getStr())
+        except ValueError:
+          raise newException(ParamError, "")
+
+        case decodedAddy.addyType:
+          of AddressType.PublicKey:
+            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](decodedAddy.data)))
+
+        res["result"] = % []
+        for utxo in utxos:
+          try:
+            res["result"].add(%* {
+              "hash": $utxo.hash,
+              "nonce": utxo.nonce
+            })
+          except KeyError as e:
+            panic("Couldn't append to the list of UTXOs despite just creating it: " & e.msg)
+
       "getBalance" = proc (
         res: JSONNode,
         params: JSONNode
@@ -147,5 +185,33 @@ proc module*(
           except IndexError as e:
             panic("Failed to get a Transaction which was a spendable UTXO: " & e.msg)
         res["result"] = % $balance
+
+      "publishSend" = proc (
+        res: JSONNode,
+        params: JSONNode
+      ) {.forceCheck: [
+        ParamError,
+        JSONRPCError
+      ].} =
+        if (
+          (params.len != 1) or
+          (params[0].kind != JString)
+        ):
+          raise newException(ParamError, "")
+
+        try:
+          functions.transactions.addSend(
+            parseSend(
+              params[0].getStr().parseHexStr(),
+              functions.consensus.getSendDifficulty()
+            )
+          )
+        except ValueError as e:
+          raise newJSONRPCError(-3, "Invalid send: " & e.msg)
+        except Spam:
+          raise newJSONRPCError(-7, "Spam")
+        except DataExists:
+          discard
+        res["result"] = % true
   except Exception as e:
     panic("Couldn't create the Transactions Module: " & e.msg)

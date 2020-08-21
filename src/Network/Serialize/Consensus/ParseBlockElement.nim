@@ -45,8 +45,6 @@ proc parseBlockElement*(
         result.element = parseSendDifficulty(data[i + 1 .. i + result.len])
       of DATA_DIFFICULTY_PREFIX:
         result.element = parseDataDifficulty(data[i + 1 .. i + result.len])
-      of GAS_DIFFICULTY_PREFIX:
-        panic("GasDifficulties are not supported.")
       of MERIT_REMOVAL_PREFIX:
         result.element = parseMeritRemoval(data[i + 1 .. i + result.len])
       else:

@@ -1,10 +1,10 @@
 # Consensus
 
-This document defines and describes Consensus Elements, which come in the forms of Verifications, Difficulty Updates, Gas Price sets, and Merit Removals. Every Element has a holder, which is the 2-byte nickname of the Merit Holder who created it. When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, or `SignedMeritRemoval` message, node behavior should be to immediately perform the protocol dictated action, as long as the Element is valid. Gas Price Elements can only have their actions applied once archived in a Block. `SignedGasDifficulty` exists solely to give miners other than the sender the ability to archive the Element as well.
+This document defines and describes Consensus Elements, which come in the forms of Verifications, Difficulty Updates, and Merit Removals. Every Element has a holder, which is the 2-byte nickname of the Merit Holder who created it. When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, or `SignedMeritRemoval` message, node behavior should be to immediately perform the protocol dictated action, as long as the Element is valid.
 
 Elements do not have hashes, so their signatures are produced by signing their serialization, without the holder, and with a prefix unique to each type of Element.
 
-It should be noted `Verification`, `VerificationPacket`, `SendDifficulty`, `DataDifficulty`, `GasDifficulty`, and `MeritRemoval` aren't actual message types. `Verification` only exists to define the `SignedVerification` message type. The rest only exist to define their signed variants, as well define how they're included as part of a `BlockBody` message.
+It should be noted `Verification`, `VerificationPacket`, `SendDifficulty`, `DataDifficulty`, and `MeritRemoval` aren't actual message types. `Verification` only exists to define the `SignedVerification` message type. The rest only exist to define their signed variants, as well define how they're included as part of a `BlockBody` message.
 
 ### Verification
 
@@ -54,20 +54,9 @@ They have the following fields:
 
 `DataDifficulty` has a message length of 10 bytes; the 2-byte holder, 4-byte nonce, and the 4-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type.
 
-### GasDifficulty
-
-A GasDifficulty is a Merit Holder voting to update the difficulty of the spam filter applied to Unlock Transactions. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined except that gas difficulty updates only take effect once archived in a Block and must be beaten, unlike Send and Data difficulties which are guidelines.
-
-They have the following fields:
-
-- nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
-- difficulty: An unsigned 64-bit number representing the difficulty for the Unlock Transactions' spam filter.
-
-`GasDifficulty` has a message length of 10 bytes; the 2-byte holder, 4-byte nonce, and the 4-byte difficulty. The signature is produced with a prefix of "\4". That said, `GasDifficulty` is not a standalone message type.
-
 ### MeritRemoval
 
-MeritRemovals aren't created by Merit Holders; they are the sum of two Elements which together define a malicious action. This malicious action is either the verification of competing Transactions or two different Difficulty/Gas Price updates which share the same nonce. Once archived in a Block, Merit Removals remove all Merit from a Merit Holder. Until the Merit Removal is archived, node behavior should not update the amount of 'live' Merit for security reasons. This is further described in the Merit documentation. Merit Holders are ineligible for rewards using removed Merit. Merit Holders may regain Merit, yet if the Block which archives their Merit Removal gives them Merit, it is also removed.
+MeritRemovals aren't created by Merit Holders; they are the sum of two Elements which together define a malicious action. This malicious action is either the verification of competing Transactions or two different Difficulty updates which share the same nonce. Once archived in a Block, Merit Removals remove all Merit from a Merit Holder. Until the Merit Removal is archived, node behavior should not update the amount of 'live' Merit for security reasons. This is further described in the Merit documentation. Merit Holders are ineligible for rewards using removed Merit. Merit Holders may regain Merit, yet if the Block which archives their Merit Removal gives them Merit, it is also removed.
 
 If multiple MeritRemovals are triggered, the first one should have already reverted actions not yet finalized and stripped the Merit Holder of their Merit (according to node behavior). The remaining work becomes achieving consensus on which MeritRemoval is the singular MeritRemoval. This is achieved when the next Block is mined as the next Block's miner decides.
 
@@ -79,9 +68,9 @@ MeritRemovals have the following fields:
 
 `MeritRemoval` has a variable message length; the 2-byte holder, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized including every Merit Holder's BLS Public Key, instead of their nickname, without any sorting required. This is to enable MeritRemovals involving holders whose nicknames were lost due to a chain reorganization. None of the included keys may be infinite. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content Merkle. That said, `MeritRemoval` is not a standalone message type.
 
-If a same-nonce MeritRemoval occurs, and the Merit Holder regains enough Merit to vote on Send/Data Difficulties, as well as the Gas Price, the regained vote must not use a nonce which has an archived MeritRemoval.
+If a same-nonce MeritRemoval occurs, and the Merit Holder regains enough Merit to vote on Send/Data Difficulties, the regained vote must not use a nonce which has an archived MeritRemoval.
 
-### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasDifficulty, and SignedMeritRemoval
+### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, and SignedMeritRemoval
 
 Every "Signed" object is the same as their non-"Signed" counterpart, except they don't rely on a Block's aggregate signature and have the extra field of:
 
@@ -92,5 +81,3 @@ Their message lengths are their non-"Signed" message length plus 48 bytes; the 4
 ### Violations in Meros
 
 - Meros doesn't support defaulting.
-
-- Meros doesn't support `GasDifficulty` or `SignedGasDifficulty`.

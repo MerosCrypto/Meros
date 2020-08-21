@@ -45,16 +45,6 @@ factor = (101 + data.length) / 102
 spam(hash, proof, dataDifficulty * factor)
 ```
 
-# Gas Difficulty
-
-The Gas difficulty is initially set to 8 and is decided as described in the Consensus documentation.
-
-In order for a Unlock's proof to beat the difficulty, the following check must pass:
-
-```
-spam(hash, proof, gasDifficulty * usedGas)
-```
-
 # Blockchain Difficulty
 
 The Blockchain difficulty is initially set to 10,000,000. When the fifth Block after the genesis is added, the difficulty starts updating every Block.
