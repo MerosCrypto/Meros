@@ -89,8 +89,7 @@ def HundredTwentyFourTest(
     (254).to_bytes(1, "little") +
     (254).to_bytes(1, "little") +
     b'\0\0\0' +
-    blockchain.last(),
-    False
+    blockchain.last()
   )
 
   #Verify Meros responds with their tail (the genesis).
@@ -109,8 +108,7 @@ def HundredTwentyFourTest(
     (254).to_bytes(1, "little") +
     (254).to_bytes(1, "little") +
     b'\0\0\0' +
-    blockchain.last(),
-    False
+    blockchain.last()
   )
   if rpc.meros.sync.recv() != MessageType.BlockchainTail.toByte() + blockchain.blocks[0].header.hash:
     raise TestError("Meros didn't respond with the genesis.")

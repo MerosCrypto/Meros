@@ -30,7 +30,7 @@ def BusyTest(
 
   #Receive Syncing until Meros asks for peers.
   while True:
-    res = meros.sync.recv()
+    res = meros.sync.recv(True)
     if MessageType(res[0]) == MessageType.Syncing:
       meros.sync.send(MessageType.BlockchainTail.toByte() + blockchain.blocks[0].header.hash)
     elif MessageType(res[0]) == MessageType.PeersRequest:
