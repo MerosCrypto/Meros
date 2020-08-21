@@ -367,6 +367,7 @@ proc add*(
   verif: SignedVerification
 ) {.forceCheck: [
   ValueError,
+  DataMissing,
   DataExists,
   MaliciousMeritHolder
 ].} =
@@ -391,7 +392,7 @@ proc add*(
   try:
     tx = consensus.functions.transactions.getTransaction(verif.hash)
   except IndexError:
-    raise newLoggedException(ValueError, "Unknown Verification.")
+    raise newLoggedException(DataMissing, "Unknown Verification.")
 
   #Check if this holder verified a competing Transaction.
   if not ((tx of Data) and (tx.inputs[0].hash == consensus.genesis)):

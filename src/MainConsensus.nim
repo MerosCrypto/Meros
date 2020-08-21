@@ -132,6 +132,9 @@ proc mainConsensus(
     #Invalid signature.
     except ValueError as e:
       raise e
+    #Unknown Transaction.
+    except DataMissing:
+      return
     #Already added.
     except DataExists as e:
       raise e
