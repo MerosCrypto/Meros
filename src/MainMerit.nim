@@ -454,16 +454,11 @@ proc mainMerit(
 
     var sketchyBlock: SketchyBlock
     try:
+      if merit.blockchain.hasBlockByBlake(headerBlake):
+        raise newLoggedException(DataExists, "Block was already added.")
+
       #Sync previous Blocks if this header isn't connected.
       if merit.blockchain.tail.header.hash != header.last:
-        #If we have the last header already, and it isn't our current last Block, there's a good chance we already have this Block.
-        if merit.blockchain.hasBlock(header.last):
-          merit.blockchain.setCacheKeyAtHeight(merit.blockchain.getHeightOf(header.last) + 1)
-          merit.blockchain.rx.hash(header)
-          if merit.blockchain.hasBlock(header.hash):
-            raise newLoggedException(DataExists, "Block was already added.")
-          merit.blockchain.setCacheKeyAtHeight(merit.blockchain.height)
-
         var
           increment: int = 32
           queue: seq[Hash[256]] = @[header.last]
@@ -572,11 +567,8 @@ proc mainMerit(
         #Set back the locked Block.
         lockedBlock[] = headerBlake
 
-      #Return if we already have this Block.
+      #Finally hash the header.
       merit.blockchain.rx.hash(header)
-      if merit.blockchain.hasBlock(header.hash):
-        raise newLoggedException(DataExists, "Block was already added.")
-
       if header.last != merit.blockchain.tail.header.hash:
         panic("Trying to add a Block which isn't after our current tail, despite calling reorganize and adding previous blocks.")
 

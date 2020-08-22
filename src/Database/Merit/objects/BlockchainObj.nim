@@ -209,6 +209,12 @@ proc hasBlock*(
 ): bool {.inline, forceCheck: [].} =
   blockchain.db.hasBlock(hash)
 
+proc hasBlockByBlake*(
+  blockchain: Blockchain,
+  hash: Hash[256]
+): bool {.inline, forceCheck: [].} =
+  blockchain.db.hasBlockByBlake(hash)
+
 proc `[]`*(
   blockchain: Blockchain,
   nonce: int

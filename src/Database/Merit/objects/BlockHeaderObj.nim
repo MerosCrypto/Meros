@@ -1,6 +1,13 @@
 import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
 
+const EMPTY_HASH: Hash[256] = Hash[256](
+  data: [
+    uint8(0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  ]
+)
+
 type BlockHeader* = ref object
   #Version.
   version*: uint32
@@ -109,5 +116,7 @@ proc hash*(
   header: BlockHeader,
   serialized: string
 ) {.forceCheck: [].} =
+  if header.hash != EMPTY_HASH:
+    return
   header.interimHash = rx.hash(serialized).serialize()
   header.hash = rx.hash(header.interimHash & header.signature.serialize())

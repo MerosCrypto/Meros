@@ -12,6 +12,7 @@ import ../../../../../Network/Serialize/Consensus/[
 ]
 
 import ../../../../../Network/Serialize/Merit/SerializeBlockHeader
+export SerializeBlockHeader
 
 proc serialize*(
   blockArg: Block
