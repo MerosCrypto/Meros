@@ -112,6 +112,39 @@ proc processBlock*(
   blockchain.chainWork += stuint(blockchain.difficulties[^1], 128)
   blockchain.db.save(newBlock.header.hash, blockchain.chainWork)
 
+#Set the cache key to what it was at a certain height.
+proc setCacheKeyAtHeight*(
+  blockchain: Blockchain,
+  height: int
+) {.forceCheck: [].} =
+  var
+    currentKeyHeight: int = height - 12
+    blockUsedAsKey: int = (currentKeyHeight - (currentKeyHeight mod 384)) - 1
+    blockUsedAsUpcomingKey: int = (height - (height mod 384)) - 1
+    currentKey: string
+  if blockUsedAsKey == -1:
+    currentKey = blockchain.genesis.serialize()
+  else:
+    try:
+      currentKey = blockchain[blockUsedAsKey].header.hash.serialize()
+    except IndexError as e:
+      panic("Couldn't grab the Block used as the current RandomX key: " & e.msg)
+
+  #Rebuild the RandomX cache if needed.
+  if currentKey != blockchain.rx.cacheKey:
+    blockchain.rx.setCacheKey(currentKey)
+    blockchain.db.saveKey(blockchain.rx.cacheKey)
+
+  if blockUsedAsUpcomingKey == -1:
+    #We don't need to do this since we don't load the upcoming key at Block 12.
+    #The only reason we do is to ensure database equality between now and a historic moment.
+    blockchain.db.deleteUpcomingKey()
+  else:
+    try:
+      blockchain.db.saveUpcomingKey(blockchain[blockUsedAsUpcomingKey].header.hash.serialize())
+    except IndexError as e:
+      panic("Couldn't grab the Block used as the upcoming RandomX key: " & e.msg)
+
 #Revert the Blockchain to a certain height.
 proc revert*(
   blockchain: var Blockchain,
@@ -187,33 +220,7 @@ proc revert*(
   blockchain.chainWork = blockchain.db.loadChainWork(blockchain.tail.header.hash)
 
   #Update the RandomX keys.
-  var
-    currentKeyHeight: int = blockchain.height - 12
-    blockUsedAsKey: int = (currentKeyHeight - (currentKeyHeight mod 384)) - 1
-    blockUsedAsUpcomingKey: int = (blockchain.height - (blockchain.height mod 384)) - 1
-    currentKey: string
-  if blockUsedAsKey == -1:
-    currentKey = blockchain.genesis.serialize()
-  else:
-    try:
-      currentKey = blockchain[blockUsedAsKey].header.hash.serialize()
-    except IndexError as e:
-      panic("Couldn't grab the Block used as the current RandomX key: " & e.msg)
-
-  #Rebuild the RandomX cache if needed.
-  if currentKey != blockchain.rx.cacheKey:
-    blockchain.rx.setCacheKey(currentKey)
-    blockchain.db.saveKey(blockchain.rx.cacheKey)
-
-  if blockUsedAsUpcomingKey == -1:
-    #We don't need to do this since we don't load the upcoming key at Block 12.
-    #The only reason we do is to ensure database equality between now and a historic moment.
-    blockchain.db.deleteUpcomingKey()
-  else:
-    try:
-      blockchain.db.saveUpcomingKey(blockchain[blockUsedAsUpcomingKey].header.hash.serialize())
-    except IndexError as e:
-      panic("Couldn't grab the Block used as the upcoming RandomX key: " & e.msg)
+  blockchain.setCacheKeyAtHeight(blockchain.height)
 
   #Update the Merit of everyone who had their Merit changed.
   for holder in changedMerit:

@@ -458,21 +458,11 @@ proc mainMerit(
       if merit.blockchain.tail.header.hash != header.last:
         #If we have the last header already, and it isn't our current last Block, there's a good chance we already have this Block.
         if merit.blockchain.hasBlock(header.last):
-          var
-            keyBackup: string = merit.blockchain.rx.cacheKey
-            keyHeight: int = merit.blockchain.getHeightOf(header.last) - 11
-            actualKey: string
-          try:
-            actualKey = merit.blockchain[max((keyHeight - (keyHeight mod 384)) - 1, 0)].header.hash.serialize()
-          except IndexError:
-            actualKey = merit.blockchain.genesis.serialize()
-          if keyBackup != actualKey:
-            merit.blockchain.rx.setCacheKey(actualKey)
+          merit.blockchain.setCacheKeyAtHeight(merit.blockchain.getHeightOf(header.last) + 1)
           merit.blockchain.rx.hash(header)
           if merit.blockchain.hasBlock(header.hash):
             raise newLoggedException(DataExists, "Block was already added.")
-          if keyBackup != actualKey:
-            merit.blockchain.rx.setCacheKey(keyBackup)
+          merit.blockchain.setCacheKeyAtHeight(merit.blockchain.height)
 
         var
           increment: int = 32
@@ -545,6 +535,7 @@ proc mainMerit(
             panic("Reorganizing the chain raised an Exception despite catching all Exceptions: " & e.msg)
           finally:
             lockedBlock[] = Hash[256]()
+            merit.blockchain.setCacheKeyAtHeight(merit.blockchain.height)
 
           for header in altHeaders:
             try:
