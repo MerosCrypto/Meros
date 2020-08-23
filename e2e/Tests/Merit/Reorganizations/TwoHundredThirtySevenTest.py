@@ -37,7 +37,7 @@ def TwoHundredThirtySevenTest(
   rpc.meros.liveBlockHeader(alt.blocks[2].header)
   if MessageType(rpc.meros.sync.recv()[0]) != MessageType.BlockListRequest:
     raise TestError("Meros didn't request for the Block List for this alternate chain.")
-  rpc.meros.blockList([alt.blocks[1].header.hash, alt.blocks[0].header.hash])
+  rpc.meros.blockList([alt.blocks[0].header.hash])
   if MessageType(rpc.meros.sync.recv()[0]) != MessageType.BlockHeaderRequest:
     raise TestError("Meros didn't request a BlockHeader in this alternate chain.")
   rpc.meros.syncBlockHeader(alt.blocks[1].header)

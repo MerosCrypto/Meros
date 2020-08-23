@@ -14,7 +14,8 @@ proc reorganize(
   DataMissing,
   NotEnoughWork
 ], async.} =
-  logInfo "Considering a reorganization", current = merit.blockchain.tail.header.hash, alternate = tail.hash, lastCommon = lastCommonBlock
+  #Print the tail's last hash as we know that. We can't know its hash due to RandomX cache keys.
+  logInfo "Considering a reorganization", current = merit.blockchain.tail.header.hash, lastOfAlternate = tail.last, lastCommon = lastCommonBlock
 
   var
     #Height of the last common Block.
@@ -46,23 +47,38 @@ proc reorganize(
     panic("Couldn't load the last common Block: " & e.msg)
   difficulties = database.calculateDifficulties(merit.blockchain.genesis, lastHeader)
 
+
+  #Update the RandomX cache key to what it was at the time.
+  merit.blockchain.setCacheKeyAtHeight(lastCommonHeight)
+  #Prepare the upcoming key, if it's relevant.
+  var upcomingHeight: int = (merit.blockchain.height - (merit.blockchain.height mod 384)) - 1
+  var upcomingKey: string
+  if upcomingHeight == -1:
+    upcomingKey = merit.blockchain.genesis.serialize()
+  else:
+    try:
+      upcomingKey = merit.blockchain[upcomingHeight].header.hash.serialize()
+    except IndexError as e:
+      panic("Failed to get the upcoming RandomX cache key: " & e.msg)
+
   #The new work is defined as the work of every Block in the queue.
   #The queue has every Block, including the new one being added, up to, but not including, the last common Block.
-  for h in countdown(high(queue), 0):
+  for h in countdown(high(queue), -1):
     #Update the last header, if this isn't the first iteration (which means there's no headers).
     if h != high(queue):
       lastHeader = result[^1]
 
     #Sync the missing header in the queue, if it's not the tip.
-    if h != 0:
+    if h != -1:
       try:
-        result.add(await syncAwait network.syncManager.syncBlockHeader(queue[h]))
+        result.add(await syncAwait network.syncManager.syncBlockHeaderWithoutHashing(queue[h]))
       except DataMissing as e:
         raise e
       except Exception as e:
         panic("Couldn't sync a BlockHeader despite catching all Exceptions: " & e.msg)
     else:
       result.add(tail)
+    merit.blockchain.rx.hash(result[^1])
 
     #Verify the new header.
     #If this is the first header, the last header has already been initially set.
@@ -126,6 +142,12 @@ proc reorganize(
     #Increment the alternate chain's height.
     inc(altHeight)
 
+    #Update the key if needed.
+    if (altHeight - 1) mod 384 == 0:
+      upcomingKey = result[^1].hash.serialize()
+    elif (altHeight - 1) mod 384 == 12:
+      merit.blockchain.rx.setCacheKey(upcomingKey)
+
   #Convert the work to hex strings for logging purposes.
   var
     oldWorkArr: array[16, byte] = oldWork.toByteArrayBE()
@@ -158,7 +180,7 @@ proc reorganize(
     #We now return the headers so MainMerit adds the alternate Blocks.
     #This is done implicitly via result.
     #That said, the tail can't be returned as that's added via the function that called this.
-    result.delete(high(result))
+    result.del(high(result))
   else:
     logInfo "Not reorganizing", oldWork = oldWorkStr, newWork = newWorkStr
     raise newException(NotEnoughWork, "Chain didn't have enough work to be worth reorganizing to.")

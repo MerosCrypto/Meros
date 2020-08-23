@@ -50,9 +50,9 @@ def TwoHundredThirtyTwoTest(
   #Trigger the reorganization to the alternate chain.
   #We only want the revert aspect of this.
   rpc.meros.liveBlockHeader(alt.blocks[3].header)
-  if rpc.meros.sync.recv()[0] != MessageType.BlockListRequest.toByte()[0]:
+  if MessageType(rpc.meros.sync.recv()[0]) != MessageType.BlockListRequest:
     raise TestError("Meros didn't ask for the Block List of the alternate chain.")
-  rpc.meros.blockList([alt.blocks[2].header.hash, alt.blocks[1].header.hash])
+  rpc.meros.blockList([alt.blocks[1].header.hash])
   if rpc.meros.sync.recv() != (MessageType.BlockHeaderRequest.toByte() + alt.blocks[2].header.hash):
     raise TestError("Meros didn't ask for the other BlockHeader in this alternate chain.")
   rpc.meros.syncBlockHeader(alt.blocks[2].header)

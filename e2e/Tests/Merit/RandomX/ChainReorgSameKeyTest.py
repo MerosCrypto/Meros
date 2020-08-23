@@ -12,10 +12,10 @@ from e2e.Meros.Liver import Liver
 from e2e.Tests.Errors import TestError, SuccessError
 from e2e.Tests.Merit.Verify import verifyBlockchain
 
-def DelayedMeritHolderTest(
+def ChainReorgSameKeyTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/Reorganizations/DelayedMeritHolder.json", "r")
+  file: IO[Any] = open("e2e/Vectors/Merit/RandomX/ChainReorgSameKey.json", "r")
   chains: Dict[str, List[Dict[str, Any]]] = json.loads(file.read())
   file.close()
 
@@ -34,12 +34,12 @@ def DelayedMeritHolderTest(
 
     blockList: List[bytes] = []
     b: int = len(alt.blocks) - 3
-    while b != -1:
+    while b != (len(alt.blocks) - 35):
       blockList.append(alt.blocks[b].header.hash)
       b -= 1
     rpc.meros.blockList(blockList)
 
-    diff = -2
+    diff = -20
     while diff != -1:
       req = rpc.meros.sync.recv()
       if req != (MessageType.BlockHeaderRequest.toByte() + alt.blocks[diff].header.hash):
@@ -47,7 +47,7 @@ def DelayedMeritHolderTest(
       rpc.meros.syncBlockHeader(alt.blocks[diff].header)
       diff += 1
 
-    diff = -2
+    diff = -20
     while diff != 0:
       req = rpc.meros.sync.recv()
       if req != (MessageType.BlockBodyRequest.toByte() + alt.blocks[diff].header.hash):
@@ -69,6 +69,6 @@ def DelayedMeritHolderTest(
       rpc,
       chains["main"],
       callbacks={
-        6: sendAlternateTip
+        400: sendAlternateTip
       }
     ).live()

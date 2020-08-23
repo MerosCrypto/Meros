@@ -55,10 +55,6 @@ suite "SerializeBlockHeader":
       )
     getRandomX().hash(miner, header, uint16(rand(high(int16))))
 
-    reloaded = getRandomX().parseBlockHeader(header.serialize())
-    compare(header, reloaded)
-    check header.serialize() == reloaded.serialize()
-
     reloaded = header.serialize().parseBlockHeader(header.interimHash, header.hash)
     compare(header, reloaded)
     check header.serialize() == reloaded.serialize()

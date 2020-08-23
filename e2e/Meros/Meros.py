@@ -250,17 +250,20 @@ class MerosSocket:
 
   def send(
     self,
-    msg: bytes,
-    save: bool = True
+    msg: bytes
   ) -> None:
     self.ress.append(msg)
     self.connection.send(msg)
 
   def recv(
     self,
-    save: bool = True
+    allowPeersRequest: bool = False
   ) -> bytes:
     result: bytes = recv(self.connection, live_lengths if self.live else sync_lengths)
+    while (not allowPeersRequest) and (MessageType(result[0]) == MessageType.PeersRequest):
+      self.send(MessageType.Peers.toByte() + bytes(1))
+      self.ress.pop()
+      result = recv(self.connection, live_lengths if self.live else sync_lengths)
     self.msgs.append(result)
     return result
 
@@ -329,14 +332,15 @@ class Meros:
     self
   ) -> bytes:
     res: bytes = MessageType.PeersRequest.toByte()
-    self.sync.send(res, False)
+    self.sync.send(res)
+    self.sync.ress.pop()
     return res
 
   def peers(
     self,
     peers: List[Tuple[str, int]]
   ) -> bytes:
-    res: bytes = MessageType.Peers.toByte()
+    res: bytes = MessageType.Peers.toByte() + len(peers).to_bytes(1, byteorder="little")
     for peer in peers:
       ipParts: List[str] = peer[0].split(".")
       res += (
@@ -346,7 +350,8 @@ class Meros:
         int(ipParts[3]).to_bytes(1, byteorder="little") +
         peer[1].to_bytes(2, byteorder="little")
       )
-    self.sync.send(res, False)
+    self.sync.send(res)
+    self.sync.ress.pop()
     return res
 
   def blockList(

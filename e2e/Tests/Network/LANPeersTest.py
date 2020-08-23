@@ -19,7 +19,7 @@ def LANPeersTest(
 
   #Verify that sending a PeersRequest returns 0 peers.
   meros.peersRequest()
-  if len(meros.sync.recv()) != 2:
+  if len(meros.sync.recv(True)) != 2:
     raise TestError("Meros sent peers.")
 
   #Create a new connection which identifies as a server.
@@ -38,7 +38,7 @@ def LANPeersTest(
 
   #Verify Meros ignores us as a peer since we're only available over the local network.
   meros.peersRequest()
-  res: bytes = meros.sync.recv()
+  res: bytes = meros.sync.recv(True)
   if len(res) != 2:
     raise TestError("Meros sent peers.")
 

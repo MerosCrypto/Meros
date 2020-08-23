@@ -1,6 +1,13 @@
 import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
 
+const EMPTY_HASH: Hash[256] = Hash[256](
+  data: [
+    uint8(0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  ]
+)
+
 type BlockHeader* = ref object
   #Version.
   version*: uint32
@@ -94,7 +101,7 @@ func newBlockHeaderObj*(
 proc hash*(
   rx: RandomX,
   miner: MinerWallet,
-  header: var BlockHeader,
+  header: BlockHeader,
   serialized: string,
   proof: uint32
 ) {.forceCheck: [].} =
@@ -106,8 +113,10 @@ proc hash*(
 #Hash the header via a passed in serialization.
 proc hash*(
   rx: RandomX,
-  header: var BlockHeader,
+  header: BlockHeader,
   serialized: string
 ) {.forceCheck: [].} =
+  if header.hash != EMPTY_HASH:
+    return
   header.interimHash = rx.hash(serialized).serialize()
   header.hash = rx.hash(header.interimHash & header.signature.serialize())

@@ -218,10 +218,11 @@ proc handle*(
             panic("Adding a SignedMeritRemoval threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         of MessageType.BlockHeader:
-          var header: BlockHeader = manager.functions.merit.getRandomX().parseBlockHeader(msg.message)
-
           try:
-            await manager.functions.merit.addBlockByHeader(header, false)
+            await manager.functions.merit.addBlockByHeader(
+              parseBlockHeaderWithoutHashing(msg.message),
+              false
+            )
           except ValueError as e:
             peer.close(e.msg)
             return

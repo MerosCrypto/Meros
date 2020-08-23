@@ -46,6 +46,11 @@ template COUNTED_MERIT(
 ): string =
   blockNum.toBinary(INT_LEN) & "c"
 
+template BLAKE_HASH(
+  hash: Hash[256]
+): string =
+  hash.serialize() & "b"
+
 template INTERIM_HASH(
   hash: Hash[256]
 ): string =
@@ -243,6 +248,7 @@ proc save*(
   nonce: int,
   blockArg: Block
 ) {.forceCheck: [].} =
+  db.put(BLAKE_HASH(Blake256(blockArg.header.serializeHash())), "")
   db.put(INTERIM_HASH(blockArg.header.hash), blockArg.header.interimHash)
   db.put(BLOCK_HASH(blockArg.header.hash), blockArg.serialize())
   db.put(BLOCK_NONCE(nonce), blockArg.header.hash.serialize())
@@ -573,6 +579,16 @@ proc hasBlock*(
   except DBReadError:
     return false
 
+proc hasBlockByBlake*(
+  db: DB,
+  hash: Hash[256]
+): bool {.forceCheck: [].} =
+  try:
+    discard db.get(BLAKE_HASH(hash))
+    return true
+  except DBReadError:
+    return false
+
 proc deleteUpcomingKey*(
   db: DB
 ) {.forceCheck: [].} =
@@ -593,6 +609,10 @@ proc deleteBlock*(
 
   db.del(BLOCK_NONCE(nonce))
   db.del(BLOCK_HEIGHT(hash))
+  try:
+    db.del(BLAKE_HASH(Blake256(db.loadBlockHeader(hash).serializeHash())))
+  except DBReadError as e:
+    panic("Couldn't load a BlockHeader we're trying to delete: " & e.msg)
   db.del(INTERIM_HASH(hash))
   db.del(BLOCK_HASH(hash))
   db.del(DIFFICULTY(hash))
