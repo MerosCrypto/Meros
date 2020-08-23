@@ -42,7 +42,6 @@ type
     #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
     End = 30
 
-  #Message object.
   Message* = object
     peer*: int
     content*: MessageType
@@ -60,7 +59,7 @@ proc hash*(
 #A zero means custom logic should be used.
 const
   LIVE_LENS*: Table[MessageType, seq[int]] = {
-    MessageType.Handshake:      @[BYTE_LEN + BYTE_LEN + BYTE_LEN + PORT_LEN + HASH_LEN],
+    MessageType.Handshake:      @[0, 0, 0, PORT_LEN + HASH_LEN],
     MessageType.Busy:           @[BYTE_LEN, -PEER_LEN],
     MessageType.BlockchainTail: @[HASH_LEN],
 

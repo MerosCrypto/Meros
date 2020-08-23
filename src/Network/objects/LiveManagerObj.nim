@@ -25,9 +25,9 @@ import ../Serialize/Consensus/[
 import ../Serialize/Transactions/[ParseClaim, ParseSend, ParseData]
 
 type LiveManager* = ref object
-  protocol*: int
-  network*: int
-  services*: char
+  protocol*: uint
+  network*: uint
+  services*: uint
   port*: int
 
   peers: TableRef[int, Peer]
@@ -35,8 +35,8 @@ type LiveManager* = ref object
   functions*: GlobalFunctionBox
 
 func newLiveManager*(
-  protocol: int,
-  network: int,
+  protocol: uint,
+  network: uint,
   port: int,
   peers: TableRef[int, Peer],
   functions: GlobalFunctionBox
@@ -53,9 +53,9 @@ func newLiveManager*(
 
 func updateServices*(
   manager: LiveManager,
-  service: byte
+  service: uint
 ) {.inline, forceCheck: [].} =
-  manager.services = char(byte(manager.services) or service)
+  manager.services = manager.services or service
 
 proc handle*(
   manager: LiveManager,
@@ -69,7 +69,7 @@ proc handle*(
       MessageType.Handshake,
       char(manager.protocol) &
       char(manager.network) &
-      manager.services &
+      char(manager.services) &
       manager.port.toBinary(PORT_LEN) &
       manager.functions.merit.getTail().serialize()
     ))
@@ -108,23 +108,24 @@ proc handle*(
     peer.close("Peer didn't send a Handshake.")
     return
 
-  if int(msg.message[0]) != manager.protocol:
+  var shake: Handshake = msg.message.parseHandshake()
+  if shake.protocol != manager.protocol:
     peer.close("Peer uses a different protocol.")
     return
 
-  if int(msg.message[1]) != manager.network:
+  if shake.network != manager.network:
     peer.close("Peer uses a different network.")
     return
 
   if (
-    ((byte(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE) and
+    ((shake.services and SERVER_SERVICE) == SERVER_SERVICE) and
     (not tAddy.isLoopback()) and
     (not tAddy.isLinkLocal()) and
     (not tAddy.isSiteLocal())
   ):
     peer.server = true
 
-  peer.port = msg.message[3 ..< 5].fromBinary()
+  peer.port = shake.port
 
   #We don't bother with the initial tail as we do that for the Sync socket.
 

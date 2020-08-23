@@ -8,12 +8,13 @@ import ../../lib/[Errors, Util]
 import SocketObj
 
 #[
-Handshakes include service bytes, which are used to declare supported... services.
-Right now, these are just used to say a peer is accepting connections as a server.
+Handshakes include service bits, which are used to declare supported services.
+Right now, these are just used to say if a peer is accepting connections as a server.
 In the future, it can be used for protocol extensions which allow optimizations without a hardfork.
 Or building a second layer communication network on top of the existing Meros network, through nodes who allow it.
+Adding a service that is greater than, or equal to, 128, requires using VarInt serialization.
 ]#
-const SERVER_SERVICE*: byte = 0b10000000
+const SERVER_SERVICE*: uint = 0b1
 
 type Peer* = ref object
   id*: int

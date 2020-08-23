@@ -24,14 +24,15 @@ type ChainParams = object
   #Initial Data Difficulty.
   DATA_DIFFICULTY: uint32
 
-  NETWORK_PROTOCOL: int
-  NETWORK_ID: int
+  NETWORK_PROTOCOL: uint
+  NETWORK_ID: uint
 
   SEEDS: seq[tuple[ip: string, port: int]]
 
 proc newChainParams(
   network: string
 ): ChainParams {.forceCheck: [].} =
+  #The protocol/ID can not be raised above 127 without adding support for VarInt serialization.
   case network:
     of "mainnet":
       echo "The mainnet has yet to launch."
@@ -70,9 +71,8 @@ proc newChainParams(
         SEND_DIFFICULTY:  3,
         DATA_DIFFICULTY:  5,
 
-        #By not using 255, we allow eventually extending these fields. If we read 255, we can also read an extra byte,
-        NETWORK_PROTOCOL: 254,
-        NETWORK_ID: 254,
+        NETWORK_PROTOCOL: 0,
+        NETWORK_ID: 127,
 
         SEEDS: @[]
       )

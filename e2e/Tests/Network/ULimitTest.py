@@ -26,7 +26,7 @@ def ULimitTest(
   while True:
     #Only create live sockets to trigger new peers for each socket.
     try:
-      sockets.append(MerosSocket(meros.tcp, 254, 254, True, blockchain.blocks[0].header.hash))
+      sockets.append(MerosSocket(meros.tcp, 0, 127, True, blockchain.blocks[0].header.hash))
     except BusyError as e:
       if e.handshake != (MessageType.Busy.toByte() + bytes(1)):
         raise TestError("Meros sent an invalid Busy message.")
@@ -35,7 +35,7 @@ def ULimitTest(
   #Trigger busy 32 more times to verify Meros doesn't still allocate file handles.
   for _ in range(32):
     try:
-      MerosSocket(meros.tcp, 254, 254, True, blockchain.blocks[0].header.hash)
+      MerosSocket(meros.tcp, 0, 127, True, blockchain.blocks[0].header.hash)
     except BusyError as e:
       if e.handshake != (MessageType.Busy.toByte() + bytes(1)):
         raise TestError("Meros sent an invalid Busy message.")
@@ -54,8 +54,8 @@ def ULimitTest(
     for lSocket in sockets:
       lSocket.send(
         MessageType.Handshake.toByte() +
-        (254).to_bytes(1, "little") +
-        (254).to_bytes(1, "little") +
+        (0).to_bytes(1, "little") +
+        (127).to_bytes(1, "little") +
         b'\0\0\0' +
         blockchain.blocks[0].header.hash
       )
@@ -64,13 +64,13 @@ def ULimitTest(
   #Connect 50 sockets and verify Meros doesn't think it's still at capacity.
   for _ in range(50):
     try:
-      sockets.append(MerosSocket(meros.tcp, 254, 254, True, blockchain.blocks[0].header.hash))
+      sockets.append(MerosSocket(meros.tcp, 0, 127, True, blockchain.blocks[0].header.hash))
     except BusyError:
       raise TestError("Meros thought it was at capcity when it wasn't.")
 
   #Verify connecting one more socket returns Busy.
   try:
-    MerosSocket(meros.tcp, 254, 254, True, blockchain.blocks[0].header.hash)
+    MerosSocket(meros.tcp, 0, 127, True, blockchain.blocks[0].header.hash)
   except BusyError:
     return
   raise TestError("Meros accepted a socket despite being at capcity.")

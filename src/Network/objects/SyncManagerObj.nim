@@ -46,13 +46,10 @@ import ../Serialize/Transactions/[
 type SyncManager* = ref object
   functions*: GlobalFunctionBox
 
-  protocol: int
-  network: int
-
-  #Our services byte.
-  services: char
-  #Our server port, if we have one.
-  port: int
+  protocol*: uint
+  network*: uint
+  services*: uint
+  port*: int
 
   peers*: TableRef[int, Peer]
 
@@ -62,8 +59,8 @@ type SyncManager* = ref object
   id*: int
 
 func newSyncManager*(
-  protocol: int,
-  network: int,
+  protocol: uint,
+  network: uint,
   port: int,
   peers: TableRef[int, Peer],
   functions: GlobalFunctionBox
@@ -84,9 +81,9 @@ func newSyncManager*(
 
 func updateServices*(
   manager: SyncManager,
-  service: byte
+  service: uint
 ) {.inline, forceCheck: [].} =
-  manager.services = char(byte(manager.services) or service)
+  manager.services = manager.services or service
 
 #Handle a SyncRequest's Response.
 proc handleResponse[SyncRequestType, ResultType, CheckType](
@@ -190,7 +187,7 @@ proc handle*(
       MessageType.Syncing,
       char(manager.protocol) &
       char(manager.network) &
-      manager.services &
+      char(manager.services) &
       manager.port.toBinary(PORT_LEN) &
       manager.functions.merit.getTail().serialize()
     ))
@@ -229,26 +226,27 @@ proc handle*(
     peer.close("Peer didn't send Syncing.")
     return
 
-  if int(msg.message[0]) != manager.protocol:
+  var shake: Handshake = msg.message.parseHandshake()
+  if shake.protocol != manager.protocol:
     peer.close("Peer uses a different protocol.")
     return
 
-  if int(msg.message[1]) != manager.network:
+  if shake.network != manager.network:
     peer.close("Peer uses a different network.")
     return
 
   if (
-    ((byte(msg.message[2]) and SERVER_SERVICE) == SERVER_SERVICE) and
+    ((shake.services and SERVER_SERVICE) == SERVER_SERVICE) and
     (not tAddy.isLoopback()) and
     (not tAddy.isLinkLocal()) and
     (not tAddy.isSiteLocal())
   ):
     peer.server = true
 
-  peer.port = msg.message[3 ..< 5].fromBinary()
+  peer.port = shake.port
 
   #Create an artificial BlockTail message.
-  msg = newMessage(MessageType.BlockchainTail, msg.message[5 ..< 37])
+  msg = newMessage(MessageType.BlockchainTail, shake.hash)
 
   #Receive and handle messages forever.
   var res: Message

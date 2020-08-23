@@ -142,6 +142,24 @@ proc recv*(
     #Handle this with custom code.
     elif len == 0:
       case content:
+        of {MessageType.Handshake, MessageType.Syncing}:
+          var
+            last: uint8 = 1 shl 7
+            count: int = 0
+          while (last shr 7) == 1:
+            try:
+              last = uint8((await socket.recv(1))[0])
+              msg &= char(last)
+              inc(count)
+              if count == 5:
+                raise newLoggedException(PeerError, "Message contains too big of a VarInt.")
+            except SocketError as e:
+              socket.safeClose(e.msg)
+              raise e
+            except Exception as e:
+              panic("Couldn't get the result of receiving from a socket: " & e.msg)
+          size += count
+
         of MessageType.SignedMeritRemoval:
           var elemI: int = msg.len - 1
           try:

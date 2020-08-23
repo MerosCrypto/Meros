@@ -42,6 +42,13 @@ const
     byte(MERIT_REMOVAL_PREFIX)
   }
 
+type Handshake* = object
+  protocol*: uint
+  network*: uint
+  services*: uint
+  port*: int
+  hash*: string
+
 #Deseralizes a string by getting the length of the next set of bytes, slicing that out, and moving on.
 func deserialize*(
   data: string,
@@ -65,3 +72,27 @@ func reserialize*(
 ): string {.forceCheck: [].} =
   for i in start .. endIndex:
     result &= data[i]
+
+func parseVarInt(
+  msg: string,
+  cursor: var int
+): uint {.forceCheck: [].} =
+  var
+    last: byte = 0b1 shl 7
+    count: int = 0
+  while (last shr 7) == 1:
+    last = byte(msg[cursor])
+    result += uint(last and byte(0b1111111)) shl (count * 7)
+    inc(cursor)
+    inc(count)
+
+#Handshake parser. It doesn't fit into Transactions/Consensus/Merit.
+func parseHandshake*(
+  msg: string
+): Handshake {.forceCheck: [].} =
+  var cursor: int = 0
+  result.protocol = msg.parseVarInt(cursor)
+  result.network = msg.parseVarInt(cursor)
+  result.services = msg.parseVarInt(cursor)
+  result.port = msg[cursor .. cursor + 1].fromBinary()
+  result.hash = msg[cursor + 2 ..< msg.len]

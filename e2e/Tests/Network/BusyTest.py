@@ -57,9 +57,9 @@ def BusyTest(
       raise TestError("Meros didn't start its connection with a Handshake.")
 
     if buf[1:] != (
-      (254).to_bytes(1, "little") +
-      (254).to_bytes(1, "little") +
-      (128).to_bytes(1, "little") + meros.tcp.to_bytes(2, "little") +
+      (0).to_bytes(1, "little") +
+      (127).to_bytes(1, "little") +
+      (1).to_bytes(1, "little") + meros.tcp.to_bytes(2, "little") +
       blockchain.blocks[0].header.hash
     ):
       busyServer.close()
@@ -90,9 +90,9 @@ def BusyTest(
         raise TestError("Meros didn't start its connection with a Handshake.")
 
       if buf[1:] != (
-        (254).to_bytes(1, "little") +
-        (254).to_bytes(1, "little") +
-        (128).to_bytes(1, "little") + meros.tcp.to_bytes(2, "little") +
+        (0).to_bytes(1, "little") +
+        (127).to_bytes(1, "little") +
+        (1).to_bytes(1, "little") + meros.tcp.to_bytes(2, "little") +
         blockchain.blocks[0].header.hash
       ):
         server.close()

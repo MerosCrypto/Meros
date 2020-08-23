@@ -67,7 +67,7 @@ class MessageType(
 #A negative number means read the last length * X bytes.
 #A zero means custom logic should be used.
 live_lengths: Dict[MessageType, List[int]] = {
-  MessageType.Handshake:      [37],
+  MessageType.Handshake:      [0, 0, 0, 2, 32],
   MessageType.Busy:           [1, -6],
   MessageType.BlockchainTail: [32],
 
@@ -142,7 +142,12 @@ def recv(
         byteorder="little"
       ) * abs(length)
     elif length == 0:
-      if header == MessageType.SignedMeritRemoval:
+      if header in {MessageType.Handshake, MessageType.Syncing}:
+        last: int = 1 << 7
+        while (last >> 7) == 1:
+          result += socketRecv(connection, 1)
+          last = result[-1]
+      elif header == MessageType.SignedMeritRemoval:
         if result[-1] == 0:
           length = 32
         elif result[-1] == 1:
@@ -211,8 +216,8 @@ class MerosSocket:
   def __init__(
     self,
     tcp: int,
-    network: int,
     protocol: int,
+    network: int,
     live: bool,
     tail: bytes
   ) -> None:
@@ -222,8 +227,8 @@ class MerosSocket:
     self.connection.connect(("127.0.0.1", tcp))
     self.connection.send(
       (MessageType.Handshake.toByte() if live else MessageType.Syncing.toByte()) +
-      network.to_bytes(1, "little") +
       protocol.to_bytes(1, "little") +
+      network.to_bytes(1, "little") +
       b'\0\0\0' +
       tail
     )
@@ -239,10 +244,10 @@ class MerosSocket:
       raise BusyError("Node was busy.", response)
     if MessageType(response[0]) != (MessageType.Handshake if live else MessageType.Syncing):
       raise TestError("Node didn't send the right Handshake for this connection type.")
-    elif response[1] != network:
-      raise TestError("Connected to a node on a diffirent network.")
-    elif response[2] != protocol:
-      raise TestError("Connected to a node using a diffirent protocol.")
+    elif response[1] != protocol:
+      raise Exception("Connected to a node on a diffirent network.")
+    elif response[2] != network:
+      raise Exception("Connected to a node using a diffirent protocol.")
 
     #Declare lists for the messages.
     self.msgs: List[bytes] = []
@@ -288,8 +293,8 @@ class Meros:
     rpc: int,
     dataDir: str = "./data/e2e"
   ) -> None:
-    self.network = 254
-    self.protocol = 254
+    self.protocol = 0
+    self.network = 127
 
     self.dataDir: str = dataDir
     self.db: str = test
@@ -320,13 +325,13 @@ class Meros:
     self,
     tail: bytes
   ) -> None:
-    self.sync = MerosSocket(self.tcp, self.network, self.protocol, False, tail)
+    self.sync = MerosSocket(self.tcp, self.protocol, self.network, False, tail)
 
   def liveConnect(
     self,
     tail: bytes
   ) -> None:
-    self.live = MerosSocket(self.tcp, self.network, self.protocol, True, tail)
+    self.live = MerosSocket(self.tcp, self.protocol, self.network, True, tail)
 
   def peersRequest(
     self

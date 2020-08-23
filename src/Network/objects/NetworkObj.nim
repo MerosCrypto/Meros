@@ -76,8 +76,8 @@ type Network* = ref object
   syncManager*: SyncManager
 
 proc newNetwork*(
-  protocol: int,
-  networkID: int,
+  protocol: uint,
+  networkID: uint,
   port: int,
   functions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
@@ -157,7 +157,7 @@ proc newNetwork*(
                 MessageType.Handshake,
                 char(network.liveManager.protocol) &
                 char(network.liveManager.network) &
-                network.liveManager.services &
+                char(network.liveManager.services) &
                 network.liveManager.port.toBinary(PORT_LEN) &
                 network.functions.merit.getTail().serialize()
               ),
@@ -167,10 +167,10 @@ proc newNetwork*(
             asyncCheck peer.sendSync(
               newMessage(
                 MessageType.Syncing,
-                char(network.liveManager.protocol) &
-                char(network.liveManager.network) &
-                network.liveManager.services &
-                network.liveManager.port.toBinary(PORT_LEN) &
+                char(network.syncManager.protocol) &
+                char(network.syncManager.network) &
+                char(network.syncManager.services) &
+                network.syncManager.port.toBinary(PORT_LEN) &
                 network.functions.merit.getTail().serialize()
               ),
               true
