@@ -192,7 +192,7 @@ proc module*(
       ) {.forceCheck: [
         ParamError,
         JSONRPCError
-      ].} =
+      ], async.} =
         if (
           (params.len != 1) or
           (params[0].kind != JString)
@@ -200,7 +200,7 @@ proc module*(
           raise newException(ParamError, "")
 
         try:
-          functions.transactions.addSend(
+          await functions.transactions.addSend(
             parseSend(
               params[0].getStr().parseHexStr(),
               functions.consensus.getSendDifficulty()
@@ -208,10 +208,10 @@ proc module*(
           )
         except ValueError as e:
           raise newJSONRPCError(-3, "Invalid send: " & e.msg)
-        except Spam:
-          raise newJSONRPCError(-7, "Spam")
         except DataExists:
           discard
+        except Exception as e:
+          panic("addSend raised an Exception despite catching all errors: " & e.msg)
         res["result"] = % true
   except Exception as e:
     panic("Couldn't create the Transactions Module: " & e.msg)

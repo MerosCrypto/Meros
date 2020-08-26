@@ -241,7 +241,6 @@ proc mint*(
   except ValueError as e:
     panic("Adding a Mint raised a ValueError: " & e.msg)
 
-
   #[
   This is not needed, yet is beneficial... somewhat.
   This removes the inputs from spendable, of which there are none, and adds the outputs to spendable.

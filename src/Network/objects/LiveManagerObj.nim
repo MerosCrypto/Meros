@@ -180,11 +180,25 @@ proc handle*(
 
         of MessageType.Send:
           var send: Send = msg.message.parseSend(manager.functions.consensus.getSendDifficulty())
-          manager.functions.transactions.addSend(send)
+          try:
+            await manager.functions.transactions.addSend(send)
+          except ValueError as e:
+            raise e
+          except DataExists as e:
+            raise e
+          except Exception as e:
+            panic("addSend raised an Exception despite catching all errors: " & e.msg)
 
         of MessageType.Data:
           var data: Data = msg.message.parseData(manager.functions.consensus.getDataDifficulty())
-          manager.functions.transactions.addData(data)
+          try:
+            await manager.functions.transactions.addData(data)
+          except ValueError as e:
+            raise e
+          except DataExists as e:
+            raise e
+          except Exception as e:
+            panic("addData raised an Exception despite catching all errors: " & e.msg)
 
         of MessageType.SignedVerification:
           var verif: SignedVerification = msg.message.parseSignedVerification()
@@ -195,7 +209,7 @@ proc handle*(
           except DataExists as e:
             raise e
           except Exception as e:
-            panic("addSignedVerification threw an exception despite catching all errors: " & e.msg)
+            panic("addSignedVerification raised an Exception despite catching all errors: " & e.msg)
 
         of MessageType.SignedSendDifficulty:
           var sendDiff: SignedSendDifficulty = msg.message.parseSignedSendDifficulty()

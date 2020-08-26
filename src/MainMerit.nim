@@ -315,11 +315,13 @@ proc mainMerit(
     try:
       blockData = newData(merit.blockchain.genesis, newBlock.header.hash.serialize())
       transactions.dataWallet.sign(blockData)
-      functions.transactions.addData(blockData, true)
+      await functions.transactions.addData(blockData, true)
     except ValueError as e:
       panic("Couldn't create this Block's data due to a ValueError: " & e.msg)
     except DataExists as e:
       panic("Couldn't create this Block's data due to a DataExists: " & e.msg)
+    except Exception as e:
+      panic("addData raised an Exception despite catching all errors: " & e.msg)
 
     #Commit the DBs.
     database.commit(merit.blockchain.height)

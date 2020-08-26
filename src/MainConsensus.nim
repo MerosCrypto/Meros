@@ -145,9 +145,15 @@ proc mainConsensus(
             of Claim as claim:
               functions.transactions.addClaim(claim)
             of Send as send:
-              functions.transactions.addSend(send)
+              if send.argon.overflows(send.getDifficultyFactor() * functions.consensus.getSendDifficulty()):
+                raise newException(ValueError, "Send doesn't pass the spam check.")
+              await functions.transactions.addSend(send)
             of Data as data:
-              functions.transactions.addData(data)
+              if data.argon.overflows(data.getDifficultyFactor() * functions.consensus.getDataDifficulty()):
+                raise newException(ValueError, "Data doesn't pass the spam check.")
+              await functions.transactions.addData(data)
+        except ValueError as e:
+          raise e
         #[
         Swallow DataExists errors.
         Stops this Transaction add from causing the signed verification to fail.
@@ -155,6 +161,8 @@ proc mainConsensus(
         ]#
         except DataExists:
           discard
+        except Exception as e:
+          panic("addSend/addData raised an Exception despite catching all errors: " & e.msg)
 
         #Try again.
         try:

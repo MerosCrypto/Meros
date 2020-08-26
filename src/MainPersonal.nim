@@ -25,10 +25,10 @@ proc mainPersonal(
   functions.personal.send = proc (
     destination: string,
     amountStr: string
-  ): Hash[256] {.forceCheck: [
+  ): Future[Hash[256]] {.forceCheck: [
     ValueError,
     NotEnoughMeros
-  ].} =
+  ], async.} =
     var
       #Wallet we're using.
       child: HDWallet
@@ -94,20 +94,22 @@ proc mainPersonal(
 
     #Add the Send.
     try:
-      functions.transactions.addSend(send)
+      await functions.transactions.addSend(send)
     except ValueError as e:
       panic("Created a Send which was invalid: " & e.msg)
     except DataExists as e:
       panic("Created a Send which already existed: " & e.msg)
+    except Exception as e:
+      panic("addSend threw an Exception despite catching every Exception: " & e.msg)
 
     result = send.hash
 
   functions.personal.data = proc (
     dataStr: string
-  ): Hash[256] {.forceCheck: [
+  ): Future[Hash[256]] {.forceCheck: [
     ValueError,
     DataExists
-  ].} =
+  ], async.} =
     var
       #Wallet we're using.
       child: HDWallet
@@ -146,11 +148,13 @@ proc mainPersonal(
       data.mine(functions.consensus.getDataDifficulty())
 
       try:
-        functions.transactions.addData(data)
+        await functions.transactions.addData(data)
       except ValueError as e:
         panic("Created a Data which was invalid: " & e.msg)
       except DataExists as e:
         raise e
+      except Exception as e:
+        panic("addData threw an Exception despite catching every Exception: " & e.msg)
 
       #Set the tip to the initial Data.
       tip = data.hash
@@ -180,11 +184,13 @@ proc mainPersonal(
 
     #Add the Data.
     try:
-      functions.transactions.addData(data)
+      await functions.transactions.addData(data)
     except ValueError as e:
       panic("Created a Data which was invalid: " & e.msg)
     except DataExists as e:
       raise e
+    except Exception as e:
+      panic("addData threw an Exception despite catching every Exception: " & e.msg)
 
     #Save the new Data tip.
     wallet.saveDataTip(data.hash)

@@ -355,19 +355,23 @@ proc sync*(
 
           of Send as send:
             try:
-              manager.functions.transactions.addSend(send, true)
+              await manager.functions.transactions.addSend(send, true)
             except ValueError:
               raise newLoggedException(ValueError, "Block includes Verifications of an invalid Transaction.")
             except DataExists:
               continue
+            except Exception as e:
+              panic("addSend raised an Exception despite catching all errors: " & e.msg)
 
           of Data as data:
             try:
-              manager.functions.transactions.addData(data, true)
+              await manager.functions.transactions.addData(data, true)
             except ValueError:
               raise newLoggedException(ValueError, "Block includes Verifications of an invalid Transaction.")
             except DataExists:
               continue
+            except Exception as e:
+              panic("addData raised an Exception despite catching all errors: " & e.msg)
 
           else:
             panic("Synced an Transaction of an unsyncable type.")

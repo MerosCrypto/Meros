@@ -14,7 +14,7 @@ import ../Transaction as TransactionFile
 type Transactions* = object
   db: DB
   #Copy of the Genesis.
-  genesis: Hash[256]
+  genesis*: Hash[256]
   #Wallet used to sign/verify Datas created by Blocks.
   dataWallet*: Wallet
   #Cache of transactions which have yet to leave Epochs.

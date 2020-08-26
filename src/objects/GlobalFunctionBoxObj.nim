@@ -54,18 +54,12 @@ type
     addSend*: proc (
       send: Send,
       syncing: bool = false
-    ) {.gcsafe, raises: [
-      ValueError,
-      DataExists
-    ].}
+    ): Future[void] {.gcsafe.}
 
     addData*: proc (
       data: Data,
       syncing: bool = false
-    ) {.gcsafe, raises: [
-      ValueError,
-      DataExists
-    ].}
+    ): Future[void] {.gcsafe.}
 
     verify*: proc (
       hash: Hash[256]
@@ -278,17 +272,11 @@ type
     send*: proc (
       destination: string,
       amount: string
-    ): Hash[256] {.gcsafe, raises: [
-      ValueError,
-      NotEnoughMeros
-    ].}
+    ): Future[Hash[256]] {.gcsafe.}
 
     data*: proc (
       data: string
-    ): Hash[256] {.gcsafe, raises: [
-      ValueError,
-      DataExists
-    ].}
+    ): Future[Hash[256]] {.gcsafe.}
 
   NetworkFunctionBox* = ref object
     connect*: proc (

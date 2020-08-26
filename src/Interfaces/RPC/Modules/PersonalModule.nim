@@ -96,7 +96,7 @@ proc module*(
       ) {.forceCheck: [
         ParamError,
         JSONRPCError
-      ].} =
+      ], async.} =
         #Verify the params.
         if (
           (params.len != 2) or
@@ -106,11 +106,13 @@ proc module*(
           raise newException(ParamError, "")
 
         try:
-          res["result"] = % $functions.personal.send(params[0].getStr(), params[1].getStr())
+          res["result"] = % $(await functions.personal.send(params[0].getStr(), params[1].getStr()))
         except ValueError:
           raise newJSONRPCError(-3, "Invalid amount")
         except NotEnoughMeros:
           raise newJSONRPCError(1, "Not enough Meros")
+        except Exception as e:
+          panic("send threw an Exception despite catching everything: " & e.msg)
 
       "data" = proc (
         res: JSONNode,
@@ -118,7 +120,7 @@ proc module*(
       ) {.forceCheck: [
         ParamError,
         JSONRPCError
-      ].} =
+      ], async.} =
         #Verify the params.
         if (
           (params.len != 1) or
@@ -127,10 +129,12 @@ proc module*(
           raise newException(ParamError, "")
 
         try:
-          res["result"] = % $functions.personal.data(params[0].getStr())
+          res["result"] = % $(await functions.personal.data(params[0].getStr()))
         except ValueError:
           raise newJSONRPCError(-3, "Invalid data length or missing datas")
         except DataExists:
           raise newJSONRPCError(0, "Data exists")
+        except Exception as e:
+          panic("send threw an Exception despite catching everything: " & e.msg)
   except Exception as e:
     panic("Couldn't create the Consensus Module: " & e.msg)

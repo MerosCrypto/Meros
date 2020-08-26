@@ -225,7 +225,6 @@ class PrototypeChain:
     #Create a Mint by mining 8 Blank Blocks.
     #The first grants Merit; the second creates a Data; the third verifies the Data.
     #The next 5 finalize the Data.
-    #We finalize/create a Merit out of it to access the Mint.
     result: Merit = Merit.fromJSON(PrototypeChain(7).toJSON())
     if len(result.mints) != 1:
       raise GenerationError("PrototypeChain Mint generator didn't create a Mint.")

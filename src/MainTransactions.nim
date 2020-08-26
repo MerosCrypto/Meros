@@ -42,13 +42,95 @@ proc verify(
     except Exception as e:
       panic("addSignedVerification threw an exception despite catching all errors: " & e.msg)
 
+proc syncPrevious(
+  functions: GlobalFunctionBox,
+  transactions: Transactions,
+  network: Network,
+  final: Transaction
+) {.forceCheck: [
+  ValueError,
+  DataMissing
+], async.} =
+  var
+    toProcess: seq[Hash[256]] = @[]
+    queue: seq[Transaction] = @[]
+    current: Hash[256]
+    tx: Transaction
+  for input in final.inputs:
+    toProcess.add(input.hash)
+
+  #This function should NOT run any async tasks if there's no previous tasks to sync.
+  while toProcess.len != 0:
+    current = toProcess.pop()
+    if (final of Data) and ((current == Hash[256]()) or (current == transactions.genesis)):
+      continue
+
+    try:
+      discard transactions[current]
+      continue
+    except IndexError:
+      discard
+
+    try:
+      tx = await syncAwait network.syncManager.syncTransaction(current)
+    except DataMissing as e:
+      raise e
+    except Exception as e:
+      panic("syncTransaction threw an error despite catching all errors: " & e.msg)
+
+    if (
+      ((final of Send) and (not ((tx of Claim) or (tx of Send)))) or
+      ((final of Data) and (not (tx of Data)))
+    ):
+      raise newException(ValueError, "Transaction has an invalid input.")
+
+    if (
+      (
+        (tx of Send) and
+        cast[Send](tx).argon.overflows(cast[Send](tx).getDifficultyFactor() * functions.consensus.getSendDifficulty())
+      ) or (
+        (tx of Data) and
+        cast[Data](tx).argon.overflows(cast[Data](tx).getDifficultyFactor() * functions.consensus.getDataDifficulty())
+      )
+    ):
+      raise newException(ValueError, "Transaction doesn't pass the spam check.")
+
+    queue.add(tx)
+
+    if not (tx of Claim):
+      for input in tx.inputs:
+        toProcess.add(input.hash)
+
+  while queue.len != 0:
+    try:
+      var next: Transaction = queue.pop()
+      case next:
+        of Claim as claim:
+          functions.transactions.addClaim(claim, true)
+        of Send as send:
+          await functions.transactions.addSend(send, true)
+        of Data as data:
+          await functions.transactions.addData(data, true)
+        else:
+          panic("Synced a Transaction input that isn't a valid input.")
+    except ValueError as e:
+      raise e
+    #Can happen either due to async conditions or due to a duplicate in the discovered tree.
+    #As the tree must be ordered, the first can't really be fixed.
+    #Best we can do is optimize with a HashSet so we skip this check, except due to async.
+    except DataExists:
+      discard
+    except Exception as e:
+      panic("Adding a Transaction raised despite catching every error: " & e.msg)
+
 proc mainTransactions(
   database: DB,
   wallet: WalletDB,
   functions: GlobalFunctionBox,
   merit: Merit,
   consensus: ref Consensus,
-  transactions: ref Transactions
+  transactions: ref Transactions,
+  network: ref Network
 ) {.forceCheck: [].} =
   transactions[] = newTransactions(database, merit.blockchain)
 
@@ -104,8 +186,21 @@ proc mainTransactions(
   ) {.forceCheck: [
     ValueError,
     DataExists
-  ].} =
+  ], async.} =
     logInfo "New Send", hash = send.hash
+
+    try:
+      await syncPrevious(functions, transactions[], network[], send)
+    except ValueError as e:
+      raise e
+    except DataExists as e:
+      raise e
+    except DataMissing:
+      raise newException(ValueError, "Transaction has a non-existent input.")
+    except Exception as e:
+      panic("syncPrevious threw an Exception despite catching everything: " & e.msg)
+
+    #Any further usage of async risks a race condition where we may double-process a transaction depending on timing.
 
     try:
       transactions[].add(send)
@@ -134,8 +229,21 @@ proc mainTransactions(
   ) {.forceCheck: [
     ValueError,
     DataExists
-  ].} =
+  ], async.} =
     logInfo "New Data", hash = data.hash
+
+    try:
+      await syncPrevious(functions, transactions[], network[], data)
+    except ValueError as e:
+      raise e
+    except DataExists as e:
+      raise e
+    except DataMissing:
+      raise newException(ValueError, "Transaction has a non-existent input.")
+    except Exception as e:
+      panic("syncPrevious threw an Exception despite catching everything: " & e.msg)
+
+    #Any further usage of async risks a race condition where we may double-process a transaction depending on timing.
 
     try:
       transactions[].add(data)

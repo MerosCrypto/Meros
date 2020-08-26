@@ -104,7 +104,7 @@ proc main() {.thread.} =
   mainDatabase(params, config, database, wallet)
   mainMerit(params, database, wallet, functions, merit, consensus, transactions, network, blockLock, innerBlockLock, lockedBlock)
   mainConsensus(params, database, functions, merit[], consensus, transactions, network)
-  mainTransactions(database, wallet, functions, merit[], consensus, transactions)
+  mainTransactions(database, wallet, functions, merit[], consensus, transactions, network)
   mainPersonal(wallet, functions, transactions)
   mainNetwork(params, config, functions, network)
   mainRPC(config, functions, rpc)
