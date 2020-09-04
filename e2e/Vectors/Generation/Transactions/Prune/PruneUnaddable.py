@@ -52,6 +52,6 @@ result: Dict[str, Any] = {
   "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON(), datas[3].toJSON()],
   "verification": descendantVerif.toSignedJSON()
 }
-vectors: IO[Any] = open("e2e/Vectors/Transactions/PruneUnaddable.json", "w")
+vectors: IO[Any] = open("e2e/Vectors/Transactions/Prune/PruneUnaddable.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()

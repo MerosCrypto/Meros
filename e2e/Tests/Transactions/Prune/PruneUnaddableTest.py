@@ -16,7 +16,7 @@ from e2e.Tests.Errors import TestError
 def PruneUnaddableTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Transactions/PruneUnaddable.json", "r")
+  file: IO[Any] = open("e2e/Vectors/Transactions/Prune/PruneUnaddable.json", "r")
   vectors: Dict[str, Any] = json.loads(file.read())
   file.close()
 

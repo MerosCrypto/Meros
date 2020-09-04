@@ -214,7 +214,7 @@ func del*(
 ) {.forceCheck: [].} =
   transactions.transactions.del(hash)
 
-#Prune a Transactions.
+#Prune a Transaction.
 proc prune*(
   transactions: var Transactions,
   hash: Hash[256]

@@ -421,55 +421,11 @@ proc finalize*(
   except IndexError as e:
     panic("Couldn't get either the Transaction we're finalizing or its Status: " & e.msg)
 
-  #Calculate the final Merit tally.
-  status.merit = 0
-  for holder in status.holders:
-    #Only include holders on the Blockchain.
-    #This also allows holders marked as malicious, if their removal has yet to be archived.
-    if status.pending.contains(holder):
-      status.holders.excl(holder)
-      continue
-    status.merit += state[holder, status.epoch]
+  #If it doesn't have any archived holders, make sure it's not verified and prune it.
+  if status.holders.len == status.pending.len:
+    if status.verified:
+      consensus.unverify(hash, status)
 
-  #[
-  If this Transaction was marked as verified, make sure it beats the protocol threshold.
-  As mentioned above, this is invalid.
-  The Transaction with the most Merit out of associated Transactions (Transactions which spend the same inputs) is verified.
-  If it's not actually verified, correct this.
-  ]#
-  if (status.verified) and (status.merit < state.protocolThreshold()):
-    #If it's now unverified, unverify the tree.
-    consensus.unverify(hash, status)
-  #If it wasn't verified, run calculateMerit.
-  elif not status.verified:
-    consensus.calculateMerit(state, hash, status)
-
-  #Check if the Transaction was beaten, if it's not already marked as beaten.
-  #This happens when it wasn't verified, or for now, when no Transaction hits 50.1%.
-  if (not status.beaten) and (not status.verified):
-    for input in tx.inputs:
-      var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
-      for spender in spenders:
-        try:
-          if consensus.getStatus(spender).verified:
-            consensus.functions.transactions.beat(hash)
-            status.beaten = true
-
-            #[
-            I am pretty sure we should mark all descendants as beaten here, yet we don't.
-            This seems like a missing case, which is very problematic.
-            As we do completely prune the tree below, under certain circumstances,
-            #we only have to mark descendants as beaten if it's not pruned.
-            That means, that while we should mark all descendants as beaten,
-            we should technically do it a bit south of here.
-            -- Kayaba
-            ]#
-        except IndexError as e:
-          panic("Couldn't get the Status of a competing Transaction: " & e.msg)
-
-  #If the status was beaten and has no archived holders, prune it and its descendants.
-  #There's no value in keeping it around.
-  if status.beaten and (status.holders.len - status.pending.len == 0):
     var
       #Discover the tree.
       tree: seq[Hash[256]] = consensus.functions.transactions.discoverTree(hash)
@@ -493,8 +449,48 @@ proc finalize*(
       consensus.db.prune(tree[h])
       consensus.functions.transactions.prune(tree[h])
 
-    #Return so we don't save the status.
     return
+
+  #Calculate the final Merit tally.
+  status.merit = 0
+  for holder in status.holders:
+    #Only include holders on the Blockchain.
+    #This also allows holders marked as malicious, if their removal has yet to be archived.
+    if status.pending.contains(holder):
+      status.holders.excl(holder)
+      continue
+    status.merit += state[holder, status.epoch]
+
+  #[
+  If this Transaction was marked as verified, make sure it beats the protocol threshold.
+  As mentioned above, this is invalid.
+  The Transaction with the most Merit out of associated Transactions (Transactions which spend the same inputs) is verified.
+  If it's not actually verified, correct this.
+  ]#
+  if (status.verified) and (status.merit < state.protocolThreshold()):
+    consensus.unverify(hash, status)
+  #If it wasn't verified, run calculateMerit.
+  elif not status.verified:
+    consensus.calculateMerit(state, hash, status)
+
+  #Check if the Transaction was beaten, if it's not already marked as beaten.
+  #This happens when it wasn't verified, or for now, when no Transaction hits 50.1%.
+  if (not status.beaten) and (not status.verified):
+    for input in tx.inputs:
+      var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
+      for spender in spenders:
+        try:
+          if consensus.getStatus(spender).verified:
+            consensus.functions.transactions.beat(hash)
+            status.beaten = true
+
+            #[
+            I am pretty sure we should mark all descendants as beaten here, yet we don't.
+            This seems like a missing case, which can be very problematic.
+            -- Kayaba
+            ]#
+        except IndexError as e:
+          panic("Couldn't get the Status of a competing Transaction: " & e.msg)
 
   #Save the status.
   #Saving it, now that it's finalized, will strip all pending/signature data.
