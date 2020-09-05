@@ -251,14 +251,21 @@ proc mint*(
   ]#
   transactions.verify(mint.hash)
 
-#Mark every Transaction as mentioned and remove every hash in this Epoch from the cache/RAM.
+#Update the Transaction families, update unmentioned, and prune the cache.
 proc archive*(
   transactions: var Transactions,
   newBlock: Block,
   epoch: Epoch
 ) {.forceCheck: [].} =
   for packet in newBlock.body.packets:
-    transactions.mention(packet.hash)
+    #This is an ugly line used to access a cache this system doesn't have proper access to.
+    if transactions.db.transactions.unmentioned.contains(packet.hash):
+      try:
+        transactions.families.register(transactions[packet.hash].inputs)
+      except IndexError as e:
+        panic("Couldn't get a transaction included in a Block: " & e.msg)
+
+      transactions.mention(packet.hash)
 
   for hash in epoch.keys():
     transactions.del(hash)
