@@ -1,4 +1,3 @@
-from typing import IO, Dict, Any
 import json
 
 import ed25519
@@ -22,8 +21,7 @@ sendFilter: SpamFilter = SpamFilter(3)
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
-claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKey.to_bytes())
-claim.amount = merit.mints[-1].outputs[0][1]
+claim: Claim = Claim([(merit.mints[-1], 0)], edPubKey.to_bytes())
 claim.sign(PrivateKey(0))
 transactions.add(claim)
 merit.add(
@@ -52,10 +50,8 @@ merit.blockchain.add(
   ).finish(0, merit)
 )
 
-result: Dict[str, Any] = {
-  "blockchain": merit.blockchain.toJSON(),
-  "transactions": transactions.toJSON()
-}
-vectors: IO[Any] = open("e2e/Vectors/Transactions/SameInput/Send.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Transactions/SameInput/Send.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": merit.blockchain.toJSON(),
+    "transactions": transactions.toJSON()
+  }))

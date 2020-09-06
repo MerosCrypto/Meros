@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import List
 from hashlib import blake2b
 import json
 
@@ -78,10 +78,8 @@ blocks.append(
 )
 blocks[-1].mine(blsPrivKey, blockchain.difficulty())
 
-result: Dict[str, Any] = {
-  "blank": blank.toJSON(),
-  "blocks": [block.toJSON() for block in blocks]
-}
-vectors: IO[Any] = open("e2e/Vectors/Consensus/TwoHundredFour.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Consensus/TwoHundredFour.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blank": blank.toJSON(),
+    "blocks": [block.toJSON() for block in blocks]
+  }))

@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 import json
 
 from e2e.Classes.Merit.Blockchain import Block, Blockchain
@@ -13,9 +13,9 @@ from e2e.Tests.Merit.Verify import verifyBlockchain
 def HundredTwentyFourTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
-  vectors: List[Dict[str, Any]] = json.loads(file.read())
-  file.close()
+  vectors: List[Dict[str, Any]]
+  with open("e2e/Vectors/Merit/BlankBlocks.json", "r") as file:
+    vectors = json.loads(file.read())
 
   blockchain: Blockchain = Blockchain()
   for i in range(2):

@@ -1,6 +1,6 @@
 #Tests a MeritRemoval created from the same Elements/same Transaction hashes are rejected.
 
-from typing import Dict, IO, Any
+from typing import Dict, Any
 import json
 
 from pytest import raises
@@ -16,9 +16,9 @@ from e2e.Tests.Errors import TestError, SuccessError
 def SameElementTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/SameElement.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/MeritRemoval/SameElement.json", "r") as file:
+    vectors = json.loads(file.read())
 
   def testBlockchain(
     b: int

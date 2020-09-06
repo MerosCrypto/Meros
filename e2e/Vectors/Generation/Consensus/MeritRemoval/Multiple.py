@@ -1,4 +1,3 @@
-from typing import Dict, IO, Any
 import json
 
 from e2e.Libs.BLS import PrivateKey, PublicKey
@@ -35,10 +34,8 @@ dataDiffConflicting.sign(0, blsPrivKey)
 mr2: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiffConflicting)
 proto.add(elements=[mr2])
 
-result: Dict[str, Any] = {
-  "blockchain": proto.toJSON(),
-  "removals": [mr1.toSignedJSON(), mr2.toSignedJSON()]
-}
-vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/Multiple.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Consensus/MeritRemoval/Multiple.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": proto.toJSON(),
+    "removals": [mr1.toSignedJSON(), mr2.toSignedJSON()]
+  }))

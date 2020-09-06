@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import Dict, Any
 import json
 
 from e2e.Meros.RPC import RPC
@@ -10,10 +10,6 @@ correctVectorsHeight: bool = False
 def PendingDieRegainTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/LockedMerit/PendingDieRegain.json", "r")
-  chain: List[Dict[str, Any]] = json.loads(file.read())
-  file.close()
-
   def verifyCorrectlyLocked(
     height: int
   ) -> None:
@@ -57,7 +53,8 @@ def PendingDieRegainTest(
       }:
         raise TestError("Didn't regain Merit which was unlocked.")
 
-  Liver(rpc, chain, everyBlock=verifyCorrectlyLocked).live()
+  with open("e2e/Vectors/Merit/LockedMerit/PendingDieRegain.json", "r") as file:
+    Liver(rpc, json.loads(file.read()), everyBlock=verifyCorrectlyLocked).live()
 
   if not correctVectorsHeight:
     raise Exception("PendingDieRegain vectors have an invalid length.")

@@ -1,4 +1,4 @@
-from typing import IO, List, Any
+from typing import List
 import json
 
 import ed25519
@@ -36,9 +36,8 @@ for data in datas:
   data.sign(edPrivKey)
   transactions.add(data)
 
-vectors: IO[Any] = open("e2e/Vectors/Merit/OutOfOrder/Packets.json", "w")
-vectors.write(json.dumps({
-  "blockchain": proto.toJSON(),
-  "transactions": transactions.toJSON()
-}))
-vectors.close()
+with open("e2e/Vectors/Merit/OutOfOrder/Packets.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": proto.toJSON(),
+    "transactions": transactions.toJSON()
+  }))

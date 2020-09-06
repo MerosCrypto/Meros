@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 import json
 
 from pytest import raises
@@ -19,9 +19,9 @@ from e2e.Tests.Errors import TestError, SuccessError
 def PartialArchiveTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/Verification/PartialArchive.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/Verification/PartialArchive.json", "r") as file:
+    vectors = json.loads(file.read())
 
   data: Data = Data.fromJSON(vectors["data"])
   svs: List[SignedVerification] = [

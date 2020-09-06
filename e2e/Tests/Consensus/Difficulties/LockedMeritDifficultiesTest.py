@@ -1,4 +1,3 @@
-from typing import Dict, IO, Any
 import json
 
 from e2e.Meros.RPC import RPC
@@ -14,10 +13,6 @@ INVALID_TEST: str = "Locked Merit Difficulties test has invalid vectors/heights,
 def LockedMeritDifficultyTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/Difficulties/LockedMerit.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
-
   def verifyVotedAndUnlocked() -> None:
     if rpc.call("merit", "getMerit", [0])["status"] != "Unlocked":
       raise Exception(INVALID_TEST)
@@ -36,12 +31,13 @@ def LockedMeritDifficultyTest(
     verifySendDifficulty(rpc, 2)
     verifyDataDifficulty(rpc, 2)
 
-  Liver(
-    rpc,
-    vectors["blockchain"],
-    callbacks={
-      50: verifyVotedAndUnlocked,
-      59: verifyDiscountedAndLocked,
-      60: verifyCountedAndPending
-    }
-  ).live()
+  with open("e2e/Vectors/Consensus/Difficulties/LockedMerit.json", "r") as vectors:
+    Liver(
+      rpc,
+      json.loads(vectors.read()),
+      callbacks={
+        50: verifyVotedAndUnlocked,
+        59: verifyDiscountedAndLocked,
+        60: verifyCountedAndPending
+      }
+    ).live()

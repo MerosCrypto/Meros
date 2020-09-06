@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import List
 import json
 
 from e2e.Libs.BLS import PrivateKey, PublicKey
@@ -29,9 +29,5 @@ proto.add(elements=[mr])
 swapped: SignedMeritRemoval = SignedMeritRemoval(dataDiffs[1], dataDiffs[0])
 proto.add(elements=[swapped])
 
-result: Dict[str, Any] = {
-  "blockchain": proto.toJSON()
-}
-vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Swap.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Swap.json", "w") as vectors:
+  vectors.write(json.dumps(proto.toJSON()))

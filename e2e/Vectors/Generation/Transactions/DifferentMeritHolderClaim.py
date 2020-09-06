@@ -119,10 +119,9 @@ merits: List[Merit] = [Merit.fromJSON(merit.toJSON()) for _ in range(2)]
 for m in range(2):
   #Create the Claim.
   claim: Claim = Claim(
-    [(merit.mints[0].hash, 0), (merit.mints[0].hash, 1)],
+    [(merit.mints[0], 0), (merit.mints[0], 1)],
     edPubKey.to_bytes()
   )
-  claim.amount = merit.mints[0].outputs[0][1] + merit.mints[0].outputs[1][1]
   claim.sign(blsPrivKeys[m])
   transactions.add(claim)
 
@@ -148,10 +147,8 @@ for m in range(2):
   block.mine(blsPrivKeys[0], merit.blockchain.difficulty())
   merits[m].add(block)
 
-result: Dict[str, Any] = {
-  "blockchains": [merits[0].toJSON(), merits[1].toJSON()],
-  "transactions": transactions.toJSON()
-}
-vectors: IO[Any] = open("e2e/Vectors/Transactions/DifferentMeritHolderClaim.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Transactions/DifferentMeritHolderClaim.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchains": [merits[0].toJSON(), merits[1].toJSON()],
+    "transactions": transactions.toJSON()
+  }))

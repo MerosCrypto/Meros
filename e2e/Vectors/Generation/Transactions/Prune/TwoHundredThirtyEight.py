@@ -1,4 +1,4 @@
-from typing import IO, List, Any
+from typing import List
 import json
 
 import ed25519
@@ -38,12 +38,11 @@ verif.sign(2, PrivateKey(2))
 for _ in range(5):
   proto.add()
 
-vectors: IO[Any] = open("e2e/Vectors/Transactions/Prune/TwoHundredThirtyEight.json", "w")
-vectors.write(
-  json.dumps({
-    "blockchain": proto.toJSON(),
-    "datas": [data.toJSON() for data in datas],
-    "verification": verif.toSignedJSON()
-  })
-)
-vectors.close()
+with open("e2e/Vectors/Transactions/Prune/TwoHundredThirtyEight.json", "w") as vectors:
+  vectors.write(
+    json.dumps({
+      "blockchain": proto.toJSON(),
+      "datas": [data.toJSON() for data in datas],
+      "verification": verif.toSignedJSON()
+    })
+  )

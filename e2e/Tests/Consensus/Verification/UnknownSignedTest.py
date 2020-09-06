@@ -1,4 +1,3 @@
-from typing import IO, Any
 from time import time, sleep
 import json
 
@@ -19,9 +18,9 @@ from e2e.Tests.Errors import TestError
 def VUnknownSignedTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
-  chain: Blockchain = Blockchain.fromJSON(json.loads(file.read()))
-  file.close()
+  chain: Blockchain
+  with open("e2e/Vectors/Merit/BlankBlocks.json", "r") as file:
+    chain = Blockchain.fromJSON(json.loads(file.read()))
 
   #Send a single block so we have a miner.
   rpc.meros.liveConnect(chain.blocks[0].header.hash)

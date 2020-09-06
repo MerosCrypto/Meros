@@ -1,4 +1,3 @@
-from typing import IO, Any
 import json
 
 from e2e.Libs.BLS import PrivateKey
@@ -43,6 +42,5 @@ merit.add(
   ).finish(0, merit)
 )
 
-vectors: IO[Any] = open("e2e/Vectors/Merit/LockedMerit/PendingDieRegain.json", "w")
-vectors.write(json.dumps(merit.toJSON()))
-vectors.close()
+with open("e2e/Vectors/Merit/LockedMerit/PendingDieRegain.json", "w") as vectors:
+  vectors.write(json.dumps(merit.toJSON()))

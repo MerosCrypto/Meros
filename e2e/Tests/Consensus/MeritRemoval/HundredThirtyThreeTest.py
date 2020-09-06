@@ -1,6 +1,6 @@
 #https://github.com/MerosCrypto/Meros/issues/133.
 
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 from time import sleep
 import json
 
@@ -20,9 +20,9 @@ from e2e.Tests.Errors import TestError, SuccessError
 def HundredThirtyThreeTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredThirtyThree.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/MeritRemoval/HundredThirtyThree.json", "r") as file:
+    vectors = json.loads(file.read())
 
   #Datas.
   datas: List[Data] = [

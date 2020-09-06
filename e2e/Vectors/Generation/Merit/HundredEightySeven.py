@@ -1,4 +1,3 @@
-from typing import IO, Any
 from hashlib import blake2b
 import json
 
@@ -30,6 +29,5 @@ for b in range(1, 3):
   block.mine(privKey, blockchain.difficulty())
   blockchain.add(block)
 
-vectors: IO[Any] = open("e2e/Vectors/Merit/HundredEightySeven.json", "w")
-vectors.write(json.dumps(blockchain.toJSON()))
-vectors.close()
+with open("e2e/Vectors/Merit/HundredEightySeven.json", "w") as vectors:
+  vectors.write(json.dumps(blockchain.toJSON()))

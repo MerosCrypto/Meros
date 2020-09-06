@@ -1,4 +1,4 @@
-from typing import IO, List, Any
+from typing import List
 from hashlib import blake2b
 import json
 
@@ -77,10 +77,9 @@ block = Block(
 block.mine(blsPrivKeys[0], blockchain.difficulty())
 blockchain.add(block)
 
-vectors: IO[Any] = open("e2e/Vectors/Consensus/Verification/PartialArchive.json", "w")
-vectors.write(json.dumps({
-  "blockchain": blockchain.toJSON(),
-  "data": data.toJSON(),
-  "verifs": [v.toSignedJSON() for v in svs]
-}))
-vectors.close()
+with open("e2e/Vectors/Consensus/Verification/PartialArchive.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": blockchain.toJSON(),
+    "data": data.toJSON(),
+    "verifs": [v.toSignedJSON() for v in svs]
+  }))

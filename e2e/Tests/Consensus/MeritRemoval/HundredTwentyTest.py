@@ -1,7 +1,7 @@
 #Tests proper handling of an Element from the blockchain which conflicts with an Elemenet in the mempool.
 #Meros should archive the Block, then broadcast a partial MeritRemoval with the mempool's DataDifficulty.
 
-from typing import Dict, IO, Any
+from typing import Dict, Any
 import json
 
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty, SignedDataDifficulty
@@ -17,9 +17,9 @@ from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 def HundredTwentyTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredTwenty.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/MeritRemoval/HundredTwenty.json", "r") as file:
+    vectors = json.loads(file.read())
 
   #DataDifficulty for the mempool.
   mempoolDataDiff: SignedDataDifficulty = SignedDataDifficulty.fromSignedJSON(vectors["mempoolDataDiff"])

@@ -1,4 +1,3 @@
-from typing import IO, Any
 import json
 
 import ed25519
@@ -47,9 +46,8 @@ transactions.add(competitor)
 
 proto.add(packets=[VerificationPacket(competitor.hash, [0])])
 
-vectors: IO[Any] = open("e2e/Vectors/Transactions/CompetingFinalized.json", "w")
-vectors.write(json.dumps({
-  "blockchain": proto.toJSON(),
-  "transactions": transactions.toJSON()
-}))
-vectors.close()
+with open("e2e/Vectors/Transactions/CompetingFinalized.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": proto.toJSON(),
+    "transactions": transactions.toJSON()
+  }))

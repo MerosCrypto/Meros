@@ -2,7 +2,7 @@
 #Meros used to allow any Verifications of any Transaction, no matter its data or signature.
 #Meros no longer allows this. All Verifications must be of Transactions on the DAG.
 
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 import json
 
 from pytest import raises
@@ -27,9 +27,9 @@ from e2e.Tests.Errors import TestError, SuccessError
 def VParsableTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/Verification/Parsable.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/Verification/Parsable.json", "r") as file:
+    vectors = json.loads(file.read())
 
   merit: Merit = Merit.fromJSON(vectors["blockchain"])
   transactions: Transactions = Transactions()

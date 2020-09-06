@@ -1,4 +1,3 @@
-from typing import IO, Any
 import json
 
 import ed25519
@@ -35,9 +34,8 @@ proto.add(2, [VerificationPacket(data.hash, [0, 1])])
 for _ in range(6):
   proto.add(2)
 
-vectors: IO[Any] = open("e2e/Vectors/Consensus/Verification/HundredTwo.json", "w")
-vectors.write(json.dumps({
-  "blockchain": proto.toJSON(),
-  "transactions": transactions.toJSON()
-}))
-vectors.close()
+with open("e2e/Vectors/Consensus/Verification/HundredTwo.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": proto.toJSON(),
+    "transactions": transactions.toJSON()
+  }))

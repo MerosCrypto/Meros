@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 from time import sleep
 import json
 
@@ -13,9 +13,9 @@ from e2e.Tests.Errors import TestError
 def ChainReorgDifferentKeyTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/RandomX/ChainReorgDifferentKey.json", "r")
-  chains: Dict[str, List[Dict[str, Any]]] = json.loads(file.read())
-  file.close()
+  chains: Dict[str, List[Dict[str, Any]]]
+  with open("e2e/Vectors/Merit/RandomX/ChainReorgDifferentKey.json", "r") as file:
+    chains = json.loads(file.read())
 
   #Load the blockchains.
   main: Blockchain = Blockchain.fromJSON(chains["main"])

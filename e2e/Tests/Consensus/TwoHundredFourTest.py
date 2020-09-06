@@ -1,4 +1,4 @@
-from typing import Dict, IO, Any
+from typing import Dict, Any
 from time import sleep
 import json
 
@@ -16,9 +16,9 @@ from e2e.Tests.Errors import TestError, SuccessError
 def TwoHundredFourTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/TwoHundredFour.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/TwoHundredFour.json", "r") as file:
+    vectors = json.loads(file.read())
 
   #Instantiate a Blockchain to set the RandomX key.
   chain: Blockchain = Blockchain()

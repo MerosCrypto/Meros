@@ -2,7 +2,7 @@
 #Does test that SendDifficulties from before having votes are applied when the Merit Holder gains votes.
 #Doesn't test signed SendDifficulties, despite having a Liver.
 
-from typing import Dict, Callable, IO, Any
+from typing import Callable, Dict, List, Any
 import json
 
 from e2e.Meros.RPC import RPC
@@ -15,10 +15,6 @@ from e2e.Tests.Consensus.Verify import verifySendDifficulty, verifyMeritRemoval
 def SendDifficultyTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/Difficulties/SendDifficulty.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
-
   #Verify functions.
   vddStarting: Callable[[], None] = lambda: verifySendDifficulty(rpc, 3)
   vddEarnedVote: Callable[[], None] = lambda: verifySendDifficulty(rpc, 2)
@@ -30,15 +26,17 @@ def SendDifficultyTest(
     vddEarnedVote()
 
   #Create and execute a Liver/Syncer.
-  Liver(
-    rpc,
-    vectors["blockchain"],
-    callbacks={
-      26: vddStarting,
-      50: vddEarnedVote,
-      51: vddVoted,
-      52: vmr,
-      102: vEarnedBack
-    }
-  ).live()
-  Syncer(rpc, vectors["blockchain"]).sync()
+  with open("e2e/Vectors/Consensus/Difficulties/SendDifficulty.json", "r") as file:
+    vectors: List[Dict[str, Any]] = json.loads(file.read())
+    Liver(
+      rpc,
+      vectors,
+      callbacks={
+        26: vddStarting,
+        50: vddEarnedVote,
+        51: vddVoted,
+        52: vmr,
+        102: vEarnedBack
+      }
+    ).live()
+    Syncer(rpc, vectors).sync()

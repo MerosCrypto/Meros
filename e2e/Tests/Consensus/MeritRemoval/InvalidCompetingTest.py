@@ -1,6 +1,6 @@
 #Tests proper handling of a MeritRemoval created from Verifications verifying competing, and invalid, Transactions.
 
-from typing import Dict, IO, Any
+from typing import Dict, Any
 import json
 
 from pytest import raises
@@ -20,9 +20,9 @@ from e2e.Tests.Merit.Verify import verifyBlockchain
 def InvalidCompetingTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/InvalidCompeting.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/MeritRemoval/InvalidCompeting.json", "r") as file:
+    vectors = json.loads(file.read())
 
   removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(vectors["removal"])
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])

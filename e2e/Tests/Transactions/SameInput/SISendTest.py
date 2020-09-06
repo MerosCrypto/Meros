@@ -1,6 +1,6 @@
 #Tests the proper handling of Sends which spend the same input twice.
 
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 import json
 
 from pytest import raises
@@ -22,9 +22,9 @@ from e2e.Tests.Errors import TestError, SuccessError
 def SameInputTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Transactions/SameInput/Send.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Transactions/SameInput/Send.json", "r") as file:
+    vectors = json.loads(file.read())
 
   merit: Merit = Merit.fromJSON(vectors["blockchain"])
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])

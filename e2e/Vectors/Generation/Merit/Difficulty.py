@@ -1,4 +1,3 @@
-from typing import IO, Any
 from random import seed, getrandbits
 import json
 
@@ -17,6 +16,5 @@ for _ in range(100):
   chain.timeOffset = max(getrandbits(32) % (blockTime * 3), blockTime // 2)
   chain.add()
 
-vectors: IO[Any] = open("e2e/Vectors/Merit/Difficulty.json", "w")
-vectors.write(json.dumps(chain.toJSON()))
-vectors.close()
+with open("e2e/Vectors/Merit/Difficulty.json", "w") as vectors:
+  vectors.write(json.dumps(chain.toJSON()))

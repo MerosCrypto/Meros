@@ -1,4 +1,4 @@
-from typing import List, IO, Any
+from typing import List
 from hashlib import blake2b
 import json
 
@@ -30,7 +30,7 @@ transactions: Transactions = Transactions()
 txs: List[Transaction] = []
 
 #Create the Claim.
-claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKey)
+claim: Claim = Claim([(merit.mints[-1], 0)], edPubKey)
 claim.sign(PrivateKey(0))
 txs.append(claim)
 transactions.add(claim)
@@ -62,10 +62,9 @@ merit.blockchain.add(
   ).finish(0, merit)
 )
 
-vectors: IO[Any] = open("e2e/Vectors/Merit/HundredSeventyFive.json", "w")
-vectors.write(json.dumps({
-  "blockchain": merit.toJSON(),
-  "transactions": transactions.toJSON(),
-  "verification": verif.toSignedJSON()
-}))
-vectors.close()
+with open("e2e/Vectors/Merit/HundredSeventyFive.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": merit.toJSON(),
+    "transactions": transactions.toJSON(),
+    "verification": verif.toSignedJSON()
+  }))

@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 from time import sleep
 import json
 
@@ -13,9 +13,9 @@ from e2e.Tests.Errors import TestError, SuccessError
 def HundredEightySevenTest(
   meros: Meros
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/HundredEightySeven.json", "r")
-  vectors: List[Dict[str, Any]] = json.loads(file.read())
-  file.close()
+  vectors: List[Dict[str, Any]]
+  with open("e2e/Vectors/Merit/HundredEightySeven.json", "r") as file:
+    vectors = json.loads(file.read())
 
   meros.liveConnect(Blockchain().last())
   meros.syncConnect(Blockchain().last())

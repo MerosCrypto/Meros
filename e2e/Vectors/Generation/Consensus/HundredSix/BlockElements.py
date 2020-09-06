@@ -1,4 +1,4 @@
-from typing import IO, Dict, List, Any
+from typing import Dict, List, Any
 import json
 
 import ed25519
@@ -61,10 +61,8 @@ blocks.append(
   ).finish(0, merit).toJSON()
 )
 
-result: Dict[str, Any] = {
-  "blocks": blocks,
-  "transactions": transactions.toJSON()
-}
-vectors: IO[Any] = open("e2e/Vectors/Consensus/HundredSix/BlockElements.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Consensus/HundredSix/BlockElements.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blocks": blocks,
+    "transactions": transactions.toJSON()
+  }))
