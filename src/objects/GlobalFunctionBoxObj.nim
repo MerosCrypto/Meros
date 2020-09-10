@@ -1,4 +1,5 @@
 import locks
+import sets
 
 import chronos
 
@@ -42,6 +43,10 @@ type
     getSpenders*: proc (
       input: Input
     ): seq[Hash[256]] {.gcsafe, raises: [].}
+
+    getAndPruneFamilyUnsafe*: proc (
+      input: Input
+    ): HashSet[Input] {.gcsafe, raises: [].}
 
     addClaim*: proc (
       claim: Claim,

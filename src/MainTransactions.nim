@@ -149,6 +149,11 @@ proc mainTransactions(
   ): seq[Hash[256]] {.forceCheck: [].} =
     transactions[].loadSpenders(input)
 
+  functions.transactions.getAndPruneFamilyUnsafe = proc (
+    input: Input
+  ): HashSet[Input] {.forceCheck: [].} =
+    transactions.families.getAndPruneFamilyUnsafe(input)
+
   functions.transactions.addClaim = proc (
     claim: Claim,
     syncing: bool = false

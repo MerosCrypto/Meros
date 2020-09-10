@@ -815,7 +815,20 @@ proc archive*(
     panic("Tried to archive an Element for a non-existent holder.")
 
   #Finalize every popped Transaction.
+  var toFinalize: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+  #First requires getting every TX from every family.
   for hash in popped.keys():
+    try:
+      for input in consensus.functions.transactions.getAndPruneFamilyUnsafe(
+        consensus.functions.transactions.getTransaction(hash).inputs[0]
+      ):
+        for tx in consensus.functions.transactions.getSpenders(input):
+          # We could directly call finalize here
+          # That said, a check for inclusion in the HashSet is likely faster than any check in finalize
+          toFinalize.incl(tx)
+    except IndexError:
+      panic("Couldn't get a Transaction we're finalizing: " & $hash)
+  for hash in toFinalize:
     consensus.finalize(state, hash)
 
   #Reclaulcate every close Status.

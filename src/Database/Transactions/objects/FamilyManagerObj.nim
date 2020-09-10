@@ -1,5 +1,3 @@
-import sequtils
-import strutils
 import sets
 import tables
 
@@ -47,7 +45,7 @@ proc merge(
   try:
     families.families[target.id] = families.families[target.id] + families.families[source.id]
   except KeyError:
-    panic("Merging families when one doesn't exist")
+    panic("Merging families when one doesn't exist.")
   families.families.del(source.id)
 
 proc register*(
@@ -77,7 +75,13 @@ proc register*(
         inc(families.lastID)
         {.pop.}
 
+        families.families[family.id] = initHashSet[Input]()
+
       families.inputMap[inputs[i]] = family
+      try:
+        families.families[family.id].incl(inputs[i])
+      except KeyError:
+        panic("Trying to include an input without a family into one which doesn't exist.")
 
   try:
     for input in inputs:
@@ -85,28 +89,18 @@ proc register*(
   except KeyError:
     panic("Trying to add an input to its new family yet said new family doesn't exist.")
 
-#The following are unsafe for two reasons:
-#1) Use of temporal IDs
-#2) Default to panic as families are solely internal and blockchain based
-proc getFamilyIDUnsafe*(
-  families: FamilyManager,
-  input: Input
-): uint64 {.inline, forceCheck: [].} =
-  try:
-    result = families.inputMap[input].resolve().id
-  except KeyError:
-    panic("Tried to get the family ID of an input not registered to a family: " & $input.hash)
-
+#The following is unsafe as it default to panic as families are solely internal/blockchain based.
 proc getAndPruneFamilyUnsafe*(
   families: FamilyManager,
-  id: uint64
+  inputArg: Input
 ): HashSet[Input] {.forceCheck: [].} =
   try:
+    var id: uint64 = families.inputMap[inputArg].resolve().id
     result = families.families[id]
+    families.families.del(id)
   except KeyError:
-    panic("Trying to get a family which doesn't exist")
+    panic("Trying to get a family which doesn't exist.")
 
-  families.families.del(id)
   for input in result:
     families.inputMap.del(input)
 
