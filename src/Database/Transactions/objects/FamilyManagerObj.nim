@@ -1,7 +1,7 @@
-import sets
-import tables
+import sequtils, sets, tables
 
 import ../../../lib/Errors
+import ../../../lib/Hash
 import ./TransactionObj
 
 type
@@ -109,29 +109,17 @@ when defined(merosTests):
     f1: FamilyManager,
     f2: FamilyManager
   ): bool =
-    if
-      (f1.inputMap.keys().toSeq().toHashSet() != f2.inputMap.keys().toSeq().toHashSet() or
-      (f1.families.len != f2.families.len)
-    ):
-      return
+    #For some reason, toSeq(keys).toHashSet() == doesn't work. This long form does.
+    if f1.inputMap.len != f2.inputMap.len:
+      return false
+    for input in f1.inputMap.keys():
+      if not f2.inputMap.hasKey(input):
+        return false
 
-    var
-      f1Keys: seq[uint64] = f1.families.keys()
-      f2Keys: seq[uint64] = f2.families.keys()
-
-    #[
-      One of these will be flattened and one of these will be 'natural'.
-      The actual family IDs are meaningless. We just need to make sure the values are the same.
-      Reduceable to O(2n) by creating a unique ID for every possible value and checking the HashSet equality of both.
-      Currently O(n^2).
-    ]#
-    while f1Keys.len != 0:
-      var found: bool = true
-      for k in f2Keys:
-        if f1.families[f1Keys[0]] == f2.families[k]:
-          f1Keys.del(0)
-          found = true
-          break
-        if not found:
-          return
+    for input in f1.inputMap.keys():
+      if f1.families[f1.inputMap[input].resolve().id].len != f2.families[f2.inputMap[input].resolve().id].len:
+        return false
+      for input in f1.families[f1.inputMap[input].resolve().id]:
+        if not f2.families[f2.inputMap[input].resolve().id].contains(input):
+          return false
     result = true

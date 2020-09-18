@@ -68,8 +68,8 @@ proc newTestGlobalFunctionBox*(
 
   result.transactions.getAndPruneFamilyUnsafe = proc (
     input: Input
-  ): HashSet[Input] {.forceCheck: [].} =
-    transactions[].families.getAndPruneFamilyUnsafe(input).toSeq()
+  ): HashSet[Input] =
+    transactions[].families.getAndPruneFamilyUnsafe(input)
 
   result.transactions.verify = proc (
     hash: Hash[256]

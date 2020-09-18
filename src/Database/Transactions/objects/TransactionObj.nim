@@ -27,6 +27,16 @@ type
     outputs*: seq[Output]
     hash*: Hash.Hash[256]
 
+proc `==`*(
+  lhs: Input,
+  rhs: Input
+): bool {.forceCheck: [].} =
+  result = lhs.hash == rhs.hash
+  if lhs of FundedInput:
+    result = result and
+      (rhs of FundedInput) and
+      (cast[FundedInput](lhs).nonce == cast[FundedInput](rhs).nonce)
+
 proc hash*(
   input: Input
 ): hashes.Hash {.inline, forceCheck: [].} =
