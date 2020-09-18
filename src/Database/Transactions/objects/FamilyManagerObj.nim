@@ -89,7 +89,7 @@ proc register*(
   except KeyError:
     panic("Trying to add an input to its new family yet said new family doesn't exist.")
 
-#The following is unsafe as it default to panic as families are solely internal/blockchain based.
+#The following is unsafe as it returns nothing when the family no longer exists.
 proc getAndPruneFamilyUnsafe*(
   families: FamilyManager,
   inputArg: Input
@@ -99,7 +99,7 @@ proc getAndPruneFamilyUnsafe*(
     result = families.families[id]
     families.families.del(id)
   except KeyError:
-    panic("Trying to get a family which doesn't exist.")
+    return
 
   for input in result:
     families.inputMap.del(input)

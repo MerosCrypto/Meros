@@ -814,22 +814,54 @@ proc archive*(
   except KeyError:
     panic("Tried to archive an Element for a non-existent holder.")
 
-  #Finalize every popped Transaction.
-  var toFinalize: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+  #Finalize every popped family.
+  #First requires expanding from TX to family.
+  var
+    inputs: seq[HashSet[Input]] = newSeq[HashSet[Input]](popped.len)
+    families: seq[seq[Hash[256]]] = newSeq[seq[Hash[256]]](popped.len)
+    i: int = 0
   #First requires getting every TX from every family.
   for hash in popped.keys():
     try:
-      for input in consensus.functions.transactions.getAndPruneFamilyUnsafe(
+      inputs[i] = consensus.functions.transactions.getAndPruneFamilyUnsafe(
         consensus.functions.transactions.getTransaction(hash).inputs[0]
-      ):
-        for tx in consensus.functions.transactions.getSpenders(input):
-          # We could directly call finalize here
-          # That said, a check for inclusion in the HashSet is likely faster than any check in finalize
-          toFinalize.incl(tx)
+      )
+      if inputs[i].len == 0:
+        continue
+
+      for input in inputs[i]:
+        if (input.hash == Hash[256]()) or (input.hash == consensus.genesis):
+          families[i].add(hash)
+          continue
+        families[i] &= consensus.functions.transactions.getSpenders(input)
+      inc(i)
     except IndexError:
       panic("Couldn't get a Transaction we're finalizing: " & $hash)
-  for hash in toFinalize:
-    consensus.finalize(state, hash)
+  inputs.setLen(i)
+  families.setLen(i)
+
+  #Iterate over each family using a queue.
+  var cyclical: bool = false
+  while families.len != 0:
+    var
+      lenAtStart: int = families.len
+      i: int = 0
+    while i < families.len:
+      try:
+        consensus.finalize(state, inputs[i], families[i], cyclical)
+      except UnfinalizedParents:
+        inc(i)
+        continue
+      families.del(i)
+
+    if lenAtStart == families.len:
+      if cyclical:
+        panic("Couldn't finalize the last family.")
+      for f in 1 ..< families.len:
+        families[0] &= families[f]
+      families.setLen(1)
+      cyclical = true
+      logInfo "Cyclical transaction family found ", family = families[0]
 
   #Reclaulcate every close Status.
   var toDelete: seq[Hash[256]] = @[]
