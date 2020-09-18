@@ -4,6 +4,7 @@ from hashlib import blake2b
 from e2e.Libs.BLS import PrivateKey, Signature
 
 from e2e.Classes.Transactions.Transaction import Transaction
+from e2e.Classes.Transactions.Mint import Mint
 
 class Claim(
   Transaction
@@ -16,21 +17,30 @@ class Claim(
       result += txInput[0] + txInput[1].to_bytes(1, "little")
     return result
 
-  def __init__(
-    self,
-    inputs: List[Tuple[bytes, int]],
-    output: bytes,
-    signature: bytes = Signature().serialize()
+  def calculateHash(
+    self
   ) -> None:
-    self.inputs: List[Tuple[bytes, int]] = inputs
-    self.output: bytes = output
-    self.amount: int = 0
     self.hash = blake2b(
       b'\1' +
       self.serializeInputs() +
-      output,
+      self.output,
       digest_size=32
     ).digest()
+
+  def __init__(
+    self,
+    inputs: List[Tuple[Mint, int]],
+    output: bytes,
+    signature: bytes = Signature().serialize()
+  ) -> None:
+    self.inputs: List[Tuple[bytes, int]] = []
+    self.amount: int = 0
+    for txInput in inputs:
+      self.inputs.append((txInput[0].hash, txInput[1]))
+      self.amount += txInput[0].outputs[txInput[1]][1]
+
+    self.output: bytes = output
+    self.calculateHash()
     self.signature: bytes = signature
 
   #Satisifes static typing requirements.
@@ -77,14 +87,13 @@ class Claim(
   def fromJSON(
     json: Dict[str, Any]
   ) -> Any:
-    inputs: List[Tuple[bytes, int]] = []
-    for txInput in json["inputs"]:
-      inputs.append((bytes.fromhex(txInput["hash"]), txInput["nonce"]))
-
     result: Claim = Claim(
-      inputs,
+      [],
       bytes.fromhex(json["outputs"][0]["key"]),
       bytes.fromhex(json["signature"])
     )
+    for txInput in json["inputs"]:
+      result.inputs.append((bytes.fromhex(txInput["hash"]), txInput["nonce"]))
+    result.calculateHash()
     result.amount = int(json["outputs"][0]["amount"])
     return result

@@ -1,4 +1,3 @@
-from typing import IO, Any
 import json
 
 from e2e.Classes.Consensus.SendDifficulty import SendDifficulty
@@ -17,8 +16,5 @@ proto.add(elements=[MeritRemoval(SendDifficulty(1, 1, 0), SendDifficulty(2, 1, 0
 for _ in range(50):
   proto.add()
 
-vectors: IO[Any] = open("e2e/Vectors/Consensus/Difficulties/SendDifficulty.json", "w")
-vectors.write(json.dumps({
-  "blockchain": proto.toJSON()
-}))
-vectors.close()
+with open("e2e/Vectors/Consensus/Difficulties/SendDifficulty.json", "w") as vectors:
+  vectors.write(json.dumps(proto.toJSON()))

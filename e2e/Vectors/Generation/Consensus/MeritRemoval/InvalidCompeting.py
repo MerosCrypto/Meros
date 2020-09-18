@@ -1,4 +1,3 @@
-from typing import Dict, IO, Any
 import json
 
 import ed25519
@@ -40,11 +39,9 @@ competingVerif.sign(0, blsPrivKey)
 mr: SignedMeritRemoval = SignedMeritRemoval(verif, competingVerif)
 proto.add(elements=[mr])
 
-result: Dict[str, Any] = {
-  "blockchain": proto.toJSON(),
-  "transactions": transactions.toJSON(),
-  "removal": mr.toSignedJSON()
-}
-vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/InvalidCompeting.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Consensus/MeritRemoval/InvalidCompeting.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": proto.toJSON(),
+    "transactions": transactions.toJSON(),
+    "removal": mr.toSignedJSON()
+  }))

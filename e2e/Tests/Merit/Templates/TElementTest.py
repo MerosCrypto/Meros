@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 from time import sleep
 import json
 
@@ -22,9 +22,6 @@ from e2e.Tests.Merit.Verify import verifyBlockchain
 def TElementTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/BlankBlocks.json", "r")
-  blocks: List[Dict[str, Any]] = json.loads(file.read())
-  file.close()
   merit: Merit = Merit()
 
   blsPrivKey: PrivateKey = PrivateKey(0)
@@ -35,7 +32,9 @@ def TElementTest(
   rpc.meros.syncConnect(merit.blockchain.blocks[0].header.hash)
 
   #Send the first Block.
-  block: Block = Block.fromJSON(blocks[0])
+  block: Block
+  with open("e2e/Vectors/Merit/BlankBlocks.json", "r") as file:
+    block = Block.fromJSON(json.loads(file.read())[0])
   merit.blockchain.add(block)
   rpc.meros.liveBlockHeader(block.header)
 

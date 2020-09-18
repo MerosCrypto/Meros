@@ -1,6 +1,6 @@
 #Tests that a Transaction added to the Transactions DAG, yet not mentioned while it can still be added, is pruned.
 
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 import json
 
 from pytest import raises
@@ -16,9 +16,9 @@ from e2e.Tests.Errors import TestError
 def PruneUnaddableTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Transactions/Prune/PruneUnaddable.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Transactions/Prune/PruneUnaddable.json", "r") as file:
+    vectors = json.loads(file.read())
 
   datas: List[Data] = [Data.fromJSON(data) for data in vectors["datas"]]
 

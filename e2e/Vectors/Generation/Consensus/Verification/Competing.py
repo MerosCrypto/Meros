@@ -1,4 +1,4 @@
-from typing import IO, Dict, List, Any
+from typing import List
 import json
 
 import ed25519
@@ -27,8 +27,7 @@ edPubKeys: List[ed25519.VerifyingKey] = [
 ]
 
 #Create the Claim.
-claim: Claim = Claim([(merit.mints[-1].hash, 0)], edPubKeys[0].to_bytes())
-claim.amount = merit.mints[-1].outputs[0][1]
+claim: Claim = Claim([(merit.mints[-1], 0)], edPubKeys[0].to_bytes())
 claim.sign(PrivateKey(0))
 transactions.add(claim)
 merit.add(
@@ -82,12 +81,10 @@ for _ in range(6):
     ).finish(0, merit)
   )
 
-result: Dict[str, Any] = {
-  "blockchain": merit.toJSON(),
-  "transactions": transactions.toJSON(),
-  "verified": packets[0].hash.hex().upper(),
-  "beaten": packets[1].hash.hex().upper()
-}
-vectors: IO[Any] = open("e2e/Vectors/Consensus/Verification/Competing.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Consensus/Verification/Competing.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": merit.toJSON(),
+    "transactions": transactions.toJSON(),
+    "verified": packets[0].hash.hex().upper(),
+    "beaten": packets[1].hash.hex().upper()
+  }))

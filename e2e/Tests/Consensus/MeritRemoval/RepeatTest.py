@@ -1,6 +1,6 @@
 #Tests proper handling of a MeritRemoval which has already been archived.
 
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 import json
 
 from pytest import raises
@@ -16,9 +16,9 @@ from e2e.Tests.Errors import TestError, SuccessError
 def RepeatTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/Repeat.json", "r")
-  vectors: List[Dict[str, Any]] = json.loads(file.read())
-  file.close()
+  vectors: List[Dict[str, Any]]
+  with open("e2e/Vectors/Consensus/MeritRemoval/Repeat.json", "r") as file:
+    vectors = json.loads(file.read())
 
   def sendBlock() -> None:
     #Send the Block with the MeritRemoval archived again.

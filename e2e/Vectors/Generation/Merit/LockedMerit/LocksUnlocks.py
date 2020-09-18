@@ -1,4 +1,3 @@
-from typing import IO, Any
 import json
 
 from e2e.Classes.Merit.Merit import Merit
@@ -11,6 +10,5 @@ merit.add(PrototypeBlock(merit.blockchain.blocks[-1].header.time + 1200).finish(
 for _ in range(9):
   merit.add(PrototypeBlock(merit.blockchain.blocks[-1].header.time + 1200).finish(0, merit))
 
-vectors: IO[Any] = open("e2e/Vectors/Merit/LockedMerit/LocksUnlocks.json", "w")
-vectors.write(json.dumps(merit.toJSON()))
-vectors.close()
+with open("e2e/Vectors/Merit/LockedMerit/LocksUnlocks.json", "w") as vectors:
+  vectors.write(json.dumps(merit.toJSON()))

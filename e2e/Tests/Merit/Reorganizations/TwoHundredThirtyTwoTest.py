@@ -1,4 +1,4 @@
-from typing import IO, Dict, List, Any
+from typing import Dict, List, Any
 
 from time import sleep
 from subprocess import Popen
@@ -18,11 +18,11 @@ from e2e.Tests.Merit.Verify import verifyBlockchain
 def TwoHundredThirtyTwoTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/Reorganizations/TwoHundredThirtyTwo.json", "r")
-  chains: Dict[str, List[Dict[str, Any]]] = json.loads(file.read())
+  chains: Dict[str, List[Dict[str, Any]]]
+  with open("e2e/Vectors/Merit/Reorganizations/TwoHundredThirtyTwo.json", "r") as file:
+    chains = json.loads(file.read())
   main: Blockchain = Blockchain.fromJSON(chains["main"])
   alt: Blockchain = Blockchain.fromJSON(chains["alt"])
-  file.close()
 
   def sendBlock(
     toSend: Block

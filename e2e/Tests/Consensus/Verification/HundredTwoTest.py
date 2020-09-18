@@ -1,6 +1,6 @@
 #https://github.com/MerosCrypto/Meros/issues/102.
 
-from typing import Dict, IO, Any
+from typing import Dict, Any
 import json
 
 from e2e.Classes.Transactions.Transactions import Transactions
@@ -13,9 +13,9 @@ from e2e.Tests.Errors import TestError
 def HundredTwoTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/Verification/HundredTwo.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/Verification/HundredTwo.json", "r") as file:
+    vectors = json.loads(file.read())
 
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 

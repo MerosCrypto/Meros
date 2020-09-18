@@ -1,6 +1,6 @@
 #Tests proper handling of a MeritRemoval where one Element is already archived.
 
-from typing import Dict, IO, Any
+from typing import Dict, Any
 import json
 
 from e2e.Classes.Consensus.MeritRemoval import PartialMeritRemoval
@@ -17,9 +17,9 @@ from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 def PartialTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/Partial.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/MeritRemoval/Partial.json", "r") as file:
+    vectors = json.loads(file.read())
 
   removal: PartialMeritRemoval = PartialMeritRemoval.fromSignedJSON(vectors["removal"])
 

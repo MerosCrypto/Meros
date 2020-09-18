@@ -1,4 +1,3 @@
-from typing import IO, Any
 from random import seed, getrandbits
 import json
 
@@ -23,6 +22,5 @@ for _ in range(State().lifetime * 3):
     nextMiner = miners
   chain.add(nextMiner)
 
-vectors: IO[Any] = open("e2e/Vectors/Merit/State.json", "w")
-vectors.write(json.dumps(chain.toJSON()))
-vectors.close()
+with open("e2e/Vectors/Merit/State.json", "w") as vectors:
+  vectors.write(json.dumps(chain.toJSON()))

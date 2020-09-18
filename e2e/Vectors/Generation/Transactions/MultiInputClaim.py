@@ -86,10 +86,9 @@ for _ in range(5):
 
 #Create the Claim.
 claim: Claim = Claim(
-  [(merit.mints[0].hash, 0), (merit.mints[1].hash, 0)],
+  [(merit.mints[0], 0), (merit.mints[1], 0)],
   edPubKey.to_bytes()
 )
-claim.amount = merit.mints[0].outputs[0][1] + merit.mints[1].outputs[0][1]
 claim.sign(blsPrivKey)
 transactions.add(claim)
 
@@ -114,10 +113,8 @@ block = Block(
 block.mine(blsPrivKey, merit.blockchain.difficulty())
 merit.add(block)
 
-result: Dict[str, Any] = {
-  "blockchain": merit.blockchain.toJSON(),
-  "transactions": transactions.toJSON()
-}
-vectors: IO[Any] = open("e2e/Vectors/Transactions/MultiInputClaim.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Transactions/MultiInputClaim.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": merit.blockchain.toJSON(),
+    "transactions": transactions.toJSON()
+  }))

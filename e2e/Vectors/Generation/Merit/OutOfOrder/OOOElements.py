@@ -72,6 +72,5 @@ for _ in range(2):
   dataDiffs = [SignedDataDifficulty(4, 2)]
   dataDiffs[0].sign(0, blsPrivKey)
 
-vectors: IO[Any] = open("e2e/Vectors/Merit/OutOfOrder/Elements.json", "w")
-vectors.write(json.dumps(blockchain.toJSON()))
-vectors.close()
+with open("e2e/Vectors/Merit/OutOfOrder/Elements.json", "w") as vectors:
+  vectors.write(json.dumps(blockchain.toJSON()))

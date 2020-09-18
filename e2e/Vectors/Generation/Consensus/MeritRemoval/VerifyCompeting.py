@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import List
 import json
 
 import ed25519
@@ -45,12 +45,10 @@ mr: SignedMeritRemoval = SignedMeritRemoval(verifs[1], verifs[2])
 #Generate a Block containing the MeritRemoval.
 proto.add(packets=packets, elements=[mr])
 
-result: Dict[str, Any] = {
-  "blockchain": proto.toJSON(),
-  "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()],
-  "verification": verifs[0].toSignedJSON(),
-  "removal": mr.toSignedJSON()
-}
-vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/VerifyCompeting.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Consensus/MeritRemoval/VerifyCompeting.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": proto.toJSON(),
+    "datas": [data.toJSON() for data in datas],
+    "verification": verifs[0].toSignedJSON(),
+    "removal": mr.toSignedJSON()
+  }))

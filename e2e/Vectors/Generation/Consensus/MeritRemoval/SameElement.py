@@ -1,4 +1,3 @@
-from typing import Dict, IO, Any
 import json
 
 import ed25519
@@ -49,15 +48,17 @@ packet: SignedMeritRemovalVerificationPacket = SignedMeritRemovalVerificationPac
 )
 verifMR: SignedMeritRemoval = SignedMeritRemoval(verif, packet)
 
-result: Dict[str, Any] = {
-  "blockchain": proto.toJSON(),
-  "removals": [
-    sendDiffMR.toSignedJSON(),
-    dataDiffMR.toSignedJSON(),
-    verifMR.toSignedJSON()
-  ],
-  "data": data.toJSON()
-}
-vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/SameElement.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Consensus/MeritRemoval/SameElement.json", "w") as vectors:
+  vectors.write(
+    json.dumps(
+      {
+        "blockchain": proto.toJSON(),
+        "removals": [
+          sendDiffMR.toSignedJSON(),
+          dataDiffMR.toSignedJSON(),
+          verifMR.toSignedJSON()
+        ],
+        "data": data.toJSON()
+      }
+    )
+  )

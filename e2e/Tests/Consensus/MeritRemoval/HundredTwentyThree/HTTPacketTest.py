@@ -4,7 +4,7 @@
 #2) That a VC MeritRemoval of Verification Packets where one has their holders re-ordered is identified as a repeat.
 #Also tests receiving a SignedMeritRemoval containing VerificationPackets.
 
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 from time import sleep
 import json
 
@@ -27,9 +27,9 @@ from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 def HTTPacketTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Packet.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Packet.json", "r") as file:
+    vectors = json.loads(file.read())
 
   #Datas.
   datas: List[Data] = [

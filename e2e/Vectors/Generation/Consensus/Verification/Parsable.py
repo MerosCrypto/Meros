@@ -1,4 +1,3 @@
-from typing import IO, Any
 import json
 
 import ed25519
@@ -22,9 +21,9 @@ data.signature = edPrivKey.sign(b"INVALID")
 data.beat(dataFilter)
 
 proto.add(packets=[VerificationPacket(data.hash, [0])])
-vectors: IO[Any] = open("e2e/Vectors/Consensus/Verification/Parsable.json", "w")
-vectors.write(json.dumps({
-  "blockchain": proto.toJSON(),
-  "data": data.toJSON()
-}))
-vectors.close()
+
+with open("e2e/Vectors/Consensus/Verification/Parsable.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": proto.toJSON(),
+    "data": data.toJSON()
+  }))

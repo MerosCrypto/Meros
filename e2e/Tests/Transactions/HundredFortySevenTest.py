@@ -1,6 +1,6 @@
 #Tests the proper handling of Transactions which try to spend an underflow.
 
-from typing import Dict, IO, Any
+from typing import Dict, Any
 import json
 
 import ed25519
@@ -20,9 +20,9 @@ from e2e.Tests.Errors import TestError, SuccessError
 def HundredFortySevenTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Transactions/ClaimedMint.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Transactions/ClaimedMint.json", "r") as file:
+    vectors = json.loads(file.read())
 
   merit: Merit = Merit.fromJSON(vectors["blockchain"])
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])

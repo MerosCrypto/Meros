@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 from time import sleep
 import json
 
@@ -13,9 +13,9 @@ from e2e.Tests.Errors import TestError
 def TwoHundredTwentyEightTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Merit/Reorganizations/ShorterChainMoreWork.json", "r")
-  chains: Dict[str, List[Dict[str, Any]]] = json.loads(file.read())
-  file.close()
+  chains: Dict[str, List[Dict[str, Any]]]
+  with open("e2e/Vectors/Merit/Reorganizations/ShorterChainMoreWork.json", "r") as file:
+    chains = json.loads(file.read())
 
   #Load the Blockchains.
   main: Blockchain = Blockchain.fromJSON(chains["main"])

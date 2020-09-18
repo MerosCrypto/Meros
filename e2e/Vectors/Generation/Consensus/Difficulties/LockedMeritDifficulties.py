@@ -1,4 +1,3 @@
-from typing import IO, Any
 import json
 
 from e2e.Classes.Consensus.SendDifficulty import SendDifficulty
@@ -36,8 +35,5 @@ merit.add(
   ).finish(1, merit)
 )
 
-vectors: IO[Any] = open("e2e/Vectors/Consensus/Difficulties/LockedMerit.json", "w")
-vectors.write(json.dumps({
-  "blockchain": merit.toJSON()
-}))
-vectors.close()
+with open("e2e/Vectors/Consensus/Difficulties/LockedMerit.json", "w") as vectors:
+  vectors.write(json.dumps(merit.toJSON()))

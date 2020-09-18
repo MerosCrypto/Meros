@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import List
 import json
 
 import ed25519
@@ -62,10 +62,8 @@ e2MR: SignedMeritRemoval = SignedMeritRemoval(packets[1], verifs[2], 0)
 e1Chain.add(elements=[e1MR])
 e2Chain.add(elements=[e2MR])
 
-result: Dict[str, Any] = {
-  "blockchains": [e1Chain.toJSON(), e2Chain.toJSON()],
-  "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON()]
-}
-vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredThirtyThree.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Consensus/MeritRemoval/HundredThirtyThree.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchains": [e1Chain.toJSON(), e2Chain.toJSON()],
+    "datas": [data.toJSON() for data in datas]
+  }))

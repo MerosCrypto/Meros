@@ -1,4 +1,4 @@
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 import json
 
 import ed25519
@@ -18,9 +18,9 @@ from e2e.Tests.Errors import TestError
 def TwoHundredFifteenTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Transactions/ClaimedMint.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Transactions/ClaimedMint.json", "r") as file:
+    vectors = json.loads(file.read())
 
   merit: Merit = Merit.fromJSON(vectors["blockchain"])
   sendFilter: SpamFilter = SpamFilter(3)
@@ -30,8 +30,7 @@ def TwoHundredFifteenTest(
   pubKey: ed25519.VerifyingKey = privKey.get_verifying_key()
 
   def syncUnknown() -> None:
-    claim: Claim = Claim([(merit.mints[0].hash, 0)], pubKey.to_bytes())
-    claim.amount = merit.mints[0].outputs[0][1]
+    claim: Claim = Claim([(merit.mints[0], 0)], pubKey.to_bytes())
     claim.sign(PrivateKey(0))
 
     #Create a series of Sends, forming a diamond.

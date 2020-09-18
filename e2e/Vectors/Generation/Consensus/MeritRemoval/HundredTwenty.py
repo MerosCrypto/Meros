@@ -1,4 +1,3 @@
-from typing import Dict, IO, Any
 import json
 
 from e2e.Libs.BLS import PrivateKey, PublicKey
@@ -22,11 +21,10 @@ dataDiffConflicting.sign(0, blsPrivKey)
 
 #Generate a Block containing the competing Data difficulty.
 proto.add(elements=[dataDiffConflicting])
-result: Dict[str, Any] = {
-  "blockchain": proto.toJSON(),
-  "mempoolDataDiff": dataDiff.toSignedJSON(),
-  "blockchainDataDiff": dataDiffConflicting.toJSON()
-}
-vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredTwenty.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+
+with open("e2e/Vectors/Consensus/MeritRemoval/HundredTwenty.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": proto.toJSON(),
+    "mempoolDataDiff": dataDiff.toSignedJSON(),
+    "blockchainDataDiff": dataDiffConflicting.toJSON()
+  }))

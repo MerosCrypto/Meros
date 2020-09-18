@@ -1,6 +1,6 @@
 #Tests proper creation and handling of multiple MeritRemovals when Meros receives multiple causes for a MeritRemoval.
 
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 import json
 
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
@@ -15,9 +15,9 @@ from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 def MultipleTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/Multiple.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/MeritRemoval/Multiple.json", "r") as file:
+    vectors = json.loads(file.read())
 
   removals: List[SignedMeritRemoval] = [
     SignedMeritRemoval.fromSignedJSON(vectors["removals"][0]),

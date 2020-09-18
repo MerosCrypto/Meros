@@ -1,4 +1,4 @@
-from typing import IO, Dict, List, Any
+from typing import List
 import json
 
 import ed25519
@@ -47,11 +47,9 @@ proto.add(packets=[
 for _ in range(5):
   proto.add()
 
-result: Dict[str, Any] = {
-  "blockchain": proto.toJSON(),
-  "datas": [datas[0].toJSON(), datas[1].toJSON(), datas[2].toJSON(), datas[3].toJSON()],
-  "verification": descendantVerif.toSignedJSON()
-}
-vectors: IO[Any] = open("e2e/Vectors/Transactions/Prune/PruneUnaddable.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Transactions/Prune/PruneUnaddable.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "blockchain": proto.toJSON(),
+    "datas": [data.toJSON() for data in datas],
+    "verification": descendantVerif.toSignedJSON()
+  }))

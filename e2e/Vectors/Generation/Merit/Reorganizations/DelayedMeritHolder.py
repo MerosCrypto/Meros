@@ -1,4 +1,3 @@
-from typing import IO, Any
 import json
 
 from e2e.Libs.BLS import PrivateKey
@@ -30,9 +29,8 @@ alt.add(
   ).finish(1, alt)
 )
 
-vectors: IO[Any] = open("e2e/Vectors/Merit/Reorganizations/DelayedMeritHolder.json", "w")
-vectors.write(json.dumps({
-  "main": main.toJSON(),
-  "alt": alt.toJSON()
-}))
-vectors.close()
+with open("e2e/Vectors/Merit/Reorganizations/DelayedMeritHolder.json", "w") as vectors:
+  vectors.write(json.dumps({
+    "main": main.toJSON(),
+    "alt": alt.toJSON()
+  }))

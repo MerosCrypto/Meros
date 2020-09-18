@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Optional, List
+from typing import TypeVar, Optional, List
 
 from e2e.Libs.Qrt import qrt
 
@@ -64,6 +64,14 @@ def encodeSketch(
       shortID = mul(shortID, squared)
   return b"".join(elem.to_bytes(FIELD_BYTES, "little") for elem in oddSums)
 
+T = TypeVar('T')
+def pad(
+  value: List[T],
+  length: int,
+  elem: T
+) -> None:
+  value.extend([elem] * (length - len(value)))
+
 def normalize(
   value: List[int]
 ) -> None:
@@ -93,8 +101,7 @@ def berlekampMassey(
       swap: bool = 2 * (len(current) - 1) <= n
       if swap:
         tmp = list(current)
-        while len(current) < len(prev) + x:
-          current.append(0)
+        pad(current, len(prev) + x, 0)
 
       for i in range(len(prev)):
         if isinstance(bInv, int):
@@ -116,8 +123,7 @@ def square(
     return
 
   target: int = (len(poly) * 2) - 1
-  while len(poly) < target:
-    poly.append(0)
+  pad(poly, target, 0)
 
   target -= 1
   while target >= 0:
@@ -134,22 +140,22 @@ def inv(
     return 0
 
   t: int = 0
-  newt: int = 1
+  newT: int = 1
   r: int = 27
-  newr: int = val
-  rlen: int = 65
-  newrlen: int = newr.bit_length()
+  newR: int = val
+  rLen: int = 65
+  newRLen: int = newR.bit_length()
 
-  while newr != 0:
-    q: int = rlen - newrlen
-    r = r ^ ((newr << q) & MASK64)
-    t = t ^ (newt << q)
+  while newR != 0:
+    q: int = rLen - newRLen
+    r = r ^ ((newR << q) & MASK64)
+    t = t ^ (newT << q)
 
-    rlen = min(r.bit_length(), rlen - 1)
-    if r < newr:
-      (t, newt) = (newt, t)
-      (r, newr) = (newr, r)
-      (rlen, newrlen) = (newrlen, rlen)
+    rLen = min(r.bit_length(), rLen - 1)
+    if r < newR:
+      (t, newT) = (newT, t)
+      (r, newR) = (newR, r)
+      (rLen, newRLen) = (newRLen, rLen)
   return t
 
 def polyMod(
@@ -195,8 +201,7 @@ def gcd(
 
   del a[0:]
   del b[0:]
-  for x in larger:
-    a.append(x)
+  a.extend(larger)
 
 def traceMod(
   mod: List[int],
@@ -205,8 +210,7 @@ def traceMod(
   result: List[int] = [0, param]
   for _ in range(FIELD_BITS - 1):
     square(result)
-    while len(result) < 2:
-      result.append(0)
+    pad(result, 2, 0)
     result[1] = param
     polyMod(mod, result)
   return result
@@ -221,8 +225,7 @@ def divMod(
       del div[0]
     return
 
-  while len(div) < (len(val) - len(mod) + 1):
-    div.append(0)
+  pad(div, len(val) - len(mod) + 1, 0)
   while len(val) >= len(mod):
     term: int = val[-1]
     div[len(val) - len(mod)] = term
@@ -250,8 +253,7 @@ def findRootsInternal(
     return True
 
   if pos + 3 > len(stack):
-    while len(stack) < ((pos + 3) * 2):
-      stack.append([])
+    pad(stack, (pos + 3) * 2, [])
 
   stack[pos + 1] = []
   stack[pos + 2] = []
@@ -264,7 +266,7 @@ def findRootsInternal(
       stack[pos + 1] = list(stack[pos + 2])
       square(stack[pos + 1])
       for i in range(len(stack[pos + 2])):
-        stack[pos + 1][i] = stack[pos + 1][i] ^ stack[pos + 2][i]
+        stack[pos + 1][i] ^= stack[pos + 2][i]
       normalize(stack[pos + 1])
       polyMod(stack[pos], stack[pos + 1])
       if stack[pos + 1]:
@@ -299,11 +301,11 @@ def findRoots(
 def decodeSketch(
   sketch: bytes
 ) -> List[int]:
-  if sketch == bytes(len(sketch)):
+  if not any(sketch):
     return []
 
   elements: List[int] = []
   for e in range(0, len(sketch), FIELD_BYTES):
     elements.append(int.from_bytes(sketch[e : e + FIELD_BYTES], "little"))
-    elements.append(mul(elements[e // FIELD_BYTES], elements[e // FIELD_BYTES]))
+    elements.append(sqr(elements[e // FIELD_BYTES]))
   return sorted(findRoots(berlekampMassey(elements)[::-1]))

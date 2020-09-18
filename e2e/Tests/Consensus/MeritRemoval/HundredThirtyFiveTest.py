@@ -1,6 +1,6 @@
 #https://github.com/MerosCrypto/Meros/issues/135.
 
-from typing import Dict, List, IO, Any
+from typing import Dict, List, Any
 import json
 
 from e2e.Classes.Transactions.Data import Data
@@ -17,9 +17,9 @@ from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 def HundredThirtyFiveTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredThirtyFive.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/MeritRemoval/HundredThirtyFive.json", "r") as file:
+    vectors = json.loads(file.read())
 
   #Datas.
   datas: List[Data] = [

@@ -1,7 +1,7 @@
 #https://github.com/MerosCrypto/Meros/issues/142.
 #Tests proper handling of Verifications with never actually get archived.
 
-from typing import Dict, IO, Any
+from typing import Dict, Any
 import json
 
 from e2e.Classes.Consensus.Verification import SignedVerification
@@ -16,9 +16,9 @@ from e2e.Tests.Errors import TestError
 def HundredFortyTwoTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/Verification/HundredFortyTwo.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: Dict[str, Any]
+  with open("e2e/Vectors/Consensus/Verification/HundredFortyTwo.json", "r") as file:
+    vectors = json.loads(file.read())
 
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 

@@ -1,4 +1,3 @@
-from typing import Dict, List, IO, Any
 import json
 
 from e2e.Libs.BLS import PrivateKey, PublicKey
@@ -29,7 +28,5 @@ proto.add(elements=[mr])
 #Generate another Block containing the MeritRemoval.
 proto.add(elements=[mr])
 
-result: List[Dict[str, Any]] = proto.toJSON()
-vectors: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/Repeat.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+with open("e2e/Vectors/Consensus/MeritRemoval/Repeat.json", "w") as vectors:
+  vectors.write(json.dumps(proto.toJSON()))

@@ -1,7 +1,7 @@
 #https://github.com/MerosCrypto/Meros/issues/123.
 #Tests that a MeritRemoval which has its Elements swapped and is sent again is rejected.
 
-from typing import Dict, IO, Any
+from typing import Dict, List, Any
 from time import sleep
 import json
 
@@ -18,13 +18,13 @@ from e2e.Tests.Errors import TestError, SuccessError
 def HTTSwapTest(
   rpc: RPC
 ) -> None:
-  file: IO[Any] = open("e2e/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Swap.json", "r")
-  vectors: Dict[str, Any] = json.loads(file.read())
-  file.close()
+  vectors: List[Dict[str, Any]]
+  with open("e2e/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Swap.json", "r") as file:
+    vectors = json.loads(file.read())
 
   def sendRepeatMeritRemoval() -> None:
     #Send the Block containing the modified Merit Removal.
-    block: Block = Block.fromJSON(vectors["blockchain"][-1])
+    block: Block = Block.fromJSON(vectors[-1])
     rpc.meros.liveBlockHeader(block.header)
 
     #Flag of if the Block's Body synced.
@@ -71,7 +71,7 @@ def HTTSwapTest(
   with raises(SuccessError):
     Liver(
       rpc,
-      vectors["blockchain"],
+      vectors,
       callbacks={
         2: sendRepeatMeritRemoval
       }
