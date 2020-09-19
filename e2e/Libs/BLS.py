@@ -1,29 +1,45 @@
 from typing import List, Tuple, Union, Any
 from ctypes import Array, c_char_p, c_char, create_string_buffer, byref
-from hashlib import blake2b, shake_256
+from hashlib import blake2b, sha256
 
 from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, OctetObj, r
 from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
+
+from e2e.Libs.HashToCurve.BLSCurve import BLS12_381_G1_CURVE
+from e2e.Libs.HashToCurve.HashToCurve import expandMessageXMD, hashToCurve
+from e2e.Libs.HashToCurve.Weierstrass import WeierstrassSuiteParameters
 
 A_FLAG: int = 1 << 5
 B_FLAG: int = 1 << 6
 C_FLAG: int = 1 << 7
 CLEAR_FLAGS: int = ~(A_FLAG + B_FLAG + C_FLAG)
 
+class MerosParameters(WeierstrassSuiteParameters):
+  def __init__(
+    self
+  ) -> None:
+    WeierstrassSuiteParameters.__init__(
+      self,
+      BLS12_381_G1_CURVE,
+      "MEROS-V00-CS01-with-BLS12381G1_XMD:SHA-256_SSWU_RO_",
+      128,
+      64,
+      lambda msg, outLen: expandMessageXMD(sha256, self.dst, msg, outLen)
+    )
+
+  def mapToCurve(
+    self,
+    u: BLS12_381_G1_CURVE.FieldType
+  ) -> BLS12_381_G1_CURVE.GroupType:
+    raise Exception("TODO")
+
+PARAMETERS = MerosParameters()
+
 def msgToG(
   msg: bytes
 ) -> G1Obj:
-  result: G1Obj = G1Obj()
-  hashed: OctetObj = OctetObj()
-
-  shake: Any = shake_256()
-  shake.update(msg)
-  hashed.val = c_char_p(shake.digest(48))
-  hashed.len = 48
-  hashed.max = 48
-
-  MilagroCurve.ECP_BLS381_mapit(byref(result), hashed)
-  return result
+  hashToCurve(PARAMETERS, msg)
+  return G1Obj()
 
 def serialize(
   g: Big384,
