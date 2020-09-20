@@ -6,7 +6,8 @@ from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1O
 from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
 
 from e2e.Libs.HashToCurve.BLSCurve import BLS12_381_G1_CURVE
-from e2e.Libs.HashToCurve.HashToCurve import expandMessageXMD, hashToCurve
+from e2e.Libs.HashToCurve.ExpandMessage import expandMessageXMD
+from e2e.Libs.HashToCurve.HashToCurve import hashToCurve
 from e2e.Libs.HashToCurve.Weierstrass import WeierstrassSuiteParameters
 
 A_FLAG: int = 1 << 5
