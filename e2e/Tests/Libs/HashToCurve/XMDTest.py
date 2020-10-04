@@ -16,6 +16,7 @@ def XMDTest() -> None:
     for v in range(len(hashVectors["vectors"])):
       vector: Dict[str, Any] = hashVectors["vectors"][v]
       if expandMessageXMD(
+        #pylint: disable=cell-var-from-loop
         lambda data: hashlib.new(hashVectors["H"], data),
         hashVectors["dst"],
         vector["msg"].encode("utf-8"),

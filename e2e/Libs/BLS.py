@@ -2,7 +2,7 @@ from typing import List, Tuple, Union, Any
 from ctypes import Array, c_char_p, c_char, create_string_buffer, byref
 from hashlib import blake2b, sha256
 
-from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, OctetObj, r
+from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, r
 from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
 
 from e2e.Libs.HashToCurve.BLSCurve import BLS12_381_G1_CURVE
@@ -15,17 +15,27 @@ B_FLAG: int = 1 << 6
 C_FLAG: int = 1 << 7
 CLEAR_FLAGS: int = ~(A_FLAG + B_FLAG + C_FLAG)
 
-class MerosParameters(WeierstrassSuiteParameters):
+#pylint: disable=too-few-public-methods
+class MerosParameters(
+  WeierstrassSuiteParameters
+):
   def __init__(
     self
   ) -> None:
+    #Not a lambda to solve a faulty complaint from the multiline expansion checker.
+    def expandMsg(
+      msg: bytes,
+      outLen: int
+    ) -> List[bytes]:
+      return expandMessageXMD(sha256, self.dst, msg, outLen)
+
     WeierstrassSuiteParameters.__init__(
       self,
       BLS12_381_G1_CURVE,
       "MEROS-V00-CS01-with-BLS12381G1_XMD:SHA-256_SSWU_RO_",
       128,
       64,
-      lambda msg, outLen: expandMessageXMD(sha256, self.dst, msg, outLen)
+      expandMsg
     )
 
   def mapToCurve(
@@ -34,6 +44,7 @@ class MerosParameters(WeierstrassSuiteParameters):
   ) -> BLS12_381_G1_CURVE.GroupType:
     raise Exception("TODO")
 
+#pylint: disable=invalid-name
 PARAMETERS = MerosParameters()
 
 def msgToG(

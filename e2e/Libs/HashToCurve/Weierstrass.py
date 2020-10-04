@@ -1,10 +1,11 @@
 from typing import Type, Callable, Tuple
+from abc import abstractmethod
 import math
 
 from e2e.Libs.HashToCurve.Elements import FieldElement, GroupElement
 from e2e.Libs.HashToCurve.HashToCurve import Curve, SuiteParameters
-from e2e.Libs.HashToCurve.Weierstrass import WeierstrassCurve
 
+#pylint: disable=too-few-public-methods
 class WeierstrassCurve(
   Curve
 ):
@@ -15,15 +16,22 @@ class WeierstrassCurve(
     primeField: bool,
     p: int,
     m: int,
+    #pylint: disable=invalid-name
     A: int,
+    #pylint: disable=invalid-name
     B: int,
+    #pylint: disable=invalid-name
     Z: int
   ) -> None:
     Curve.__init__(self, fieldType, groupType, primeField, p, m)
+    #pylint: disable=invalid-name
     self.A: fieldType = fieldType(A)
+    #pylint: disable=invalid-name
     self.B: fieldType = fieldType(B)
+    #pylint: disable=invalid-name
     self.Z: fieldType = fieldType(Z)
 
+#pylint: disable=too-few-public-methods
 class WeierstrassSuiteParameters(
   SuiteParameters
 ):
@@ -34,18 +42,29 @@ class WeierstrassSuiteParameters(
     curve: WeierstrassCurve,
     dst: str,
     k: int,
+    #pylint: disable=invalid-name
     L: int,
     expandMessage: Callable[[bytes, int], bytes]
   ) -> None:
     SuiteParameters.__init__(self, curve, dst, k, L, expandMessage)
 
+  @abstractmethod
+  def mapToCurve(
+    self,
+    u: FieldElement
+  ) -> GroupElement:
+    ...
+
+#pylint: disable=too-many-locals
 def mapToCurveSSWUAB0(
   params: WeierstrassSuiteParameters,
   u: FieldElement
 ) -> Tuple[FieldElement, FieldElement, FieldElement, FieldElement]:
   #Constants.
+  #pylint: disable=invalid-name
   C1 = (params.curve.q - 3) // 4
-  C2 = math.sqrt(-(params.curve.Z ** 3))
+  #pylint: disable=invalid-name
+  C2 = math.floor(math.sqrt(-(params.curve.Z ** 3)))
 
   #Steps 1-3.
   tv1: FieldElement = u ** 2

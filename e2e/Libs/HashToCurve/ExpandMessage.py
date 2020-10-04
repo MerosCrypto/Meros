@@ -2,6 +2,7 @@ from typing import Callable, List, Any
 
 #https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-5.4.1
 def expandMessageXMD(
+  #pylint: disable=invalid-name
   H: Callable[[bytes], Any],
   dst: str,
   msg: bytes,

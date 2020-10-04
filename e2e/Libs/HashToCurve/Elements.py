@@ -1,27 +1,15 @@
-from typing import Optional, List, Any
+from typing import Any
 from abc import ABC, abstractmethod
 
 class FieldElement(
   ABC
 ):
-  @property
-  def value(
-    self
-  ) -> List[int]:
-    ...
-
-  @value.setter
-  @abstractmethod
-  def value(
-    self,
-    value: List[int]
-  ):
-    ...
-
   @abstractmethod
   def __init__(
     self,
-    value: Optional[Any] = None
+    #List[int] or int. The BLS impl shipped in this codebase also accepts itself.
+    #Just a nice convenience function to cleanly make sure args are viable.
+    value: Any
   ) -> None:
     ...
 
@@ -43,7 +31,7 @@ class FieldElement(
   @abstractmethod
   def __div__(
     self,
-    other: Any
+    other: int
   ) -> Any:
     ...
 
@@ -58,7 +46,7 @@ class FieldElement(
   def __eq__(
     self,
     other: Any
-  ) -> Any:
+  ) -> bool:
     ...
 
   #Positive/negative (0/1); not the signature scheme operation.
@@ -79,13 +67,6 @@ class GroupElement(
 ):
   @abstractmethod
   def __add__(
-    self,
-    other: Any
-  ) -> Any:
-    ...
-
-  @abstractmethod
-  def __mul__(
     self,
     other: Any
   ) -> Any:

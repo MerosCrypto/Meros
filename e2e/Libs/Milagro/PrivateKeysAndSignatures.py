@@ -43,8 +43,14 @@ class G1Obj(
   ]
 G1: Any = POINTER(G1Obj)
 
+MilagroCurve.BIG_384_58_one.argtypes = [Big384]
+MilagroCurve.BIG_384_58_one.restype = None
+
 MilagroCurve.BIG_384_58_copy.argtypes = [Big384, Big384]
 MilagroCurve.BIG_384_58_copy.restype = None
+
+MilagroCurve.BIG_384_58_imul.argtypes = [Big384, c_int]
+MilagroCurve.BIG_384_58_imul.restype = None
 
 MilagroCurve.BIG_384_58_mod.argtypes = [Big384, Big384]
 MilagroCurve.BIG_384_58_mod.restype = None
@@ -58,11 +64,20 @@ MilagroCurve.BIG_384_58_toBytes.restype = None
 MilagroCurve.BIG_384_58_fromBytesLen.argtypes = [Big384, c_char_p, c_int]
 MilagroCurve.BIG_384_58_fromBytesLen.restype = None
 
+MilagroCurve.FP_BLS381_equals.argtypes = [FP1, FP1]
+MilagroCurve.FP_BLS381_equals.restype = c_int
+
 MilagroCurve.FP_BLS381_neg.argtypes = [FP1, FP1]
 MilagroCurve.FP_BLS381_neg.restype = None
 
+MilagroCurve.FP_BLS381_div2.argtypes = [FP1, FP1]
+MilagroCurve.FP_BLS381_div2.restype = None
+
 MilagroCurve.FP_BLS381_redc.argtypes = [Big384, FP1]
 MilagroCurve.FP_BLS381_redc.restype = None
+
+MilagroCurve.FP_BLS381_rcopy.argtypes = [FP1, Big384]
+MilagroCurve.FP_BLS381_rcopy.restype = None
 
 MilagroCurve.ECP_BLS381_inf.argtypes = [G1]
 MilagroCurve.ECP_BLS381_inf.restype = None
@@ -88,7 +103,6 @@ MilagroCurve.ECP_BLS381_neg.restype = None
 MilagroCurve.ECP_BLS381_get.argtypes = [Big384, Big384, G1]
 MilagroCurve.ECP_BLS381_get.restype = c_int
 
-MilagroCurve.ECP_BLS381_mapit.argtypes = [G1, Octet]
-MilagroCurve.ECP_BLS381_mapit.restype = None
-
 r: Big384 = Big384.in_dll(MilagroCurve, "CURVE_Order_BLS381")
+#pylint: disable=invalid-name
+G1_COFACTOR: Big384 = Big384.in_dll(MilagroCurve, "CURVE_Cof_BLS381")
