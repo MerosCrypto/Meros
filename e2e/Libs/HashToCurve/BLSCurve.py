@@ -31,8 +31,8 @@ class BLS12_381_F1(
         raise Exception("Incompatible field element integer list passed to BLS12_381_F1.")
       value = value[0]
 
+    self.value = FP1Obj()
     if value is None:
-      self.value = FP1Obj()
       MilagroCurve.FP_BLS381_zero(byref(self.value))
     elif isinstance(value, int):
       if value >= ((2 ** 31) - 1):
@@ -40,7 +40,7 @@ class BLS12_381_F1(
 
       temp: Big384 = Big384()
       MilagroCurve.BIG_384_58_one(temp)
-      MilagroCurve.BIG_384_58_imul(temp, value)
+      MilagroCurve.BIG_384_58_imul(temp, temp, value)
 
       MilagroCurve.FP_BLS381_rcopy(byref(self.value), temp)
 
@@ -146,7 +146,7 @@ class BLS12_381_G1(
     return result
 
 #pylint: disable=invalid-name
-BLS12_381_G1_CURVE = WeierstrassCurve(
+BLS12_381_G1_CURVE: WeierstrassCurve = WeierstrassCurve(
   BLS12_381_F1,
   BLS12_381_G1,
   False,
