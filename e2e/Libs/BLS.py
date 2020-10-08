@@ -7,7 +7,6 @@ from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj
 
 from e2e.Libs.HashToCurve.BLSCurve import BLS12_381_G1_CURVE
 from e2e.Libs.HashToCurve.ExpandMessage import expandMessageXMD
-from e2e.Libs.HashToCurve.HashToCurve import hashToCurve
 from e2e.Libs.HashToCurve.Weierstrass import WeierstrassSuiteParameters
 
 A_FLAG: int = 1 << 5
@@ -50,7 +49,7 @@ PARAMETERS = MerosParameters()
 def newMsgToG(
   msg: bytes
 ) -> G1Obj:
-  hashToCurve(PARAMETERS, msg)
+  PARAMETERS.hashToCurve(msg)
   return G1Obj()
 
 def msgToG(

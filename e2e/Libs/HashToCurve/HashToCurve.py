@@ -53,34 +53,32 @@ class SuiteParameters(
   ) -> GroupElement:
     ...
 
-#https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-5.3
-def hashToField(
-  params: SuiteParameters,
-  msg: bytes,
-  count: int,
-) -> List[List[int]]:
-  #Steps 1-2
-  uniform: bytes = params.expandMessage(msg, count * params.curve.m * params.L)
+  #https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-5.3
+  def hashToField(
+    self,
+    msg: bytes,
+    count: int
+  ) -> List[List[int]]:
+    #Steps 1-2
+    uniform: bytes = self.expandMessage(msg, count * self.curve.m * self.L)
 
-  #Steps 3-9.
-  u: List[List[int]] = []
-  for i in range(count):
-    u.append([])
-    for j in range(params.curve.m):
-      elmOffset = params.L * (j + (i * params.curve.m))
-      tv = uniform[elmOffset : elmOffset + params.L]
-      u[-1].append(int.from_bytes(tv, "big") % params.curve.p)
-  return u
+    #Steps 3-9.
+    u: List[List[int]] = []
+    for i in range(count):
+      u.append([])
+      for j in range(self.curve.m):
+        elmOffset = self.L * (j + (i * self.curve.m))
+        tv = uniform[elmOffset : elmOffset + self.L]
+        u[-1].append(int.from_bytes(tv, "big") % self.curve.p)
+    return u
 
-#https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-3
-def hashToCurve(
-  suite: SuiteParameters,
-  msg: bytes
-) -> Any:
-  #Steps 1-3.
-  #pylint: disable=invalid-name
-  Qs: List[GroupElement] = [suite.mapToCurve(suite.curve.FieldType(u)) for u in hashToField(suite, msg, 2)]
-  #Steps 4-6.
-  return (Qs[0] + Qs[1]).clearCofactor()
-
-#raise Exception("This file isn't tested.")
+  #https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-3
+  def hashToCurve(
+    self,
+    msg: bytes
+  ) -> Any:
+    #Steps 1-3.
+    #pylint: disable=invalid-name
+    Qs: List[GroupElement] = [self.mapToCurve(self.curve.FieldType(u)) for u in self.hashToField(msg, 2)]
+    #Steps 4-6.
+    return (Qs[0] + Qs[1]).clearCofactor()
