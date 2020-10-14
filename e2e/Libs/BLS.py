@@ -5,7 +5,7 @@ from hashlib import blake2b, shake_256, sha256
 from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, OctetObj, Big384, FP1Obj, G1Obj, r
 from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
 
-from e2e.Libs.HashToCurve.BLSCurve import BLS12_381_G1_CURVE
+from e2e.Libs.HashToCurve.BLSCurve import BLS12381G1Curve
 from e2e.Libs.HashToCurve.ExpandMessage import expandMessageXMD
 from e2e.Libs.HashToCurve.Weierstrass import WeierstrassSuiteParameters
 
@@ -30,18 +30,12 @@ class MerosParameters(
 
     WeierstrassSuiteParameters.__init__(
       self,
-      BLS12_381_G1_CURVE,
+      BLS12381G1Curve(),
       "MEROS-V00-CS01-with-BLS12381G1_XMD:SHA-256_SSWU_RO_",
       128,
       64,
       expandMsg
     )
-
-  def mapToCurve(
-    self,
-    u: BLS12_381_G1_CURVE.FieldType
-  ) -> BLS12_381_G1_CURVE.GroupType:
-    raise Exception("TODO")
 
 #pylint: disable=invalid-name
 PARAMETERS = MerosParameters()

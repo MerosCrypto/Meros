@@ -27,6 +27,13 @@ class Curve:
     self.m: int = m
     self.q: int = p if primeField else (p ** m)
 
+  @abstractmethod
+  def mapToCurve(
+    self,
+    u: FieldElement
+  ) -> GroupElement:
+    ...
+
 #pylint: disable=too-few-public-methods
 class SuiteParameters(
   ABC
@@ -45,13 +52,6 @@ class SuiteParameters(
     #pylint: disable=invalid-name
     self.L: int = L
     self.expandMessage: Callable[[bytes, int], bytes] = expandMessage
-
-  @abstractmethod
-  def mapToCurve(
-    self,
-    u: FieldElement
-  ) -> GroupElement:
-    ...
 
   #https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-5.3
   def hashToField(
@@ -79,6 +79,6 @@ class SuiteParameters(
   ) -> Any:
     #Steps 1-3.
     #pylint: disable=invalid-name
-    Qs: List[GroupElement] = [self.mapToCurve(self.curve.FieldType(u)) for u in self.hashToField(msg, 2)]
+    Qs: List[GroupElement] = [self.curve.mapToCurve(self.curve.FieldType(u)) for u in self.hashToField(msg, 2)]
     #Steps 4-6.
     return (Qs[0] + Qs[1]).clearCofactor()

@@ -22,6 +22,13 @@ class FieldElement(
     ...
 
   @abstractmethod
+  def __sub__(
+    self,
+    other: Any
+  ) -> Any:
+    ...
+
+  @abstractmethod
   def __mul__(
     self,
     other: Any
@@ -29,9 +36,10 @@ class FieldElement(
     ...
 
   @abstractmethod
-  def __div__(
+  def div(
     self,
-    other: int
+    other: Any,
+    q: Any
   ) -> Any:
     ...
 
@@ -62,9 +70,23 @@ class FieldElement(
   ) -> Any:
     ...
 
+  @abstractmethod
+  def sqrt(
+    self
+  ) -> Any:
+    ...
+
 class GroupElement(
   ABC
 ):
+  @abstractmethod
+  def __init__(
+    self,
+    x: FieldElement,
+    y: FieldElement
+  ) -> Any:
+    ...
+
   @abstractmethod
   def __add__(
     self,

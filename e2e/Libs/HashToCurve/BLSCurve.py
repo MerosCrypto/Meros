@@ -1,7 +1,6 @@
 from typing import List, Any
 
 from ctypes import byref
-import math
 
 from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, G1_COFACTOR
 
@@ -58,6 +57,14 @@ class BLS12_381_F1(
     MilagroCurve.FP_BLS381_add(byref(result), byref(self.value), byref(BLS12_381_F1(other).value))
     return result
 
+  def __sub__(
+    self,
+    other: Any
+  ) -> Any:
+    result: FP1Obj = FP1Obj()
+    MilagroCurve.FP_BLS381_sub(byref(result), byref(self.value), byref(BLS12_381_F1(other).value))
+    return result
+
   def __mul__(
     self,
     other: Any
@@ -66,19 +73,12 @@ class BLS12_381_F1(
     MilagroCurve.FP_BLS381_mul(byref(result), byref(self.value), byref(BLS12_381_F1(other).value))
     return result
 
-  def __div__(
+  def div(
     self,
-    other: int
+    other: FieldElement,
+    q: FieldElement
   ) -> Any:
-    if other == 1:
-      return BLS12_381_F1(self)
-    if (other < 1) or (not math.log2(other).is_integer()):
-      raise Exception("Only power of two divisors are valid.")
-
-    result = BLS12_381_F1(self)
-    while other != 1:
-      MilagroCurve.FP_BLS381_div2(byref(result.value), byref(result.value))
-      other = other // 2
+    return self * (other ** (q - 2))
 
   def __pow__(
     self,
@@ -117,11 +117,19 @@ class BLS12_381_F1(
     MilagroCurve.FP_BLS381_neg(byref(result), byref(self.value))
     return result
 
+  def sqrt(
+    self
+  ) -> Any:
+    result: FP1Obj = FP1Obj()
+    MilagroCurve.FP_BLS381_sqrt(byref(result), byref(self.value))
+    return result
+
 class BLS12_381_G1(
   GroupElement
 ):
   value: G1Obj
 
+  #pylint: disable=super-init-not-called
   def __init__(
     self,
     x: G1Obj
@@ -145,14 +153,28 @@ class BLS12_381_G1(
     MilagroCurve.ECP_BLS381_mul(byref(result.value), G1_COFACTOR)
     return result
 
-#pylint: disable=invalid-name
-BLS12_381_G1_CURVE: WeierstrassCurve = WeierstrassCurve(
-  BLS12_381_F1,
-  BLS12_381_G1,
-  False,
-  0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab,
-  1,
-  0,
-  4,
-  11
-)
+#pylint: disable=too-few-public-methods
+class BLS12381G1Curve(
+  WeierstrassCurve
+):
+  def __init__(
+    self
+  ) -> None:
+    WeierstrassCurve.__init__(
+      self,
+      BLS12_381_F1,
+      BLS12_381_G1,
+      False,
+      0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab,
+      1,
+      #Isogenous A/B.
+      0x144698a3b8e9433d693a02c96d4982b0ea985383ee66a8d8e8981aefd881ac98936f8da0e0f97f5cf428082d584c1d,
+      0x12e2908d11688030018b12e8753eee3b2016c1f0f24f4070a0b9c14fcef35ef55a23215a316ceaa5d1cc48e98e172be0,
+      11
+    )
+
+  def mapToCurve(
+    self,
+    u: BLS12_381_F1
+  ) -> BLS12_381_G1:
+    raise Exception("TODO")

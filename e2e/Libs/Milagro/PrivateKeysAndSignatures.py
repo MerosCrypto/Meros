@@ -78,8 +78,17 @@ MilagroCurve.FP_BLS381_equals.restype = c_int
 MilagroCurve.FP_BLS381_neg.argtypes = [FP1, FP1]
 MilagroCurve.FP_BLS381_neg.restype = None
 
-MilagroCurve.FP_BLS381_div2.argtypes = [FP1, FP1]
-MilagroCurve.FP_BLS381_div2.restype = None
+MilagroCurve.FP_BLS381_add.argtypes = [FP1, FP1, FP1]
+MilagroCurve.FP_BLS381_add.restype = None
+
+MilagroCurve.FP_BLS381_sub.argtypes = [FP1, FP1, FP1]
+MilagroCurve.FP_BLS381_sub.restype = None
+
+MilagroCurve.FP_BLS381_mul.argtypes = [FP1, FP1, FP1]
+MilagroCurve.FP_BLS381_mul.restype = None
+
+MilagroCurve.FP_BLS381_sqrt.argtypes = [FP1, FP1]
+MilagroCurve.FP_BLS381_sqrt.restype = None
 
 MilagroCurve.FP_BLS381_redc.argtypes = [Big384, FP1]
 MilagroCurve.FP_BLS381_redc.restype = None
