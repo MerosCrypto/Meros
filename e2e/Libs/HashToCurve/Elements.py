@@ -1,5 +1,5 @@
 from typing import Any
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 
 class FieldElement(
   ABC
@@ -105,4 +105,16 @@ class GroupElement(
   def clearCofactor(
     self
   ) -> Any:
+    ...
+
+  @abstractproperty
+  def x(
+    self
+  ) -> str:
+    ...
+
+  @abstractproperty
+  def y(
+    self
+  ) -> str:
     ...

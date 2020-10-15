@@ -12,9 +12,9 @@ def SSWUTest() -> None:
   #Generate some random field elements to map.
   for uListInt in params.hashToField(("").encode("utf-8"), 16):
     u: FieldElement = params.curve.FieldType(uListInt)
-    generic: Tuple[FieldElement, FieldElement] = mapToCurveSSWU(params, u)
-    straightLine: Tuple[FieldElement, FieldElement] = mapToCurveSSWUStraightLine(params, u)
-    threeMod4: Tuple[FieldElement, FieldElement] = mapToCurveSSWU3Mod4(params, u)
+    generic: Tuple[FieldElement, FieldElement] = mapToCurveSSWU(params.curve, u)
+    straightLine: Tuple[FieldElement, FieldElement] = mapToCurveSSWUStraightLine(params.curve, u)
+    threeMod4: Tuple[FieldElement, FieldElement] = mapToCurveSSWU3Mod4(params.curve, u)
     if (generic[0] != straightLine[0]) or (generic[1] != straightLine[1]):
       raise TestError("Generic SSWU differs from Straight Line.")
     if (generic[0] != threeMod4[0]) or (generic[1] != threeMod4[1]):

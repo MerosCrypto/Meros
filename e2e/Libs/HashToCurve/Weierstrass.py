@@ -20,6 +20,10 @@ class WeierstrassCurve(
     #pylint: disable=invalid-name
     B: int,
     #pylint: disable=invalid-name
+    isogenousA: int,
+    #pylint: disable=invalid-name
+    isogenousB: int,
+    #pylint: disable=invalid-name
     Z: int
   ) -> None:
     Curve.__init__(self, fieldType, groupType, primeField, p, m)
@@ -27,6 +31,14 @@ class WeierstrassCurve(
     self.A: int = A
     #pylint: disable=invalid-name
     self.B: int = B
+
+    #This my be a misuse of isogeny, where we may want the underlying Curve to have these values.
+    #The following SSWU algorithms also always use the isogenous points which isn't correct.
+    #That said, this code can be used with a curve which isn't complimented by mirroring the A/B values.
+    #So theoretically incorrect, yet the code works, especially since we only need this for BLS12-381 G1 which has an isogenous compliment.
+    self.isogenousA: int = isogenousA
+    self.isogenousB: int = isogenousB
+
     #pylint: disable=invalid-name
     self.Z: int = Z
 
@@ -59,21 +71,21 @@ class WeierstrassSuiteParameters(
 
 #pylint: disable=too-many-locals
 def mapToCurveSSWU(
-  params: WeierstrassSuiteParameters,
+  curve: WeierstrassCurve,
   u: FieldElement
 ) -> Tuple[FieldElement, FieldElement]:
   #pylint: disable=invalid-name
-  A: int = params.curve.A
+  A: int = curve.isogenousA
   #pylint: disable=invalid-name
-  B: int = params.curve.B
+  B: int = curve.isogenousB
   #pylint: disable=invalid-name
-  Z: FieldElement = params.curve.FieldType(params.curve.Z)
+  Z: FieldElement = curve.FieldType(curve.Z)
 
   #Steps 1-3.
-  tv1: FieldElement = (((Z ** 2) * (u ** 4)) + (Z * (u ** 2))) ** (params.curve.q - 2)
-  x1: FieldElement = (params.curve.FieldType(B).negative().div(params.curve.FieldType(A), params.curve.q)) * (tv1 + 1)
-  if tv1 == params.curve.FieldType(0):
-    x1 = params.curve.FieldType(B).div(Z * A, params.curve.q)
+  tv1: FieldElement = (((Z ** 2) * (u ** 4)) + (Z * (u ** 2))) ** (curve.q - 2)
+  x1: FieldElement = (curve.FieldType(B).negative().div(curve.FieldType(A), curve.q)) * (tv1 + 1)
+  if tv1 == curve.FieldType(0):
+    x1 = curve.FieldType(B).div(Z * A, curve.q)
 
   #Steps 4-6.
   gx1: FieldElement = (x1 ** 3) + (x1 * A) + B
@@ -83,8 +95,8 @@ def mapToCurveSSWU(
   #Steps 7-8.
   x: FieldElement
   y: FieldElement
-  sqrCheck: FieldElement = gx1 ** ((params.curve.q - 1) // 2)
-  if (sqrCheck == params.curve.FieldType(0)) or (sqrCheck == params.curve.FieldType(1)):
+  sqrCheck: FieldElement = gx1 ** ((curve.q - 1) // 2)
+  if (sqrCheck == curve.FieldType(0)) or (sqrCheck == curve.FieldType(1)):
     x = x1
     y = gx1.sqrt()
   else:
@@ -100,26 +112,26 @@ def mapToCurveSSWU(
 
 #pylint: disable=too-many-locals
 def mapToCurveSSWUStraightLine(
-  params: WeierstrassSuiteParameters,
+  curve: WeierstrassCurve,
   u: FieldElement
 ) -> Tuple[FieldElement, FieldElement]:
   #pylint: disable=invalid-name
-  A: FieldElement = params.curve.FieldType(params.curve.A)
+  A: FieldElement = curve.FieldType(curve.isogenousA)
   #pylint: disable=invalid-name
-  B: FieldElement = params.curve.FieldType(params.curve.B)
+  B: FieldElement = curve.FieldType(curve.isogenousB)
   #pylint: disable=invalid-name
-  Z: FieldElement = params.curve.FieldType(params.curve.Z)
+  Z: FieldElement = curve.FieldType(curve.Z)
 
-  C1: FieldElement = B.negative().div(A, params.curve.q)
-  C2: FieldElement = params.curve.FieldType(1).negative().div(Z, params.curve.q)
+  C1: FieldElement = B.negative().div(A, curve.q)
+  C2: FieldElement = curve.FieldType(1).negative().div(Z, curve.q)
 
   #Steps 1-2.
   tv1: FieldElement = Z * (u ** 2)
   tv2: FieldElement = tv1 ** 2
 
   #Steps 3-8.
-  x1: FieldElement = ((tv1 + tv2) ** (params.curve.q - 2)) + 1
-  if x1 == params.curve.FieldType(1):
+  x1: FieldElement = ((tv1 + tv2) ** (curve.q - 2)) + 1
+  if x1 == curve.FieldType(1):
     x1 = C2
   x1 = x1 * C1
 
@@ -134,8 +146,8 @@ def mapToCurveSSWUStraightLine(
   #Steps 16-19.
   x: FieldElement
   y: FieldElement
-  sqrCheck: FieldElement = gx1 ** ((params.curve.q - 1) // 2)
-  if (sqrCheck == params.curve.FieldType(0)) or (sqrCheck == params.curve.FieldType(1)):
+  sqrCheck: FieldElement = gx1 ** ((curve.q - 1) // 2)
+  if (sqrCheck == curve.FieldType(0)) or (sqrCheck == curve.FieldType(1)):
     x = x1
     y = gx1
   else:
@@ -152,38 +164,38 @@ def mapToCurveSSWUStraightLine(
 
 #pylint: disable=too-many-locals
 def mapToCurveSSWU3Mod4(
-  params: WeierstrassSuiteParameters,
+  curve: WeierstrassCurve,
   u: FieldElement
 ) -> Tuple[FieldElement, FieldElement]:
   #Constants.
   #pylint: disable=invalid-name
-  C1: int = (params.curve.q - 3) // 4
+  C1: int = (curve.q - 3) // 4
   #pylint: disable=invalid-name
-  C2: FieldElement = (params.curve.FieldType(params.curve.Z) ** 3).negative().sqrt()
+  C2: FieldElement = (curve.FieldType(curve.Z) ** 3).negative().sqrt()
 
   #Steps 1-3.
   tv1: FieldElement = u ** 2
-  tv3: FieldElement = tv1 * params.curve.Z
+  tv3: FieldElement = tv1 * curve.Z
   tv2: FieldElement = tv3 ** 2
 
   #Steps 4-7.
   xd: FieldElement = tv2 + tv3
-  x1n: FieldElement = (xd + 1) * params.curve.B
-  xd = xd * params.curve.FieldType(params.curve.A).negative()
+  x1n: FieldElement = (xd + 1) * curve.isogenousB
+  xd = xd * curve.FieldType(curve.isogenousA).negative()
 
   #Steps 8-9.
-  if xd == params.curve.FieldType(0):
-    xd = params.curve.FieldType(params.curve.A) * params.curve.Z
+  if xd == curve.FieldType(0):
+    xd = curve.FieldType(curve.isogenousA) * curve.Z
 
   #Steps 10-12.
   gxd: FieldElement = xd ** 3
-  tv2 = (xd ** 2) * params.curve.A
+  tv2 = (xd ** 2) * curve.isogenousA
 
   #Steps 13-15.
   gx1: FieldElement = ((x1n ** 2) + tv2) * x1n
 
   #Steps 16-20.
-  tv2 = gxd * params.curve.B
+  tv2 = gxd * curve.isogenousB
   gx1 = gx1 + tv2
   tv4: FieldElement = gxd ** 2
   tv2 = gx1 * gxd
@@ -205,4 +217,4 @@ def mapToCurveSSWU3Mod4(
     y = y.negative()
 
   #Step 34.
-  return (xn.div(xd, params.curve.q), y)
+  return (xn.div(xd, curve.q), y)

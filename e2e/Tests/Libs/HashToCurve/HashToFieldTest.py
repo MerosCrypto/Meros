@@ -29,4 +29,4 @@ def HashToFieldTest() -> None:
         #Just noting that this isn't generic because of that.
         #-- Kayaba
         if hex(u[0])[2:].rjust(96, '0') != vector["u"][i]:
-          raise TestError("Incorrect field point.")
+          raise TestError("Incorrect field.")

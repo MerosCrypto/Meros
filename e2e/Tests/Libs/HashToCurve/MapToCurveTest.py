@@ -1,6 +1,7 @@
 from typing import Dict, List, Any
 import json
 
+from e2e.Libs.HashToCurve.Elements import GroupElement
 from e2e.Libs.HashToCurve.HashToCurve import SuiteParameters
 from e2e.Libs.BLS import MerosParameters
 
@@ -20,11 +21,6 @@ def MapToCurveTest() -> None:
       raise Exception("Testing an unknown curve.")
 
     for vector in curve["vectors"]:
-      for i, u in enumerate(params.hashToField(vector["msg"].encode("utf-8"), 2)):
-        #This utilization of 0 is only valid because Meros deals with FP1s.
-        #As I have no idea the encoding for FPXs, though I assume they're just concat'd.
-        #I'm not writing what I think would be the proper serialization format.
-        #Just noting that this isn't generic because of that.
-        #-- Kayaba
-        if hex(u[0])[2:].rjust(96, '0') != vector["u"][i]:
-          raise TestError("Incorrect field point.")
+      result: GroupElement = params.curve.mapToCurve(params.curve.FieldType(int(vector["u"], 16)))
+      if (result.x != vector["x"]) or (result.y != vector["y"]):
+        raise TestError("Incorrect map.")
