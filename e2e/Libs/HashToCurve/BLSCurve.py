@@ -1,6 +1,6 @@
-from typing import List, Any
+from typing import List, Optional, Any
 
-from ctypes import byref
+from ctypes import c_char_p, byref
 
 from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, G1_COFACTOR
 
@@ -11,7 +11,7 @@ def clone(
   value: FP1Obj
 ) -> FP1Obj:
   result: FP1Obj = FP1Obj()
-  MilagroCurve.BIG_384_58_copy(byref(result.g), byref(value.g))
+  MilagroCurve.BIG_384_58_copy(result.g, value.g)
   result.XES = value.XES
   return result
 
@@ -23,7 +23,7 @@ class BLS12_381_F1(
   #pylint: disable=super-init-not-called
   def __init__(
     self,
-    value: Any
+    value: Any = None
   ) -> None:
     if isinstance(value, List):
       if len(value) != 1:
@@ -31,23 +31,23 @@ class BLS12_381_F1(
       value = value[0]
 
     self.value = FP1Obj()
-    if value is None:
+    if (value is None) or (isinstance(value, int) and (value == 0)):
       MilagroCurve.FP_BLS381_zero(byref(self.value))
     elif isinstance(value, int):
-      if value >= ((2 ** 31) - 1):
-        raise Exception("Cannot create a FieldElement from an integer exceeding the signed 32-bit integer bound.")
-
-      temp: Big384 = Big384()
-      MilagroCurve.BIG_384_58_one(temp)
-      MilagroCurve.BIG_384_58_imul(temp, temp, value)
-
-      MilagroCurve.FP_BLS381_rcopy(byref(self.value), temp)
+      if value == 1:
+        MilagroCurve.FP_BLS381_one(byref(self.value))
+      else:
+        temp: Big384 = Big384()
+        MilagroCurve.BIG_384_58_fromBytes(temp, c_char_p(value.to_bytes(48, byteorder="big")))
+        MilagroCurve.FP_BLS381_rcopy(byref(self.value), temp)
 
     #Clone the value.
     elif isinstance(value, FP1Obj):
       self.value = clone(value)
     elif isinstance(value, BLS12_381_F1):
       self.value = clone(value.value)
+    else:
+      raise Exception("Unknown type passed to BLS12-381 F1 constructor.")
 
   def __add__(
     self,
@@ -55,7 +55,7 @@ class BLS12_381_F1(
   ) -> Any:
     result: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_add(byref(result), byref(self.value), byref(BLS12_381_F1(other).value))
-    return result
+    return BLS12_381_F1(result)
 
   def __sub__(
     self,
@@ -63,7 +63,7 @@ class BLS12_381_F1(
   ) -> Any:
     result: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_sub(byref(result), byref(self.value), byref(BLS12_381_F1(other).value))
-    return result
+    return BLS12_381_F1(result)
 
   def __mul__(
     self,
@@ -71,12 +71,12 @@ class BLS12_381_F1(
   ) -> Any:
     result: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_mul(byref(result), byref(self.value), byref(BLS12_381_F1(other).value))
-    return result
+    return BLS12_381_F1(result)
 
   def div(
     self,
     other: FieldElement,
-    q: FieldElement
+    q: int
   ) -> Any:
     return self * (other ** (q - 2))
 
@@ -84,12 +84,9 @@ class BLS12_381_F1(
     self,
     exp: int
   ) -> Any:
-    if exp < 1:
-      raise Exception("Negative/zero exponents aren't supported.")
-
-    result: FieldElement = BLS12_381_F1(self.value)
-    for _ in range(1, exp):
-      result *= self
+    result: BLS12_381_F1 = BLS12_381_F1()
+    MilagroCurve.FP_BLS381_pow(byref(result.value), byref(self.value), BLS12_381_F1(exp).value.toBig384())
+    return result
 
   def __eq__(
     self,
@@ -97,16 +94,21 @@ class BLS12_381_F1(
   ) -> bool:
     return MilagroCurve.FP_BLS381_equals(byref(self.value), byref(other.value)) == 1
 
+  def __ne__(
+    self,
+    other: Any
+  ) -> bool:
+    #pylint: disable=superfluous-parens
+    return not (self == other)
+
   def sign(
     self
   ) -> int:
     neg: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_neg(byref(neg), byref(self.value))
 
-    a: Big384 = Big384()
-    b: Big384 = Big384()
-    MilagroCurve.FP_BLS381_redc(a, byref(self.value))
-    MilagroCurve.FP_BLS381_redc(b, byref(neg))
+    a: Big384 = self.value.toBig384()
+    b: Big384 = neg.toBig384()
     #!= -1 because == 1 would cause 0 to identify as negative.
     return 0 if (MilagroCurve.BIG_384_58_comp(a, b) != -1) else 1
 
@@ -115,14 +117,14 @@ class BLS12_381_F1(
   ) -> Any:
     result: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_neg(byref(result), byref(self.value))
-    return result
+    return BLS12_381_F1(result)
 
   def sqrt(
     self
   ) -> Any:
     result: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_sqrt(byref(result), byref(self.value))
-    return result
+    return BLS12_381_F1(result)
 
 class BLS12_381_G1(
   GroupElement
@@ -132,10 +134,21 @@ class BLS12_381_G1(
   #pylint: disable=super-init-not-called
   def __init__(
     self,
-    x: G1Obj
+    x: Any,
+    y: Optional[BLS12_381_F1] = None
   ) -> None:
     self.value: G1Obj = G1Obj()
-    MilagroCurve.ECP_BLS381_copy(byref(self.value), byref(x))
+    if isinstance(x, G1Obj):
+      MilagroCurve.ECP_BLS381_copy(byref(self.value), byref(x))
+    elif isinstance(x, BLS12_381_G1):
+      MilagroCurve.ECP_BLS381_copy(byref(self.value), byref(x.value))
+    elif (isinstance(x, BLS12_381_F1) and isinstance(y, BLS12_381_F1)):
+      xBig: Big384 = x.value.toBig384()
+      yBig: Big384 = y.value.toBig384()
+      if MilagroCurve.ECP_BLS381_set(byref(self.value), xBig, yBig) != 1:
+        raise Exception("Passed invalid x/y to G1 constructor.")
+    else:
+      raise Exception("Unknown type passed to BLS12-381 G1 constructor.")
 
   def __add__(
     self,

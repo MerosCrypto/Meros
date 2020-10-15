@@ -57,6 +57,13 @@ class FieldElement(
   ) -> bool:
     ...
 
+  @abstractmethod
+  def __ne__(
+    self,
+    other: Any
+  ) -> bool:
+    ...
+
   #Positive/negative (0/1); not the signature scheme operation.
   @abstractmethod
   def sign(
