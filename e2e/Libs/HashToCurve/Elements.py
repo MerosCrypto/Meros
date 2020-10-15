@@ -78,6 +78,13 @@ class FieldElement(
     ...
 
   @abstractmethod
+  def isSquare(
+    self,
+    q: Any
+  ) -> bool:
+    ...
+
+  @abstractmethod
   def sqrt(
     self
   ) -> Any:

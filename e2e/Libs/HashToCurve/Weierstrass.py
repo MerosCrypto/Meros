@@ -28,19 +28,19 @@ class WeierstrassCurve(
   ) -> None:
     Curve.__init__(self, fieldType, groupType, primeField, p, m)
     #pylint: disable=invalid-name
-    self.A: int = A
+    self.A: FieldElement = self.FieldType(A)
     #pylint: disable=invalid-name
-    self.B: int = B
+    self.B: FieldElement = self.FieldType(B)
 
     #This my be a misuse of isogeny, where we may want the underlying Curve to have these values.
     #The following SSWU algorithms also always use the isogenous points which isn't correct.
     #That said, this code can be used with a curve which isn't complimented by mirroring the A/B values.
     #So theoretically incorrect, yet the code works, especially since we only need this for BLS12-381 G1 which has an isogenous compliment.
-    self.isogenousA: int = isogenousA
-    self.isogenousB: int = isogenousB
+    self.isogenousA: FieldElement = self.FieldType(isogenousA)
+    self.isogenousB: FieldElement = self.FieldType(isogenousB)
 
     #pylint: disable=invalid-name
-    self.Z: int = Z
+    self.Z: FieldElement = self.FieldType(Z)
 
   @abstractmethod
   def mapToCurve(
@@ -75,17 +75,17 @@ def mapToCurveSSWU(
   u: FieldElement
 ) -> Tuple[FieldElement, FieldElement]:
   #pylint: disable=invalid-name
-  A: int = curve.isogenousA
+  A: FieldElement = curve.isogenousA
   #pylint: disable=invalid-name
-  B: int = curve.isogenousB
+  B: FieldElement = curve.isogenousB
   #pylint: disable=invalid-name
-  Z: FieldElement = curve.FieldType(curve.Z)
+  Z: FieldElement = curve.Z
 
   #Steps 1-3.
   tv1: FieldElement = (((Z ** 2) * (u ** 4)) + (Z * (u ** 2))) ** (curve.q - 2)
-  x1: FieldElement = (curve.FieldType(B).negative().div(curve.FieldType(A), curve.q)) * (tv1 + 1)
+  x1: FieldElement = (B.negative().div(A, curve.q)) * (tv1 + 1)
   if tv1 == curve.FieldType(0):
-    x1 = curve.FieldType(B).div(Z * A, curve.q)
+    x1 = B.div(Z * A, curve.q)
 
   #Steps 4-6.
   gx1: FieldElement = (x1 ** 3) + (x1 * A) + B
@@ -95,13 +95,8 @@ def mapToCurveSSWU(
   #Steps 7-8.
   x: FieldElement
   y: FieldElement
-  sqrCheck: FieldElement = gx1 ** ((curve.q - 1) // 2)
-  if (sqrCheck == curve.FieldType(0)) or (sqrCheck == curve.FieldType(1)):
-    x = x1
-    y = gx1.sqrt()
-  else:
-    x = x2
-    y = gx2.sqrt()
+  x, y = (x1, gx1) if gx1.isSquare(curve.q) else (x2, gx2)
+  y = y.sqrt()
 
   #Step 9.
   if u.sign() != y.sign():
@@ -116,14 +111,14 @@ def mapToCurveSSWUStraightLine(
   u: FieldElement
 ) -> Tuple[FieldElement, FieldElement]:
   #pylint: disable=invalid-name
-  A: FieldElement = curve.FieldType(curve.isogenousA)
+  A: FieldElement = curve.isogenousA
   #pylint: disable=invalid-name
-  B: FieldElement = curve.FieldType(curve.isogenousB)
+  B: FieldElement = curve.isogenousB
   #pylint: disable=invalid-name
-  Z: FieldElement = curve.FieldType(curve.Z)
+  Z: FieldElement = curve.Z
 
-  C1: FieldElement = B.negative().div(A, curve.q)
-  C2: FieldElement = curve.FieldType(1).negative().div(Z, curve.q)
+  c1: FieldElement = B.negative().div(A, curve.q)
+  c2: FieldElement = curve.FieldType(1).negative().div(Z, curve.q)
 
   #Steps 1-2.
   tv1: FieldElement = Z * (u ** 2)
@@ -132,27 +127,21 @@ def mapToCurveSSWUStraightLine(
   #Steps 3-8.
   x1: FieldElement = ((tv1 + tv2) ** (curve.q - 2)) + 1
   if x1 == curve.FieldType(1):
-    x1 = C2
-  x1 = x1 * C1
+    x1 = c2
+  x1 *= c1
 
   #Steps 9-12.
   gx1: FieldElement = (((x1 ** 2) + A) * x1) + B
 
   #Steps 13-15.
   x2: FieldElement = tv1 * x1
-  tv2 = tv1 * tv2
+  tv2 *= tv1
   gx2: FieldElement = gx1 * tv2
 
   #Steps 16-19.
   x: FieldElement
   y: FieldElement
-  sqrCheck: FieldElement = gx1 ** ((curve.q - 1) // 2)
-  if (sqrCheck == curve.FieldType(0)) or (sqrCheck == curve.FieldType(1)):
-    x = x1
-    y = gx1
-  else:
-    x = x2
-    y = gx2
+  x, y = (x1, gx1) if gx1.isSquare(curve.q) else (x2, gx2)
   y = y.sqrt()
 
   #Step 20-21.
@@ -169,9 +158,9 @@ def mapToCurveSSWU3Mod4(
 ) -> Tuple[FieldElement, FieldElement]:
   #Constants.
   #pylint: disable=invalid-name
-  C1: int = (curve.q - 3) // 4
+  c1: int = (curve.q - 3) // 4
   #pylint: disable=invalid-name
-  C2: FieldElement = (curve.FieldType(curve.Z) ** 3).negative().sqrt()
+  c2: FieldElement = (curve.Z ** 3).negative().sqrt()
 
   #Steps 1-3.
   tv1: FieldElement = u ** 2
@@ -181,11 +170,11 @@ def mapToCurveSSWU3Mod4(
   #Steps 4-7.
   xd: FieldElement = tv2 + tv3
   x1n: FieldElement = (xd + 1) * curve.isogenousB
-  xd = xd * curve.FieldType(curve.isogenousA).negative()
+  xd *= curve.isogenousA.negative()
 
   #Steps 8-9.
   if xd == curve.FieldType(0):
-    xd = curve.FieldType(curve.isogenousA) * curve.Z
+    xd = curve.isogenousA * curve.Z
 
   #Steps 10-12.
   gxd: FieldElement = xd ** 3
@@ -196,15 +185,15 @@ def mapToCurveSSWU3Mod4(
 
   #Steps 16-20.
   tv2 = gxd * curve.isogenousB
-  gx1 = gx1 + tv2
+  gx1 += tv2
   tv4: FieldElement = gxd ** 2
   tv2 = gx1 * gxd
-  tv4 = tv4 * tv2
+  tv4 *= tv2
 
   #Steps 21-26.
-  y1: FieldElement = (tv4 ** C1) * tv2
+  y1: FieldElement = (tv4 ** c1) * tv2
   x2n: FieldElement = tv3 * x1n
-  y2: FieldElement = ((y1 * C2) * tv1) * u
+  y2: FieldElement = ((y1 * c2) * tv1) * u
 
   #Steps 27-28.
   tv2 = (y1 ** 2) * gxd

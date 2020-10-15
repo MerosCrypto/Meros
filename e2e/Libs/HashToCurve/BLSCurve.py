@@ -120,6 +120,13 @@ class BLS12_381_F1(
     MilagroCurve.FP_BLS381_neg(byref(result), byref(self.value))
     return BLS12_381_F1(result)
 
+  def isSquare(
+    self,
+    q: FieldElement
+  ) -> bool:
+    squareCheck: FieldElement = self ** ((q - 1) // 2)
+    return (squareCheck == BLS12_381_F1(0)) or (squareCheck == BLS12_381_F1(1))
+
   def sqrt(
     self
   ) -> Any:
