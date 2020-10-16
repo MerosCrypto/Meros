@@ -105,13 +105,9 @@ class BLS12_381_F1(
   def sign(
     self
   ) -> int:
-    neg: FP1Obj = FP1Obj()
-    MilagroCurve.FP_BLS381_neg(byref(neg), byref(self.value))
-
-    a: Big384 = self.value.toBig384()
-    b: Big384 = neg.toBig384()
-    #!= -1 because == 1 would cause 0 to identify as negative.
-    return 0 if (MilagroCurve.BIG_384_58_comp(a, b) != -1) else 1
+    buffer: Array[c_char] = create_string_buffer(48)
+    MilagroCurve.BIG_384_58_toBytes(buffer, self.value.toBig384())
+    return bytes(buffer)[-1] & 0b1
 
   def negative(
     self
