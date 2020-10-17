@@ -3,7 +3,7 @@ from typing import Tuple, List, Optional, Any
 from ctypes import c_char_p, byref
 from ctypes import Array, c_char, create_string_buffer
 
-from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, G1_COFACTOR
+from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj
 
 from e2e.Libs.HashToCurve.Elements import FieldElement, GroupElement
 from e2e.Libs.HashToCurve.Weierstrass import WeierstrassCurve, mapToCurveSSWU3Mod4
@@ -102,6 +102,12 @@ class BLS12_381_F1(
     #pylint: disable=superfluous-parens
     return not (self == other)
 
+  #This is supposed to return 0 or 1 to signify sign.
+  #This may not return 0 for positive and 1 for negative.
+  #The BLS spec uses even/odd instead of larger/smaller to determine signage.
+  #This bit mask is probably correct, as it returns the tail as a 0/1, but it may not be.
+  #We only use it to enforce two variables have the same sign.
+  #This works without any problem for such comparisons.
   def sign(
     self
   ) -> int:
@@ -174,7 +180,7 @@ class BLS12_381_G1(
     self
   ) -> GroupElement:
     result: BLS12_381_G1 = BLS12_381_G1(self.value)
-    MilagroCurve.ECP_BLS381_mul(byref(result.value), G1_COFACTOR)
+    MilagroCurve.ECP_BLS381_mul(byref(result.value), BLS12_381_F1(15132376222941642753).value.toBig384())
     return result
 
   @property

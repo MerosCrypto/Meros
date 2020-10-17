@@ -1,8 +1,8 @@
 from typing import List, Tuple, Union, Any
 from ctypes import Array, c_char_p, c_char, create_string_buffer, byref
-from hashlib import blake2b, shake_256, sha256
+from hashlib import blake2b, sha256
 
-from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, OctetObj, Big384, FP1Obj, G1Obj, r
+from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, r
 from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
 
 from e2e.Libs.HashToCurve.BLSCurve import BLS12381G1Curve
@@ -40,26 +40,10 @@ class MerosParameters(
 #pylint: disable=invalid-name
 PARAMETERS = MerosParameters()
 
-def newMsgToG(
-  msg: bytes
-) -> G1Obj:
-  PARAMETERS.hashToCurve(msg)
-  return G1Obj()
-
 def msgToG(
   msg: bytes
 ) -> G1Obj:
-  hashed: OctetObj = OctetObj()
-
-  shake: Any = shake_256()
-  shake.update(msg)
-  hashed.val = c_char_p(shake.digest(48))
-  hashed.len = 48
-  hashed.max = 48
-
-  result: G1Obj = G1Obj()
-  MilagroCurve.ECP_BLS381_mapit(byref(result), hashed)
-  return result
+  return PARAMETERS.hashToCurve(msg).value
 
 def serialize(
   g: Big384,

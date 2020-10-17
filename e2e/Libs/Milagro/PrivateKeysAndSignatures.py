@@ -14,17 +14,6 @@ else:
 Big384: Any = c_int64 * 7
 DBig384: Any = c_int64 * 14
 
-#pylint: disable=too-few-public-methods
-class OctetObj(
-  Structure
-):
-  _fields_: List[Tuple[str, Type[Any]]] = [
-    ("len", c_int),
-    ("max", c_int),
-    ("val", c_char_p)
-  ]
-Octet: Any = POINTER(OctetObj)
-
 #pylint: disable=too-few-public-methods,
 class FP1Obj(
   Structure
@@ -126,9 +115,4 @@ MilagroCurve.ECP_BLS381_neg.restype = None
 MilagroCurve.ECP_BLS381_get.argtypes = [Big384, Big384, G1]
 MilagroCurve.ECP_BLS381_get.restype = c_int
 
-MilagroCurve.ECP_BLS381_mapit.argtypes = [G1, Octet]
-MilagroCurve.ECP_BLS381_mapit.restype = None
-
 r: Big384 = Big384.in_dll(MilagroCurve, "CURVE_Order_BLS381")
-#pylint: disable=invalid-name
-G1_COFACTOR: Big384 = Big384.in_dll(MilagroCurve, "CURVE_Cof_BLS381")
