@@ -7,5 +7,10 @@ class FileLock:
 
   def __enter__(
     self
-  ):
+  ) -> None:
+    ...
+
+  def __exit__(
+    self
+  ) -> None:
     ...

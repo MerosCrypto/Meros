@@ -1,8 +1,8 @@
 from typing import Type, TypeVar, Generic, Callable, Iterable, Optional, Any
 
 def fixture(
-  scope: str = "",
-  params: Optional[Iterable[Any]] = None
+  scope: str = ...,
+  params: Optional[Iterable[Any]] = ...
 ) -> Callable[..., None]:
   ...
 
@@ -14,7 +14,12 @@ class RaisesContext(
 
   def __enter__(
     self
-  ):
+  ) -> None:
+    ...
+
+  def __exit__(
+    self
+  ) -> None:
     ...
 
 def raises(

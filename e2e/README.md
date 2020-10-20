@@ -45,7 +45,7 @@ Meros supports static typing via both Pyright and MyPy:
 
 ```
 pyright -p e2e
-./venv/bin/python3 -m mypy --config-file e2e/mypy.ini e2e/
+./venv/bin/python3 -m mypy --config-file e2e/mypy.ini e2e
 ```
 
 ### Linting
