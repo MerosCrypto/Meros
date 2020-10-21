@@ -2,13 +2,20 @@ from typing import Type, List, Tuple, Any
 from ctypes import cdll, Structure, POINTER, c_char_p, c_int64, c_int32, c_int, byref
 import os
 
-#Import the Milagro Curve library.
+#Import the Milagro shared libraries.
 #pylint: disable=invalid-name
 MilagroCurve: Any
 if os.name == "nt":
   MilagroCurve = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/amcl_curve_BLS381")
 else:
   MilagroCurve = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_curve_BLS381.so")
+
+#pylint: disable=invalid-name
+MilagroPairing: Any
+if os.name == "nt":
+  MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/amcl_pairing_BLS381")
+else:
+  MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_pairing_BLS381.so")
 
 #Define the structures.
 Big384: Any = c_int64 * 7
@@ -26,6 +33,16 @@ class FP1Obj(
     result: Big384 = Big384()
     MilagroCurve.FP_BLS381_redc(result, byref(self))
     return result
+
+  def isLargerThanNegative(
+    self
+  ) -> bool:
+    yNeg: FP1Obj = FP1Obj()
+    MilagroPairing.FP_BLS381_neg(byref(yNeg), byref(self))
+
+    a: Big384 = self.toBig384()
+    b: Big384 = yNeg.toBig384()
+    return MilagroCurve.BIG_384_58_comp(a, b) == 1
 
 FP1: Any = POINTER(FP1Obj)
 

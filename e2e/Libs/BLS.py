@@ -217,9 +217,6 @@ class Signature:
     if MilagroPairing.ECP_BLS381_setx(byref(self.value), g[3], 0) != 1:
       raise Exception("Invalid G1.")
 
-    yNeg: FP1Obj = FP1Obj()
-    MilagroPairing.FP_BLS381_neg(byref(yNeg), byref(self.value.y))
-
     if self.value.y.isLargerThanNegative() != g[2]:
       if MilagroPairing.ECP_BLS381_setx(byref(self.value), g[3], 1) != 1:
         raise Exception("Setting a proven valid X failed.")

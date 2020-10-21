@@ -2,9 +2,11 @@ import hashes
 import strutils
 
 import mc_bls
-export G1_LEN, G2_LEN, toPublicKey, sign, verify, aggregate, serialize, isInf
+export SCALAR_LEN, G1_LEN, G2_LEN, toPublicKey, verify, aggregate, serialize, isInf
 
 import ../lib/objects/ErrorObjs
+
+const DST {.strdefine.}: string = "MEROS-V00-CS01-with-BLS12381G1_XMD:SHA-256_SSWU_RO_"
 
 #[
 Type aliases for mc_bls.
@@ -55,20 +57,21 @@ proc newBLSAggregationInfo*(
   BLSError
 ].} =
   try:
-    result = newAggregationInfo(key, msg)
+    result = newAggregationInfo(key, msg, DST)
   except BLSError as e:
     raise e
 
-proc newBLSAggregationInfo*(
+template newBLSAggregationInfo*(
   keys: seq[BLSPublicKey],
   msg: string
-): BLSAggregationInfo {.forceCheck: [
-  BLSError
-].} =
-  try:
-    result = newAggregationInfo(keys, msg)
-  except BLSError as e:
-    raise e
+): BLSAggregationInfo =
+  newBLSAggregationInfo(keys.aggregate(), msg)
+
+proc sign*(
+  key: BLSPrivateKey,
+  msg: string
+): BLSSignature {.inline, forceCheck: [].} =
+  key.sign(msg, DST)
 
 proc `==`*(
   x: BLSPrivateKey,

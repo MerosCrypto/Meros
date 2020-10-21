@@ -29,7 +29,7 @@ proc newMinerWallet*(): MinerWallet {.forceCheck: [
   BLSError
 ].} =
   #Create a Private Key.
-  var privKey: string = newString(G1_LEN)
+  var privKey: string = newString(SCALAR_LEN)
   randomFill(privKey)
 
   try:

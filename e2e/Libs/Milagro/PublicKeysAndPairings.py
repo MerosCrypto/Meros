@@ -2,15 +2,7 @@ from typing import List, Tuple, Type, Any
 from ctypes import cdll, Structure, POINTER, c_int
 import os
 
-from e2e.Libs.Milagro.PrivateKeysAndSignatures import byref, Big384, FP1Obj, G1, MilagroCurve
-
-#Import the Milagro Curve library.
-#pylint: disable=invalid-name
-MilagroPairing: Any
-if os.name == "nt":
-  MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/amcl_pairing_BLS381")
-else:
-  MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_pairing_BLS381.so")
+from e2e.Libs.Milagro.PrivateKeysAndSignatures import byref, Big384, FP1Obj, G1, MilagroCurve, MilagroPairing
 
 #pylint: disable=too-few-public-methods
 class FP2Obj(
