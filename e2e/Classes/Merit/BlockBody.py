@@ -21,7 +21,7 @@ class BlockBody:
   ) -> None:
     self.packets: List[VerificationPacket] = sorted(
       list(packets),
-      key=lambda packet: packet.hash
+      key=lambda packet: packet.hash[::-1]
     )
 
     packetsMerkle: List[bytes] = []
