@@ -38,6 +38,8 @@ proc newBLSPrivateKey*(
   This should arguably be in mc_bls. That said, blst doesn't provide a scalar modulus.
   Milagro's enforcement of this may also not be technically required by the spec.
   So between the need for stint and a lack of clarity about spec, it was placed here.
+  Meros only still has this to maintain private key compatibility with the Python tests, which use Milagro.
+  The usage of mod r may change in the future.
   ]#
   var
     key: string = keyArg
