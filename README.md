@@ -1,8 +1,6 @@
-# <img src="https://github.com/MerosCrypto/Meros/raw/master/logos/coin.png" height="64px" width="64px"/> Meros
+# <img src="https://github.com/MerosCrypto/Meros/raw/master/logos/coin.png" height="40px" width="40px"/> Meros
 
 ## An instant and feeless cryptocurrency for the future, secured by the [Merit Caching](https://github.com/MerosCrypto/Merit-Caching) consensus mechanism.
-
-<a href="https://discord.gg/nZmdWGA"><img src="https://discordapp.com/assets/e05ead6e6ebc08df9291738d0aa6986d.png" height=60 width=60/></a>
 
 #### Current State
 
