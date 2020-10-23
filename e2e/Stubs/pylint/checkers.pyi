@@ -12,10 +12,10 @@ class BaseChecker:
   def add_message(
     self,
     msgid: str,
-    line: int = 0,
-    node: Any = None,
-    args: Any = None,
-    confidence: Any = None,
-    col_offset: Any = None
+    line: int = ...,
+    node: Any = ...,
+    args: Any = ...,
+    confidence: Any = ...,
+    col_offset: Any = ...
   ) -> None:
     ...

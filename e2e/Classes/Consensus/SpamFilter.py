@@ -1,6 +1,6 @@
 from typing import Tuple
 
-import argon2
+import argon2.low_level as argon2
 
 class SpamFilter:
   def __init__(
@@ -14,14 +14,14 @@ class SpamFilter:
     data: bytes,
     nonce: int
   ) -> bytes:
-    result: bytes = argon2.low_level.hash_secret_raw(
+    result: bytes = argon2.hash_secret_raw(
       data,
       nonce.to_bytes(8, "little"),
       1,
       8,
       1,
       32,
-      argon2.low_level.Type.D
+      argon2.Type.D
     )
     return result
 
