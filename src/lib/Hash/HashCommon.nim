@@ -38,7 +38,7 @@ func `<`*[bits: static[int]](
   rhs: Hash[bits]
 ): bool =
   var bytes: int = bits div 8
-  for i in 0 ..< bytes:
+  for i in countdown(bytes - 1, 0):
     if lhs.data[i] == rhs.data[i]:
       continue
     elif lhs.data[i] < rhs.data[i]:
@@ -52,7 +52,7 @@ func `<=`*[bits: static[int]](
   rhs: Hash[bits]
 ): bool =
   var bytes: int = bits div 8
-  for i in 0 ..< bytes:
+  for i in countdown(bytes - 1, 0):
     if lhs.data[i] == rhs.data[i]:
       continue
     elif lhs.data[i] < rhs.data[i]:
@@ -66,7 +66,7 @@ func `>`*[bits: static[int]](
   rhs: Hash[bits]
 ): bool =
   var bytes: int = bits div 8
-  for i in 0 ..< bytes:
+  for i in countdown(bytes - 1, 0):
     if lhs.data[i] == rhs.data[i]:
       continue
     elif lhs.data[i] > rhs.data[i]:
@@ -80,7 +80,7 @@ func `>=`*[bits: static[int]](
   rhs: Hash[bits]
 ): bool =
   var bytes: int = bits div 8
-  for i in 0 ..< bytes:
+  for i in countdown(bytes - 1, 0):
     if lhs.data[i] == rhs.data[i]:
       continue
     elif lhs.data[i] > rhs.data[i]:
@@ -94,7 +94,7 @@ func `==`*[bits: static[int]](
   rhs: Hash[bits]
 ): bool =
   var bytes: int = bits div 8
-  for i in 0 ..< bytes:
+  for i in countdown(bytes - 1, 0):
     if lhs.data[i] == rhs.data[i]:
       continue
     else:

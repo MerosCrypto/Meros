@@ -2,6 +2,7 @@
 switch("threads", "on")
 switch("experimental", "caseStmtMacros")
 switch("define", "SIGN_PREFIX=MEROS")
+switch("define", "DST=MEROS-V00-CS01-with-BLS12381G1_XMD:SHA-256_SSWU_RO_")
 switch("define", "ADDRESS_HRP=mr")
 switch("define", "COIN_TYPE=5132")
 switch("define", "DEFAULT_PORT=5132")

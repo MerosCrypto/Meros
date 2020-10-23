@@ -1,29 +1,49 @@
 from typing import List, Tuple, Union, Any
 from ctypes import Array, c_char_p, c_char, create_string_buffer, byref
-from hashlib import blake2b, shake_256
+from hashlib import blake2b, sha256
 
-from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, OctetObj, r
+from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, r
 from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
+
+from e2e.Libs.HashToCurve.BLSCurve import BLS12381G1Curve
+from e2e.Libs.HashToCurve.ExpandMessage import expandMessageXMD
+from e2e.Libs.HashToCurve.Weierstrass import WeierstrassSuiteParameters
 
 A_FLAG: int = 1 << 5
 B_FLAG: int = 1 << 6
 C_FLAG: int = 1 << 7
 CLEAR_FLAGS: int = ~(A_FLAG + B_FLAG + C_FLAG)
 
+#pylint: disable=too-few-public-methods
+class MerosParameters(
+  WeierstrassSuiteParameters
+):
+  def __init__(
+    self
+  ) -> None:
+    #Not a lambda to solve a faulty complaint from the multiline expansion checker.
+    def expandMsg(
+      msg: bytes,
+      outLen: int
+    ) -> bytes:
+      return expandMessageXMD(sha256, self.dst, msg, outLen)
+
+    WeierstrassSuiteParameters.__init__(
+      self,
+      BLS12381G1Curve(),
+      "MEROS-V00-CS01-with-BLS12381G1_XMD:SHA-256_SSWU_RO_",
+      128,
+      64,
+      expandMsg
+    )
+
+#pylint: disable=invalid-name
+PARAMETERS = MerosParameters()
+
 def msgToG(
   msg: bytes
 ) -> G1Obj:
-  result: G1Obj = G1Obj()
-  hashed: OctetObj = OctetObj()
-
-  shake: Any = shake_256()
-  shake.update(msg)
-  hashed.val = c_char_p(shake.digest(48))
-  hashed.len = 48
-  hashed.max = 48
-
-  MilagroCurve.ECP_BLS381_mapit(byref(result), hashed)
-  return result
+  return PARAMETERS.hashToCurve(msg).value
 
 def serialize(
   g: Big384,
@@ -107,22 +127,8 @@ class PublicKey:
     if MilagroPairing.ECP2_BLS381_setx(byref(self.value), byref(x)) == 0:
       raise Exception("Invalid G2.")
 
-    yNeg: FP2Obj = FP2Obj()
-    cmpRes: int
-    MilagroPairing.FP2_BLS381_neg(byref(yNeg), byref(self.value.y))
-
-    a: Big384 = Big384()
-    b: Big384 = Big384()
-    MilagroCurve.FP_BLS381_redc(a, byref(self.value.y.b))
-    MilagroCurve.FP_BLS381_redc(b, byref(yNeg.b))
-    cmpRes = MilagroCurve.BIG_384_58_comp(a, b)
-    if cmpRes == 0:
-      MilagroCurve.FP_BLS381_redc(a, byref(self.value.y.a))
-      MilagroCurve.FP_BLS381_redc(b, byref(yNeg.a))
-      cmpRes = MilagroCurve.BIG_384_58_comp(a, b)
-
-    if (cmpRes == 1) != g1[2]:
-      self.value.y = yNeg
+    if self.value.y.isLargerThanNegative() != g1[2]:
+      MilagroPairing.FP2_BLS381_neg(byref(self.value.y), byref(self.value.y))
 
   def isInf(
     self
@@ -132,23 +138,9 @@ class PublicKey:
   def serialize(
     self
   ) -> bytes:
-    yNeg: FP2Obj = FP2Obj()
-    cmpRes: int
-    MilagroPairing.FP2_BLS381_neg(byref(yNeg), byref(self.value.y))
-
-    a: Big384 = Big384()
-    b: Big384 = Big384()
-    MilagroCurve.FP_BLS381_redc(a, byref(self.value.y.b))
-    MilagroCurve.FP_BLS381_redc(b, byref(yNeg.b))
-    cmpRes = MilagroCurve.BIG_384_58_comp(a, b)
-    if cmpRes == 0:
-      MilagroCurve.FP_BLS381_redc(a, byref(self.value.y.a))
-      MilagroCurve.FP_BLS381_redc(b, byref(yNeg.a))
-      cmpRes = MilagroCurve.BIG_384_58_comp(a, b)
-
-    MilagroCurve.FP_BLS381_redc(a, byref(self.value.x.a))
-    MilagroCurve.FP_BLS381_redc(b, byref(self.value.x.b))
-    result: bytearray = serialize(b, cmpRes == 1)
+    a: Big384 = self.value.x.a.toBig384()
+    b: Big384 = self.value.x.b.toBig384()
+    result: bytearray = serialize(b, self.value.y.isLargerThanNegative())
     result += serialize(a, False)
     result[48] = result[48] & CLEAR_FLAGS
     return bytes(result)
@@ -225,14 +217,7 @@ class Signature:
     if MilagroPairing.ECP_BLS381_setx(byref(self.value), g[3], 0) != 1:
       raise Exception("Invalid G1.")
 
-    yNeg: FP1Obj = FP1Obj()
-    MilagroPairing.FP_BLS381_neg(byref(yNeg), byref(self.value.y))
-
-    a: Big384 = Big384()
-    b: Big384 = Big384()
-    MilagroCurve.FP_BLS381_redc(a, byref(self.value.y))
-    MilagroCurve.FP_BLS381_redc(b, byref(yNeg))
-    if (MilagroCurve.BIG_384_58_comp(a, b) == 1) != g[2]:
+    if self.value.y.isLargerThanNegative() != g[2]:
       if MilagroPairing.ECP_BLS381_setx(byref(self.value), g[3], 1) != 1:
         raise Exception("Setting a proven valid X failed.")
 

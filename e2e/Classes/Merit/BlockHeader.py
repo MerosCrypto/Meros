@@ -38,7 +38,7 @@ class BlockHeader:
   ) -> bytes:
     packets: List[VerificationPacket] = sorted(
       list(packetsArg),
-      key=lambda packet: packet.hash
+      key=lambda packet: packet.hash[::-1]
     )
 
     hashes: List[bytes] = []

@@ -2,21 +2,31 @@ from typing import List, Tuple, Type, Any
 from ctypes import cdll, Structure, POINTER, c_int
 import os
 
-from e2e.Libs.Milagro.PrivateKeysAndSignatures import Big384, FP1Obj, G1
-
-#Import the Milagro Curve library.
-#pylint: disable=invalid-name
-MilagroPairing: Any
-if os.name == "nt":
-  MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/amcl_pairing_BLS381")
-else:
-  MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_pairing_BLS381.so")
+from e2e.Libs.Milagro.PrivateKeysAndSignatures import byref, Big384, FP1Obj, G1, MilagroCurve, MilagroPairing
 
 #pylint: disable=too-few-public-methods
 class FP2Obj(
   Structure
 ):
   _fields_: List[Tuple[str, Type[Any]]] = [("a", FP1Obj), ("b", FP1Obj)]
+
+  def isLargerThanNegative(
+    self
+  ) -> bool:
+    yNeg: FP2Obj = FP2Obj()
+    MilagroPairing.FP2_BLS381_neg(byref(yNeg), byref(self))
+
+    a: Big384 = self.b.toBig384()
+    b: Big384 = yNeg.b.toBig384()
+    cmpRes: int = MilagroCurve.BIG_384_58_comp(a, b)
+
+    if cmpRes == 0:
+      a = self.a.toBig384()
+      b = yNeg.a.toBig384()
+      cmpRes = MilagroCurve.BIG_384_58_comp(a, b)
+
+    return cmpRes == 1
+
 FP2: Any = POINTER(FP2Obj)
 
 #pylint: disable=too-few-public-methods

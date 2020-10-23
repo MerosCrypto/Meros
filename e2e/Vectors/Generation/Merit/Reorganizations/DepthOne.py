@@ -20,12 +20,19 @@ main.add(
 #Because of that, we can't just mine the Block; we need to mine it until it has a lower hash than the above Block.
 #Calculate a custom difficulty guaranteed to beat the above Block.
 hashAsInt: int = int.from_bytes(main.blockchain.blocks[-1].header.hash, "little")
+timeOffset: int = 1201
 alt.blockchain.difficulties[-1] = 0
-while (alt.blockchain.difficulties[-1] * hashAsInt).bit_length() <= 256:
-  alt.blockchain.difficulties[-1] += 1
+while int.from_bytes(
+  PrototypeBlock(
+    alt.blockchain.blocks[-1].header.time + timeOffset,
+    minerID=1
+  ).finish(0, alt).header.hash,
+  "little"
+) > hashAsInt:
+  timeOffset += 1
 
 alt.add(
-  PrototypeBlock(alt.blockchain.blocks[-1].header.time + 1200, minerID=1).finish(0, alt)
+  PrototypeBlock(alt.blockchain.blocks[-1].header.time + timeOffset, minerID=1).finish(0, alt)
 )
 
 with open("e2e/Vectors/Merit/Reorganizations/DepthOne.json", "w") as vectors:
