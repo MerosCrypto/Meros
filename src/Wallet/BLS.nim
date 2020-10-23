@@ -33,13 +33,11 @@ proc newBLSPrivateKey*(
     raise newException(BLSError, "Invalid private key length.")
 
   #[
-  Mod by the curve order (r).
-  Milagro does this. blst doesn't automatically.
+  Mod by the curve order (r). Needed to create a valid scalar.
+  Milagro does this. blst doesn't automatically, and mc_bls doesn't by extension.
   This should arguably be in mc_bls. That said, blst doesn't provide a scalar modulus.
-  Milagro's enforcement of this may also not be technically required by the spec.
-  So between the need for stint and a lack of clarity about spec, it was placed here.
-  Meros only still has this to maintain private key compatibility with the Python tests, which use Milagro.
-  The usage of mod r may change in the future.
+  This leaves mc_bls closer to blst and uses stint, which is already here.
+  This may be moved in the future.
   ]#
   var
     key: string = keyArg

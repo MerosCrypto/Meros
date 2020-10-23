@@ -4,7 +4,7 @@
 - GCC/G++:
 - Make
 - curl _(for choosenim)_
-- CMake _(for BLS)_
+- CMake _(for RandomX)_
 - autoconf / automake / libtool _(for Minisketch)_
 - GTK+ 3 and WebKit _(for the GUI)_
 - choosenim

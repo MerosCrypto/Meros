@@ -4,7 +4,7 @@
 - Git
 - GCC/G++:
 - Make
-- CMake _(for BLS)_
+- CMake _(for RandomX)_
 - autoconf / automake / libtool _(for Minisketch)_
 - choosenim
 - Nim 1.2.4
