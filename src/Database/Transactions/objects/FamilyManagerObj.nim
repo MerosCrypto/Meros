@@ -1,7 +1,6 @@
-import sequtils, sets, tables
+import sets, tables
 
 import ../../../lib/Errors
-import ../../../lib/Hash
 import ./TransactionObj
 
 type

@@ -273,6 +273,7 @@ proc calculateMeritSingle(
       panic("Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
 
     #Mark the Transaction as verified.
+    logInfo "Verified Transaction", hash = tx.hash
     status.verified = true
     consensus.db.save(tx.hash, status)
     consensus.functions.transactions.verify(tx.hash)
@@ -388,7 +389,7 @@ proc unverify*(
       continue
 
     #Since this child was verified, unverify it and grab its children.
-    logWarn "Unverified Transaction", tx = child
+    logWarn "Unverified Transaction", hash = child
     childStatus.verified = false
     consensus.db.save(child, childStatus)
 
@@ -446,6 +447,7 @@ proc finalize*(
     #Happens when competitors occur yet only a subset is verified.
     if status.holders.len == status.pending.len:
       if status.verified:
+        logWarn "Unverifying due to never being mentioned on chain", hash = txs[^1].tx.hash
         consensus.unverify(txs[^1].tx.hash, status)
 
       var

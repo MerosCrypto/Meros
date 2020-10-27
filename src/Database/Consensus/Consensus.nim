@@ -1,4 +1,4 @@
-import sets, tables
+import sequtils, sets, tables
 
 import ../../lib/[Errors, Hash]
 import ../../Wallet/MinerWallet
@@ -834,6 +834,7 @@ proc archive*(
           families[i].add(hash)
           continue
         families[i] &= consensus.functions.transactions.getSpenders(input)
+      families[i] = families[i].deduplicate()
       inc(i)
     except IndexError:
       panic("Couldn't get a Transaction we're finalizing: " & $hash)
