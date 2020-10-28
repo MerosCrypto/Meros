@@ -421,11 +421,14 @@ proc finalize*(
       try:
         if consensus.getStatus(input.hash).merit == -1:
           raise newException(UnfinalizedParents, "Family requires another family to finalize first.")
-      #This would generally be a panic, yet there is a single case where it isn't.
-      #If this input is a Mint, it won't have a status.
-      except IndexError:
-        #panic("Couldn't get the input of a Transaction we're finalizing's status: " & e.msg)
-        discard
+      except IndexError as e:
+        #This would generally be a panic, yet there is a single case where it isn't.
+        #If this input is a Mint, it won't have a status.
+        try:
+          if not (consensus.functions.transactions.getTransaction(input.hash) of Mint):
+            panic("Couldn't get the status of an input of a Transaction we're finalizing: " & e.msg)
+        except IndexError as e:
+          panic("Couldn't get a Transaction which is an input of a Transaction we're finalizing: " & e.msg)
 
   type FinalizableTransaction = object
     tx: Transaction
@@ -546,19 +549,26 @@ proc finalize*(
             break thisTX
 
           #Parent has yet to verify.
-          if not (finalizable.tx of Claim):
-            if not inputStatus.verified:
-              break thisTX
+          if not ((finalizable.tx of Claim) or inputStatus.verified):
+            break thisTX
 
         for input in finalizable.tx.inputs:
           used.incl(input)
 
-        #Verify and finalize.
-        #This function call will have horrible side effects IF any TX other than SOLELY the best TX is passed.
-        consensus.calculateMerit(state, finalizable.tx.hash, finalizable.status)
+        #[
+        Verify and finalize.
+        We could call calculateMerit, and then have descendants be verified along the way.
+        The problem is a transaction can compete with its own descendant.
+        cM won't realize this, and will verify both.
+        This loop here SHOULD properly unverify the competitor (see DescendantHighestVerifiedParent for evidence).
+        That said, there is a temporary state where both are verified, before a warning about an unverification.
+        This is slower, yet also much safer.
+        ]#
+        consensus.calculateMeritSingle(state, finalizable.tx, finalizable.status, 0)
         consensus.db.save(finalizable.tx.hash, finalizable.status)
         consensus.statuses.del(finalizable.tx.hash)
         txs.delete(i)
+        continue
 
       inc(i)
 
