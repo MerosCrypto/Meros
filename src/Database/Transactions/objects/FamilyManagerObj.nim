@@ -97,6 +97,7 @@ proc getAndPruneFamilyUnsafe*(
     var id: uint64 = families.inputMap[inputArg].resolve().id
     result = families.families[id]
     families.families.del(id)
+  #When multiple transactions share an input, or for magic inputs (Datas), this edge case is triggered.
   except KeyError:
     return
 

@@ -515,7 +515,10 @@ proc finalize*(
   If the transaction was verified or beaten, remove it.
   If the parents aren't verified, continue.
   ]#
-  var used: HashSet[Input] = initHashSet[Input]()
+  var
+    used: HashSet[Input] = initHashSet[Input]()
+    toVerify: seq[FinalizableTransaction] = @[]
+    consideredVerified: HashSet[Hash[256]] = initHashSet[Hash[256]]()
   while txs.len != 0:
     var
       i: int = 0
@@ -548,25 +551,26 @@ proc finalize*(
             txs.delete(i)
             break thisTX
 
-          #Parent has yet to verify.
-          if not ((finalizable.tx of Claim) or inputStatus.verified):
+          #Parent has yet to to have its status as verified/beaten checked due to sort ordering.
+          if not ((finalizable.tx of Claim) or inputStatus.verified or consideredVerified.contains(input.hash)):
             break thisTX
 
         for input in finalizable.tx.inputs:
           used.incl(input)
 
         #[
+        Mark for verification/finalization.
         Verify and finalize.
         We could call calculateMerit, and then have descendants be verified along the way.
         The problem is a transaction can compete with its own descendant.
         cM won't realize this, and will verify both.
         This loop here SHOULD properly unverify the competitor (see DescendantHighestVerifiedParent for evidence).
         That said, there is a temporary state where both are verified, before a warning about an unverification.
-        This is slower, yet also much safer.
+        We could use calculateMeritSingle, yet that's inefficient.
+        This creation of a queue allows safe usage of cM.
         ]#
-        consensus.calculateMeritSingle(state, finalizable.tx, finalizable.status, 0)
-        consensus.db.save(finalizable.tx.hash, finalizable.status)
-        consensus.statuses.del(finalizable.tx.hash)
+        toVerify.add(finalizable)
+        consideredVerified.incl(finalizable.tx.hash)
         txs.delete(i)
         continue
 
@@ -574,6 +578,12 @@ proc finalize*(
 
     if lenAtStart == txs.len:
       panic("Couldn't finalize the TXs remaining in this family.")
+
+  #Now that we've marked the beaten TXs as so, run the tree verifications.
+  for tx in toVerify:
+    consensus.calculateMerit(state, tx.tx.hash, tx.status)
+    consensus.db.save(tx.tx.hash, tx.status)
+    consensus.statuses.del(tx.tx.hash)
 
 #[
 Delete a TransactionStatus.

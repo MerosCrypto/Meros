@@ -823,18 +823,26 @@ proc archive*(
   #First requires getting every TX from every family.
   for hash in popped.keys():
     try:
-      inputs[i] = consensus.functions.transactions.getAndPruneFamilyUnsafe(
-        consensus.functions.transactions.getTransaction(hash).inputs[0]
-      )
-      if inputs[i].len == 0:
-        continue
-
-      for input in inputs[i]:
-        if (input.hash == Hash[256]()) or (input.hash == consensus.genesis):
-          families[i].add(hash)
+      #The Consensus test doesn't actually create transactions; just hashes registered in the cache.
+      #Work around this edge case, wrapped in a define to ensure it's never used in a live scenario.
+      #This should be impossible when actually run.
+      when defined(merosTests):
+        if consensus.functions.transactions.getTransaction(hash).inputs.len == 0:
+          families[i] = @[hash]
+          inc(i)
           continue
-        families[i] &= consensus.functions.transactions.getSpenders(input)
-      families[i] = families[i].deduplicate()
+
+      var tx: Transaction = consensus.functions.transactions.getTransaction(hash)
+      if (tx of Data) and (tx.inputs[0].hash == Hash[256]()) or (tx.inputs[0].hash == consensus.genesis):
+        families[i].add(hash)
+      else:
+        inputs[i] = consensus.functions.transactions.getAndPruneFamilyUnsafe(tx.inputs[0])
+        #Part of a different family.
+        if inputs.len == 0:
+          continue
+        for input in inputs[i]:
+          families[i] &= consensus.functions.transactions.getSpenders(input)
+        families[i] = families[i].deduplicate()
       inc(i)
     except IndexError:
       panic("Couldn't get a Transaction we're finalizing: " & $hash)
@@ -853,7 +861,10 @@ proc archive*(
       except UnfinalizedParents:
         inc(i)
         continue
-      families.del(i)
+      #We should be able to use del here, as del should take the last element and move it.
+      #Therefore, the pair indexes should be the same. That said, it's best to pick the safer option.
+      inputs.delete(i)
+      families.delete(i)
 
     if lenAtStart == families.len:
       if cyclical:
