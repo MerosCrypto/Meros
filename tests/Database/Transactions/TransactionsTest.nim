@@ -241,8 +241,14 @@ suite "Transactions":
         #Add back the Block.
         merit.processBlock(blocks[b])
 
+        #Create the Epoch.
+        var popped: Epoch = merit.postProcessBlock()[0]
+        #Update the families.
+        for hash in popped.keys():
+          for input in transactions[hash].inputs:
+            discard transactions.families.getAndPruneFamilyUnsafe(input)
         #Archive the Epoch.
-        transactions.archive(newBlock, merit.postProcessBlock()[0])
+        transactions.archive(newBlock, popped)
 
         #Mint Meros.
         if b != blocks.len - 1:
@@ -372,8 +378,14 @@ suite "Transactions":
       merit.processBlock(newBlock)
       blocks.add(newBlock)
 
+      #Create the Epoch.
+      var popped: Epoch = merit.postProcessBlock()[0]
+      #Update the families.
+      for hash in popped.keys():
+        for input in transactions[hash].inputs:
+          discard transactions.families.getAndPruneFamilyUnsafe(input)
       #Archive the Epoch.
-      transactions.archive(newBlock, merit.postProcessBlock()[0])
+      transactions.archive(newBlock, popped)
 
       #Create a Mint/Claim to fund all planned Sends.
       var claims: seq[Claim] = @[]
@@ -444,7 +456,11 @@ suite "Transactions":
     )
     merit.processBlock(newBlock)
     blocks.add(newBlock)
-    transactions.archive(newBlock, merit.postProcessBlock()[0])
+    var popped: Epoch = merit.postProcessBlock()[0]
+    for hash in popped.keys():
+      for input in transactions[hash].inputs:
+        discard transactions.families.getAndPruneFamilyUnsafe(input)
+    transactions.archive(newBlock, popped)
     commit(merit.blockchain.height)
 
     #Create a copy of spendable for every wallet.

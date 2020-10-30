@@ -1,9 +1,11 @@
+import hashes
+
 import ../../../lib/[Errors, Hash]
 import ../../../Wallet/Wallet
 
 type
   Input* = ref object of RootObj
-    hash*: Hash[256]
+    hash*: Hash.Hash[256]
 
   #FundedInput, which includes a nonce specifying the output to use the funds of.
   FundedInput* = ref object of Input
@@ -23,17 +25,35 @@ type
   Transaction* = ref object of RootObj
     inputs*: seq[Input]
     outputs*: seq[Output]
-    hash*: Hash[256]
+    hash*: Hash.Hash[256]
+
+proc `==`*(
+  lhs: Input,
+  rhs: Input
+): bool {.forceCheck: [].} =
+  result = lhs.hash == rhs.hash
+  if lhs of FundedInput:
+    result = result and
+      (rhs of FundedInput) and
+      (cast[FundedInput](lhs).nonce == cast[FundedInput](rhs).nonce)
+
+proc hash*(
+  input: Input
+): hashes.Hash {.inline, forceCheck: [].} =
+  var nonce: int = 0
+  if input of FundedInput:
+    nonce = cast[FundedInput](input).nonce
+  !$ (hash(input.hash) !& nonce)
 
 func newInput*(
-  hash: Hash[256]
+  hash: Hash.Hash[256]
 ): Input {.inline, forceCheck: [].} =
   Input(
     hash: hash
   )
 
 func newFundedInput*(
-  hash: Hash[256],
+  hash: Hash.Hash[256],
   nonce: int
 ): FundedInput {.inline, forceCheck: [].} =
   FundedInput(

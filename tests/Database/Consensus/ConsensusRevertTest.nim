@@ -82,8 +82,6 @@ suite "ConsensusRevert":
       finalizedStatuses: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
       #Pending statuses.
       pendingStatuses: Table[Hash[256], TransactionStatus] = initTable[Hash[256], TransactionStatus]()
-      #Transactions with pending Verifications or parents with pending Verifications.
-      transactionsWithPending: HashSet[Hash[256]] = initHashSet[Hash[256]]()
 
       #Copy of the archived nonces at every step.
       archivedNonces: Table[Hash[256], Table[uint16, int]] = initTable[Hash[256], Table[uint16, int]]()
@@ -379,6 +377,12 @@ suite "ConsensusRevert":
         if consensus.statuses[tx].verified:
           verified[tx] = merit.blockchain.height
 
+      #Since this test doesn't cause any competing transactions, mark any TX which just finalized as verified.
+      for popped in epoch.keys():
+        #Preserve any earlier height.
+        if not verified.hasKey(popped):
+          verified[popped] = merit.blockchain.height
+
     #Verify the reversion worked.
     proc verify() =
       var verifiers: Table[Hash[256], HashSet[uint16]] = initTable[Hash[256], HashSet[uint16]]()
@@ -412,7 +416,6 @@ suite "ConsensusRevert":
               var
                 meritSum: int = 0
                 parentsVerified: bool = true
-                parentOrChildPending: bool = transactionsWithPending.contains(tx)
 
               #Calculate the Merit sum.
               for holder in consensus.statuses[tx].holders:
@@ -429,9 +432,8 @@ suite "ConsensusRevert":
                     parentsVerified = false
                     break
 
-              #If this had pending Verifications, or any parent did, it actually could be verified anyways.
+              #Depending on when parents where verified, it could be verified under the node threshold.
               check (
-                parentOrChildPending and
                 parentsVerified and
                 (meritSum >= merit.state.nodeThresholdAt(consensus.statuses[tx].epoch))
               ) == consensus.statuses[tx].verified
@@ -779,7 +781,6 @@ suite "ConsensusRevert":
           var verif: SignedVerification = newSignedVerificationObj(tx)
           holders[h].sign(verif)
           consensus.add(merit.state, verif)
-          transactionsWithPending = transactions.discoverUnorderedTree(tx, transactionsWithPending)
 
     #Backup the pending statuses.
     for tx in consensus.statuses.keys():

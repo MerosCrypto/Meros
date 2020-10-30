@@ -30,6 +30,7 @@ type
   MaliciousMeritHolder* = object of CatchableError #Used when a MeritHolder commits a malicious act against the network.
     #MeritRemoval or pair Element, depending on where it's used in the codebase.
     element*: Element
+  UnfinalizedParents* = object of CatchableError #Status used when we try to finalize a family which relies on another.
 
   #Database/Merit Statuses.
   NotInEpochs*   = object of CatchableError #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.

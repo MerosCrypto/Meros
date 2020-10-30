@@ -3,7 +3,7 @@
 from typing import Dict, List, Any
 import json
 
-#from pytest import raises
+from pytest import raises
 
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Consensus.Verification import SignedVerification
@@ -36,19 +36,19 @@ def PruneUnaddableTest(
       rpc.call("transactions", "getTransaction", [data.hash.hex()])
       rpc.call("consensus", "getStatus", [data.hash.hex()])
 
-  #def verifyPruned() -> None:
-  #  for data in datas[2:]:
-  #    with raises(TestError):
-  #      rpc.call("transactions", "getTransaction", [data.hash.hex()])
-  #    with raises(TestError):
-  #      rpc.call("consensus", "getStatus", [data.hash.hex()])
+  def verifyPruned() -> None:
+    for data in datas[2:]:
+      with raises(TestError):
+        rpc.call("transactions", "getTransaction", [data.hash.hex()])
+      with raises(TestError):
+        rpc.call("consensus", "getStatus", [data.hash.hex()])
 
   Liver(
     rpc,
     vectors["blockchain"],
     callbacks={
       1: sendDatas,
-      2: verifyAdded
+      2: verifyAdded,
+      7: verifyPruned
     }
   ).live()
-  #   7: verifyPruned

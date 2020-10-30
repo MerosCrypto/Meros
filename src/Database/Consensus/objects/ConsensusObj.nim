@@ -1,4 +1,4 @@
-import sets, tables
+import algorithm, sets, tables
 
 import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
@@ -273,6 +273,7 @@ proc calculateMeritSingle(
       panic("Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
 
     #Mark the Transaction as verified.
+    logInfo "Verified Transaction", hash = tx.hash
     status.verified = true
     consensus.db.save(tx.hash, status)
     consensus.functions.transactions.verify(tx.hash)
@@ -325,14 +326,10 @@ proc calculateMerit*(
       panic("Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
     wasVerified = status.verified
 
-
-    #[
-    If we're finalizing the Transaction, use the protocol threshold.
-    This will change in the future.
-    The protocol 'threshold' is whatever transaction has the most Merit out of all that spend an input.
-    ]#
+    #If we're finalizing the transaction, the best transaction wins.
+    #The below function ensures only the best TX gets passed here.
     if status.merit != -1:
-      threshold = state.protocolThreshold()
+      threshold = 0
     #Grab the node's threshold.
     else:
       threshold = state.nodeThresholdAt(status.epoch)
@@ -392,7 +389,7 @@ proc unverify*(
       continue
 
     #Since this child was verified, unverify it and grab its children.
-    logWarn "Unverified Transaction", tx = child
+    logWarn "Unverified Transaction", hash = child
     childStatus.verified = false
     consensus.db.save(child, childStatus)
 
@@ -405,98 +402,188 @@ proc unverify*(
     #Notify the Transactions DAG about the unverification.
     consensus.functions.transactions.unverify(child)
 
-#Finalize a TransactionStatus.
+#Finalize a family.
 proc finalize*(
   consensus: var Consensus,
   state: State,
-  hash: Hash[256]
-) {.forceCheck: [].} =
-  #Get the Transaction/Status.
-  var
+  inputs: HashSet[Input],
+  family: seq[Hash[256]],
+  cyclical: bool = false
+) {.forceCheck: [
+  UnfinalizedParents
+].} =
+  if not cyclical:
+    #Check the inputs are finalized.
+    for input in inputs:
+      if (input.hash == Hash[256]()) or (input.hash == consensus.genesis):
+        continue
+
+      try:
+        if consensus.getStatus(input.hash).merit == -1:
+          raise newException(UnfinalizedParents, "Family requires another family to finalize first.")
+      except IndexError as e:
+        #This would generally be a panic, yet there is a single case where it isn't.
+        #If this input is a Mint, it won't have a status.
+        try:
+          if not (consensus.functions.transactions.getTransaction(input.hash) of Mint):
+            panic("Couldn't get the status of an input of a Transaction we're finalizing: " & e.msg)
+        except IndexError as e:
+          panic("Couldn't get a Transaction which is an input of a Transaction we're finalizing: " & e.msg)
+
+  type FinalizableTransaction = object
     tx: Transaction
     status: TransactionStatus
-  try:
-    tx = consensus.functions.transactions.getTransaction(hash)
-    status = consensus.getStatus(hash)
-  except IndexError as e:
-    panic("Couldn't get either the Transaction we're finalizing or its Status: " & e.msg)
+  var txs: seq[FinalizableTransaction] = @[]
 
-  #If it doesn't have any archived holders, make sure it's not verified and prune it.
-  if status.holders.len == status.pending.len:
-    if status.verified:
-      consensus.unverify(hash, status)
+  #Grab each TX and calculate their Merit.
+  for i in 0 ..< family.len:
+    var status: TransactionStatus
+    try:
+      txs.add(FinalizableTransaction(
+        tx: consensus.functions.transactions.getTransaction(family[i])
+      ))
+      status = consensus.getStatus(family[i])
+    except IndexError as e:
+      panic("Couldn't get the status of a Transaction (or the Transaction itself) we're finalizing: " & e.msg)
 
-    var
-      #Discover the tree.
-      tree: seq[Hash[256]] = consensus.functions.transactions.discoverTree(hash)
-      #Create a set of pruned Transactions as the tree can easily have duplicates.
-      pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+    #If this transaction was never mentioned on chain, prune it.
+    #Happens when competitors occur yet only a subset is verified.
+    if status.holders.len == status.pending.len:
+      if status.verified:
+        logWarn "Unverifying due to never being mentioned on chain", hash = txs[^1].tx.hash
+        consensus.unverify(txs[^1].tx.hash, status)
 
-    #Prune the tree.
-    for h in countdown(tree.len - 1, 0):
-      if pruned.contains(tree[h]):
-        continue
-      pruned.incl(tree[h])
+      var
+        #Discover the tree.
+        tree: seq[Hash[256]] = consensus.functions.transactions.discoverTree(txs[^1].tx.hash)
+        #Create a set of pruned Transactions as the tree can easily have duplicates.
+        pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
 
-      #Remove the Transaction from RAM.
-      consensus.statuses.del(tree[h])
-      consensus.unmentioned.excl(tree[h])
-      #Removes from the DB's copy of unmentioned.
-      consensus.db.mention(tree[h])
-      consensus.close.excl(tree[h])
+      #Prune the tree.
+      for h in countdown(tree.len - 1, 0):
+        if pruned.contains(tree[h]):
+          continue
+        pruned.incl(tree[h])
 
-      #Remove the Transaction from the Database.
-      consensus.db.prune(tree[h])
-      consensus.functions.transactions.prune(tree[h])
+        #Remove the Transaction from RAM.
+        consensus.statuses.del(tree[h])
+        consensus.unmentioned.excl(tree[h])
+        #Removes from the DB's copy of unmentioned.
+        consensus.db.mention(tree[h])
+        consensus.close.excl(tree[h])
 
-    return
+        #Remove the Transaction from the Database.
+        consensus.db.prune(tree[h])
+        consensus.functions.transactions.prune(tree[h])
 
-  #Calculate the final Merit tally.
-  status.merit = 0
-  for holder in status.holders:
-    #Only include holders on the Blockchain.
-    #This also allows holders marked as malicious, if their removal has yet to be archived.
-    if status.pending.contains(holder):
-      status.holders.excl(holder)
+      txs.del(txs.len - 1)
       continue
-    status.merit += state[holder, status.epoch]
+
+    #Calculate the final Merit tally.
+    status.merit = 0
+    for holder in status.holders:
+      #Only include holders on the Blockchain.
+      #This also allows holders marked as malicious, if their removal has yet to be archived.
+      if status.pending.contains(holder):
+        status.holders.excl(holder)
+        continue
+      status.merit += state[holder, status.epoch]
+
+    txs[^1].status = status
+
+  #Sort from highest Merit to lowest.
+  txs.sort(
+    proc (
+      a: FinalizableTransaction,
+      b: FinalizableTransaction
+    ): int =
+      if a.status.merit > b.status.merit:
+        result = 1
+      elif a.status.merit < b.status.merit:
+        result = -1
+      else:
+        if a.tx.hash < b.tx.hash:
+          result = 1
+        else:
+          result = -1
+    ,
+    SortOrder.Descending
+  )
 
   #[
-  If this Transaction was marked as verified, make sure it beats the protocol threshold.
-  As mentioned above, this is invalid.
-  The Transaction with the most Merit out of associated Transactions (Transactions which spend the same inputs) is verified.
-  If it's not actually verified, correct this.
+  Iterate.
+  If the transaction was verified or beaten, remove it.
+  If the parents aren't verified, continue.
   ]#
-  if (status.verified) and (status.merit < state.protocolThreshold()):
-    consensus.unverify(hash, status)
-  #If it wasn't verified, run calculateMerit.
-  elif not status.verified:
-    consensus.calculateMerit(state, hash, status)
+  var
+    used: HashSet[Input] = initHashSet[Input]()
+    toVerify: seq[FinalizableTransaction] = @[]
+    consideredVerified: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+  while txs.len != 0:
+    var
+      i: int = 0
+      lenAtStart: int = txs.len
+    while i < txs.len:
+      block thisTX:
+        var finalizable: FinalizableTransaction = txs[i]
+        for input in finalizable.tx.inputs:
+          if (finalizable.tx of Data) and ((input.hash == Hash[256]()) or (input.hash == consensus.genesis)):
+            continue
 
-  #Check if the Transaction was beaten, if it's not already marked as beaten.
-  #This happens when it wasn't verified, or for now, when no Transaction hits 50.1%.
-  if (not status.beaten) and (not status.verified):
-    for input in tx.inputs:
-      var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
-      for spender in spenders:
-        try:
-          if consensus.getStatus(spender).verified:
-            consensus.functions.transactions.beat(hash)
-            status.beaten = true
+          var
+            inputStatus: TransactionStatus
+            parentBeaten: bool = false
+          if not (finalizable.tx of Claim):
+            try:
+              inputStatus = consensus.getStatus(input.hash)
+            except IndexError as e:
+              panic("Couldn't get the status of an input of a Transaction we're finalizing: " & e.msg)
+            parentBeaten = inputStatus.beaten
 
-            #[
-            I am pretty sure we should mark all descendants as beaten here, yet we don't.
-            This seems like a missing case, which can be very problematic.
-            -- Kayaba
-            ]#
-        except IndexError as e:
-          panic("Couldn't get the Status of a competing Transaction: " & e.msg)
+          #This or parent was beaten.
+          if used.contains(input) or parentBeaten:
+            if finalizable.status.verified:
+              consensus.unverify(finalizable.tx.hash, finalizable.status)
+            consensus.functions.transactions.beat(finalizable.tx.hash)
+            finalizable.status.beaten = true
+            consensus.db.save(finalizable.tx.hash, finalizable.status)
+            consensus.statuses.del(finalizable.tx.hash)
+            txs.delete(i)
+            break thisTX
 
-  #Save the status.
-  #Saving it, now that it's finalized, will strip all pending/signature data.
-  #This will cause a double save for the finalized TX in the unverified case.
-  consensus.db.save(hash, status)
-  consensus.statuses.del(hash)
+          #Parent has yet to to have its status as verified/beaten checked due to sort ordering.
+          if not ((finalizable.tx of Claim) or inputStatus.verified or consideredVerified.contains(input.hash)):
+            break thisTX
+
+        for input in finalizable.tx.inputs:
+          used.incl(input)
+
+        #[
+        Mark for verification/finalization.
+        Verify and finalize.
+        We could call calculateMerit, and then have descendants be verified along the way.
+        The problem is a transaction can compete with its own descendant.
+        cM won't realize this, and will verify both.
+        This loop here SHOULD properly unverify the competitor (see DescendantHighestVerifiedParent for evidence).
+        That said, there is a temporary state where both are verified, before a warning about an unverification.
+        We could use calculateMeritSingle, yet that's inefficient.
+        This creation of a queue allows safe usage of cM.
+        ]#
+        toVerify.add(finalizable)
+        consideredVerified.incl(finalizable.tx.hash)
+        txs.delete(i)
+        continue
+
+      inc(i)
+
+    if lenAtStart == txs.len:
+      panic("Couldn't finalize the TXs remaining in this family.")
+
+  #Now that we've marked the beaten TXs as so, run the tree verifications.
+  for tx in toVerify:
+    consensus.calculateMerit(state, tx.tx.hash, tx.status)
+    consensus.db.save(tx.tx.hash, tx.status)
+    consensus.statuses.del(tx.tx.hash)
 
 #[
 Delete a TransactionStatus.
