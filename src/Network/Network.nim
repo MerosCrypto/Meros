@@ -1,5 +1,4 @@
 import tables
-import strutils
 
 import chronos
 

@@ -77,7 +77,3 @@ Every "Signed" object is the same as their non-"Signed" counterpart, except they
 - signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of element1 and element2, unless element1 was already archived on the Blockchain, in which case it's the signature of element2.
 
 Their message lengths are their non-"Signed" message length plus 48 bytes; the 48-byte signature which is appended to the end of the serialized non-"Signed" version.
-
-### Violations in Meros
-
-- Meros doesn't support defaulting.
