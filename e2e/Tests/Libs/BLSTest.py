@@ -1,5 +1,7 @@
 from e2e.Libs.BLS import PrivateKey, AggregationInfo
 
+from e2e.Tests.Errors import TestError
+
 #Basic sanity test.
 def BLSTest() -> None:
   key: PrivateKey = PrivateKey(0)

@@ -2,7 +2,7 @@ from typing import List, Tuple, Union, Any
 from ctypes import Array, c_char_p, c_char, create_string_buffer, byref
 from hashlib import blake2b, sha256
 
-from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, r
+from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, G1Obj, r
 from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
 
 from e2e.Libs.HashToCurve.BLSCurve import BLS12381G1Curve

@@ -1,6 +1,5 @@
 from typing import List, Tuple, Type, Any
-from ctypes import cdll, Structure, POINTER, c_int
-import os
+from ctypes import Structure, POINTER, c_int
 
 from e2e.Libs.Milagro.PrivateKeysAndSignatures import byref, Big384, FP1Obj, G1, MilagroCurve, MilagroPairing
 
