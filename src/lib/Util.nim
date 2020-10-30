@@ -4,6 +4,7 @@ import times
 import strutils
 export toHex, parseHexStr, parseHexInt, parseUInt
 
+import stint
 import nimcrypto
 
 #Manually import these to stop a recursive dependency.
@@ -33,6 +34,16 @@ func reverse*(
   result = newString(data.len)
   for i in 0 ..< data.len:
     result[data.len - 1 - i] = data[i]
+
+#Convert a StUInt to hex, pruning leading 0 bytes.
+func toShortHex*[bits: static int](
+  x: StUInt[bits]
+): string {.forceCheck: [].} =
+  var xArr: array[bits div 8, byte] = x.toByteArrayBE()
+  for b in 0 ..< 16:
+    if (result.len == 0) and (xArr[b] == 0):
+      continue
+    result &= xArr[b].toHex()
 
 #Converts a number to a binary string.
 func toBinary*(

@@ -4,6 +4,7 @@ import sequtils
 import sets, tables
 import json
 
+import objects/ReorganizationInfoObj
 import objects/GlobalFunctionBoxObj
 import objects/ConfigObj
 

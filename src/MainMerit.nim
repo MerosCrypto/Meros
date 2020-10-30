@@ -507,9 +507,9 @@ proc mainMerit(
 
         #If the last Block on its chains isn't our tail, this is a potentially a chain with more work.
         if lastCommonBlock != merit.blockchain.tail.header.hash:
-          var altHeaders: seq[BlockHeader]
+          var reorgInfo: ReorganizationInfo
           try:
-            altHeaders = await reorganize(
+            reorgInfo = await reorganize(
               database,
               merit[],
               consensus,
@@ -534,14 +534,30 @@ proc mainMerit(
             lockedBlock[] = Hash[256]()
             merit.blockchain.setCacheKeyAtHeight(merit.blockchain.height)
 
-          for header in altHeaders:
+          for header in reorgInfo.headers:
             try:
               await functions.merit.addBlockByHeaderInternal(header, true, innerBlockLock)
             except ValueError as e:
               logInfo "Reorganization failed", error = e.msg
+              reorgRecover(
+                database,
+                merit[],
+                consensus,
+                transactions,
+                lastCommonBlock,
+                reorgInfo
+              )
               raise e
             except DataMissing as e:
               logInfo "Reorganization failed", error = e.msg
+              reorgRecover(
+                database,
+                merit[],
+                consensus,
+                transactions,
+                lastCommonBlock,
+                reorgInfo
+              )
               raise e
             except DataExists as e:
               panic("Adding a missing Block before this alternate tail raised DataExists: " & e.msg)
