@@ -47,7 +47,6 @@ proc reorganize(
     panic("Couldn't load the last common Block: " & e.msg)
   difficulties = database.calculateDifficulties(merit.blockchain.genesis, lastHeader)
 
-
   #Update the RandomX cache key to what it was at the time.
   merit.blockchain.setCacheKeyAtHeight(lastCommonHeight)
   #Prepare the upcoming key, if it's relevant.
@@ -61,8 +60,8 @@ proc reorganize(
     except IndexError as e:
       panic("Failed to get the upcoming RandomX cache key: " & e.msg)
 
-  #The new work is defined as the work of every Block in the queue.
-  #The queue has every Block, including the new one being added, up to, but not including, the last common Block.
+  #The queue has every Block between the last common Block and the alternate tip (exclusive).
+  #The new work is therefore defined as the queue's work + the tail's.
   for h in countdown(high(queue), -1):
     #Update the last header, if this isn't the first iteration (which means there's no headers).
     if h != high(queue):
@@ -155,32 +154,35 @@ proc reorganize(
     newWorkArr: array[16, byte] = newWork.toByteArrayBE()
     newWorkStr: string
   for b in 0 ..< 16:
-    if (oldWorkArr[b] == 0) and (newWorkArr[b] == 0):
+    if (oldWorkStr.len == 0) and (oldWorkArr[b] == 0) and (newWorkArr[b] == 0):
       continue
     oldWorkStr &= oldWorkArr[b].toHex()
     newWorkStr &= newWorkArr[b].toHex()
 
   #If the new chain has more work, reorganize to it.
-  if (
-    (newWork > oldWork) or
-    ((newWork == oldWork) and (tail.hash < merit.blockchain.tail.header.hash))
-  ):
-    #The first step is to revert everything to a point it can be advanced again.
-    logInfo "Reorganizing", depth = merit.blockchain.height - lastCommonHeight, oldWork = oldWorkStr, newWork = newWorkStr
+  try:
+    if (
+      (newWork > oldWork) or
+      ((newWork == oldWork) and (result[0].hash < merit.blockchain[lastCommonHeight].header.hash))
+    ):
+      #The first step is to revert everything to a point it can be advanced again.
+      logInfo "Reorganizing", depth = merit.blockchain.height - lastCommonHeight, oldWork = oldWorkStr, newWork = newWorkStr
 
-    consensus[].revert(merit.blockchain, merit.state, transactions[], lastCommonHeight)
-    transactions[].revert(merit.blockchain, lastCommonHeight)
-    merit.revert(lastCommonHeight)
-    database.commit(merit.blockchain.height)
-    transactions[] = newTransactions(database, merit.blockchain)
-    consensus[].postRevert(merit.blockchain, merit.state, transactions[])
-    database.commit(merit.blockchain.height)
-    logInfo "Reverted"
+      consensus[].revert(merit.blockchain, merit.state, transactions[], lastCommonHeight)
+      transactions[].revert(merit.blockchain, lastCommonHeight)
+      merit.revert(lastCommonHeight)
+      database.commit(merit.blockchain.height)
+      transactions[] = newTransactions(database, merit.blockchain)
+      consensus[].postRevert(merit.blockchain, merit.state, transactions[])
+      database.commit(merit.blockchain.height)
+      logInfo "Reverted"
 
-    #We now return the headers so MainMerit adds the alternate Blocks.
-    #This is done implicitly via result.
-    #That said, the tail can't be returned as that's added via the function that called this.
-    result.del(high(result))
-  else:
-    logInfo "Not reorganizing", oldWork = oldWorkStr, newWork = newWorkStr
-    raise newException(NotEnoughWork, "Chain didn't have enough work to be worth reorganizing to.")
+      #We now return the headers so MainMerit adds the alternate Blocks.
+      #This is done implicitly via result.
+      #That said, the tail can't be returned as that's added via the function that called this.
+      result.del(high(result))
+    else:
+      logInfo "Not reorganizing", oldWork = oldWorkStr, newWork = newWorkStr
+      raise newException(NotEnoughWork, "Chain didn't have enough work to be worth reorganizing to.")
+  except IndexError as e:
+    panic("Couldn't get the fork Block on our current chain: " & e.msg)
