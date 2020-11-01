@@ -75,12 +75,12 @@ def ChainReorgDifferentKeyTest(
       b -= 1
     rpc.meros.blockList(blockList)
 
-    for b in range(391, 400):
-      if rpc.meros.sync.recv() != (MessageType.BlockHeaderRequest.toByte() + main.blocks[b].header.hash):
-        raise TestError("Meros didn't request the BlockHeader.")
-      rpc.meros.syncBlockHeader(main.blocks[b].header)
-
     for b in range(391, 401):
+      if b != 400:
+        if rpc.meros.sync.recv() != (MessageType.BlockHeaderRequest.toByte() + main.blocks[b].header.hash):
+          raise TestError("Meros didn't request the BlockHeader.")
+        rpc.meros.syncBlockHeader(main.blocks[b].header)
+
       if rpc.meros.sync.recv() != (MessageType.BlockBodyRequest.toByte() + main.blocks[b].header.hash):
         raise TestError("Meros didn't request the BlockBody.")
       rpc.meros.blockBody(main.blocks[b])
