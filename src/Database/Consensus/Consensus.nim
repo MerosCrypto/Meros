@@ -308,14 +308,6 @@ proc register*(
     )
   ):
     for input in tx.inputs:
-      #Check if this Transaction's parent was beaten.
-      try:
-        if (not status.beaten) and (consensus.getStatus(input.hash).beaten):
-          consensus.functions.transactions.beat(tx.hash)
-          status.beaten = true
-      except IndexError:
-        panic("Parent Transaction doesn't have a status.")
-
       #Check for competing Transactions.
       var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
       if (spenders.len != 1) and (input.hash != Hash[256]()):
@@ -435,6 +427,10 @@ proc add*(
     status = consensus.getStatus(verif.hash)
   except IndexError:
     panic("SignedVerification added for a Transaction which was not registered.")
+
+  #Make sure the Transaction isn't beaten.
+  if status.beaten:
+    raise newLoggedException(ValueError, "Verification is for a beaten Transaction.")
 
   #Add the Verification.
   try:

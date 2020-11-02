@@ -82,6 +82,11 @@ type
       hash: Hash[256]
     ): seq[Hash[256]] {.gcsafe, raises: [].}
 
+    discoverUnorderedTree*: proc (
+      hash: Hash[256],
+      discovered: HashSet[Hash[256]]
+    ): HashSet[Hash[256]] {.gcsafe, raises: [].}
+
     prune*: proc (
       hash: Hash[256]
     ) {.gcsafe, raises: [].}

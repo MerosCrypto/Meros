@@ -66,11 +66,12 @@ proc module*(
             merit += functions.merit.getMerit(holder, status.epoch)
 
         res["result"] = %* {
-          "verifiers":  verifiers,
-          "merit":    merit,
-          "threshold":  functions.consensus.getThreshold(status.epoch),
-          "verified":   status.verified,
-          "competing":  status.competing
+          "verifiers": verifiers,
+          "merit":     merit,
+          "threshold": functions.consensus.getThreshold(status.epoch),
+          "verified":  status.verified,
+          "competing": status.competing,
+          "beaten":    status.beaten
         }
   except Exception as e:
     panic("Couldn't create the Consensus Module: " & e.msg)

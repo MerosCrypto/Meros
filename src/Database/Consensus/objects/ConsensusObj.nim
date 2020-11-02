@@ -230,12 +230,11 @@ proc calculateMeritSingle(
   #[
   If the Transaction is:
   - Already verified
-  - Impossible to verify as a conflicting transaction won
   - Conflicting, and therefore needing to default
   Return. The only point in calculating this Merit is to verify when it gets enough Verifications.
   #So if it shouldn't be verified...
   ]#
-  if status.verified or status.beaten or (status.competing and status.merit == -1):
+  if status.verified or (status.competing and status.merit == -1):
     return
 
   #Calculate Merit, if needed.
@@ -519,6 +518,7 @@ proc finalize*(
     used: HashSet[Input] = initHashSet[Input]()
     toVerify: seq[FinalizableTransaction] = @[]
     consideredVerified: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+    beatenAlready: HashSet[Hash[256]] = initHashSet[Hash[256]]()
   while txs.len != 0:
     var
       i: int = 0
@@ -526,10 +526,18 @@ proc finalize*(
     while i < txs.len:
       block thisTX:
         var finalizable: FinalizableTransaction = txs[i]
+        if beatenAlready.contains(finalizable.tx.hash) or finalizable.status.beaten:
+          consensus.statuses.del(finalizable.tx.hash)
+          txs.delete(i)
+          continue
+
         for input in finalizable.tx.inputs:
           if (finalizable.tx of Data) and ((input.hash == Hash[256]()) or (input.hash == consensus.genesis)):
             continue
 
+          #With the recent changes to the beaten field, this may be rewritable to finalizable.status.beaten.
+          #Any parent beaten should cascade. That said, this manages a reference, and we consistently load/save from/to the DB.
+          #It's the safer option to do a parent check, even though it's potentially more inefficient.
           var
             inputStatus: TransactionStatus
             parentBeaten: bool = false
@@ -542,11 +550,52 @@ proc finalize*(
 
           #This or parent was beaten.
           if used.contains(input) or parentBeaten:
-            if finalizable.status.verified:
-              consensus.unverify(finalizable.tx.hash, finalizable.status)
-            consensus.functions.transactions.beat(finalizable.tx.hash)
-            finalizable.status.beaten = true
-            consensus.db.save(finalizable.tx.hash, finalizable.status)
+            var toBeat: HashSet[Hash[256]] = consensus.functions.transactions.discoverUnorderedTree(finalizable.tx.hash, initHashSet[Hash[256]]())
+            for hash in toBeat:
+              #Needed for when a Transaction is finalizing with its descendant, and the parent is beaten.
+              if beatenAlready.contains(hash):
+                continue
+
+              var status: TransactionStatus
+              if hash == finalizable.tx.hash:
+                status = finalizable.status
+              else:
+                try:
+                  status = consensus.getStatus(hash)
+                except IndexError as e:
+                  panic("Couldn't get the status of a descendant of a Transaction we're finalizing: " & e.msg)
+
+              if status.verified:
+                consensus.unverify(hash, status)
+              consensus.functions.transactions.beat(hash)
+              status.beaten = true
+
+              #Clear any pending Verifications.
+              if status.holders.len != status.pending.len:
+                status.holders = status.holders - status.pending
+                status.pending = initHashSet[uint16]()
+                status.packet = newSignedVerificationPacketObj(status.packet.hash)
+                status.signatures = initTable[uint16, BLSSignature]()
+
+              #If this Transaction only had pending Verifications, prune it.
+              if status.holders.len == 0:
+                var
+                  tree: seq[Hash[256]] = consensus.functions.transactions.discoverTree(hash)
+                  pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+                for h in countdown(tree.len - 1, 0):
+                  if pruned.contains(tree[h]):
+                    continue
+                  pruned.incl(tree[h])
+                  consensus.statuses.del(tree[h])
+                  consensus.unmentioned.excl(tree[h])
+                  consensus.db.mention(tree[h])
+                  consensus.close.excl(tree[h])
+                  consensus.db.prune(tree[h])
+                  consensus.functions.transactions.prune(tree[h])
+
+              consensus.db.save(hash, status)
+            beatenAlready = beatenAlready + toBeat
+
             consensus.statuses.del(finalizable.tx.hash)
             txs.delete(i)
             break thisTX

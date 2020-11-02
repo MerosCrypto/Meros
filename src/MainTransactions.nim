@@ -291,6 +291,12 @@ proc mainTransactions(
   ): seq[Hash[256]] {.forceCheck: [].} =
     transactions[].discoverTree(hash)
 
+  functions.transactions.discoverUnorderedTree = proc (
+    hash: Hash[256],
+    discovered: HashSet[Hash[256]]
+  ): HashSet[Hash[256]] {.forceCheck: [].} =
+    transactions[].discoverUnorderedTree(hash, discovered)
+
   functions.transactions.prune = proc (
     hash: Hash[256]
   ) {.forceCheck: [].} =

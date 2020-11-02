@@ -300,6 +300,15 @@ proc sync*(
       discard manager.functions.transactions.getTransaction(packet.hash)
     except IndexError:
       missingTXs.add(packet.hash)
+      continue
+
+    #Also check if this packet is for a beaten Transaction.
+    #If so, raise.
+    try:
+      if manager.functions.consensus.getStatus(packet.hash).beaten:
+        raise newLoggedException(ValueError, "Block tries to archive Verifications for beaten Transactions.")
+    except IndexError as e:
+      panic("Couldn't get the status for a Transaction we have: " & e.msg)
 
   #Sync the missing Transactions.
   if missingTXs.len != 0:
