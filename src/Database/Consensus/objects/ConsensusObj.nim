@@ -234,7 +234,7 @@ proc calculateMeritSingle(
   Return. The only point in calculating this Merit is to verify when it gets enough Verifications.
   #So if it shouldn't be verified...
   ]#
-  if status.verified or (status.competing and status.merit == -1):
+  if status.verified or status.beaten or (status.competing and status.merit == -1):
     return
 
   #Calculate Merit, if needed.
