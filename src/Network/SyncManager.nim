@@ -1,5 +1,4 @@
 import algorithm
-import strutils
 import sets, tables
 
 import chronos
@@ -580,7 +579,6 @@ proc syncBlockHeaderWithoutHashing*(
 #Sync a missing BlockList.
 proc syncBlockList*(
   manager: SyncManager,
-  forwards: bool,
   amount: int,
   hash: Hash[256]
 ): SyncFuture[seq[Hash[256]]] {.forceCheck: [].} =
@@ -588,7 +586,7 @@ proc syncBlockList*(
   var id: int = manager.id
   inc(manager.id)
 
-  logDebug "Syncing Block List", id = id, forwards = forwards, amount = amount
+  logDebug "Syncing Block List", id = id, amount = amount
 
   #Create the future.
   result = newSyncFuture[seq[Hash[256]]](
@@ -599,7 +597,7 @@ proc syncBlockList*(
   )
 
   #Create the request and register it.
-  var request: BlockListSyncRequest = result.future.newBlockListSyncRequest(forwards, amount, hash)
+  var request: BlockListSyncRequest = result.future.newBlockListSyncRequest(amount, hash)
   manager.requests[id] = request
 
   #Send the request to every peer.

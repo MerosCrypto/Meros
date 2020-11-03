@@ -34,21 +34,14 @@ def HundredTwentyFourTest(
 
       msg: bytes = rpc.meros.sync.recv()
       if MessageType(msg[0]) == MessageType.BlockListRequest:
-        reqHash = msg[3 : 35]
+        reqHash = msg[-32:]
         for b in range(len(blockchain.blocks)):
           if blockchain.blocks[b].header.hash == reqHash:
             blockList: List[bytes] = []
             for bl in range(1, msg[2] + 2):
-              if msg[1] == 0:
-                if b - bl < 0:
-                  break
-                blockList.append(blockchain.blocks[b - bl].header.hash)
-
-              elif msg[1] == 1:
-                blockList.append(blockchain.blocks[b + bl].header.hash)
-
-              else:
-                raise TestError("Meros asked for an invalid direction in a BlockListRequest.")
+              if b - bl < 0:
+                break
+              blockList.append(blockchain.blocks[b - bl].header.hash)
 
             if blockList == []:
               rpc.meros.dataMissing()

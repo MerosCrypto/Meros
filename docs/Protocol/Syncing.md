@@ -6,7 +6,7 @@
 
 ### BlockListRequest and BlockList
 
-`BlockListRequest` has a message length of 34 bytes; 1-byte of 0, to request Blocks before the specified Block, or 1 to request Blocks after the specified Block, 1-byte quantity (where the quantity is the byte's value plus one), and the 32-byte hash of the Block to work off of. The expected response is a `BlockList` containing the Blocks before/after the specified Block. The amount of hashes provided by `BlockList` may be less than the amount requested if the genesis Block or the tail Block is reached. `BlockList` has a variable message length; the 1-byte quantity (where the quantity is the byte's value plus one) and each 32-byte hash. If there are no Blocks before/after the specified Block (depending on the requested direction), the syncee sends `DataMissing`.
+`BlockListRequest` has a message length of 33 bytes; the 1-byte quantity (where the quantity requested is the byte's value plus one) and a Block's 32-byte hash. The expected response is a `BlockList` containing the hashes of the Blocks before the specified Block. The amount of hashes provided by `BlockList` will be less than the amount requested if the Block before the genesis Block is requested. `BlockList` has a variable message length; the 1-byte quantity (where the quantity is the byte's value plus one) and each 32-byte hash. If the specified Block is either the genesis Block or unknown, the syncee sends `DataMissing`.
 
 ### CheckpointRequest
 
@@ -38,5 +38,4 @@
 
 ### Violations in Meros
 
-- Meros doesn't support the `BlockListRequest` forwards mode.
 - Meros doesn't support the `CheckpointRequest` message type.

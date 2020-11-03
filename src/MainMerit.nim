@@ -53,11 +53,6 @@ proc mainMerit(
     if result == merit.blockchain.genesis:
       raise newLoggedException(IndexError, "Requested the hash of the Block before the genesis.")
 
-  functions.merit.getBlockHashAfter = proc (
-    hash: Hash[256]
-  ): Hash[256] {.forceCheck: [].} =
-    discard
-
   functions.merit.getDifficulty = proc (): uint64 {.forceCheck: [].} =
     merit.blockchain.difficulties[^1]
 
@@ -462,6 +457,9 @@ proc mainMerit(
       #Sync previous Blocks if this header isn't connected.
       if merit.blockchain.tail.header.hash != header.last:
         var
+          #This, at max, can be 256.
+          #Not a constant so this can be tuned at runtime.
+          #Either via a config or via an idea of how far off we may be (timestamping),
           increment: int = 32
           queue: seq[Hash[256]] = @[header.last]
           #Malformed size used for the first loop iteration.
@@ -473,11 +471,10 @@ proc mainMerit(
         #Only in this first case do we need info about the preceding blocks.
         if not merit.blockchain.hasBlock(header.last):
           while not merit.blockchain.hasBlock(queue[^1]):
-            #If we ran out of Blocks, raise.
-            #The only three cases we run out of Blocks are:
-            #A) We synced forwards. We didn't.
-            #B) Their genesis doesn't match our genesis.
-            #C) Our peer is an idiot.
+            #If we ran out of Blocks, the other node cut us off prematurely.
+            #We should have, in the most extreme case, been cut off when we hit the genesis.
+            #We have code to detect that and handle the edge case.
+            #If we didn't hit the genesis, yet did get cut off, we have different genesis Blocks.
             if queue.len != size + increment:
               raise newLoggedException(ValueError, "Blockchain has a different genesis.")
 
@@ -486,7 +483,7 @@ proc mainMerit(
 
             #Get the list of Blocks before this Block.
             try:
-              queue &= await syncAwait network.syncManager.syncBlockList(false, increment, queue[^1])
+              queue &= await syncAwait network.syncManager.syncBlockList(increment, queue[^1])
             except DataMissing as e:
               #This should only be raised if:
               #A) The requested Block is unknown.

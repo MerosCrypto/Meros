@@ -60,14 +60,12 @@ proc newPeersSyncRequest*(
 
 proc newBlockListSyncRequest*(
   future: Future[seq[Hash[256]]],
-  forwards: bool,
   amount: int,
   hash: Hash[256]
 ): BlockListSyncRequest {.inline, forceCheck: [].} =
   BlockListSyncRequest(
     msg: newMessage(
       MessageType.BlockListRequest,
-      (if forwards: char(1) else: char(0)) &
       char(amount - 1) &
       hash.serialize()
     ),

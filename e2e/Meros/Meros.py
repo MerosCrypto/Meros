@@ -90,7 +90,7 @@ sync_lengths: Dict[MessageType, List[int]] = {
 
   MessageType.PeersRequest:     [],
   MessageType.Peers:            live_lengths[MessageType.Busy],
-  MessageType.BlockListRequest: [34],
+  MessageType.BlockListRequest: [33],
   MessageType.BlockList:        [1, -32, 32],
 
   MessageType.BlockHeaderRequest:  [32],

@@ -317,25 +317,14 @@ proc handle*(
         of MessageType.BlockListRequest:
           var
             list: string = ""
-            last: Hash[256] = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN + HASH_LEN].toHash[:256]()
+            last: Hash[256] = msg.message[BYTE_LEN ..< BYTE_LEN + HASH_LEN].toHash[:256]()
             i: int = -1
 
           try:
-            #Backwards.
-            if int(msg.message[0]) == 0:
-              while i < int(msg.message[1]):
-                last = manager.functions.merit.getBlockHashBefore(last)
-                list &= last.serialize()
-                inc(i)
-            #Forwards.
-            elif int(msg.message[0]) == 1:
-              while i < int(msg.message[1]):
-                last = manager.functions.merit.getBlockHashAfter(last)
-                list &= last.serialize()
-                inc(i)
-            else:
-              peer.close("Peer requested an invalid BlockList direction.")
-              return
+            while i < int(msg.message[0]):
+              last = manager.functions.merit.getBlockHashBefore(last)
+              list &= last.serialize()
+              inc(i)
           except IndexError:
             discard
 

@@ -77,30 +77,19 @@ class Syncer:
       msg: bytes = self.rpc.meros.sync.recv()
 
       if MessageType(msg[0]) == MessageType.BlockListRequest:
-        reqHash = msg[3 : 35]
+        reqHash = msg[-32:]
         for b in range(len(self.merit.blockchain.blocks)):
           if self.merit.blockchain.blocks[b].header.hash == reqHash:
             if self.blocks[-1].header.hash != reqHash:
               self.blocks.append(self.merit.blockchain.blocks[b])
             blockList: List[bytes] = []
-            for bl in range(1, msg[2] + 2):
-              if msg[1] == 0:
-                if b - bl < 0:
-                  break
+            for bl in range(1, msg[1] + 2):
+              if b - bl < 0:
+                break
 
-                blockList.append(self.merit.blockchain.blocks[b - bl].header.hash)
-                if b - bl != 0:
-                  self.blocks.append(self.merit.blockchain.blocks[b - bl])
-
-              elif msg[1] == 1:
-                if b + bl > self.settings["height"]:
-                  break
-
-                blockList.append(self.merit.blockchain.blocks[b + bl].header.hash)
-                self.blocks.append(self.merit.blockchain.blocks[b + bl])
-
-              else:
-                raise TestError("Meros asked for an invalid direction in a BlockListRequest.")
+              blockList.append(self.merit.blockchain.blocks[b - bl].header.hash)
+              if b - bl != 0:
+                self.blocks.append(self.merit.blockchain.blocks[b - bl])
 
             if blockList == []:
               self.rpc.meros.dataMissing()

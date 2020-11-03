@@ -82,7 +82,7 @@ const
 
     MessageType.PeersRequest:     @[],
     MessageType.Peers:            LIVE_LENS[MessageType.Busy],
-    MessageType.BlockListRequest: @[BYTE_LEN + BYTE_LEN + HASH_LEN],
+    MessageType.BlockListRequest: @[BYTE_LEN + HASH_LEN],
     MessageType.BlockList:        @[BYTE_LEN, -HASH_LEN, HASH_LEN],
 
     MessageType.BlockHeaderRequest:  @[HASH_LEN],

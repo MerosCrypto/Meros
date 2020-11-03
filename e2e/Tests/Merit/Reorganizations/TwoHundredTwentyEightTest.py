@@ -36,7 +36,7 @@ def TwoHundredTwentyEightTest(
     req = rpc.meros.sync.recv()
     if MessageType(req[0]) != MessageType.BlockListRequest:
       raise TestError("Meros didn't request the list of previous BlockHeaders.")
-    if req[3 : 35] != alt.blocks[-2].header.hash:
+    if req[-32:] != alt.blocks[-2].header.hash:
       raise TestError("Meros didn't request the list of previous BlockHeaders for THIS header.")
 
     blockList: List[bytes] = []

@@ -174,12 +174,6 @@ type
       IndexError
     ].}
 
-    getBlockHashAfter*: proc (
-      hash: Hash[256]
-    ): Hash[256] {.gcsafe, raises: [
-      IndexError
-    ].}
-
     getDifficulty*: proc (): uint64 {.gcsafe, raises: [].}
 
     getBlockByNonce*: proc (
