@@ -331,6 +331,40 @@ proc register*(
   #Mark the Transaction as unmentioned.
   consensus.setUnmentioned(tx.hash)
 
+#Check if a Verification for a Transaction causes a MeritRemoval.
+proc checkMaliciousVerification*(
+  consensus: Consensus,
+  holder: uint16,
+  txHash: Hash[256]
+): tuple[malicious: bool, other: TransactionStatus] {.forceCheck: [].} =
+  var tx: Transaction = consensus.functions.getTransaction(txHash)
+
+  #Initial/Block Datas.
+  if (
+    (tx of Data) and
+    (
+      (tx.inputs[0].hash == consensus.genesis) or
+      (tx.inputs[0].hash == Hash[256]())
+    )
+  ):
+    return
+
+  for input in tx.inputs:
+    var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
+    for spender in spenders:
+      if spender == verif.hash:
+        continue
+
+      #Get the spender's status.
+      var status: TransactionStatus
+      try:
+        status = consensus.getStatus(spender)
+      except IndexError as e:
+        panic("Couldn't get the status of a Transaction: " & e.msg)
+
+      if status.holders.contains(verif.holder):
+        return (true, status)
+
 #Add a VerificationPacket.
 proc add*(
   consensus: var Consensus,
@@ -386,40 +420,30 @@ proc add*(
   except IndexError:
     raise newLoggedException(DataMissing, "Unknown Verification.")
 
-  #Check if this holder verified a competing Transaction.
-  if not ((tx of Data) and (tx.inputs[0].hash == consensus.genesis)):
-    for input in tx.inputs:
-      var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
-      for spender in spenders:
-        if spender == verif.hash:
-          continue
-
-        #Get the spender's status.
-        var status: TransactionStatus
-        try:
-          status = consensus.getStatus(spender)
-        except IndexError as e:
-          panic("Couldn't get the status of a Transaction: " & e.msg)
-
-        if status.holders.contains(verif.holder):
-          try:
-            var partial: bool = not status.signatures.hasKey(verif.holder)
-            raise newMaliciousMeritHolder(
-              "Verifier verified competing Transactions.",
-              newSignedMeritRemoval(
-                verif.holder,
-                partial,
-                newVerificationObj(spender),
-                verif,
-                if partial:
-                  verif.signature
-                else:
-                  @[status.signatures[verif.holder], verif.signature].aggregate()
-                , state.holders
-              )
-            )
-          except KeyError as e:
-            panic("Couldn't get a holder's unarchived Verification signature: " & e.msg)
+  var potentialRemoval: tuple[
+    malicious: bool,
+    other: TransactionStatus
+  ] = consensus.checkMaliciousVerification(verif.holder, verif.hash)
+  if potentialRemoval.malicious:
+    try:
+      var partial: bool = not potentialRemoval.other.signatures.hasKey(verif.holder)
+      raise newMaliciousMeritHolder(
+        "Verifier verified competing Transactions.",
+        newSignedMeritRemoval(
+          verif.holder,
+          partial,
+          newVerificationObj(other.packet.hash),
+          verif,
+          if partial:
+            verif.signature
+          else:
+            @[potentialRemoval.other.signatures[verif.holder], verif.signature].aggregate()
+          ,
+          state.holders
+        )
+      )
+    except KeyError as e:
+      panic("Couldn't get a holder's unarchived Verification signature: " & e.msg)
 
   #Get the status.
   var status: TransactionStatus
