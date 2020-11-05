@@ -41,6 +41,8 @@ proc parseBlockBody*(
     except ValueError as e:
       raise e
     i += pbeResult.len
+    if pbeResult.element of MeritRemoval:
+      raise newLoggedException(ValueError, "Block Body contained a Merit Removal; these are no longer valid. See https://github.com/MerosCrypto/Meros/issues/252.")
     elements.add(pbeResult.element)
 
   if bodyStr.len < i + BLS_SIGNATURE_LEN:

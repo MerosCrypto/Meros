@@ -49,17 +49,6 @@ proc `%**`(
       result["nonce"] = % dataDiff.nonce
       result["difficulty"] = % dataDiff.difficulty
 
-    of MeritRemovalVerificationPacket as packet:
-      result["descendant"] = % "VerificationPacket"
-
-      result["hash"] = % $packet.hash
-      result["holders"] = % []
-      for holder in packet.holders:
-        try:
-          result["holders"].add(% $holder)
-        except KeyError as e:
-          panic("Couldn't add a holder to a VerificationPacket's JSON representation despite declaring an array for the holders: " & e.msg)
-
     of MeritRemoval as mr:
       result["descendant"] = % "MeritRemoval"
 
@@ -94,19 +83,19 @@ proc `%`(
   result = %* {
     "hash":   $blockArg.header.hash,
     "header": {
-      "version":   blockArg.header.version,
-      "last":    $blockArg.header.last,
-      "contents":  $blockArg.header.contents,
+      "version":      blockArg.header.version,
+      "last":         $blockArg.header.last,
+      "contents":     $blockArg.header.contents,
 
       "significant":  blockArg.header.significant,
       "sketchSalt":   blockArg.header.sketchSalt.toHex(),
       "sketchCheck":  $blockArg.header.sketchCheck,
 
-      "time":    blockArg.header.time,
-      "proof":   blockArg.header.proof,
-      "signature": $blockArg.header.signature
+      "time":         blockArg.header.time,
+      "proof":        blockArg.header.proof,
+      "signature":    $blockArg.header.signature
     },
-    "aggregate": $blockArg.body.aggregate
+    "aggregate":      $blockArg.body.aggregate
   }
 
   #Add the miner to the header.

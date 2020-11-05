@@ -41,8 +41,6 @@ proc parseMeritRemovalElement(
     case int(data[i]):
       of VERIFICATION_PREFIX:
         result.element = parseVerification(holder & data[i + 1 ..< i + result.len])
-      of VERIFICATION_PACKET_PREFIX:
-        result.element = parseMeritRemovalVerificationPacket(data[i + 1 ..< i + result.len])
       of SEND_DIFFICULTY_PREFIX:
         result.element = parseSendDifficulty(holder & data[i + 1 ..< i + result.len])
       of DATA_DIFFICULTY_PREFIX:

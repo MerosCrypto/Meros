@@ -6,17 +6,6 @@ import Verification
 import objects/VerificationPacketObj
 export VerificationPacketObj
 
-#Convert a VerificationPacket to a MeritRemovalVerificationPacket.
-#VerificationPackets use the holder's nickname.
-#MRVPs use the holder's keys. That's why this requires the lookup
-proc toMeritRemovalVerificationPacket*(
-  packet: VerificationPacket,
-  lookup: seq[BLSPublicKey]
-): MeritRemovalVerificationPacket {.forceCheck: [].} =
-  result = newMeritRemovalVerificationPacketObj(packet.hash)
-  for holder in packet.holders:
-    result.holders.add(lookup[holder])
-
 proc add*(
   packet: VerificationPacket,
   verif: Verification

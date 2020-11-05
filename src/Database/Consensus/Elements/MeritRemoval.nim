@@ -17,12 +17,7 @@ import ../../../Network/Serialize/Consensus/[
 proc hashForMeritRemovalReason*(
   elem: Element
 ): Hash[256] {.forceCheck: [].} =
-  if elem of MeritRemovalVerificationPacket:
-    result = Blake256(
-      cast[MeritRemovalVerificationPacket](elem).serializeAsVerificationWithoutHolder()
-    )
-  else:
-    result = Blake256(elem.serializeWithoutHolder())
+  result = Blake256(elem.serializeWithoutHolder())
 
 #Calculate a hash representing the reason for a MeritRemoval.
 #By making sure every Merit Removal
@@ -48,18 +43,9 @@ proc calculateMeritRemovalReason*(
 proc newMeritRemoval*(
   nick: uint16,
   partial: bool,
-  e1Arg: Element,
-  e2Arg: Element,
-  lookup: seq[BLSPublicKey]
+  e1: Element,
+  e2: Element
 ): MeritRemoval {.forceCheck: [].} =
-  var
-    e1: Element = e1Arg
-    e2: Element = e2Arg
-  if e1 of VerificationPacket:
-    e1 = cast[VerificationPacket](e1).toMeritRemovalVerificationPacket(lookup)
-  if e2 of VerificationPacket:
-    e2 = cast[VerificationPacket](e2).toMeritRemovalVerificationPacket(lookup)
-
   result = newMeritRemovalObj(
     nick,
     partial,
@@ -71,19 +57,10 @@ proc newMeritRemoval*(
 proc newSignedMeritRemoval*(
   nick: uint16,
   partial: bool,
-  e1Arg: Element,
-  e2Arg: Element,
-  signature: BLSSignature,
-  lookup: seq[BLSPublicKey]
+  e1: Element,
+  e2: Element,
+  signature: BLSSignature
 ): SignedMeritRemoval {.inline, forceCheck: [].} =
-  var
-    e1: Element = e1Arg
-    e2: Element = e2Arg
-  if e1 of VerificationPacket:
-    e1 = cast[VerificationPacket](e1).toMeritRemovalVerificationPacket(lookup)
-  if e2 of VerificationPacket:
-    e2 = cast[VerificationPacket](e2).toMeritRemovalVerificationPacket(lookup)
-
   newSignedMeritRemovalObj(
     nick,
     partial,
@@ -105,26 +82,15 @@ proc agInfo*(
   holder: BLSPublicKey
 ): BLSAggregationInfo {.forceCheck: [].} =
   try:
-    if mr.element2 of MeritRemovalVerificationPacket:
-      var packet: MeritRemovalVerificationPacket = cast[MeritRemovalVerificationPacket](mr.element2)
-      result = newBLSAggregationInfo(packet.holders.aggregate(), packet.serializeAsVerificationWithoutHolder())
-    else:
-      result = newBLSAggregationInfo(holder, mr.element2.serializeWithoutHolder())
+    result = newBLSAggregationInfo(holder, mr.element2.serializeWithoutHolder())
 
     #If this is a partial MeritRemoval, the signature is just the second Element's.
     if mr.partial:
       return
 
-    if mr.element1 of MeritRemovalVerificationPacket:
-      var packet: MeritRemovalVerificationPacket = cast[MeritRemovalVerificationPacket](mr.element1)
-      result = @[
-        newBLSAggregationInfo(packet.holders.aggregate(), packet.serializeAsVerificationWithoutHolder()),
-        result
-      ].aggregate()
-    else:
-      result = @[
-        newBLSAggregationInfo(holder, mr.element1.serializeWithoutHolder()),
-        result
-      ].aggregate()
+    result = @[
+      newBLSAggregationInfo(holder, mr.element1.serializeWithoutHolder()),
+      result
+    ].aggregate()
   except BLSError:
     panic("Holder with an infinite key entered the system.")

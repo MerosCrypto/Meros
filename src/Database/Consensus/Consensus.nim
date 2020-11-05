@@ -110,16 +110,6 @@ proc verify*(
     case mr.element2:
       of Verification as verif:
         secondHash = verif.hash
-      of MeritRemovalVerificationPacket as packet:
-        #Verify this Packet actually includes this holder.
-        var found: bool = false
-        for holder in packet.holders:
-          if holder == lookup[mr.holder]:
-            found = true
-        if not found:
-          raise newLoggedException(ValueError, "Merit Removal Verification Packet doesn't include this holder.")
-
-        secondHash = packet.hash
       else:
         raise newLoggedException(ValueError, "Invalid second Element.")
 
@@ -155,8 +145,6 @@ proc verify*(
     case mr.element2:
       of Verification as _:
         raise newLoggedException(ValueError, "Invalid second Element.")
-      of MeritRemovalVerificationPacket as _:
-        raise newLoggedException(ValueError, "Invalid second Element.")
       of SendDifficulty as sd:
         if nonce != sd.nonce:
           raise newLoggedException(ValueError, "Second Element has a distinct nonce.")
@@ -182,16 +170,6 @@ proc verify*(
     case mr.element1:
       of Verification as verif:
         checkSecondCompeting(verif.hash)
-      of MeritRemovalVerificationPacket as packet:
-        #Verify this Packet actually includes this holder.
-        var found: bool = false
-        for holder in packet.holders:
-          if holder == lookup[mr.holder]:
-            found = true
-        if not found:
-          raise newLoggedException(ValueError, "Merit Removal Verification Packet doesn't include this holder.")
-
-        checkSecondCompeting(packet.hash)
       of SendDifficulty as sd:
         checkSecondSameNonce(sd.nonce)
       of DataDifficulty as dd:
@@ -701,9 +679,6 @@ proc remove*(
       of Verification as _:
         return
 
-      of MeritRemovalVerificationPacket as _:
-        return
-
       of SendDifficulty as sd:
         consensus.db.saveMeritRemovalNonce(mr.holder, sd.nonce)
         usedNonces.incl(sd.nonce)
@@ -1107,9 +1082,6 @@ proc revert*(
           of Verification as verif:
             if aboutToBePruned.contains(verif.hash):
               consensus.addMeritRemovalTransaction(transactions[verif.hash])
-          of MeritRemovalVerificationPacket as packet:
-            if aboutToBePruned.contains(packet.hash):
-              consensus.addMeritRemovalTransaction(transactions[packet.hash])
           else:
             discard
     except KeyError as e:
