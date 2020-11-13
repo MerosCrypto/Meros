@@ -101,6 +101,17 @@ proc mainConsensus(
   ): int {.forceCheck: [].} =
     merit.state.nodeThresholdAt(epoch)
 
+  functions.consensus.getElement = proc (
+    holder: uint16,
+    nonce: int
+  ): BlockElement {.forceCheck: [
+    IndexError
+  ].} =
+    try:
+      result = consensus[].getElement(holder, nonce)
+    except IndexError as e:
+      raise e
+
   functions.consensus.getPending = proc (): tuple[
     packets: seq[VerificationPacket],
     elements: seq[BlockElement],

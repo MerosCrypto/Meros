@@ -650,6 +650,18 @@ proc delete*(
   consensus.unmentioned.excl(hash)
   consensus.db.delete(hash)
 
+proc getElement*(
+  consensus: Consensus,
+  holder: uint16,
+  nonce: int
+): BlockElement {.forceCheck: [
+  IndexError
+].} =
+  try:
+    result = consensus.db.load(holder, nonce)
+  except DBReadError:
+    raise newLoggedException(IndexError, "Element " & $holder & " " & $nonce & " not found.")
+
 #Get all pending Verification Packets/Elements, as well as the aggregate signature.
 #Used to create a Block template.
 proc getPending*(

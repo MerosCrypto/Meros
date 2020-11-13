@@ -440,7 +440,7 @@ proc sync*(
   var
     newNonces: Table[uint16, int] = initTable[uint16, int]()
     hasElem: set[uint16] = {}
-    hasMR: set[uint16] = {}
+    hasMR: Table[uint16, (bool, Element, Element)] = initTable[uint16, (bool, Element, Element)]()
   #Sort by nonce so we don't risk a gap.
   result[1].sort(
     proc (
@@ -465,57 +465,76 @@ proc sync*(
       if e1Nonce < e2Nonce: -1 else: 1
   )
 
-  for elem in result[1]:
-    if hasMR.contains(elem.holder):
-      raise newLoggedException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
+  #Workaround for some scoping issues with manager during nested functions.
+  var managerLocal: SyncManager = manager
+  for e, elem in result[1]:
+    if hasMR.hasKey(elem.holder):
+      continue
 
-    case elem:
-      of SendDifficulty as sendDiff:
-        if not newNonces.hasKey(sendDiff.holder):
-          newNonces[sendDiff.holder] = manager.functions.consensus.getArchivedNonce(sendDiff.holder)
+    proc handleElementWithNonce(
+      elem: SendDifficulty or DataDifficulty
+    ) {.forceCheck: [
+      ValueError
+    ].} =
+      if not newNonces.hasKey(elem.holder):
+        newNonces[elem.holder] = managerLocal.functions.consensus.getArchivedNonce(elem.holder)
 
-        try:
-          if sendDiff.nonce != newNonces[sendDiff.holder] + 1:
-            #[
-            Ideally, we'd now check if this was an existing Element or a conflicting Element.
-            Unfortunately, MeritRemovals require the second Element to have an independent signature.
-            The Block's aggregate signature won't work as a proof.
-            So even though we can know there's a malicious Merit Holder, we can't tell the network.
-            If we then acted on this knowledge, we'd risk desyncing.
-            Therefore, we have to just reject the Block for being invalid.
-            ]#
-            raise newLoggedException(ValueError, "Block has an Element with an invalid nonce.")
+      try:
+        if elem.nonce > newNonces[elem.holder] + 1:
+          raise newLoggedException(ValueError, "Block has an Element which skips a nonce.")
+        elif elem.nonce < newNonces[elem.holder] + 1:
+          if elem.nonce <= managerLocal.functions.consensus.getArchivedNonce(elem.holder):
+            var archived: Element
+            try:
+              archived = managerLocal.functions.consensus.getElement(elem.holder, elem.nonce)
+            except IndexError as e:
+              panic("Couldn't get a Element with a nonce lower than the newest nonce for this holder: " & e.msg)
+            if elem == archived:
+              raise newLoggedException(ValueError, "Block contains an already archived Element.")
+            hasMR[elem.holder] = (true, elem, archived)
+          else:
+            for e2 in 0 ..< e:
+              var otherNonce: int
+              #Case statement macro didn't resolve properly.
+              if result[1][e] of SendDifficulty:
+                otherNonce = cast[SendDifficulty](result[1][e]).nonce
+              elif result[1][e] of DataDifficulty:
+                otherNonce = cast[DataDifficulty](result[1][e]).nonce
+              else:
+                panic("Checking the nonce of an unknown Block Element.")
 
-          inc(newNonces[sendDiff.holder])
-        except KeyError:
-          panic("Table doesn't have a value for a key we made sure we had.")
+              if (result[1][e].holder == elem.holder) and (otherNonce == elem.nonce):
+                if result[1][e] == elem:
+                  raise newLoggedException(ValueError, "Block contains the same Element twice.")
+                hasMR[elem.holder] = (false, elem, result[1][e])
+        inc(newNonces[elem.holder])
+      except KeyError:
+        panic("Table doesn't have a value for a key we made sure we had.")
 
-      of DataDifficulty as dataDiff:
-        if not newNonces.hasKey(dataDiff.holder):
-          newNonces[dataDiff.holder] = manager.functions.consensus.getArchivedNonce(dataDiff.holder)
-
-        try:
-          if dataDiff.nonce != newNonces[dataDiff.holder] + 1:
-            raise newLoggedException(ValueError, "Block has an Element with an invalid nonce.")
-
-          inc(newNonces[dataDiff.holder])
-        except KeyError:
-          panic("Table doesn't have a value for a key we made sure we had.")
-
-      of MeritRemoval as mr:
-        if hasElem.contains(mr.holder):
-          raise newLoggedException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
-
-        try:
-          await manager.functions.consensus.verifyUnsignedMeritRemoval(mr)
-        except ValueError as e:
-          raise e
-        except DataExists:
-          raise newLoggedException(ValueError, "Block has an old MeritRemoval.")
-        except Exception as e:
-          panic("Verifying a MeritRemoval threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
+    try:
+      case elem:
+        of SendDifficulty as sendDiff:
+          handleElementWithNonce(sendDiff)
+        of DataDifficulty as dataDiff:
+          handleElementWithNonce(dataDiff)
+    except ValueError as e:
+      raise e
     hasElem.incl(elem.holder)
+
+  for holder in hasMR.keys():
+    var valueSet: (bool, Element, Element)
+    try:
+      valueSet = hasMR[holder]
+    except KeyError as e:
+      panic("Can't get the info behind a Merit Removal despite iterating over the Table's keys: " & e.msg)
+    result[1].add(
+      newMeritRemoval(
+        holder,
+        valueSet[0],
+        valueSet[1],
+        valueSet[2]
+      )
+    )
 
 proc syncBlockBody*(
   manager: SyncManager,
