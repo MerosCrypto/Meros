@@ -1,5 +1,4 @@
 import ../../../lib/[Errors, Hash]
-import ../../../Wallet/MinerWallet
 
 import ../../../Database/Consensus/Elements/objects/VerificationPacketObj
 

@@ -68,8 +68,7 @@ proc getMeritRemovalTransaction*(
 #But also that we have yet to add this MeritRemoval.
 proc verify*(
   consensus: Consensus,
-  mr: MeritRemoval,
-  lookup: seq[BLSPublicKey]
+  mr: MeritRemoval
 ) {.forceCheck: [
   ValueError,
   DataExists
@@ -315,7 +314,11 @@ proc checkMaliciousVerification*(
   holder: uint16,
   txHash: Hash[256]
 ): tuple[malicious: bool, other: TransactionStatus] {.forceCheck: [].} =
-  var tx: Transaction = consensus.functions.getTransaction(txHash)
+  var tx: Transaction
+  try:
+    tx = consensus.functions.transactions.getTransaction(txHash)
+  except IndexError as e:
+    panic("Couldn't get the Transaction behind a Verification: " & e.msg)
 
   #Initial/Block Datas.
   if (
@@ -330,7 +333,7 @@ proc checkMaliciousVerification*(
   for input in tx.inputs:
     var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
     for spender in spenders:
-      if spender == verif.hash:
+      if spender == txHash:
         continue
 
       #Get the spender's status.
@@ -340,7 +343,7 @@ proc checkMaliciousVerification*(
       except IndexError as e:
         panic("Couldn't get the status of a Transaction: " & e.msg)
 
-      if status.holders.contains(verif.holder):
+      if status.holders.contains(holder):
         return (true, status)
 
 #Add a VerificationPacket.
@@ -410,14 +413,12 @@ proc add*(
         newSignedMeritRemoval(
           verif.holder,
           partial,
-          newVerificationObj(other.packet.hash),
+          newVerificationObj(potentialRemoval.other.packet.hash),
           verif,
           if partial:
             verif.signature
           else:
             @[potentialRemoval.other.signatures[verif.holder], verif.signature].aggregate()
-          ,
-          state.holders
         )
       )
     except KeyError as e:
@@ -509,7 +510,6 @@ proc add*(
                 consensus.signatures[sendDiff.holder][sendDiff.nonce - consensus.archived[sendDiff.holder] - 1],
                 sendDiff.signature
               ].aggregate()
-            , state.holders
           )
         )
       except KeyError as e:
@@ -591,8 +591,6 @@ proc add*(
                 consensus.signatures[dataDiff.holder][dataDiff.nonce - consensus.archived[dataDiff.holder] - 1],
                 dataDiff.signature
               ].aggregate()
-            ,
-            state.holders
           )
         )
       except KeyError as e:
@@ -625,7 +623,7 @@ proc add*(
     raise newLoggedException(ValueError, "Invalid MeritRemoval signature.")
 
   try:
-    consensus.verify(mr, state.holders)
+    consensus.verify(mr)
   except ValueError as e:
     raise e
   except DataExists as e:

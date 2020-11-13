@@ -5,7 +5,7 @@ import ../../../Database/Consensus/Elements/MeritRemoval
 
 import ../SerializeCommon
 
-import ParseElement, ParseVerification, ParseVerificationPacket
+import ParseElement, ParseVerification
 import ParseSendDifficulty, ParseDataDifficulty
 
 #Parse an Element out of a MeritRemoval.
@@ -101,8 +101,7 @@ proc parseMeritRemoval*(
     uint16(mrSeq[0].fromBinary()),
     partial,
     element1,
-    element2,
-    @[]
+    element2
   )
 
 #Parse a Signed MeritRemoval.
@@ -158,8 +157,7 @@ proc parseSignedMeritRemoval*(
       partial,
       element1,
       element2,
-      newBLSSignature(mrStr[mrStr.len - BLS_SIGNATURE_LEN ..< mrStr.len]),
-      @[]
+      newBLSSignature(mrStr[mrStr.len - BLS_SIGNATURE_LEN ..< mrStr.len])
     )
   except BLSError:
     raise newLoggedException(ValueError, "Invalid Signature.")

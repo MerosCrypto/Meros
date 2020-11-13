@@ -252,8 +252,7 @@ proc mainMerit(
             true,
             elem,
             existing,
-            sig,
-            merit[].state.holders
+            sig
           )
         )
 
