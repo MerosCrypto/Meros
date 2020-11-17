@@ -13,7 +13,7 @@ To install every prerequisite, run:
 
 ```
 xcode-select --install
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 brew install git cmake autoconf automake libtool
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 1.2.4
