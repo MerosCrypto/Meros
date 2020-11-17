@@ -45,6 +45,7 @@ import ../Serialize/Transactions/[
 
 type SyncManager* = ref object
   functions*: GlobalFunctionBox
+  genesis*: Hash[256]
 
   protocol*: uint
   network*: uint
@@ -65,19 +66,23 @@ func newSyncManager*(
   peers: TableRef[int, Peer],
   functions: GlobalFunctionBox
 ): SyncManager {.forceCheck: [].} =
-  SyncManager(
-    functions: functions,
+  try:
+    result = SyncManager(
+      functions: functions,
+      genesis: functions.merit.getBlockByNonce(0).header.last,
 
-    protocol: protocol,
-    network: network,
+      protocol: protocol,
+      network: network,
 
-    port: port,
+      port: port,
 
-    peers: peers,
+      peers: peers,
 
-    requests: initTable[int, SyncRequest](),
-    id: 0
-  )
+      requests: initTable[int, SyncRequest](),
+      id: 0
+    )
+  except IndexError as e:
+    panic("Couldn't get the genesis Block: " & e.msg)
 
 func updateServices*(
   manager: SyncManager,

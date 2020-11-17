@@ -778,6 +778,7 @@ proc archive*(
     nonce: int
   ) {.forceCheck: [].} =
     try:
+      #The Elements passed aren't sorted; skip out of order Elements.
       if consensus.archived[holder] < nonce:
         #Remove signatures.
         #There won't be any if we only ever saw the unsigned version of this Element.

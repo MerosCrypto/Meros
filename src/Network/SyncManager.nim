@@ -174,6 +174,7 @@ proc syncSketchHashes*(
       panic("Couldn't send a SketchHashesSyncRequest to a Peer: " & e.msg)
 
 #Sync a Block's missing Transactions/VerificationPackets.
+#The second return value is sorted.
 proc sync*(
   manager: SyncManager,
   state: State,
@@ -394,7 +395,20 @@ proc sync*(
   logDebug "Added missing Transactions", hash = newBlock.data.header.hash
 
   #Verify the included packets.
+  var
+    #Holders for a TX from this Block specifically.
+    holdersForTX: Table[Hash[256], seq[uint16]]
+    #Track any competitors the Transactions have. Used to create MRs.
+    competitors: Table[Hash[256], seq[Hash[256]]] = initTable[Hash[256], seq[Hash[256]]]()
+    thisTXsCompetitors: seq[Hash[256]]
   for packet in result[0].body.packets:
+    holdersForTX[packet.hash] = packet.holders
+
+    #If we already tracked this TX, this Block doesn't only have unique packets.
+    if competitors.hasKey(packet.hash):
+      raise newLoggedException(ValueError, "Block includes two packets for the same Transaction.")
+    thisTXsCompetitors = @[]
+
     #Verify the predecessors of every Transaction are already mentioned on the chain OR also in this Block.
     var tx: Transaction
     try:
@@ -402,10 +416,23 @@ proc sync*(
     except IndexError as e:
       panic("Couldn't get a Transaction we're confirmed to have: " & e.msg)
 
-    if not ((tx of Claim) or ((tx of Data) and cast[Data](tx).isFirstData)):
+    if not ((tx of Data) and (cast[Data](tx).isFirstData or (tx.inputs[0].hash == manager.genesis))):
       for input in tx.inputs:
-        if not (manager.functions.consensus.hasArchivedPacket(input.hash) or includedTXs.contains(input.hash)):
+        if (
+          (not (tx of Claim)) and
+          (not (manager.functions.consensus.hasArchivedPacket(input.hash) or includedTXs.contains(input.hash)))
+        ):
           raise newLoggedException(ValueError, "Block's Transactions have predecessors which have yet to be mentioned on chain.")
+
+        #Track competitors while we're here.
+        thisTXsCompetitors &= manager.functions.transactions.getSpenders(input)
+
+    thisTXsCompetitors.deduplicate()
+    for i in 0 ..< thisTXsCompetitors.len:
+      if thisTXsCompetitors[i] == packet.hash:
+        thisTXsCompetitors.del(i)
+        break
+    competitors[packet.hash] = thisTXsCompetitors
 
     #Get the status.
     var status: TransactionStatus
@@ -468,9 +495,6 @@ proc sync*(
   #Workaround for some scoping issues with manager during nested functions.
   var managerLocal: SyncManager = manager
   for e, elem in result[1]:
-    if hasMR.hasKey(elem.holder):
-      continue
-
     proc handleElementWithNonce(
       elem: SendDifficulty or DataDifficulty
     ) {.forceCheck: [
@@ -491,7 +515,9 @@ proc sync*(
               panic("Couldn't get a Element with a nonce lower than the newest nonce for this holder: " & e.msg)
             if elem == archived:
               raise newLoggedException(ValueError, "Block contains an already archived Element.")
-            hasMR[elem.holder] = (true, elem, archived)
+            if not hasMR.hasKey(elem.holder):
+              hasMR[elem.holder] = @[]
+            hasMR[elem.holder].add((true, elem, archived))
           else:
             for e2 in 0 ..< e:
               var otherNonce: int
@@ -506,7 +532,9 @@ proc sync*(
               if (result[1][e].holder == elem.holder) and (otherNonce == elem.nonce):
                 if result[1][e] == elem:
                   raise newLoggedException(ValueError, "Block contains the same Element twice.")
-                hasMR[elem.holder] = (false, elem, result[1][e])
+                if not hasMR.hasKey(elem.holder):
+                  hasMR[elem.holder] = @[]
+                hasMR[elem.holder].add((false, elem, result[1][e]))
         inc(newNonces[elem.holder])
       except KeyError:
         panic("Table doesn't have a value for a key we made sure we had.")
@@ -521,20 +549,52 @@ proc sync*(
       raise e
     hasElem.incl(elem.holder)
 
-  for holder in hasMR.keys():
-    var valueSet: (bool, Element, Element)
+  #Generate any Competing Verification Merit Removals.
+  for packet in result[0].body.packets:
     try:
-      valueSet = hasMR[holder]
+      thisTXsCompetitors = competitors[packet.hash]
+    except KeyError:
+      panic("Didn't register a competitors variable for a Transaction in this Block.")
+    if thisTXsCompetitors.len == 0:
+      continue
+
+    for holder in packet.holders:
+      for competitor in thisTXsCompetitors:
+        try:
+          compStatus = manager.functions.consensus.getStatus(competitor)
+        except IndexError as e:
+          panic("Couldn't get a status for a Transaction which spends an input mentioned in this Block: " & e.msg)
+        var mrStatus: int = 0
+        #Has archived Verification for this Transaction.
+        #If they have a pending Verification, we could create a Signed MeritRemoval at this point in time.
+        #Basically a new form of https://github.com/MerosCrypto/Meros/issues/120.
+        if compStatus.holders.contains(holder) and (not compStatus.pending.contains(holder)):
+          mrStatus = 1
+        #Check if they have a Verification for this Transaction in this Block.
+      elif (includedTXs.contains(competitor)) and (holdersForTX[competitor].contains(holder)):
+          mrStatus = 2
+
+        if mrStatus != 0:
+          try:
+            if not hasMR.hasKey(holder):
+              hasMR[holder] = @[]
+            hasMR[holder].add(mrStatus == 1, newVerificationObj(holder, packet.hash), newVerificationObj(competitor))
+          except KeyError:
+            panic("Table doesn't have a value for a key we made sure we had.")
+
+  for holder in hasMR.keys():
+    try:
+      for valueSet in hasMR[holder]:
+        result[0].body.elements.add(
+          newMeritRemoval(
+            holder,
+            valueSet[0],
+            valueSet[1],
+            valueSet[2]
+          )
+        )
     except KeyError as e:
       panic("Can't get the info behind a Merit Removal despite iterating over the Table's keys: " & e.msg)
-    result[1].add(
-      newMeritRemoval(
-        holder,
-        valueSet[0],
-        valueSet[1],
-        valueSet[2]
-      )
-    )
 
 proc syncBlockBody*(
   manager: SyncManager,

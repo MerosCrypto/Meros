@@ -175,10 +175,10 @@ proc mainMerit(
     #Sync this Block.
     var
       newBlock: Block
-      elements: seq[BlockElement]
+      sortedElements: seq[BlockElement]
       verified: bool = false
     try:
-      (newBlock, elements) = await network.syncManager.sync(
+      (newBlock, sortedElements) = await network.syncManager.sync(
         merit.state,
         sketchyBlock,
         sketcher
@@ -273,7 +273,7 @@ proc mainMerit(
       panic("Couldn't get the Merit Removal of a holder who just had one archived: " & e.msg)
 
     #Add every Element.
-    for elem in elements:
+    for elem in sortedElements:
       case elem:
         of SendDifficulty as sendDiff:
           functions.consensus.addSendDifficulty(sendDiff)
