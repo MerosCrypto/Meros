@@ -190,7 +190,8 @@ proc newNetwork*(
     #Register the timer again.
     try:
       removeInactiveTimer = setTimer(Moment.fromNow(seconds(10)), removeInactive)
-    except OSError as e:
+    #OSError/IOSelectorsException. The latter doesn't appear on Linux yet does appear on macOS.
+    except Exception as e:
       panic("Setting a timer to remove inactive peers failed: " & e.msg)
 
   #Call removeInactive so it registers the timer.
@@ -206,7 +207,7 @@ proc newNetwork*(
       clearTimer(updateFileTrackerTimer)
     try:
       updateFileTrackerTimer = setTimer(Moment.fromNow(minutes(1)), updateFileTracker)
-    except OSError as e:
+    except Exception as e:
       panic("Setting a timer to update the amount of open files failed: " & e.msg)
   updateFileTracker()
 
