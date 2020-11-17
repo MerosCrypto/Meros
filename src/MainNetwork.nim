@@ -77,7 +77,7 @@ proc mainNetwork(
     #Add a new timer to look for peers since this one expired.
     try:
       requestPeersTimer = setTimer(Moment.fromNow(minutes(2)), requestPeersRegularly)
-    except OSError as e:
+    except Exception as e:
       panic("Couldn't re-set a timer to request peers: " & e.msg)
 
   #Also request peers now.
