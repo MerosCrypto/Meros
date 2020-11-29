@@ -31,6 +31,9 @@ template TIP(): string =
 template HOLDERS(): string =
   "n" #"N"icks, since "h" is taken.
 
+template MERIT_REMOVALS(): string =
+  "m"
+
 template TOTAL_MERIT(
   blockNum: int
 ): string =
@@ -336,8 +339,18 @@ proc remove*(
   merit: int,
   blockNum: int
 ) {.forceCheck: [].} =
+  #Cache so when this Block is saved, the all removals are grouped under it.
   db.merit.removals[nick] = merit
+
+  #Update this holder's personal entry with the height.
   db.put(HOLDER_REMOVAL(nick), blockNum.toBinary(INT_LEN))
+
+  #Update the global list.
+  #This should potentially be handled via the above cache.
+  try:
+    db.put(MERIT_REMOVALS(), db.get(MERIT_REMOVALS()) & nick.toBinary(NICKNAME_LEN))
+  except DBReadError:
+    db.put(MERIT_REMOVALS(), nick.toBinary(NICKNAME_LEN))
 
 proc loadUpcomingKey*(
   db: DB
@@ -532,6 +545,18 @@ proc loadLastParticipations*(
   except DBReadError:
     discard
 
+proc loadHoldersWithRemovals*(
+  db: DB
+): set[uint16] {.forceCheck: [].} =
+  result = {}
+  try:
+    var removals: string = db.get(MERIT_REMOVALS())
+    #Not at risk of raising, put here for efficiency.
+    for i in countup(0, removals.len - 1, 2):
+      result.incl(uint16(removals[i ..< i + 2].fromBinary()))
+  except DBReadError:
+    discard
+
 proc loadBlockRemovals*(
   db: DB,
   blockNum: int
@@ -613,10 +638,33 @@ proc deleteBlock*(
   db.del(TOTAL_MERIT(nonce))
   db.del(PENDING_MERIT(nonce))
   db.del(COUNTED_MERIT(nonce))
+
+  #Delete this Block's removals.
   db.del(BLOCK_REMOVALS(nonce))
 
+  #Get the global list of holders with removals.
+  var hasMRs: string = ""
+  try:
+    hasMRs = db.get(MERIT_REMOVALS())
+  except DBReadError:
+    discard
+
   for holder in removals:
+    #Delete their personal removals.
     db.del(HOLDER_REMOVAL(holder))
+
+    #Update the global list.
+    #This will raise an IndexError if didn't load a Merit Removal yet are trying to delete one.
+    #While that should be fatal, Nim fatal exceptions can still be caught.
+    #That said, they bypass the effects system, and therefore the raises pragma.
+    #Explicitly panic in this 'impossible' edge case.
+    try:
+      hasMRs = hasMRs[0 ..< hasMRs.len - (NICKNAME_LEN + INT_LEN)]
+    except IndexError as e:
+      panic("Tried to removal a holder from the list of people with Merit Removals yet the list was empty: " & e.msg)
+
+  #Save back the global list.
+  db.put(MERIT_REMOVALS(), hasMRs)
 
 #Delete the latest holder.
 proc deleteHolder*(

@@ -120,5 +120,5 @@ proc newJSONRPCError*(
 #Getter for the MaliciousMeritHolder's removal as a MeritRemoval.
 proc removal*(
   mmh: ref MaliciousMeritHolder
-): MeritRemoval {.inline, forceCheck: [].} =
-  cast[MeritRemoval](mmh.element)
+): SignedMeritRemoval {.inline, forceCheck: [].} =
+  cast[SignedMeritRemoval](mmh.element)

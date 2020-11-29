@@ -312,36 +312,6 @@ proc mainConsensus(
       dataDiff.signedSerialize()
     )
 
-  functions.consensus.verifyUnsignedMeritRemoval = proc (
-    mr: MeritRemoval
-  ): Future[void] {.forceCheck: [
-    ValueError,
-    DataExists
-  ], async.} =
-    try:
-      await syncMeritRemovalTransactions(functions, consensus, network[], mr)
-    except ValueError as e:
-      raise e
-    except Exception as e:
-      panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    try:
-      consensus[].verify(mr)
-    except ValueError as e:
-      raise e
-    except DataExists as e:
-      #If it's cached, it's already been verified and it's not archived yet.
-      if not consensus.malicious.hasKey(mr.holder):
-        raise e
-
-      try:
-        for cachedMR in consensus.malicious[mr.holder]:
-          if mr.reason == cachedMR.reason:
-            return
-      except KeyError:
-        panic("Merit Holder confirmed to be in malicious doesn't have an entry in malicious.")
-      raise e
-
   functions.consensus.addSignedMeritRemoval = proc (
     mr: SignedMeritRemoval
   ): Future[void] {.forceCheck: [

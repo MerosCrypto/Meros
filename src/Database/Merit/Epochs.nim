@@ -5,7 +5,7 @@ import tables
 
 import ../../lib/[Errors, Hash]
 
-import ../Consensus/Elements/objects/[VerificationPacketObj, MeritRemovalObj]
+import ../Consensus/Elements/objects/VerificationPacketObj
 
 import Block, Blockchain, State
 
@@ -79,7 +79,7 @@ proc newEpochs*(
 proc calculate*(
   epoch: Epoch,
   state: var State,
-  removed: Table[uint16, MeritRemoval]
+  removed: set[uint16]
 ): seq[Reward] {.forceCheck: [].} =
   #If the epoch is empty, do nothing.
   if epoch.len == 0:
@@ -103,7 +103,7 @@ proc calculate*(
     try:
       #Iterate over every holder who verified a tx.
       for holder in epoch[tx]:
-        if not removed.hasKey(holder):
+        if not removed.contains(holder):
           #Add their Merit to the Transaction's weight.
           weight += state[holder, state.processedBlocks]
     except KeyError as e:
@@ -127,7 +127,7 @@ proc calculate*(
     return @[]
 
   #Multiply every score by how much Merit the holder has.
-  for malicious in removed.keys():
+  for malicious in removed:
     scores.del(malicious)
 
   try:

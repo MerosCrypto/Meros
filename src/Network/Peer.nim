@@ -161,25 +161,9 @@ proc recv*(
           size += count
 
         of MessageType.SignedMeritRemoval:
-          var elemI: int = msg.len - 1
           try:
-            if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
-              len = {
-                byte(VERIFICATION_PACKET_PREFIX)
-              }.getLength(msg[elemI])
-              size += len
-
-              try:
-                msg &= await socket.recv(len)
-              except SocketError as e:
-                socket.safeClose(e.msg)
-                raise e
-              except Exception as e:
-                panic("Couldn't get the result of receiving from a socket: " & e.msg)
-              len = -1
-
             len += MERIT_REMOVAL_ELEMENT_SET.getLength(
-              msg[elemI],
+              msg[msg.len - 1],
               0,
               MERIT_REMOVAL_PREFIX
             )
@@ -230,30 +214,9 @@ proc recv*(
                   socket.safeClose("Didn't get a full message.")
                   raise newLoggedException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
-                var elemI: int = msg.len - 1
-                len = 0
-                try:
-                  if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
-                    len = {
-                      byte(VERIFICATION_PACKET_PREFIX)
-                    }.getLength(msg[elemI])
-                    size += len
-
-                    try:
-                      msg &= await socket.recv(len)
-                    except SocketError as e:
-                      socket.safeClose(e.msg)
-                      raise e
-                    except Exception as e:
-                      panic("Couldn't get the result of receiving from a socket: " & e.msg)
-                    len = 0
-
-                  len += MERIT_REMOVAL_ELEMENT_SET.getLength(
-                    msg[elemI],
-                    if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
-                      msg[elemI + 1 ..< msg.len].fromBinary()
-                    else:
-                      0,
+                len = MERIT_REMOVAL_ELEMENT_SET.getLength(
+                    msg[msg.len - 1],
+                    0,
                     MERIT_REMOVAL_PREFIX
                   )
                 except ValueError as e:

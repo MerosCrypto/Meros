@@ -52,7 +52,7 @@ type
     pendingRemovals*: Deque[int]
 
     #Set of Merit Holders with a Merit Removal, invalidating all future participation.
-    hasMR: set[uint16]
+    hasMR*: set[uint16]
 
   #Object returned after processing a new Block.
   StateChanges* = object
@@ -108,7 +108,7 @@ proc newStateObj*(
       panic("Couldn't load a holder's Merit: " & e.msg)
 
   #Load the holders with Merit Removals.
-  state.hasMR = result.db.loadHoldersWithRemovals()
+  result.hasMR = result.db.loadHoldersWithRemovals()
 
 proc saveMerits*(
   state: State,

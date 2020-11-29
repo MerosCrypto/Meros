@@ -1,5 +1,4 @@
 import ../../../../lib/objects/ErrorObjs
-import ../../../../lib/Hash/objects/HashObj
 import ../../../../Wallet/MinerWallet
 
 import ElementObj
@@ -16,13 +15,13 @@ func newSignedMeritRemovalObj*(
   nick: uint16,
   partial: bool,
   element1: Element,
-  element2: Element
+  element2: Element,
   signature: BLSSignature
 ): SignedMeritRemoval {.inline, forceCheck: [].} =
   result = SignedMeritRemoval(
     holder: nick,
     partial: partial,
     element1: element1,
-    element2: element2
+    element2: element2,
     signature: signature
   )

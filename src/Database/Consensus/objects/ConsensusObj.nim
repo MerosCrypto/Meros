@@ -480,7 +480,7 @@ proc finalize*(
         consensus.close.excl(tree[h])
 
         #Remove the Transaction from the Database.
-        consensus.db.prune(tree[h])
+        consensus.db.delete(tree[h])
         consensus.functions.transactions.prune(tree[h])
 
       txs.del(txs.len - 1)
@@ -598,7 +598,7 @@ proc finalize*(
                   consensus.unmentioned.excl(tree[h])
                   consensus.db.mention(tree[h])
                   consensus.close.excl(tree[h])
-                  consensus.db.prune(tree[h])
+                  consensus.db.delete(tree[h])
                   consensus.functions.transactions.prune(tree[h])
 
               consensus.db.save(hash, status)
@@ -713,10 +713,12 @@ proc getPending*(
       #Skip over Competing Verification MRs. They're covered in the above packet code.
       if mr.element1 of Verification:
         continue
-      #Add the elements/signature and move on to the next holder.
+      #Add the Elements/signature and move on to the next holder.
       #There's no value in providing multiple Merit Removals for them.
-      result.elements.add(mr.element1)
-      result.elements.add(mr.element2)
+      #There also is a risk if multiple Merit Removals share an Element we'll include a duplicate.
+      #You can't argue with safety AND efficiency.
+      result.elements.add(cast[BlockElement](mr.element1))
+      result.elements.add(cast[BlockElement](mr.element2))
       signatures.add(mr.signature)
       break
 

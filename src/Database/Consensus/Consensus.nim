@@ -5,9 +5,6 @@ import ../../Wallet/MinerWallet
 
 import ../../objects/GlobalFunctionBoxObj
 
-#Used to create a key out of a Transaction.
-#Literally no value in writing a new implementation.
-from ../Filesystem/DB/Serialize/Transactions/DBSerializeTransaction import serialize
 import ../Transactions/Transactions
 
 import ../Merit/objects/[BlockObj, BlockchainObj, EpochsObj]
@@ -42,121 +39,6 @@ proc newConsensus*(
   dataDiff: uint32
 ): Consensus {.inline, forceCheck: [].} =
   newConsensusObj(functions, db, state, sendDiff, dataDiff)
-
-#Verify a MeritRemoval's validity.
-#Checks not only that the Elements are unique, competing, and legitimate,
-#But also that we have yet to add this MeritRemoval.
-proc verify*(
-  consensus: Consensus,
-  mr: MeritRemoval
-) {.forceCheck: [
-  ValueError,
-  DataExists
-].} =
-  if consensus.db.hasMeritRemoval(mr):
-    raise newLoggedException(DataExists, "MeritRemoval already exists.")
-
-  proc checkSecondCompeting(
-    hash: Hash[256]
-  ) {.forceCheck: [
-    ValueError
-  ].} =
-    if mr.partial:
-      var status: TransactionStatus
-      try:
-        status = consensus.db.load(hash)
-      except DBReadError:
-        raise newLoggedException(ValueError, "Unknown hash.")
-
-      if (not status.holders.contains(mr.holder)) or status.signatures.hasKey(mr.holder):
-        raise newLoggedException(ValueError, "Verification isn't archived.")
-
-    var
-      inputs: HashSet[string] = initHashSet[string]()
-      tx: Transaction
-    try:
-      tx = consensus.functions.transactions.getTransaction(hash)
-    except IndexError:
-      try:
-        tx = consensus.getMeritRemovalTransaction(hash)
-      except IndexError:
-        raise newLoggedException(ValueError, "Unknown Transaction verified in first Element.")
-
-    for input in tx.inputs:
-      inputs.incl(input.serialize())
-
-    var secondHash: Hash[256]
-    case mr.element2:
-      of Verification as verif:
-        secondHash = verif.hash
-      else:
-        raise newLoggedException(ValueError, "Invalid second Element.")
-
-    if hash == secondHash:
-      raise newLoggedException(ValueError, "MeritRemoval claims a Transaction competes with itself.")
-
-    try:
-      tx = consensus.functions.transactions.getTransaction(secondHash)
-    except IndexError:
-      try:
-        tx = consensus.getMeritRemovalTransaction(hash)
-      except IndexError:
-        raise newLoggedException(ValueError, "Unknown Transaction verified in second Element.")
-
-    for input in tx.inputs:
-      if inputs.contains(input.serialize()):
-        return
-    raise newLoggedException(ValueError, "Transactions don't compete.")
-
-  proc checkSecondSameNonce(
-    nonce: int
-  ) {.forceCheck: [
-    ValueError
-  ].} =
-    try:
-      if mr.partial and ((nonce > consensus.archived[mr.holder]) or (mr.element1 != consensus.db.load(mr.holder, nonce))):
-        raise newLoggedException(ValueError, "First Element isn't archived.")
-    except KeyError:
-      raise newLoggedException(ValueError, "MeritRemoval has an invalid holder.")
-    except DBReadError as e:
-      panic("Nonce was within bounds yet no Element could be loaded: " & e.msg)
-
-    case mr.element2:
-      of Verification as _:
-        raise newLoggedException(ValueError, "Invalid second Element.")
-      of SendDifficulty as sd:
-        if nonce != sd.nonce:
-          raise newLoggedException(ValueError, "Second Element has a distinct nonce.")
-
-        if (
-          (mr.element1 of SendDifficulty) and
-          (cast[SendDifficulty](mr.element1).difficulty == sd.difficulty)
-        ):
-          raise newLoggedException(ValueError, "Elements are the same.")
-      of DataDifficulty as dd:
-        if nonce != dd.nonce:
-          raise newLoggedException(ValueError, "Second Element has a distinct nonce.")
-
-        if (
-          (mr.element1 of DataDifficulty) and
-          (cast[DataDifficulty](mr.element1).difficulty == dd.difficulty)
-        ):
-          raise newLoggedException(ValueError, "Elements are the same.")
-      else:
-        panic("Unsupported MeritRemoval Element.")
-
-  try:
-    case mr.element1:
-      of Verification as verif:
-        checkSecondCompeting(verif.hash)
-      of SendDifficulty as sd:
-        checkSecondSameNonce(sd.nonce)
-      of DataDifficulty as dd:
-        checkSecondSameNonce(dd.nonce)
-      else:
-        panic("Unsupported MeritRemoval Element.")
-  except ValueError as e:
-    raise e
 
 #Flag a MeritHolder as malicious.
 proc flag*(
@@ -334,10 +216,17 @@ proc add*(
   DataExists,
   MaliciousMeritHolder
 ].} =
-  #This can be triggerred if one node is a block behind the other, which is why it's a return, not a ValueError.
+  #[
+  This can be triggered if one node is a block behind the other.
+  A ValueError would cause a disconnection. A DataMissing is accurate and forgiving.
+  That said, DataMissing has side effects; it attempts to sync the underlying TX.
+  If it's found, and this is still missing, a panic happens.
+  DataExists is similar and forgiving, without this side effect.
+
+  This function has a similar raise below when it checks if the TX in question was beaten.
+  ]#
   if not state.isValidHolderWithMerit(verif.holder):
-    #raise newLoggedException(ValueError, "Sent Verification with an invalid holder/holder without Merit.")
-    return
+    raise newLoggedException(DataExists, "Sent Verification with an invalid holder/holder without Merit.")
 
   #Verify the signature.
   try:
@@ -397,9 +286,9 @@ proc add*(
 
   #Make sure the Transaction isn't beaten.
   if status.beaten:
-    #Return to not cause a disconnect due to one node needing to catch up.
-    #raise newLoggedException(ValueError, "Verification is for a beaten Transaction.")
-    return
+    #DataExists to not cause a disconnect due to one node needing to catch up.
+    #Same reasoning as the above.
+    raise newLoggedException(DataExists, "Verification is for a beaten Transaction.")
 
   #Calculate Merit.
   consensus.calculateMerit(state, verif.hash, status)
@@ -566,6 +455,116 @@ proc add*(
   except KeyError as e:
     panic("Couldn't cache a signature: " & e.msg)
 
+#Verify a MeritRemoval's validity.
+proc verify(
+  consensus: Consensus,
+  mr: SignedMeritRemoval
+) {.forceCheck: [
+  ValueError,
+  DataExists
+].} =
+  proc checkSecondCompeting(
+    hash: Hash[256]
+  ) {.forceCheck: [
+    ValueError
+  ].} =
+    if mr.partial:
+      var status: TransactionStatus
+      try:
+        status = consensus.db.load(hash)
+      except DBReadError:
+        raise newLoggedException(ValueError, "Unknown hash.")
+
+      if (not status.holders.contains(mr.holder)) or status.signatures.hasKey(mr.holder):
+        raise newLoggedException(ValueError, "Verification isn't archived.")
+
+    var
+      inputs: HashSet[string] = initHashSet[string]()
+      tx: Transaction
+    try:
+      tx = consensus.functions.transactions.getTransaction(hash)
+    except IndexError:
+      try:
+        tx = consensus.getMeritRemovalTransaction(hash)
+      except IndexError:
+        raise newLoggedException(ValueError, "Unknown Transaction verified in first Element.")
+
+    for input in tx.inputs:
+      inputs.incl(input)
+
+    var secondHash: Hash[256]
+    case mr.element2:
+      of Verification as verif:
+        secondHash = verif.hash
+      else:
+        raise newLoggedException(ValueError, "Invalid second Element.")
+
+    if hash == secondHash:
+      raise newLoggedException(ValueError, "MeritRemoval claims a Transaction competes with itself.")
+
+    try:
+      tx = consensus.functions.transactions.getTransaction(secondHash)
+    except IndexError:
+      try:
+        tx = consensus.getMeritRemovalTransaction(hash)
+      except IndexError:
+        raise newLoggedException(ValueError, "Unknown Transaction verified in second Element.")
+
+    for input in tx.inputs:
+      if inputs.contains(input):
+        return
+    raise newLoggedException(ValueError, "Transactions don't compete.")
+
+  proc checkSecondSameNonce(
+    nonce: int
+  ) {.forceCheck: [
+    ValueError
+  ].} =
+    try:
+      if mr.partial and ((nonce > consensus.archived[mr.holder]) or (mr.element1 != consensus.db.load(mr.holder, nonce))):
+        raise newLoggedException(ValueError, "First Element isn't archived.")
+    except KeyError:
+      raise newLoggedException(ValueError, "MeritRemoval has an invalid holder.")
+    except DBReadError as e:
+      panic("Nonce was within bounds yet no Element could be loaded: " & e.msg)
+
+    case mr.element2:
+      of Verification as _:
+        raise newLoggedException(ValueError, "Invalid second Element.")
+      of SendDifficulty as sd:
+        if nonce != sd.nonce:
+          raise newLoggedException(ValueError, "Second Element has a distinct nonce.")
+
+        if (
+          (mr.element1 of SendDifficulty) and
+          (cast[SendDifficulty](mr.element1).difficulty == sd.difficulty)
+        ):
+          raise newLoggedException(ValueError, "Elements are the same.")
+      of DataDifficulty as dd:
+        if nonce != dd.nonce:
+          raise newLoggedException(ValueError, "Second Element has a distinct nonce.")
+
+        if (
+          (mr.element1 of DataDifficulty) and
+          (cast[DataDifficulty](mr.element1).difficulty == dd.difficulty)
+        ):
+          raise newLoggedException(ValueError, "Elements are the same.")
+      else:
+        panic("Unsupported MeritRemoval Element.")
+
+  try:
+    case mr.element1:
+      of Verification as verif:
+        checkSecondCompeting(verif.hash)
+      of SendDifficulty as sd:
+        checkSecondSameNonce(sd.nonce)
+      of DataDifficulty as dd:
+        checkSecondSameNonce(dd.nonce)
+      else:
+        panic("Unsupported MeritRemoval Element.")
+  except ValueError as e:
+    raise e
+
 #Add a SignedMeritRemoval.
 proc add*(
   consensus: var Consensus,
@@ -576,13 +575,23 @@ proc add*(
   ValueError,
   DataExists
 ].} =
-  #Return if the MeritRemoval was already flagged.
+  #Raise if this holder already had a MeritRemoval archived.
+  if state.hasMR.contains(mr.holder):
+    raise newLoggedException(DataExists, "Already removed this holder's Merit.")
+
+  #Raise if the MeritRemoval was already flagged.
   #First check done as we're likely to be sent SMRs multiple times and signature verifs are expensive.
   if consensus.malicious.hasKey(holder):
     try:
       for mr in consensus.malicious[holder]:
-        if (mr.element1 == removal.element1) and (mr.element2 == removal.element2):
-          return
+        if (
+          ((mr.element1 == removal.element1) and (mr.element2 == removal.element2)) or
+          #Test if the Elements are swapped.
+          #All this does is prevent a minor annoyance where we could hold the same MeritRemoval twice.
+          #Now that MRs are permanent, this doesn't really mean anything.
+          ((mr.element1 == removal.element2) and (mr.element2 == removal.element1))
+        ):
+          raise newLoggedException(DataExists, "Already handled this SignedMeritRemoval.")
     except KeyError as e:
       panic("Failed to get the MeritRemovals for a holder which has MeritRemovals in the cache: " & e.msg)
 
@@ -592,6 +601,7 @@ proc add*(
 
   #Verify the Elements conflict with each other.
   try:
+    #Only usage of this function. They should be merged.
     consensus.verify(mr)
   except ValueError as e:
     raise e

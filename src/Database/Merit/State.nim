@@ -58,11 +58,12 @@ proc cacheNextRemoval(
       panic("State tried to remove dead Merit yet couldn't get the old Block: " & e.msg)
 
     #Do nothing if they had their Merit removed.
-    var removals: seq[int] = state.loadHolderRemovals(nick)
-    for removal in removals:
-      if (removal < height) and (removal >= nonce):
+    try:
+      if state.db.loadRemovalHeight(nick) < height:
         state.pendingRemovals.addLast(-1)
         return
+    except DBReadError:
+      discard
 
     #Add the nickname.
     state.pendingRemovals.addLast(int(nick))

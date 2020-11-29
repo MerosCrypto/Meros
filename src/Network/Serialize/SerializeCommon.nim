@@ -30,7 +30,6 @@ const
   #Elements that can be in a MeritRemoval.
   MERIT_REMOVAL_ELEMENT_SET*: set[byte] = {
     byte(VERIFICATION_PREFIX),
-    byte(VERIFICATION_PACKET_PREFIX),
     byte(SEND_DIFFICULTY_PREFIX),
     byte(DATA_DIFFICULTY_PREFIX)
   }
@@ -38,8 +37,7 @@ const
   #Elements that can be in a Block.
   BLOCK_ELEMENT_SET*: set[byte] = {
     byte(SEND_DIFFICULTY_PREFIX),
-    byte(DATA_DIFFICULTY_PREFIX),
-    byte(MERIT_REMOVAL_PREFIX)
+    byte(DATA_DIFFICULTY_PREFIX)
   }
 
 type Handshake* = object

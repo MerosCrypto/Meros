@@ -1,5 +1,4 @@
 import macros
-import algorithm
 
 import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
@@ -8,9 +7,11 @@ import objects/[ElementObj, SignedElementObj]
 export ElementObj, SignedElementObj
 
 import Verification as VerificationFile
-import VerificationPacket as VerificationPacketFile
 import SendDifficulty as SendDifficultyFile
 import DataDifficulty as DataDifficultyFile
+
+{.used.}
+import VerificationPacket as VerificationPacketFile
 import MeritRemoval as MeritRemovalFile
 
 export VerificationFile, VerificationPacketFile
@@ -86,14 +87,6 @@ proc `==`*(
         (not (e2 of Verification)) or
         (v1.holder != cast[Verification](e2).holder) or
         (v1.hash != cast[Verification](e2).hash)
-      ):
-        return false
-
-    of VerificationPacket as vp1:
-      if (
-        (not (e2 of VerificationPacket)) or
-        (vp1.holders.sorted() != cast[VerificationPacket](e2).holders.sorted()) or
-        (vp1.hash != cast[VerificationPacket](e2).hash)
       ):
         return false
 

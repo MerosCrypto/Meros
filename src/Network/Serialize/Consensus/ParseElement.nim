@@ -19,14 +19,6 @@ proc getLength*(
     of VERIFICATION_PREFIX:
       result = HASH_LEN
 
-    #VerificationPackets are never in Blocks.
-    #They can be in MeritRemovals, and MeritRemoval VerificationPackets use an expanded serialization to guarantee usability.
-    of VERIFICATION_PACKET_PREFIX:
-      if actual != MERIT_REMOVAL_PREFIX:
-        result = NICKNAME_LEN
-      else:
-        result += (BLS_PUBLIC_KEY_LEN * holders) + HASH_LEN
-
     of SEND_DIFFICULTY_PREFIX:
       result = NICKNAME_LEN + INT_LEN + INT_LEN
       if actual == MERIT_REMOVAL_PREFIX:

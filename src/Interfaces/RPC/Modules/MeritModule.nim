@@ -310,7 +310,8 @@ proc module*(
               contents.packets,
               pending.packets,
               pending.elements,
-              pending.aggregate
+              pending.aggregate,
+              {}
             ).serialize(sketchSalt, pending.packets.len).toHex()
           }
         except ValueError as e:

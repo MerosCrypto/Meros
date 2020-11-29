@@ -72,22 +72,11 @@ template HOLDER_MALICIOUS_PROOF_QUANTITY(
 ): string =
   holder.toBinary(NICKNAME_LEN) & "p"
 
-template HOLDER_MALICIOUS_PROOFS_BACKUP(
-  holder: uint16
-): string =
-  HOLDER_MALICIOUS_PROOF_QUANTITY(holder) & "b"
-
 template HOLDER_MALICIOUS_PROOF(
   holder: uint16,
   nonce: int
 ): string =
   holder.toBinary(NICKNAME_LEN) & nonce.toBinary(INT_LEN) & "p"
-
-template HOLDER_MALICIOUS_PROOF_BACKUP(
-  holder: uint16,
-  nonce: int
-): string =
-  HOLDER_MALICIOUS_PROOF(holder, nonce) & "b"
 
 proc put(
   db: DB,
@@ -248,11 +237,11 @@ proc saveMaliciousProof*(
 ) {.forceCheck: [].} =
   var nonce: int = 1
   try:
-    nonce = db.get(HOLDER_MALICIOUS_PROOFS(mr.holder)).fromBinary() + 1
+    nonce = db.get(HOLDER_MALICIOUS_PROOF_QUANTITY(mr.holder)).fromBinary() + 1
   except DBReadError:
     discard
   db.put(HOLDER_MALICIOUS_PROOF(mr.holder, nonce), mr.signedSerialize())
-  db.put(HOLDER_MALICIOUS_PROOFS(mr.holder), nonce.toBinary())
+  db.put(HOLDER_MALICIOUS_PROOF_QUANTITY(mr.holder), nonce.toBinary())
 
   if not db.consensus.malicious.contains(mr.holder):
     var malicious: string = ""
@@ -408,7 +397,7 @@ proc loadMaliciousProofs*(
     result[holder] = @[]
 
     try:
-      for p in 0 ..< db.get(HOLDER_MALICIOUS_PROOFS(holder)).fromBinary():
+      for p in 0 ..< db.get(HOLDER_MALICIOUS_PROOF_QUANTITY(holder)).fromBinary():
         try:
           result[holder].add(db.get(HOLDER_MALICIOUS_PROOF(holder, p)).parseSignedMeritRemoval())
         except ValueError as e:

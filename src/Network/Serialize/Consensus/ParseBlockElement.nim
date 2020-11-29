@@ -3,7 +3,7 @@ import ../../../lib/Errors
 import ../../../Database/Consensus/Elements/objects/ElementObj
 
 import ../SerializeCommon
-import ParseElement, ParseSendDifficulty, ParseDataDifficulty, ParseMeritRemoval
+import ParseElement, ParseSendDifficulty, ParseDataDifficulty
 
 proc parseBlockElement*(
   data: string,
@@ -14,7 +14,10 @@ proc parseBlockElement*(
 ] {.forceCheck: [
   ValueError
 ].} =
-  result.len = BLOCK_ELEMENT_SET.getLength(data[i])
+  try:
+    result.len = BLOCK_ELEMENT_SET.getLength(data[i])
+  except ValueError as e:
+    raise e
   if i + result.len > data.len:
     raise newLoggedException(ValueError, "parseBlockElement not handed enough data to parse the next Element.")
 
@@ -28,6 +31,3 @@ proc parseBlockElement*(
         panic("Possible Element wasn't supported.")
   except ValueError as e:
     raise e
-
-  if int(data[i]) != MERIT_REMOVAL_PREFIX:
-    inc(result.len)

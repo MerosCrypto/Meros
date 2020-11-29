@@ -1,31 +1,12 @@
-import ../../../lib/[Errors, Hash]
+import ../../../lib/Errors
 import ../../../Wallet/MinerWallet
-
-import VerificationPacket as VerificationPacketFile
 
 import objects/MeritRemovalObj
 export MeritRemovalObj
 
 #The serialization of the elements used in the Merit Removal is used to generate a hash.
 import ../../../Network/Serialize/SerializeCommon
-import ../../../Network/Serialize/Consensus/[
-  SerializeVerification,
-  SerializeVerificationPacket,
-  SerializeMeritRemoval
-]
-
-proc newMeritRemoval*(
-  nick: uint16,
-  partial: bool,
-  e1: Element,
-  e2: Element
-): MeritRemoval {.forceCheck: [].} =
-  result = newMeritRemovalObj(
-    nick,
-    partial,
-    e1,
-    e2
-  )
+import ../../../Network/Serialize/Consensus/SerializeVerification
 
 proc newSignedMeritRemoval*(
   nick: uint16,
@@ -44,7 +25,7 @@ proc newSignedMeritRemoval*(
 
 #Calculate the MeritRemoval's aggregation info.
 proc agInfo*(
-  mr: MeritRemoval,
+  mr: SignedMeritRemoval,
   holder: BLSPublicKey
 ): BLSAggregationInfo {.forceCheck: [].} =
   try:

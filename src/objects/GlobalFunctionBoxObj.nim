@@ -160,10 +160,6 @@ type
       DataExists
     ].}
 
-    verifyUnsignedMeritRemoval*: proc (
-      mr: MeritRemoval
-    ): Future[void] {.gcsafe.}
-
     addSignedMeritRemoval*: proc (
       mr: SignedMeritRemoval
     ): Future[void] {.gcsafe.}

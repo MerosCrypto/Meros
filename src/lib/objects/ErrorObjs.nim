@@ -28,7 +28,7 @@ type
 
   #Database/Consensus Statuses.
   MaliciousMeritHolder* = object of CatchableError #Used when a MeritHolder commits a malicious act against the network.
-    #MeritRemoval or pair Element, depending on where it's used in the codebase.
+    #SignedMeritRemoval or pair Element, depending on where it's used in the codebase.
     element*: Element
   UnfinalizedParents* = object of CatchableError #Status used when we try to finalize a family which relies on another.
 
