@@ -20,13 +20,7 @@ proc parseMeritRemovalElement(
   ValueError
 ].} =
   try:
-    result.len = 0
-    if int(data[i]) == VERIFICATION_PACKET_PREFIX:
-      result.len = {
-        byte(VERIFICATION_PACKET_PREFIX)
-      }.getLength(data[i])
-
-    result.len += MERIT_REMOVAL_ELEMENT_SET.getLength(
+    result.len = MERIT_REMOVAL_ELEMENT_SET.getLength(
       data[i],
       data[i + 1 .. i + result.len].fromBinary(),
       MERIT_REMOVAL_PREFIX

@@ -116,7 +116,7 @@ template BLOCK_REMOVALS(
 ): string =
   blockNum.toBinary(INT_LEN) & "r"
 
-template HOLDER_REMOVALS(
+template HOLDER_REMOVAL(
   nick: uint16
 ): string =
   nick.toBinary(NICKNAME_LEN) & "r"
@@ -337,13 +337,7 @@ proc remove*(
   blockNum: int
 ) {.forceCheck: [].} =
   db.merit.removals[nick] = merit
-
-  var removals: string
-  try:
-    removals = db.get(HOLDER_REMOVALS(nick))
-  except DBReadError:
-    discard
-  db.put(HOLDER_REMOVALS(nick), removals & blockNum.toBinary(INT_LEN))
+  db.put(HOLDER_REMOVAL(nick), blockNum.toBinary(INT_LEN))
 
 proc loadUpcomingKey*(
   db: DB
@@ -556,18 +550,16 @@ proc loadBlockRemovals*(
       )
     )
 
-proc loadHolderRemovals*(
+proc loadRemovalHeight*(
   db: DB,
   nick: uint16
-): seq[int] {.forceCheck: [].} =
-  var removals: string
+): int {.forceCheck: [
+  DBReadError
+].} =
   try:
-    removals = db.get(HOLDER_REMOVALS(nick))
-  except DBReadError:
-    return
-
-  for i in countup(0, removals.len - 1, 4):
-    result.add(removals[i ..< i + 4].fromBinary())
+    result = db.get(HOLDER_REMOVAL(nick)).fromBinary()
+  except DBReadError as e:
+    raise e
 
 proc hasBlock*(
   db: DB,
@@ -597,7 +589,8 @@ proc deleteUpcomingKey*(
 proc deleteBlock*(
   db: DB,
   nonce: int,
-  elements: seq[BlockElement]
+  elements: seq[BlockElement],
+  removals: set[uint16]
 ) {.forceCheck: [].} =
   var hash: Hash[256]
   try:
@@ -622,17 +615,8 @@ proc deleteBlock*(
   db.del(COUNTED_MERIT(nonce))
   db.del(BLOCK_REMOVALS(nonce))
 
-  for elem in elements:
-    if elem of MeritRemoval:
-      var removals: string
-      try:
-        removals = db.get(HOLDER_REMOVALS(cast[MeritRemoval](elem).holder))
-      except DBReadError as e:
-        panic("Couldn't get the removals of a holder with a MeritRemoval: " & e.msg)
-      if removals.len == INT_LEN:
-        db.del(HOLDER_REMOVALS(cast[MeritRemoval](elem).holder))
-      else:
-        db.put(HOLDER_REMOVALS(cast[MeritRemoval](elem).holder), removals[0 ..< removals.len - INT_LEN])
+  for holder in removals:
+    db.del(HOLDER_REMOVAL(holder))
 
 #Delete the latest holder.
 proc deleteHolder*(
@@ -651,4 +635,4 @@ proc deleteHolder*(
     panic("Tried to delete a holder who didn't have their key saved: " & e.msg)
   db.del(HOLDER_NICK(holders))
   db.del(MERIT(holders))
-  db.del(HOLDER_REMOVALS(holders))
+  db.del(HOLDER_REMOVAL(holders))

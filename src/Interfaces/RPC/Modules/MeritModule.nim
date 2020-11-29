@@ -49,29 +49,6 @@ proc `%**`(
       result["nonce"] = % dataDiff.nonce
       result["difficulty"] = % dataDiff.difficulty
 
-    of MeritRemoval as mr:
-      result["descendant"] = % "MeritRemoval"
-
-      result["holder"] = % mr.holder
-      result["partial"] = % mr.partial
-
-      var
-        element1: JSONNode = %** mr.element1
-        element2: JSONNode = %** mr.element2
-
-      if element1.hasKey("holder"):
-        try:
-          element1.delete("holder")
-        except KeyError as e:
-          panic("Couldn't delete a key we confirmed was present: " & e.msg)
-      if element2.hasKey("holder"):
-        try:
-          element2.delete("holder")
-        except KeyError as e:
-          panic("Couldn't delete a key we confirmed was present: " & e.msg)
-
-      result["elements"] = % [element1, element2]
-
     else:
       panic("MeritModule's `%`(Element) passed an unsupported Element type.")
 

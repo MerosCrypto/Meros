@@ -13,15 +13,20 @@ type BlockBody* = object
   #Aggregate signature.
   aggregate*: BLSSignature
 
+  #Merit Removals. Internal footnote.
+  removals*: set[uint16]
+
 func newBlockBodyObj*(
   packetsContents: Hash[256],
   packets: seq[VerificationPacket],
   elements: seq[BlockElement],
-  aggregate: BLSSignature
+  aggregate: BLSSignature,
+  removals: set[uint16]
 ): BlockBody {.inline, forceCheck: [].} =
   BlockBody(
     packetsContents: packetsContents,
     packets: packets,
     elements: elements,
-    aggregate: aggregate
+    aggregate: aggregate,
+    removals: removals
   )

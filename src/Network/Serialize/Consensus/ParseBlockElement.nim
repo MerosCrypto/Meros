@@ -14,28 +14,7 @@ proc parseBlockElement*(
 ] {.forceCheck: [
   ValueError
 ].} =
-  try:
-    result.len = BLOCK_ELEMENT_SET.getLength(data[i])
-
-    if int(data[i]) == MERIT_REMOVAL_PREFIX:
-      for _ in 0 ..< 2:
-        var
-          holdersLen: int = 0
-          holders: int = 0
-        if int(data[i + result.len]) == VERIFICATION_PACKET_PREFIX:
-          holdersLen = {
-            byte(VERIFICATION_PACKET_PREFIX)
-          }.getLength(data[i + result.len])
-          holders = data[i + result.len + 1 .. i + result.len + holdersLen].fromBinary()
-
-        result.len += MERIT_REMOVAL_ELEMENT_SET.getLength(
-          data[i + result.len],
-          holders,
-          MERIT_REMOVAL_PREFIX
-        ) + holdersLen
-  except ValueError as e:
-    raise e
-
+  result.len = BLOCK_ELEMENT_SET.getLength(data[i])
   if i + result.len > data.len:
     raise newLoggedException(ValueError, "parseBlockElement not handed enough data to parse the next Element.")
 
@@ -45,8 +24,6 @@ proc parseBlockElement*(
         result.element = parseSendDifficulty(data[i + 1 .. i + result.len])
       of DATA_DIFFICULTY_PREFIX:
         result.element = parseDataDifficulty(data[i + 1 .. i + result.len])
-      of MERIT_REMOVAL_PREFIX:
-        result.element = parseMeritRemoval(data[i + 1 .. i + result.len])
       else:
         panic("Possible Element wasn't supported.")
   except ValueError as e:

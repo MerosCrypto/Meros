@@ -48,7 +48,11 @@ type
     ]#
     lastParticipation*: seq[int]
 
+    #Refers to Merit being decremented from dying; not Merit Removals.
     pendingRemovals*: Deque[int]
+
+    #Set of Merit Holders with a Merit Removal, invalidating all future participation.
+    hasMR: set[uint16]
 
   #Object returned after processing a new Block.
   StateChanges* = object
@@ -74,7 +78,9 @@ proc newStateObj*(
 
     processedBlocks: blockchainHeight,
 
-    pendingRemovals: initDeque[int](8)
+    pendingRemovals: initDeque[int](8),
+
+    hasMR: {}
   )
 
   #Load the Merit amounts.
@@ -100,6 +106,9 @@ proc newStateObj*(
       result.lastParticipation[h] = lastParticipations[lastParticipations.len - INT_LEN ..< lastParticipations.len].fromBinary()
     except DBReadError as e:
       panic("Couldn't load a holder's Merit: " & e.msg)
+
+  #Load the holders with Merit Removals.
+  state.hasMR = result.db.loadHoldersWithRemovals()
 
 proc saveMerits*(
   state: State,
@@ -268,12 +277,6 @@ proc loadBlockRemovals*(
 ): seq[tuple[nick: uint16, merit: int]] {.inline, forceCheck: [].} =
   state.db.loadBlockRemovals(blockNum)
 
-proc loadHolderRemovals*(
-  state: State,
-  nick: uint16
-): seq[int] {.inline, forceCheck: [].} =
-  state.db.loadHolderRemovals(nick)
-
 #Set a holder's Merit.
 proc `[]=`*(
   state: var State,
@@ -306,6 +309,8 @@ proc remove*(
         state.pendingRemovals[p] = -1
   except IndexError as e:
     panic("Couldn't remove the Dead Merit removal for a Merit Holder who had a MeritRemoval: " & e.msg)
+
+  state.hasMR.incl(nick)
 
 #Delete the last nickname from RAM.
 proc deleteLastNickname*(

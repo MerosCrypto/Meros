@@ -109,6 +109,7 @@ proc compare*(
     s1.statuses == s2.statuses
     s1.lastParticipation == s2.lastParticipation
 
+    #Sanity check.
     s1.pendingRemovals.len == 6
     s1.pendingRemovals.len == s2.pendingRemovals.len
 
@@ -120,6 +121,8 @@ proc compare*(
       s1.holders[h] == s2.holders[h]
       uint16(h) == s1.reverseLookup(s1.holders[h])
       uint16(h) == s2.reverseLookup(s2.holders[h])
+
+  check s1.hasMR == s2.hasMR
 
 proc compare*(
   e1Arg: Epochs,

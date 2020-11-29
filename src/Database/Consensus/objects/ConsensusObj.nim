@@ -24,7 +24,15 @@ type Consensus* = object
   db*: DB
 
   filters*: tuple[send: SpamFilter, data: SpamFilter]
-  #Cache of every malicious Merit Removal which has yet to be archived.
+
+  #[
+  Cache of every malicious Merit Removal which has yet to be archived.
+  After implicit Merit Removals, it was made so only one Merit Removal could be archived.
+  That said, this remains a seq.
+  If one MeritRemoval is no longer addable due to pruning one of the involved TXs, this lets us fall back on to another.
+  This is an extreme edge case, yet a nice to have.
+  We also already phrase all of this code around seqs.
+  ]#
   malicious*: Table[uint16, seq[SignedMeritRemoval]]
 
   #Statuses of Transactions not yet out of Epochs.
@@ -680,9 +688,13 @@ proc getPending*(
   var signatures: seq[BLSSignature] = @[]
   try:
     for holder in consensus.signatures.keys():
+      #[
+      Skip over participants with Merit Removals.
+      We need to include their Elements from the SignedMeritRemovals.
+      This guarantees we don't include the same Element twice.
+      Also a nice space saving optimization.
+      ]#
       if consensus.malicious.hasKey(holder):
-        result.elements.add(consensus.malicious[holder][0])
-        signatures.add(consensus.malicious[holder][0].signature)
         continue
 
       if consensus.signatures[holder].len != 0:
@@ -695,6 +707,21 @@ proc getPending*(
   except DBReadError as e:
     panic("Couldn't get an Element we know we have: " & e.msg)
 
+  #Add in Elements of Malicious Merit Holders to prove they're malicious.
+  for holderMRs in consensus.malicious.values():
+    for mr in holderMRs:
+      #Skip over Competing Verification MRs. They're covered in the above packet code.
+      if mr.element1 of Verification:
+        continue
+      #Add the elements/signature and move on to the next holder.
+      #There's no value in providing multiple Merit Removals for them.
+      result.elements.add(mr.element1)
+      result.elements.add(mr.element2)
+      signatures.add(mr.signature)
+      break
+
+  #Ensure all Transactions have had their parents been mentioned.
+  #If they have an unverified parent, don't include them.
   var p: int = 0
   while p < result.packets.len:
     var

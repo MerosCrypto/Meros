@@ -205,10 +205,8 @@ proc mainMerit(
 
     #Check who has their Merit removed.
     var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
-    for elem in newBlock.body.elements:
-      if elem of MeritRemoval:
-        consensus[].flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
-        removed[elem.holder] = cast[MeritRemoval](elem)
+    for holder in newBlock.body.removals:
+      consensus[].flag(merit.blockchain, merit.state, holder)
 
     #Add the Block to the Blockchain.
     merit[].processBlock(newBlock)
@@ -238,8 +236,6 @@ proc mainMerit(
           of DataDifficulty as dd:
             existing = consensus.db.load(dd.holder, dd.nonce)
             sig = consensus.db.loadSignature(dd.holder, dd.nonce)
-          of MeritRemoval as _:
-            continue
           else:
             panic("The code implemented for issue #120 was handed an Element it doesn't recognize.")
       except DBReadError:

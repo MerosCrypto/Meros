@@ -34,6 +34,7 @@ proc newBlockchain*(
 proc testBlockHeader*(
   miners: Table[BLSPublicKey, uint16],
   lookup: seq[BLSPublicKey],
+  hasMR: set[uint16],
   previous: BlockHeader,
   difficulty: uint64,
   header: BlockHeader
@@ -67,6 +68,10 @@ proc testBlockHeader*(
     #Make sure the nick is valid.
     if header.minerNick >= uint16(lookup.len):
       raise newLoggedException(ValueError, "Header has an invalid nickname.")
+
+    #Make sure they never had their Merit removed.
+    if hasMR.contains(header.minerNick):
+      raise newLoggedException(ValueError, "Header has a miner who had their Merit Removed.")
 
     key = lookup[header.minerNick]
 
@@ -156,6 +161,7 @@ proc revert*(
   state.pruneStatusesAndParticipations(oldAmountOfHolders)
 
   #Miners we changed the Merit of.
+  #We should initially set this to blockchain[b].body.removals, instead of what we have both.
   var changedMerit: HashSet[uint16] = initHashSet[uint16]()
 
   #Revert the Blocks.
@@ -171,9 +177,8 @@ proc revert*(
         changedMerit.incl(uint16(blockchain[b].header.minerNick))
 
       #If this Block had a Merit Removal, mark the affected holder in changedMerit.
-      for elem in blockchain[b].body.elements:
-        if elem of MeritRemoval:
-          changedMerit.incl(cast[MeritRemoval](elem).holder)
+      for holder in blockchain[b].body.removals:
+        changedMerit.incl(holder)
     except IndexError as e:
       panic("Couldn't grab the Block we're reverting past: " & e.msg)
 
@@ -193,9 +198,8 @@ proc revert*(
       else:
         changedMerit.incl(deadBlock.header.minerNick)
 
-      for elem in deadBlock.body.elements:
-        if elem of MeritRemoval:
-          changedMerit.incl(cast[MeritRemoval](elem).holder)
+      for holder in deadBlock.body.removals:
+        changedMerit.incl(holder)
 
     #Delete the Block.
     try:

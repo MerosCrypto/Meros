@@ -30,3 +30,6 @@ proc serialize*(
     result &= elem.serializeContents()
 
   result &= blockArg.body.aggregate.serialize()
+
+  for holder in blockArg.body.removals:
+    result &= holder.toBinary(NICKNAME_LEN)

@@ -180,10 +180,7 @@ proc recv*(
 
             len += MERIT_REMOVAL_ELEMENT_SET.getLength(
               msg[elemI],
-              if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
-                msg[elemI + 1 ..< msg.len].fromBinary()
-              else:
-                0,
+              0,
               MERIT_REMOVAL_PREFIX
             )
           except ValueError as e:

@@ -37,8 +37,6 @@ proc serialize*(
 
   result &= body.elements.len.toBinary(INT_LEN)
   for elem in body.elements:
-    if elem of MeritRemoval:
-      continue
     result &= elem.serializeContents()
 
   result &= body.aggregate.serialize()

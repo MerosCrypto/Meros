@@ -467,15 +467,15 @@ proc sync*(
   var
     newNonces: Table[uint16, int] = initTable[uint16, int]()
     hasElem: set[uint16] = {}
-    hasMR: Table[uint16, (bool, Element, Element)] = initTable[uint16, (bool, Element, Element)]()
   #Sort by nonce so we don't risk a gap.
   result[1].sort(
     proc (
       e1: BlockElement,
       e2: BlockElement
     ): int {.forceCheck: [].} =
-      var e1Nonce: int = -1
-      var e2Nonce: int = -1
+      var
+        e1Nonce: int = -1
+        e2Nonce: int = -1
 
       case e1:
         of SendDifficulty as sendDiff:
@@ -515,9 +515,7 @@ proc sync*(
               panic("Couldn't get a Element with a nonce lower than the newest nonce for this holder: " & e.msg)
             if elem == archived:
               raise newLoggedException(ValueError, "Block contains an already archived Element.")
-            if not hasMR.hasKey(elem.holder):
-              hasMR[elem.holder] = @[]
-            hasMR[elem.holder].add((true, elem, archived))
+            result[0].body.removals.incl(elem.holder)
           else:
             for e2 in 0 ..< e:
               var otherNonce: int
@@ -532,9 +530,7 @@ proc sync*(
               if (result[1][e].holder == elem.holder) and (otherNonce == elem.nonce):
                 if result[1][e] == elem:
                   raise newLoggedException(ValueError, "Block contains the same Element twice.")
-                if not hasMR.hasKey(elem.holder):
-                  hasMR[elem.holder] = @[]
-                hasMR[elem.holder].add((false, elem, result[1][e]))
+                result[0].body.removals.incl(elem.holder)
         inc(newNonces[elem.holder])
       except KeyError:
         panic("Table doesn't have a value for a key we made sure we had.")
@@ -559,42 +555,26 @@ proc sync*(
       continue
 
     for holder in packet.holders:
+      if result[0].body.removals.contains(holder):
+        continue
+
       for competitor in thisTXsCompetitors:
         try:
           compStatus = manager.functions.consensus.getStatus(competitor)
         except IndexError as e:
           panic("Couldn't get a status for a Transaction which spends an input mentioned in this Block: " & e.msg)
-        var mrStatus: int = 0
         #Has archived Verification for this Transaction.
         #If they have a pending Verification, we could create a Signed MeritRemoval at this point in time.
         #Basically a new form of https://github.com/MerosCrypto/Meros/issues/120.
-        if compStatus.holders.contains(holder) and (not compStatus.pending.contains(holder)):
-          mrStatus = 1
-        #Check if they have a Verification for this Transaction in this Block.
-      elif (includedTXs.contains(competitor)) and (holdersForTX[competitor].contains(holder)):
-          mrStatus = 2
-
-        if mrStatus != 0:
-          try:
-            if not hasMR.hasKey(holder):
-              hasMR[holder] = @[]
-            hasMR[holder].add(mrStatus == 1, newVerificationObj(holder, packet.hash), newVerificationObj(competitor))
-          except KeyError:
-            panic("Table doesn't have a value for a key we made sure we had.")
-
-  for holder in hasMR.keys():
-    try:
-      for valueSet in hasMR[holder]:
-        result[0].body.elements.add(
-          newMeritRemoval(
-            holder,
-            valueSet[0],
-            valueSet[1],
-            valueSet[2]
-          )
-        )
-    except KeyError as e:
-      panic("Can't get the info behind a Merit Removal despite iterating over the Table's keys: " & e.msg)
+        if compStatus.pending.contains(holder):
+          discard
+        elif (
+          #Archived Competing Verification.
+          compStatus.holders.contains(holder) or
+          #Competing Verification in this same Block.
+          ((includedTXs.contains(competitor)) and (holdersForTX[competitor].contains(holder)))
+        ):
+          result[0].body.removals.incl(holder)
 
 proc syncBlockBody*(
   manager: SyncManager,

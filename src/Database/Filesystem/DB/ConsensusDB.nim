@@ -3,15 +3,12 @@ import sets, tables
 import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
 
-import ../../Transactions/objects/TransactionObj
-
 import ../../Consensus/Elements/Elements
 import ../../Consensus/objects/TransactionStatusObj
 
 import ../../../Network/Serialize/SerializeCommon
 import ../../../Network/Serialize/Consensus/[SerializeMeritRemoval, ParseMeritRemoval]
 
-import Serialize/Transactions/[DBSerializeTransaction, ParseTransaction]
 import Serialize/Consensus/[SerializeTransactionStatus, ParseTransactionStatus]
 
 import objects/DBObj
@@ -67,18 +64,18 @@ template SIGNATURE(
 ): string =
   BLOCK_ELEMENT(holder, nonce) & "s"
 
-template TRANSACTION(
-  hash: Hash[256]
-): string =
-  hash.serialize() & "t"
-
 template MALICIOUS_PROOFS(): string =
   "p"
 
-template HOLDER_MALICIOUS_PROOFS(
+template HOLDER_MALICIOUS_PROOF_QUANTITY(
   holder: uint16
 ): string =
   holder.toBinary(NICKNAME_LEN) & "p"
+
+template HOLDER_MALICIOUS_PROOFS_BACKUP(
+  holder: uint16
+): string =
+  HOLDER_MALICIOUS_PROOF_QUANTITY(holder) & "b"
 
 template HOLDER_MALICIOUS_PROOF(
   holder: uint16,
@@ -86,15 +83,11 @@ template HOLDER_MALICIOUS_PROOF(
 ): string =
   holder.toBinary(NICKNAME_LEN) & nonce.toBinary(INT_LEN) & "p"
 
-template MERIT_REMOVAL(
-  mr: MeritRemoval
+template HOLDER_MALICIOUS_PROOF_BACKUP(
+  holder: uint16,
+  nonce: int
 ): string =
-  mr.reason.serialize() & "r"
-
-template MERIT_REMOVAL_NONCES(
-  holder: uint16
-): string =
-  holder.toBinary(NICKNAME_LEN) & "n"
+  HOLDER_MALICIOUS_PROOF(holder, nonce) & "b"
 
 proc put(
   db: DB,
@@ -249,17 +242,11 @@ proc saveArchived*(
 ) {.inline, forceCheck: [].} =
   db.put(HOLDER_ARCHIVED_NONCE(holder), nonce.toBinary())
 
-proc saveTransaction*(
-  db: DB,
-  tx: Transaction
-) {.inline, forceCheck: [].} =
-  db.put(TRANSACTION(tx.hash), tx.serialize())
-
 proc saveMaliciousProof*(
   db: DB,
   mr: SignedMeritRemoval
 ) {.forceCheck: [].} =
-  var nonce: int = 0
+  var nonce: int = 1
   try:
     nonce = db.get(HOLDER_MALICIOUS_PROOFS(mr.holder)).fromBinary() + 1
   except DBReadError:
@@ -274,25 +261,6 @@ proc saveMaliciousProof*(
     except DBReadError:
       discard
     db.put(MALICIOUS_PROOFS(), malicious & mr.holder.toBinary(NICKNAME_LEN))
-
-proc save*(
-  db: DB,
-  mr: MeritRemoval
-) {.inline, forceCheck: [].} =
-  db.put(MERIT_REMOVAL(mr), "")
-
-proc saveMeritRemovalNonce*(
-  db: DB,
-  holder: uint16,
-  nonce: int
-) {.forceCheck: [].} =
-  var existing: string
-  try:
-    existing = db.get(MERIT_REMOVAL_NONCES(holder))
-  except DBReadError:
-    discard
-
-  db.put(MERIT_REMOVAL_NONCES(holder), existing & nonce.toBinary(INT_LEN))
 
 proc load*(
   db: DB,
@@ -422,19 +390,6 @@ proc loadArchived*(
   except DBReadError:
     result = -1
 
-proc loadTransaction*(
-  db: DB,
-  hash: Hash[256]
-): Transaction {.forceCheck: [
-  DBReadError
-].} =
-  try:
-    result = hash.parseTransaction(db.get(TRANSACTION(hash)))
-  except ValueError as e:
-    panic("Couldn't parse a Transaction saved to the Consensus DB: " & e.msg)
-  except DBReadError as e:
-    raise e
-
 #Load the malicious proofs table.
 proc loadMaliciousProofs*(
   db: DB
@@ -453,7 +408,7 @@ proc loadMaliciousProofs*(
     result[holder] = @[]
 
     try:
-      for p in 0 .. db.get(HOLDER_MALICIOUS_PROOFS(holder)).fromBinary():
+      for p in 0 ..< db.get(HOLDER_MALICIOUS_PROOFS(holder)).fromBinary():
         try:
           result[holder].add(db.get(HOLDER_MALICIOUS_PROOF(holder, p)).parseSignedMeritRemoval())
         except ValueError as e:
@@ -461,22 +416,13 @@ proc loadMaliciousProofs*(
     except DBReadError:
       result.del(holder)
 
-proc loadMeritRemovalNonces*(
-  db: DB,
-  holder: uint16
-): HashSet[int] {.forceCheck: [].} =
-  result = initHashSet[int]()
-
-  var nonces: string
-  try:
-    nonces = db.get(MERIT_REMOVAL_NONCES(holder))
-  except DBReadError:
-    return
-
-  for n in countup(0, nonces.len - 1, INT_LEN):
-    result.incl(nonces[n ..< n + INT_LEN].fromBinary())
-
-#Delete a Transaction Status.
+#[
+Delete a Transaction Status.
+We used to have a function called prune which also deleted the Transaction itself from this DB.
+This was when the Consensus DB did save some TXs used in MRs which were no longer valid against the current DAG.
+With implicit Merit Removals, this functionality is gone.
+Prune was also deleted, and all code was migrated to this function.
+]#
 proc delete*(
   db: DB,
   hash: Hash[256]
@@ -515,88 +461,20 @@ proc deleteDataDifficulty*(
   db.del(HOLDER_DATA_DIFFICULTY(holder))
   db.del(DATA_DIFFICULTY_NONCE(holder))
 
-proc deleteMaliciousProof*(
+proc deleteMaliciousProofs*(
   db: DB,
-  mr: MeritRemoval
+  holder: uint16
 ) {.forceCheck: [].} =
-  var proofs: int
+  #We actually don't want to delete any of these (https://github.com/MerosCrypto/Meros/issues/152).
+  #We solely want to ignore them, which means removing the note to reload them as part of the cache.
+  #Since implicit Merit Removals pemanently banned holders, we don't have to worry about overwrite.
+  var malicious: string
   try:
-    #Get the proof count and updae it.
-    proofs = db.get(HOLDER_MALICIOUS_PROOFS(mr.holder)).fromBinary()
-    if proofs == 0:
-      db.del(HOLDER_MALICIOUS_PROOFS(mr.holder))
-    else:
-      db.put(HOLDER_MALICIOUS_PROOFS(mr.holder), (proofs - 1).toBinary())
-  except DBReadError as e:
-    panic("Couldn't get the amount of malicious proofs a holder has when deleting one: " & e.msg)
-
-  try:
-    #Find the proof we're deleting.
-    for p in 0 ..< proofs:
-      try:
-        if db.get(HOLDER_MALICIOUS_PROOF(mr.holder, p)).parseMeritRemoval().reason == mr.reason:
-          db.put(HOLDER_MALICIOUS_PROOF(mr.holder, p), db.get(HOLDER_MALICIOUS_PROOF(mr.holder, proofs)))
-          break
-      except ValueError as e:
-        panic("Couldn't parse a MeritRemoval we saved to the database as a malicious proof: " & e.msg)
-  except DBReadError as e:
-    panic("Couldn't load a malicious proof of a holder when deleting one: " & e.msg)
-
-  #Delete the last proof.
-  #If we haven't found the proof already, it is the last proof.
-  #If we did find it, we moved the last proof to its place.
-  db.del(HOLDER_MALICIOUS_PROOF(mr.holder, proofs))
-
-proc deleteMeritRemoval*(
-  db: DB,
-  mr: MeritRemoval
-) {.forceCheck: [].} =
-  #Delete the MeritRemoval.
-  db.del(MERIT_REMOVAL(mr))
-
-  #Delete its nonce.
-  var nonce: int = -1
-  case mr.element1:
-    of Verification as _:
-      discard
-    of VerificationPacket as _:
-      discard
-    of SendDifficulty as sd:
-      nonce = sd.nonce
-    of DataDifficulty as dd:
-      nonce = dd.nonce
-    else:
-      panic("Unknown Element included in the MeritRemoval being deleted.")
-
-  if nonce != -1:
-    var existing: string
-    try:
-      existing = db.get(MERIT_REMOVAL_NONCES(mr.holder))
-    except DBReadError as e:
-      panic("Couldn't get the nonces of a holder who has a MeritRemoval being deleted: " & e.msg)
-
-    for n in countup(0, existing.len - 1, INT_LEN):
-      if existing[n ..< n + INT_LEN].fromBinary() == nonce:
-        existing = existing[0 ..< n] & existing[n + INT_LEN ..< existing.len]
-        break
-
-    db.put(MERIT_REMOVAL_NONCES(mr.holder), existing)
-
-proc hasMeritRemoval*(
-  db: DB,
-  removal: MeritRemoval
-): bool {.forceCheck: [].} =
-  try:
-    discard db.get(MERIT_REMOVAL(removal))
-    result = true
+    malicious = db.get(MALICIOUS_PROOFS())
   except DBReadError:
-    result = false
+    return
 
-#Prune a Transaction.
-proc prune*(
-  db: DB,
-  hash: Hash[256]
-) {.forceCheck: [].} =
-  db.del(TRANSACTION(hash))
-  db.del(STATUS(hash))
-  db.consensus.unmentioned.excl(hash)
+  for h in countup(0, malicious.len - 1, 2):
+    if holder == uint16(malicious[h ..< h + 2].fromBinary()):
+      db.put(MALICIOUS_PROOFS(), malicious[0 ..< h] & malicious[h + 2 ..< malicious.len])
+      break
