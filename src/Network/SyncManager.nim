@@ -1,5 +1,5 @@
 import algorithm
-import sets, tables
+import sequtils, sets, tables
 
 import chronos
 
@@ -427,7 +427,7 @@ proc sync*(
         #Track competitors while we're here.
         thisTXsCompetitors &= manager.functions.transactions.getSpenders(input)
 
-    thisTXsCompetitors.deduplicate()
+    thisTXsCompetitors = thisTXsCompetitors.deduplicate()
     for i in 0 ..< thisTXsCompetitors.len:
       if thisTXsCompetitors[i] == packet.hash:
         thisTXsCompetitors.del(i)
@@ -559,22 +559,27 @@ proc sync*(
         continue
 
       for competitor in thisTXsCompetitors:
+        var compStatus: TransactionStatus
         try:
           compStatus = manager.functions.consensus.getStatus(competitor)
         except IndexError as e:
           panic("Couldn't get a status for a Transaction which spends an input mentioned in this Block: " & e.msg)
-        #Has archived Verification for this Transaction.
-        #If they have a pending Verification, we could create a Signed MeritRemoval at this point in time.
-        #Basically a new form of https://github.com/MerosCrypto/Meros/issues/120.
-        if compStatus.pending.contains(holder):
-          discard
-        elif (
-          #Archived Competing Verification.
-          compStatus.holders.contains(holder) or
-          #Competing Verification in this same Block.
-          ((includedTXs.contains(competitor)) and (holdersForTX[competitor].contains(holder)))
-        ):
-          result[0].body.removals.incl(holder)
+
+        try:
+          #Has archived Verification for this Transaction.
+          #If they have a pending Verification, we could create a Signed MeritRemoval at this point in time.
+          #Basically a new form of https://github.com/MerosCrypto/Meros/issues/120.
+          if compStatus.pending.contains(holder):
+            discard
+          elif (
+            #Archived Competing Verification.
+            compStatus.holders.contains(holder) or
+            #Competing Verification in this same Block.
+            (holdersForTX.hasKey(competitor) and holdersForTX[competitor].contains(holder))
+          ):
+            result[0].body.removals.incl(holder)
+        except KeyError as e:
+          panic("Couldn't get the holders for a Transaction in this Block: " & e.msg)
 
 proc syncBlockBody*(
   manager: SyncManager,

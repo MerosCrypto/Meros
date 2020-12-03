@@ -13,7 +13,6 @@ import ../Hash/objects/HashObj
 
 import ../../Database/Consensus/Elements/objects/ElementObj
 
-
 type
   #lib Errors.
   SaltError*   = object of CatchableError #Used when a sketch salt causes a collision.
@@ -28,8 +27,10 @@ type
 
   #Database/Consensus Statuses.
   MaliciousMeritHolder* = object of CatchableError #Used when a MeritHolder commits a malicious act against the network.
-    #SignedMeritRemoval or pair Element, depending on where it's used in the codebase.
+    #This will be created with the qactual MR or the pair Element, depending on the circumstances.
+    #These used to be the same field, until Merit Removals were made implicit, and no longer a descendant of Element.
     element*: Element
+    removalRef*: MeritRemovalParent
   UnfinalizedParents* = object of CatchableError #Status used when we try to finalize a family which relies on another.
 
   #Database/Merit Statuses.

@@ -4,9 +4,8 @@ import ../../../Wallet/MinerWallet
 import objects/MeritRemovalObj
 export MeritRemovalObj
 
-#The serialization of the elements used in the Merit Removal is used to generate a hash.
-import ../../../Network/Serialize/SerializeCommon
-import ../../../Network/Serialize/Consensus/SerializeVerification
+#The serialization of Elements is used to generate AggregationInfo.
+import ../../../Network/Serialize/Consensus/SerializeElement
 
 proc newSignedMeritRemoval*(
   nick: uint16,

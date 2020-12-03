@@ -1,7 +1,6 @@
 import macros
 
 import ../../../lib/[Errors, Util, Hash]
-import ../../../Wallet/MinerWallet
 
 import objects/[ElementObj, SignedElementObj]
 export ElementObj, SignedElementObj
@@ -10,7 +9,8 @@ import Verification as VerificationFile
 import SendDifficulty as SendDifficultyFile
 import DataDifficulty as DataDifficultyFile
 
-{.used.}
+#This line triggers an UnusedImport line, despite being exported below.
+#Adding {.push warning[UnusedImport]: off.} unfortunately doesn't help.
 import VerificationPacket as VerificationPacketFile
 import MeritRemoval as MeritRemovalFile
 

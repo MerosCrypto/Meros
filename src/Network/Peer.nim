@@ -214,7 +214,8 @@ proc recv*(
                   socket.safeClose("Didn't get a full message.")
                   raise newLoggedException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
-                len = MERIT_REMOVAL_ELEMENT_SET.getLength(
+                try:
+                  len = MERIT_REMOVAL_ELEMENT_SET.getLength(
                     msg[msg.len - 1],
                     0,
                     MERIT_REMOVAL_PREFIX

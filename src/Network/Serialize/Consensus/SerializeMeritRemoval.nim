@@ -4,11 +4,10 @@ import ../../../Wallet/MinerWallet
 import ../../../Database/Consensus/Elements/objects/MeritRemovalObj
 
 import ../SerializeCommon
-import SerializeElement, SerializeVerification
-export SerializeElement
+import SerializeElement
 
-#Serialize a Signed MeritRemoval.
-method signedSerialize*(
+#Serialize a SignedMeritRemoval.
+proc serialize*(
   mr: SignedMeritRemoval
 ): string {.forceCheck: [].} =
   result = mr.holder.toBinary(NICKNAME_LEN)

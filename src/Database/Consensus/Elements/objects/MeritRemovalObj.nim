@@ -4,7 +4,7 @@ import ../../../../Wallet/MinerWallet
 import ElementObj
 export ElementObj
 
-type SignedMeritRemoval* = ref object
+type SignedMeritRemoval* = ref object of MeritRemovalParent
   holder*: uint16
   partial*: bool
   element1*: Element

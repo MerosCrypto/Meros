@@ -27,10 +27,8 @@ import ../Serialize/Merit/[
 ]
 
 import ../Serialize/Consensus/[
-  SerializeVerification,
-  SerializeSendDifficulty,
-  SerializeDataDifficulty,
-  SerializeMeritRemoval,
+  SerializeElement,
+  SerializeVerificationPacket,
   ParseVerificationPacket
 ]
 
@@ -59,7 +57,7 @@ type SyncManager* = ref object
   #Next usable Request ID.
   id*: int
 
-func newSyncManager*(
+proc newSyncManager*(
   protocol: uint,
   network: uint,
   port: int,

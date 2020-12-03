@@ -67,11 +67,12 @@ proc flag*(
       if status.merit != -1:
         continue
 
+      #Don't bother checking Transactions which have yet to be verified.
       if status.verified and status.holders.contains(holder):
         var merit: int = 0
-        for holder in status.holders:
-          if not consensus.malicious.hasKey(holder):
-            merit += state[holder, status.epoch]
+        for sHolder in status.holders:
+          if not ((holder == sHolder) or consensus.malicious.hasKey(sHolder)):
+            merit += state[sHolder, status.epoch]
 
         if merit < state.nodeThresholdAt(status.epoch):
           consensus.unverify(packet.hash, status)
@@ -85,9 +86,9 @@ proc flag*(
 
     if status.verified and status.holders.contains(holder):
       var merit: int = 0
-      for holder in status.holders:
-        if not consensus.malicious.hasKey(holder):
-          merit += state[holder, status.epoch]
+      for sHolder in status.holders:
+        if not ((holder == sHolder) or consensus.malicious.hasKey(sHolder)):
+          merit += state[sHolder, status.epoch]
 
       if merit < state.nodeThresholdAt(status.epoch):
         consensus.unverify(hash, status)
@@ -460,8 +461,7 @@ proc verify(
   consensus: Consensus,
   mr: SignedMeritRemoval
 ) {.forceCheck: [
-  ValueError,
-  DataExists
+  ValueError
 ].} =
   proc checkSecondCompeting(
     hash: Hash[256]
@@ -479,15 +479,12 @@ proc verify(
         raise newLoggedException(ValueError, "Verification isn't archived.")
 
     var
-      inputs: HashSet[string] = initHashSet[string]()
+      inputs: HashSet[Input] = initHashSet[Input]()
       tx: Transaction
     try:
       tx = consensus.functions.transactions.getTransaction(hash)
     except IndexError:
-      try:
-        tx = consensus.getMeritRemovalTransaction(hash)
-      except IndexError:
-        raise newLoggedException(ValueError, "Unknown Transaction verified in first Element.")
+      raise newLoggedException(ValueError, "Unknown Transaction verified in first Element.")
 
     for input in tx.inputs:
       inputs.incl(input)
@@ -505,10 +502,7 @@ proc verify(
     try:
       tx = consensus.functions.transactions.getTransaction(secondHash)
     except IndexError:
-      try:
-        tx = consensus.getMeritRemovalTransaction(hash)
-      except IndexError:
-        raise newLoggedException(ValueError, "Unknown Transaction verified in second Element.")
+      raise newLoggedException(ValueError, "Unknown Transaction verified in second Element.")
 
     for input in tx.inputs:
       if inputs.contains(input):
@@ -581,9 +575,9 @@ proc add*(
 
   #Raise if the MeritRemoval was already flagged.
   #First check done as we're likely to be sent SMRs multiple times and signature verifs are expensive.
-  if consensus.malicious.hasKey(holder):
+  if consensus.malicious.hasKey(mr.holder):
     try:
-      for mr in consensus.malicious[holder]:
+      for removal in consensus.malicious[mr.holder]:
         if (
           ((mr.element1 == removal.element1) and (mr.element2 == removal.element2)) or
           #Test if the Elements are swapped.
@@ -601,25 +595,22 @@ proc add*(
 
   #Verify the Elements conflict with each other.
   try:
-    #Only usage of this function. They should be merged.
+    #Only usage of this function. It should be merged here.
     consensus.verify(mr)
   except ValueError as e:
     raise e
-  except DataExists as e:
-    raise e
 
   #Save it to the cache.
-  if not consensus.malicious.hasKey(holder):
-    consensus.malicious[holder] = @[removal]
+  if not consensus.malicious.hasKey(mr.holder):
+    consensus.malicious[mr.holder] = @[mr]
   else:
     try:
-      consensus.malicious[holder].add(removal)
+      consensus.malicious[mr.holder].add(mr)
     except KeyError as e:
       panic("Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
 
   #Save the MeritRemoval to the database, marking its part of the cache.
-  consensus.db.save(removal)
-  consensus.db.saveMaliciousProof(cast[SignedMeritRemoval](removal))
+  consensus.db.saveMaliciousProof(mr)
 
   #Update affected pending Transactions.
   consensus.flag(blockchain, state, mr.holder)
@@ -636,7 +627,7 @@ proc remove*(
   for holder in holders:
     logInfo "Archiving Merit Removal", holder = holder
 
-    #We do not call flag here. MainMerit calls it before remove is called.
+    #We do not call flag here. MainMerit calls it before it adds Verification Packets.
 
     #Clear any cached entries.
     consensus.malicious.del(holder)
@@ -647,8 +638,8 @@ proc remove*(
     #Such an update requires the difficulty to only be lowered when a new Block coordinates it.
     #Because of that, removal from filters is done here.
     #It can also be done in add(SignedMeritRemoval) with a check for the diff would change.
-    consensus.filters.send.remove(holder, merit)
-    consensus.filters.data.remove(holder, merit)
+    consensus.filters.send.remove(holder, state[holder, state.processedBlocks])
+    consensus.filters.data.remove(holder, state[holder, state.processedBlocks])
 
 #Mark all mentioned packets as mentioned, reset pending, finalize finalized Transactions, and check close Transactions.
 proc archive*(
@@ -1001,10 +992,10 @@ proc revert*(
             consensus.malicious[holder].del(i)
             continue
         inc(i)
-    except KeyError:
+    except KeyError as e:
       panic("Couldn't get a malicious Merit Holder's Merit Removals: " & e.msg)
-    except IndexError:
-      panic("Couldn't get a Transaction that is about to be pruned.")
+    except IndexError as e:
+      panic("Couldn't get a Transaction that is about to be pruned: " & e.msg)
 
 proc postRevert*(
   consensus: var Consensus,

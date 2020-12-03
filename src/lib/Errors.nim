@@ -92,10 +92,13 @@ template newLoggedException*(
 
 proc newMaliciousMeritHolder*(
   msg: string,
-  elem: Element
+  elem: Element or SignedMeritRemoval
 ): ref MaliciousMeritHolder {.forceCheck: [].} =
   result = newLoggedException(MaliciousMeritHolder, msg)
-  result.element = elem
+  when elem is SignedMeritRemoval:
+    result.removalRef = elem
+  else:
+    result.element = elem
 
 proc newSpam*(
   msg: string,
@@ -121,4 +124,4 @@ proc newJSONRPCError*(
 proc removal*(
   mmh: ref MaliciousMeritHolder
 ): SignedMeritRemoval {.inline, forceCheck: [].} =
-  cast[SignedMeritRemoval](mmh.element)
+  cast[SignedMeritRemoval](mmh.removalRef)

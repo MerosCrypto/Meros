@@ -10,11 +10,8 @@ export BlockHeaderObj
 
 import ../../Network/Serialize/SerializeCommon
 import ../../Network/Serialize/Consensus/[
-  SerializeVerification,
-  SerializeVerificationPacket,
-  SerializeSendDifficulty,
-  SerializeDataDifficulty,
-  SerializeMeritRemoval
+  SerializeElement,
+  SerializeVerificationPacket
 ]
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 

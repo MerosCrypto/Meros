@@ -16,3 +16,8 @@ type
   BlockElement* = ref object of Element
     #Creator's nickname.
     holder*: uint16
+
+  #MeritRemoval is no longer an Element, and that inheritance should not be re-introduced.
+  #That said, it's polymorphism was used for the MaliciousMeritHolder Exception.
+  #This re-establishes it without bridging it to something it isn't.
+  MeritRemovalParent* = ref object of RootObj

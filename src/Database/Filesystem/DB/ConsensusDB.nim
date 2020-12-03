@@ -240,7 +240,7 @@ proc saveMaliciousProof*(
     nonce = db.get(HOLDER_MALICIOUS_PROOF_QUANTITY(mr.holder)).fromBinary() + 1
   except DBReadError:
     discard
-  db.put(HOLDER_MALICIOUS_PROOF(mr.holder, nonce), mr.signedSerialize())
+  db.put(HOLDER_MALICIOUS_PROOF(mr.holder, nonce), mr.serialize())
   db.put(HOLDER_MALICIOUS_PROOF_QUANTITY(mr.holder), nonce.toBinary())
 
   if not db.consensus.malicious.contains(mr.holder):

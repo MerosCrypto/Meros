@@ -11,13 +11,9 @@ import objects/BlockObj
 export BlockObj
 
 import ../../Network/Serialize/SerializeCommon
-
 import ../../Network/Serialize/Consensus/[
-  SerializeVerification,
-  SerializeVerificationPacket,
-  SerializeSendDifficulty,
-  SerializeDataDifficulty,
-  SerializeMeritRemoval
+  SerializeElement,
+  SerializeVerificationPacket
 ]
 
 proc verifySketchCheck*(
