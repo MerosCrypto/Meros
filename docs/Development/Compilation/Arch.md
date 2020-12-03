@@ -13,7 +13,7 @@
 To install every prerequisite, run:
 
 ```
-sudo pacman -S git gcc make cmake autoconf automake libtool webkit2gtk curl
+sudo pacman -S curl git gcc libtool autoconf automake pkgconf make cmake webkit2gtk
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 1.2.4
 ```

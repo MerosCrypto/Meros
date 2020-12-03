@@ -94,7 +94,10 @@ disable=
     #- TestError (test didn't pass)
     #- Exception (test broke)
     #To catch Exception, you need a broad except.
-    broad-except
+    broad-except,
+
+    #Incompatible with type hints (see https://github.com/PyCQA/pylint/issues/3882).
+    unsubscriptable-object
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
