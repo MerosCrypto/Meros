@@ -103,6 +103,14 @@ proc `%`(
   except KeyError as e:
     panic("Couldn't add an Element to a Block's JSON representation despite declaring an array for the Elements: " & e.msg)
 
+  #Add the removals.
+  result["removals"] = % []
+  try:
+    for holder in blockArg.body.removals:
+      result["removals"].add(% holder)
+  except KeyError as e:
+    panic("Couldn't add a removal to a Block's JSON representation despite declaring an array for the removals: " & e.msg)
+
 proc module*(
   functions: GlobalFunctionBox
 ): RPCFunctions {.forceCheck: [].} =
