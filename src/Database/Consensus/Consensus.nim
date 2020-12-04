@@ -45,8 +45,22 @@ proc flag*(
   consensus: var Consensus,
   blockchain: Blockchain,
   state: State,
-  holder: uint16
+  holder: uint16,
+  removal: SignedMeritRemoval
 ) {.forceCheck: [].} =
+  if not removal.isNil:
+    #Save it to the cache.
+    if not consensus.malicious.hasKey(holder):
+      consensus.malicious[holder] = @[removal]
+    else:
+      try:
+        consensus.malicious[holder].add(removal)
+      except KeyError as e:
+        panic("Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
+
+    #Save the MeritRemoval to the database, marking its part of the cache.
+    consensus.db.saveMaliciousProof(removal)
+
   #Reclaulcate the affected Transactions in Epochs.
   var
     status: TransactionStatus
@@ -594,20 +608,8 @@ proc add*(
   except ValueError as e:
     raise e
 
-  #Save it to the cache.
-  if not consensus.malicious.hasKey(mr.holder):
-    consensus.malicious[mr.holder] = @[mr]
-  else:
-    try:
-      consensus.malicious[mr.holder].add(mr)
-    except KeyError as e:
-      panic("Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
-
-  #Save the MeritRemoval to the database, marking its part of the cache.
-  consensus.db.saveMaliciousProof(mr)
-
-  #Update affected pending Transactions.
-  consensus.flag(blockchain, state, mr.holder)
+  #Save and update affected pending Transactions.
+  consensus.flag(blockchain, state, mr.holder, mr)
 
 #Remove the Merit from holders who had an implicit Merit Removal.
 #As Consensus doesn't track Merit, this just clears their pending MeritRemovals.

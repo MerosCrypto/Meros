@@ -213,7 +213,7 @@ proc mainMerit(
     That said, that requires multiple malicious holders, which is unlikely (unless part of a dedicated DoS attack).
     ]#
     for holder in newBlock.body.removals:
-      consensus[].flag(merit.blockchain, merit.state, holder)
+      consensus[].flag(merit.blockchain, merit.state, holder, nil)
 
     #Add every Verification Packet.
     for packet in newBlock.body.packets:

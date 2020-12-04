@@ -15,17 +15,6 @@ type
     capacity*: int
     sketch*: string
 
-proc newSketchyBlockBodyObj*(
-  body: BlockBody,
-  capacity: int,
-  sketch: string
-): SketchyBlockBody {.inline, forceCheck: [].} =
-  SketchyBlockBody(
-    data: body,
-    capacity: capacity,
-    sketch: sketch
-  )
-
 proc newSketchyBlockObj*(
   header: BlockHeader,
   body: SketchyBlockBody

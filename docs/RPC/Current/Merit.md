@@ -79,7 +79,7 @@ The result is an object, as follows:
 
 The result is an object, as follows:
 - `status`    (string): "Unlocked", "Locked", or "Pending".
-- `malicious` (bool)
+- `malicious` (bool): Whether or not this holder has a Merit Removal against them pending.
 - `merit`     (int)
 
 ### `getBlockTemplate`

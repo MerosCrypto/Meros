@@ -3,7 +3,8 @@ import ../../../Wallet/MinerWallet
 
 import ../../Consensus/Elements/Elements
 
-type BlockBody* = object
+#Turned into a ref due to a problem with the aggregate signature dropping.
+type BlockBody* = ref object
   #Hash of the packets side of the content Merkle.
   packetsContents*: Hash[256]
   #Packets for those Transactions.

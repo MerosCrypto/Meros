@@ -191,7 +191,7 @@ proc mainConsensus(
       mr = true
 
       #Flag the MeritRemoval.
-      consensus[].flag(merit.blockchain, merit.state, e.removal.holder)
+      consensus[].flag(merit.blockchain, merit.state, e.removal.holder, e.removal)
 
     if mr:
       try:
@@ -243,7 +243,7 @@ proc mainConsensus(
       raise e
     except MaliciousMeritHolder as e:
       mr = true
-      consensus[].flag(merit.blockchain, merit.state, e.removal.holder)
+      consensus[].flag(merit.blockchain, merit.state, e.removal.holder, e.removal)
 
     if mr:
       try:
@@ -288,7 +288,7 @@ proc mainConsensus(
       raise e
     except MaliciousMeritHolder as e:
       mr = true
-      consensus[].flag(merit.blockchain, merit.state, e.removal.holder)
+      consensus[].flag(merit.blockchain, merit.state, e.removal.holder, e.removal)
 
     if mr:
       try:
