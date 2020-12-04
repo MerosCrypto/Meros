@@ -4,7 +4,7 @@ This document defines and describes Consensus Elements, which come in the forms 
 
 Elements do not have hashes, so their signatures are produced by signing their serialization, without the holder, and with a prefix unique to each type of Element.
 
-It should be noted `Verification`, `VerificationPacket`, `SendDifficulty`, `DataDifficulty`, and `MeritRemoval` aren't actual message types. `Verification` only exists to define the `SignedVerification` message type. The rest only exist to define their signed variants, as well define how they're included as part of a `BlockBody` message.
+It should be noted `Verification`, `VerificationPacket`, `SendDifficulty`, `DataDifficulty`, and `MeritRemoval` aren't actual message types. `Verification` and `MeritRemoval` only exist to define their signed counterparts. The rest exist to do this as well as define how they're included as part of a `BlockBody` message.
 
 ### Verification
 
@@ -22,7 +22,7 @@ Verifications, except when present in a MeritRemoval, can only be of valid Trans
 
 ### VerificationPacket
 
-A Verification packet is a group of Verifications belonging to a single Transaction. They use less bandwidth than individual Verifications and are faster to handle in the moment as their signed version uses a single signature for every message.
+A VerificationPacket is a group of Verifications belonging to a single Transaction. They use less bandwidth than individual Verifications and are faster to handle in the moment as their signed version uses a single signature for every message.
 
 `VerificationPacket` has a variable message length; the 2-byte amount of Verifications, the verifiers (each represented by their 2-byte nickname, in ascending order), and the 32-byte hash. Even though VerificationPackets are not directly signed, they use a prefix of "\1" inside a Block Header's content Merkle.
 
@@ -56,9 +56,11 @@ They have the following fields:
 
 ### MeritRemoval
 
-MeritRemovals aren't created by Merit Holders; they are the sum of two Elements which together define a malicious action. This malicious action is either the verification of competing Transactions or two different Difficulty updates which share the same nonce. Once archived in a Block, Merit Removals remove all Merit from a Merit Holder. Until the Merit Removal is archived, node behavior should not update the amount of 'live' Merit for security reasons. This is further described in the Merit documentation. Merit Holders are ineligible for rewards using removed Merit. Merit Holders may regain Merit, yet if the Block which archives their Merit Removal gives them Merit, it is also removed.
+MeritRemovals aren't created by Merit Holders; they are the sum of two Elements which together define a malicious action. This malicious action is either the verification of competing Transactions or two different Difficulty updates which share the same nonce.
 
-If multiple MeritRemovals are triggered, the first one should have already reverted actions not yet finalized and stripped the Merit Holder of their Merit (according to node behavior). The remaining work becomes achieving consensus on which MeritRemoval is the singular MeritRemoval. This is achieved when the next Block is mined as the next Block's miner decides.
+Once archived in a Block, Merit Removals remove all Merit from a Merit Holder. Until the Merit Removal is archived, node behavior should not update the amount of 'live' Merit for security reasons. This is further described in the Merit documentation. Once a Merit Holder has a removal archived, that key and nickname can never earn Merit, create Verifications, or update the difficulty again. If the Block which archives a holder's Merit Removal also gives them Merit, that Merit is removed as well (as confirmed by the Merit documentation).
+
+VerificationPackets cannot be used inside a Merit Removal.
 
 MeritRemovals have the following fields:
 
@@ -66,9 +68,9 @@ MeritRemovals have the following fields:
 - element1: The first Element.
 - element2: The second Element.
 
-`MeritRemoval` has a variable message length; the 2-byte holder, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized including every Merit Holder's BLS Public Key, instead of their nickname, without any sorting required. This is to enable MeritRemovals involving holders whose nicknames were lost due to a chain reorganization. None of the included keys may be infinite. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content Merkle. That said, `MeritRemoval` is not a standalone message type.
+`MeritRemoval` has a variable message length; the 2-byte holder, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder.
 
-If a same-nonce MeritRemoval occurs, and the Merit Holder regains enough Merit to vote on Send/Data Difficulties, the regained vote must not use a nonce which has an archived MeritRemoval.
+`MeritRemoval` is not a standalone message type, as MeritRemovals are either included in Blocks or broadcasted via `SignedMeritRemoval`. That said, this serialization is not used inside of Blocks. Blocks contain MeritRemovals implicitly, by specifying the competing Verifications in the Block's packets, or by attaching the Elements sharing a nonce in the Block's elements.
 
 ### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, and SignedMeritRemoval
 
