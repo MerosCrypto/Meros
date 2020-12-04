@@ -23,7 +23,7 @@ dataDiffConflicting.sign(0, blsPrivKey)
 
 #Create a MeritRemoval out of the two of them.
 mr: PartialMeritRemoval = PartialMeritRemoval(dataDiff, dataDiffConflicting)
-proto.add(elements=[mr])
+proto.add(elements=[dataDiffConflicting])
 
 with open("e2e/Vectors/Consensus/MeritRemoval/Partial.json", "w") as vectors:
   vectors.write(json.dumps({

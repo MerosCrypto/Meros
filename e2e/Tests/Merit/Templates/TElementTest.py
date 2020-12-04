@@ -10,7 +10,6 @@ from e2e.Classes.Merit.Blockchain import Block
 from e2e.Classes.Merit.Merit import Merit
 
 from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
-from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
@@ -126,14 +125,10 @@ def TElementTest(
   sleep(0.5)
 
   #Verify the block template has a MeritRemoval.
-  mr: MeritRemoval = MeritRemoval(
-    SignedDataDifficulty(3, 1, 0),
-    SignedDataDifficulty(4, 1, 0),
-    False
-  )
+  #Thanks to implicit Merit Removals, this just means it has the new difficulty.
   template = rpc.call("merit", "getBlockTemplate", [blsPubKey])
   template["header"] = bytes.fromhex(template["header"])
-  if template["header"][36 : 68] != BlockHeader.createContents([], [mr]):
+  if template["header"][36 : 68] != BlockHeader.createContents([], [dataDiff]):
     raise TestError("Block template doesn't have the Merit Removal.")
 
   #Mine the Block.
@@ -141,14 +136,14 @@ def TElementTest(
     BlockHeader(
       0,
       block.header.hash,
-      BlockHeader.createContents([], [mr]),
+      BlockHeader.createContents([], [dataDiff]),
       1,
       template["header"][-43 : -39],
       BlockHeader.createSketchCheck(template["header"][-43 : -39], []),
       0,
       int.from_bytes(template["header"][-4:], byteorder="little")
     ),
-    BlockBody([], [mr], Signature.aggregate(signatures))
+    BlockBody([], [dataDiff], Signature.aggregate(signatures))
   )
   if block.header.serializeHash()[:-4] != template["header"]:
     raise TestError("Failed to recreate the header.")

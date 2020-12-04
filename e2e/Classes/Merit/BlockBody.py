@@ -8,7 +8,6 @@ from e2e.Classes.Consensus.Element import Element
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.SendDifficulty import SendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty
-from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
 from e2e.Classes.Merit.BlockHeader import merkle
 
@@ -95,7 +94,5 @@ class BlockBody:
         elements.append(SendDifficulty.fromJSON(element))
       elif element["descendant"] == "DataDifficulty":
         elements.append(DataDifficulty.fromJSON(element))
-      elif element["descendant"] == "MeritRemoval":
-        elements.append(MeritRemoval.fromJSON(element))
 
     return BlockBody(packets, elements, Signature(bytes.fromhex(json["aggregate"])))

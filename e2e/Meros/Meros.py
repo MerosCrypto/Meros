@@ -1,4 +1,4 @@
-from typing import Dict, Set, List, Tuple, Any
+from typing import Dict, Set, List, Tuple, Union, Any
 from enum import Enum
 from subprocess import Popen
 from time import sleep
@@ -15,7 +15,7 @@ from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.SendDifficulty import SignedSendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
-from e2e.Classes.Consensus.MeritRemoval import PartialMeritRemoval
+from e2e.Classes.Consensus.MeritRemoval import PartialMeritRemoval, SignedMeritRemoval
 
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.Block import Block
@@ -150,9 +150,6 @@ def recv(
       elif header == MessageType.SignedMeritRemoval:
         if result[-1] == 0:
           length = 32
-        elif result[-1] == 1:
-          result += socketRecv(connection, 2)
-          length = (int.from_bytes(result[-2:], byteorder="little") * 96) + 32
         elif result[-1] == 2:
           length = 8
         elif result[-1] == 3:
@@ -417,8 +414,7 @@ class Meros:
 
   def signedElement(
     self,
-    elem: SignedElement,
-    lookup: List[bytes] = []
+    elem: SignedElement
   ) -> bytes:
     res: bytes = bytes()
     if isinstance(elem, SignedVerification):
@@ -427,12 +423,18 @@ class Meros:
       res = MessageType.SignedDataDifficulty.toByte()
     elif isinstance(elem, SignedSendDifficulty):
       res = MessageType.SignedSendDifficulty.toByte()
-    elif isinstance(elem, PartialMeritRemoval):
-      res = MessageType.SignedMeritRemoval.toByte()
     else:
       raise Exception("Unsupported Element passed to Meros.signedElement.")
     res += elem.signedSerialize()
 
+    self.live.send(res)
+    return res
+
+  def meritRemoval(
+    self,
+    mr: Union[PartialMeritRemoval, SignedMeritRemoval]
+  ) -> bytes:
+    res: bytes = MessageType.SignedMeritRemoval.toByte() + mr.serialize()
     self.live.send(res)
     return res
 

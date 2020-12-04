@@ -7,6 +7,7 @@ from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
 
 from e2e.Classes.Consensus.Verification import SignedVerification
+from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 
 from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
@@ -35,9 +36,9 @@ verif.sign(0, blsPrivKey)
 competingVerif: SignedVerification = SignedVerification(competingData.hash)
 competingVerif.sign(0, blsPrivKey)
 
-#Create a MeritRemoval out of the (meaningless0 conflicting Verifications.
+#Create a MeritRemoval out of the (meaningless) conflicting Verifications.
 mr: SignedMeritRemoval = SignedMeritRemoval(verif, competingVerif)
-proto.add(elements=[mr])
+proto.add(packets=[VerificationPacket(data.hash, [0]), VerificationPacket(competingData.hash, [0])])
 
 with open("e2e/Vectors/Consensus/MeritRemoval/InvalidCompeting.json", "w") as vectors:
   vectors.write(json.dumps({

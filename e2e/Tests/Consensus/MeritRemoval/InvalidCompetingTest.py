@@ -30,7 +30,7 @@ def InvalidCompetingTest(
   #Create and execute a Liver to handle the MeritRemoval.
   def sendMeritRemoval() -> None:
     #Send and verify the MeritRemoval.
-    removalBytes: bytes = rpc.meros.signedElement(removal)
+    removalBytes: bytes = rpc.meros.meritRemoval(removal)
 
     sent: int = 0
     while True:

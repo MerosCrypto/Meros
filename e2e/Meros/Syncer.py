@@ -5,9 +5,7 @@ from e2e.Libs.Minisketch import Sketch
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Merit import Merit
 
-from e2e.Classes.Consensus.Verification import Verification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
-from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
@@ -137,15 +135,6 @@ class Syncer:
 
         #Update the list of mentioned Transactions.
         noVCMRs: bool = True
-        for elem in self.blocks[-1].body.elements:
-          if isinstance(elem, MeritRemoval):
-            if isinstance(elem.e1, (Verification, VerificationPacket)):
-              self.txs.add(elem.e1.hash)
-              noVCMRs = False
-            if isinstance(elem.e2, (Verification, VerificationPacket)):
-              self.txs.add(elem.e2.hash)
-              noVCMRs = False
-
         if (self.packets == {}) and noVCMRs:
           del self.blocks[-1]
 

@@ -43,7 +43,7 @@ for data in datas:
 mr: SignedMeritRemoval = SignedMeritRemoval(verifs[1], verifs[2])
 
 #Generate a Block containing the MeritRemoval.
-proto.add(packets=packets, elements=[mr])
+proto.add(packets=packets)
 
 with open("e2e/Vectors/Consensus/MeritRemoval/VerifyCompeting.json", "w") as vectors:
   vectors.write(json.dumps({

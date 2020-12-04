@@ -22,7 +22,7 @@ dataDiffConflicting.sign(0, blsPrivKey)
 
 #Create a MeritRemoval out of the two of them.
 mr1: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiffConflicting)
-proto.add(elements=[mr1])
+proto.add(elements=[dataDiff, dataDiffConflicting])
 
 #Create two more DataDifficulties with a different nonce.
 dataDiff = SignedDataDifficulty(3, 1)
@@ -32,7 +32,6 @@ dataDiffConflicting.sign(0, blsPrivKey)
 
 #Create another MeritRemoval out of these two.
 mr2: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiffConflicting)
-proto.add(elements=[mr2])
 
 with open("e2e/Vectors/Consensus/MeritRemoval/Multiple.json", "w") as vectors:
   vectors.write(json.dumps({

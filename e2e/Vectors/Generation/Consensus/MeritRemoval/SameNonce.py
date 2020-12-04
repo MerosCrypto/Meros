@@ -17,12 +17,12 @@ dataDiff: SignedDataDifficulty = SignedDataDifficulty(3, 0)
 dataDiff.sign(0, blsPrivKey)
 
 #Create a conflicting DataDifficulty with the same nonce.
-dataDiffConflicting = SignedDataDifficulty(1, 0)
+dataDiffConflicting: SignedDataDifficulty = SignedDataDifficulty(1, 0)
 dataDiffConflicting.sign(0, blsPrivKey)
 
 #Create a MeritRemoval out of the two of them.
 mr: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiffConflicting)
-proto.add(elements=[mr])
+proto.add(elements=[dataDiff, dataDiffConflicting])
 
 with open("e2e/Vectors/Consensus/MeritRemoval/SameNonce.json", "w") as vectors:
   vectors.write(json.dumps({

@@ -5,9 +5,7 @@ from e2e.Libs.Minisketch import Sketch
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Merit import Merit
 
-from e2e.Classes.Consensus.Verification import Verification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
-from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
@@ -70,22 +68,6 @@ class Liver:
           )
         ):
           pendingTXs.append(packet.hash)
-
-      for elem in block.body.elements:
-        if isinstance(elem, MeritRemoval):
-          if (
-            isinstance(elem.e1, (Verification, VerificationPacket)) and
-            (elem.e1.hash not in self.rpc.meros.sentTXs) and
-            (elem.e1.hash not in pendingTXs)
-          ):
-            pendingTXs.append(elem.e1.hash)
-
-          if (
-            isinstance(elem.e2, (Verification, VerificationPacket)) and
-            (elem.e2.hash not in self.rpc.meros.sentTXs) and
-            (elem.e2.hash not in pendingTXs)
-          ):
-            pendingTXs.append(elem.e2.hash)
 
       self.rpc.meros.liveBlockHeader(block.header)
 

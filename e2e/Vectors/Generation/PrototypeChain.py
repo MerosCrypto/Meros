@@ -9,10 +9,9 @@ from e2e.Classes.Transactions.Data import Data
 
 from e2e.Classes.Consensus.Element import Element
 from e2e.Classes.Consensus.Verification import Verification, SignedVerification
-from e2e.Classes.Consensus.VerificationPacket import VerificationPacket, SignedMeritRemovalVerificationPacket
+from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.SendDifficulty import SendDifficulty, SignedSendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty, SignedDataDifficulty
-from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
 
 from e2e.Classes.Merit.Blockchain import BlockHeader, BlockBody, Block, Blockchain
 from e2e.Classes.Merit.Merit import Merit
@@ -29,25 +28,14 @@ def signElement(
     verif: SignedVerification = SignedVerification(elem.hash, elem.holder)
     verif.sign(elem.holder, PrivateKey(elem.holder))
     return verif.signature
-
-  if isinstance(elem, SignedMeritRemovalVerificationPacket):
-    return elem.signature
-
   if isinstance(elem, SendDifficulty):
     sendDiff: SignedSendDifficulty = SignedSendDifficulty(elem.difficulty, elem.nonce)
     sendDiff.sign(elem.holder, PrivateKey(elem.holder))
     return sendDiff.signature
-
   if isinstance(elem, DataDifficulty):
     dataDiff: SignedDataDifficulty = SignedDataDifficulty(elem.difficulty, elem.nonce)
     dataDiff.sign(elem.holder, PrivateKey(elem.holder))
     return dataDiff.signature
-
-  if isinstance(elem, MeritRemoval):
-    result: Signature = signElement(elem.e2)
-    if not elem.partial:
-      result = Signature.aggregate([result, signElement(elem.e1)])
-    return result
 
   raise GenerationError("Tried to sign an Element in a Block we didn't recognize the type of.")
 

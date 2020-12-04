@@ -32,7 +32,7 @@ def SameElementTest(
       if rpc.meros.liveTransaction(data) != rpc.meros.live.recv():
         raise TestError("Meros didn't send back the Data.")
 
-      rpc.meros.signedElement(removal)
+      rpc.meros.meritRemoval(removal)
       try:
         if len(rpc.meros.live.recv()) != 0:
           raise Exception()

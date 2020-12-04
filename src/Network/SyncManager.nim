@@ -520,15 +520,15 @@ proc sync*(
             for e2 in 0 ..< e:
               var otherNonce: int
               #Case statement macro didn't resolve properly.
-              if result[1][e] of SendDifficulty:
-                otherNonce = cast[SendDifficulty](result[1][e]).nonce
-              elif result[1][e] of DataDifficulty:
-                otherNonce = cast[DataDifficulty](result[1][e]).nonce
+              if result[1][e2] of SendDifficulty:
+                otherNonce = cast[SendDifficulty](result[1][e2]).nonce
+              elif result[1][e2] of DataDifficulty:
+                otherNonce = cast[DataDifficulty](result[1][e2]).nonce
               else:
                 panic("Checking the nonce of an unknown Block Element.")
 
-              if (result[1][e].holder == elem.holder) and (otherNonce == elem.nonce):
-                if result[1][e] == elem:
+              if (elem.holder == result[1][e2].holder) and (elem.nonce == otherNonce):
+                if elem == result[1][e2]:
                   raise newLoggedException(ValueError, "Block contains the same Element twice.")
                 result[0].body.removals.incl(elem.holder)
         inc(newNonces[elem.holder])

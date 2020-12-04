@@ -13,7 +13,6 @@ from e2e.Meros.Syncer import Syncer
 from e2e.Tests.Errors import TestError
 from e2e.Tests.Consensus.Verify import verifyMeritRemoval
 
-
 def PartialTest(
   rpc: RPC
 ) -> None:
@@ -31,7 +30,7 @@ def PartialTest(
     #Verify the MeritRemoval.
     if rpc.meros.live.recv() != (
       MessageType.SignedMeritRemoval.toByte() +
-      removal.signedSerialize()
+      removal.serialize()
     ):
       raise TestError("Meros didn't send us the Merit Removal.")
     verifyMeritRemoval(rpc, 2, 2, removal.holder, True)
@@ -48,7 +47,7 @@ def PartialTest(
   #Create and execute a Liver to handle a Partial MeritRemoval.
   def sendMeritRemoval() -> None:
     #Send and verify the MeritRemoval.
-    if rpc.meros.signedElement(removal) != rpc.meros.live.recv():
+    if rpc.meros.meritRemoval(removal) != rpc.meros.live.recv():
       raise TestError("Meros didn't send us the Merit Removal.")
     verifyMeritRemoval(rpc, 2, 2, removal.holder, True)
 

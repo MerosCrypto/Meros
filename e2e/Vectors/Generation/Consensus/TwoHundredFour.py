@@ -4,8 +4,7 @@ import json
 
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
-from e2e.Classes.Consensus.VerificationPacket import VerificationPacket, MeritRemovalVerificationPacket
-from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
+from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
@@ -50,30 +49,6 @@ blocks.append(
       blockchain.blocks[-1].header.time + 1200
     ),
     BlockBody([vp], [], blsPrivKey.sign(b''))
-  )
-)
-blocks[-1].mine(blsPrivKey, blockchain.difficulty())
-
-#Generate a Block which has a MR VP with no holders.
-mr: MeritRemoval = MeritRemoval(
-  MeritRemovalVerificationPacket(b'z' * 32, []),
-  MeritRemovalVerificationPacket(b'z' * 32, []),
-  False,
-  0
-)
-blocks.append(
-  Block(
-    BlockHeader(
-      0,
-      blockchain.last(),
-      BlockHeader.createContents([], [mr]),
-      1,
-      bytes(4),
-      bytes(32),
-      0,
-      blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [mr], blsPrivKey.sign(b''))
   )
 )
 blocks[-1].mine(blsPrivKey, blockchain.difficulty())
