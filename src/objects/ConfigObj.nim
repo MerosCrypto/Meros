@@ -29,6 +29,7 @@ OPTIONS:
   -ns, --no-server                  Don't accept incoming connections.
   -t,  --tcp-port  <PORT>           Port to listen for connections on.
   -r,  --rpc-port  <PORT>           Port the RPC should listen on.
+  -nr, --no-rpc                     Don't listen on the RPC socket.
   -ng, --no-gui                     Don't start the GUI."""
 
   #Table of which long parameter a short parameter represents.
@@ -40,6 +41,7 @@ OPTIONS:
     "ns": "no-server",
     "t":  "tcp-port",
     "r":  "rpc-port",
+    "nr": "no-rpc",
     "ng": "no-gui"
   }.toTable()
 
@@ -52,6 +54,7 @@ OPTIONS:
     "no-server": 0,
     "tcp-port":  1,
     "rpc-port":  1,
+    "no-rpc":    0,
     "no-gui":    0
   }.toTable()
 
@@ -68,6 +71,9 @@ type Config* = object
   tcpPort*: int
   #Port for the RPC to listen on.
   rpcPort*: int
+
+  #Listen on the RPC socket or not.
+  rpc*: bool
 
   #[
   Spawn a GUI or not.
@@ -106,6 +112,7 @@ proc newConfig*(): Config {.forceCheck: [].} =
     tcpPort: 5132,
     rpcPort: 5133,
 
+    rpc: true,
     gui: true
   )
 
@@ -276,6 +283,15 @@ proc newConfig*(): Config {.forceCheck: [].} =
     settings.get("rpc-port", JInt).getInt(),
     int(parseUInt(options["rpc-port"][0]))
   )
+
+  if options.hasKey("no-rpc"):
+    result.rpc = false
+  else:
+    result.rpc.setParameter(
+      "no-rpc",
+      not settings.get("no-rpc", JBool).getBool(),
+      parseBool(options["no-rpc"][0])
+    )
 
   if options.hasKey("no-gui"):
     result.gui = false

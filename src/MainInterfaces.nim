@@ -19,7 +19,8 @@ proc mainRPC(
 
   try:
     asyncCheck rpc.start()
-    asyncCheck rpc.listen(config)
+    if config.rpc:
+      asyncCheck rpc.listen(config)
   except Exception as e:
     panic("Couldn't start the RPC: " & e.msg)
 
