@@ -1,4 +1,3 @@
-import algorithm
 import sets, tables
 
 import ../../../src/lib/Hash
@@ -9,8 +8,8 @@ import ../../../src/Database/Consensus/Consensus
 import ../../Fuzzed
 
 proc compare*(
-  e1: Element,
-  e2: Element
+  e1: Element or VerificationPacket or SignedVerificationPacket or SignedMeritRemoval,
+  e2: Element or VerificationPacket or SignedVerificationPacket or SignedMeritRemoval
 ) =
   check e1 == e2
 
@@ -67,24 +66,19 @@ proc compare*(
 
   check c1.malicious.len == c2.malicious.len
   for nick in c1.malicious.keys():
-    proc maliciousSort(
-      x: SignedMeritRemoval,
-      y: SignedMeritRemoval,
-    ): int =
-      if x.reason < y.reason:
-        return -1
-      else:
-        return 1
-
     var
-      c1Malicious: seq[SignedMeritRemoval] = c1.malicious[nick].sorted(maliciousSort)
-      c2Malicious: seq[SignedMeritRemoval] = c2.malicious[nick].sorted(maliciousSort)
+      c1Malicious: seq[SignedMeritRemoval] = c1.malicious[nick]
+      c2Malicious: seq[SignedMeritRemoval] = c2.malicious[nick]
 
     check c1Malicious.len == c2Malicious.len
-    for r in 0 ..< c1Malicious.len:
-      check:
-        cast[Element](c1Malicious[r]) == cast[Element](c2Malicious[r])
-        c1Malicious[r].signature == c2Malicious[r].signature
+    for r1 in 0 ..< c1Malicious.len:
+      for r2 in 0 ..< c2Malicious.len:
+        if c1Malicious[r1] == c2Malicious[r2]:
+          c2Malicious.del(r2)
+          break
+
+        if (r2 == c2Malicious.len - 1):
+          check false
 
   check c1.statuses.len == c2.statuses.len
   for hash in c1.statuses.keys():

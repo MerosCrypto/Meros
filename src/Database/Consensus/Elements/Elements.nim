@@ -1,4 +1,5 @@
 import macros
+import algorithm
 
 import ../../../lib/[Errors, Util, Hash]
 
@@ -111,8 +112,38 @@ proc `==`*(
     else:
       panic("Unsupported Element type used in equality check.")
 
-proc `!=`*(
-  e1: Element,
-  e2: Element
+#The following used to be Elements.
+#They're no longer, yet to prevent the reform from being too large a hassle, their code is preserved here.
+proc `==`*(
+  vp1: VerificationPacket,
+  vp2: VerificationPacket
 ): bool {.inline, forceCheck: [].} =
-  not (e1 == e2)
+  (vp1.hash == vp2.hash) and (sorted(vp1.holders) == sorted(vp2.holders))
+
+proc `==`*(
+  svp1: SignedVerificationPacket,
+  svp2: SignedVerificationPacket
+): bool {.inline, forceCheck: [].} =
+  (cast[VerificationPacket](svp1) == cast[VerificationPacket](svp2)) and
+  (svp1.signature == svp2.signature)
+
+proc `==`*(
+  mr1: SignedMeritRemoval,
+  mr2: SignedMeritRemoval
+): bool {.inline, forceCheck: [].} =
+  (
+    (mr1.holder == mr2.holder) and
+    (mr1.partial == mr2.partial) and (
+      ((mr1.element1 == mr2.element1) and (mr1.element2 == mr2.element2)) or
+      #If it's not a partial MeritRemoval, allow the Elements to be swapped.
+      ((not mr1.partial) and (mr1.element1 == mr2.element2) and (mr1.element2 == mr2.element1))
+    ) and
+    (mr1.signature == mr2.signature)
+  )
+
+#Basic provider of != for all of the above.
+template `!=`*(
+  x: Element or VerificationPacket or SignedVerificationPacket or SignedMeritRemoval,
+  y: Element or VerificationPacket or SignedVerificationPacket or SignedMeritRemoval
+): bool =
+  not (x == y)

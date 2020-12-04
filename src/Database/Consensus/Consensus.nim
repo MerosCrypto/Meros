@@ -578,13 +578,7 @@ proc add*(
   if consensus.malicious.hasKey(mr.holder):
     try:
       for removal in consensus.malicious[mr.holder]:
-        if (
-          ((mr.element1 == removal.element1) and (mr.element2 == removal.element2)) or
-          #Test if the Elements are swapped.
-          #All this does is prevent a minor annoyance where we could hold the same MeritRemoval twice.
-          #Now that MRs are permanent, this doesn't really mean anything.
-          ((mr.element1 == removal.element2) and (mr.element2 == removal.element1))
-        ):
+        if mr == removal:
           raise newLoggedException(DataExists, "Already handled this SignedMeritRemoval.")
     except KeyError as e:
       panic("Failed to get the MeritRemovals for a holder which has MeritRemovals in the cache: " & e.msg)
