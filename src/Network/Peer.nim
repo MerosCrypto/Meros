@@ -199,31 +199,6 @@ proc recv*(
             except ValueError as e:
               raise newLoggedException(PeerError, e.msg)
 
-            if int(msg[^1]) == MERIT_REMOVAL_PREFIX:
-              for _ in 0 ..< 2:
-                try:
-                  msg &= await socket.recv(len)
-                except SocketError as e:
-                  socket.safeClose(e.msg)
-                  raise e
-                except Exception as e:
-                  panic("Couldn't get the result of receiving from a socket: " & e.msg)
-
-                size += len
-                if msg.len != size:
-                  socket.safeClose("Didn't get a full message.")
-                  raise newLoggedException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
-
-                try:
-                  len = MERIT_REMOVAL_ELEMENT_SET.getLength(
-                    msg[msg.len - 1],
-                    0,
-                    MERIT_REMOVAL_PREFIX
-                  )
-                except ValueError as e:
-                  raise newLoggedException(PeerError, e.msg)
-              dec(len)
-
         else:
           panic("Length of 0 was found for a message other than the ones we support.")
 

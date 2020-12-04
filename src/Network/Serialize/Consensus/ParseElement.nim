@@ -7,7 +7,7 @@ proc getLength*(
   possibilities: set[byte],
   prefix: char,
   holders: int = 0,
-  actual: int = 255
+  actual: int = -1
 ): int {.forceCheck: [
   ValueError
 ].} =
@@ -28,9 +28,6 @@ proc getLength*(
       result = NICKNAME_LEN + INT_LEN + INT_LEN
       if actual == MERIT_REMOVAL_PREFIX:
         result -= NICKNAME_LEN
-
-    of MERIT_REMOVAL_PREFIX:
-      result = NICKNAME_LEN + BYTE_LEN + BYTE_LEN
 
     else:
       panic("Possible Element wasn't supported.")

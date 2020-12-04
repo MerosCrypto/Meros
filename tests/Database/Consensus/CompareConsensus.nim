@@ -1,6 +1,5 @@
 import sets, tables
 
-import ../../../src/lib/Hash
 import ../../../src/Wallet/MinerWallet
 
 import ../../../src/Database/Consensus/Consensus
@@ -8,10 +7,28 @@ import ../../../src/Database/Consensus/Consensus
 import ../../Fuzzed
 
 proc compare*(
-  e1: Element or VerificationPacket or SignedVerificationPacket or SignedMeritRemoval,
-  e2: Element or VerificationPacket or SignedVerificationPacket or SignedMeritRemoval
+  e1: Element,
+  e2: Element
 ) =
   check e1 == e2
+
+proc compare*(
+  vp1: VerificationPacket,
+  vp2: VerificationPacket
+) =
+  check vp1 == vp2
+
+proc compare*(
+  svp1: SignedVerificationPacket,
+  svp2: SignedVerificationPacket
+) =
+  check svp1 == svp2
+
+proc compare*(
+  smr1: SignedMeritRemoval,
+  smr2: SignedMeritRemoval
+) =
+  check smr1 == smr2
 
 proc compare*(
   ts1: TransactionStatus,

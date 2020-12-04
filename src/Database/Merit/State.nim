@@ -279,7 +279,7 @@ proc revert*(
   #Reload the Merit amounts.
   try:
     state.total = state.db.loadTotal(height - 1)
-    state.pending = state.db.loadPending(height)
+    state.pending = state.db.loadPending(height - 1)
     state.counted = state.db.loadCounted(height - 1)
   except DBReadError as e:
     panic("Couldn't load a historical Merit amount: " & e.msg)

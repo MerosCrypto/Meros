@@ -659,12 +659,15 @@ proc deleteBlock*(
     #That said, they bypass the effects system, and therefore the raises pragma.
     #Explicitly panic in this 'impossible' edge case.
     try:
-      hasMRs = hasMRs[0 ..< hasMRs.len - (NICKNAME_LEN + INT_LEN)]
-    except IndexError as e:
+      hasMRs = hasMRs[0 ..< hasMRs.len - NICKNAME_LEN]
+    except RangeError as e:
       panic("Tried to removal a holder from the list of people with Merit Removals yet the list was empty: " & e.msg)
 
   #Save back the global list.
-  db.put(MERIT_REMOVALS(), hasMRs)
+  if hasMRs.len != 0:
+    db.put(MERIT_REMOVALS(), hasMRs)
+  else:
+    db.del(MERIT_REMOVALS())
 
 #Delete the latest holder.
 proc deleteHolder*(

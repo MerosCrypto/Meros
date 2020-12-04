@@ -6,7 +6,6 @@ import ../../../src/lib/[Util, Hash]
 import ../../../src/Wallet/MinerWallet
 
 import ../../../src/Database/Consensus/Elements/[Verification, VerificationPacket]
-import ../../../src/Database/Consensus/Elements/MeritRemoval as MeritRemovalFile
 import ../../../src/Database/Merit/Merit
 
 import ../../Fuzzed
@@ -89,7 +88,7 @@ suite "Epochs":
   noFuzzTest "Empty.":
     check epochs.shift(
       newBlankBlock(rx = blockchain.rx)
-    ).calculate(state, initTable[uint16, MeritRemoval]()).len == 0
+    ).calculate(state, {}).len == 0
 
     #Manually set the RandomX instance to null to make sure it's GC'able.
     blockchain.rx = nil
@@ -138,7 +137,7 @@ suite "Epochs":
     rewards = epochs.shift(newBlankBlock(
       rx = blockchain.rx,
       packets = cast[seq[VerificationPacket]](@[packet])
-    )).calculate(state, initTable[uint16, MeritRemoval]())
+    )).calculate(state, {})
     check rewards.len == 0
 
     #Shift 4 over.
@@ -151,7 +150,7 @@ suite "Epochs":
       blockchain.processBlock(newBlock)
       discard state.processBlock(blockchain)
 
-      rewards = epochs.shift(newBlock).calculate(state, initTable[uint16, MeritRemoval]())
+      rewards = epochs.shift(newBlock).calculate(state, {})
       check rewards.len == 0
 
     #Manually rig the State to be 100% Unlocked.
@@ -164,7 +163,7 @@ suite "Epochs":
     state.counted = total
 
     #Next shift should result in a Rewards of 0: 334, 1: 333, and 2: 333.
-    rewards = epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]())
+    rewards = epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, {})
 
     #Veirfy the length.
     check rewards.len == 3
@@ -212,7 +211,7 @@ suite "Epochs":
     rewards = epochs.shift(newBlankBlock(
       rx = blockchain.rx,
       packets = cast[seq[VerificationPacket]](@[packet])
-    )).calculate(state, initTable[uint16, MeritRemoval]())
+    )).calculate(state, {})
     check rewards.len == 0
 
     #Shift 4 over.
@@ -225,11 +224,11 @@ suite "Epochs":
       blockchain.processBlock(newBlock)
       discard state.processBlock(blockchain)
 
-      rewards = epochs.shift(newBlock).calculate(state, initTable[uint16, MeritRemoval]())
+      rewards = epochs.shift(newBlock).calculate(state, {})
       check rewards.len == 0
 
     #Next shift should result in a Rewards of 0: 1000.
-    rewards = epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]())
+    rewards = epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, {})
     check:
       rewards.len == 1
       rewards[0].nick == 0
@@ -272,7 +271,7 @@ suite "Epochs":
       rewards = epochs.shift(newBlankBlock(
         rx = blockchain.rx,
         packets = cast[seq[VerificationPacket]](@[packet])
-      )).calculate(state, initTable[uint16, MeritRemoval]())
+      )).calculate(state, {})
       check rewards.len == 0
 
     #Shift 3 over.
@@ -288,11 +287,11 @@ suite "Epochs":
       blockchain.processBlock(newBlock)
       discard state.processBlock(blockchain)
 
-      rewards = epochs.shift(newBlock).calculate(state, initTable[uint16, MeritRemoval]())
+      rewards = epochs.shift(newBlock).calculate(state, {})
       check rewards.len == 0
 
     #Next shift should result in a Rewards of 0: 500, 1: 500, and 2: 500.
-    rewards = epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, initTable[uint16, MeritRemoval]())
+    rewards = epochs.shift(newBlankBlock(rx = blockchain.rx)).calculate(state, {})
 
     #Veirfy the length.
     check rewards.len == 2

@@ -141,9 +141,27 @@ proc `==`*(
     (mr1.signature == mr2.signature)
   )
 
-#Basic provider of != for all of the above.
-template `!=`*(
-  x: Element or VerificationPacket or SignedVerificationPacket or SignedMeritRemoval,
-  y: Element or VerificationPacket or SignedVerificationPacket or SignedMeritRemoval
-): bool =
+#This should be a template/generic. That said, equality checking with refs is iffy.
+proc `!=`*(
+  x: Element,
+  y: Element
+): bool {.inline, forceCheck: [].} =
+  not (x == y)
+
+proc `!=`*(
+  x: VerificationPacket,
+  y: VerificationPacket
+): bool {.inline, forceCheck: [].} =
+  not (x == y)
+
+proc `!=`*(
+  x: SignedVerificationPacket,
+  y: SignedVerificationPacket
+): bool {.inline, forceCheck: [].} =
+  not (x == y)
+
+proc `!=`*(
+  x: SignedMeritRemoval,
+  y: SignedMeritRemoval
+): bool {.inline, forceCheck: [].} =
   not (x == y)

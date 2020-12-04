@@ -15,7 +15,7 @@ proc parseBlockElement*(
   ValueError
 ].} =
   try:
-    result.len = BLOCK_ELEMENT_SET.getLength(data[i])
+    result.len = BLOCK_ELEMENT_SET.getLength(data[i]) + 1
   except ValueError as e:
     raise e
   if i + result.len > data.len:
@@ -24,9 +24,9 @@ proc parseBlockElement*(
   try:
     case int(data[i]):
       of SEND_DIFFICULTY_PREFIX:
-        result.element = parseSendDifficulty(data[i + 1 .. i + result.len])
+        result.element = parseSendDifficulty(data[i + 1 ..< i + result.len])
       of DATA_DIFFICULTY_PREFIX:
-        result.element = parseDataDifficulty(data[i + 1 .. i + result.len])
+        result.element = parseDataDifficulty(data[i + 1 ..< i + result.len])
       else:
         panic("Possible Element wasn't supported.")
   except ValueError as e:

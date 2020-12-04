@@ -54,6 +54,8 @@ proc compare*(
   for e in 0 ..< bb1.elements.len:
     compare(bb1.elements[e], bb2.elements[e])
 
+  check bb1.removals == bb2.removals
+
 proc compare*(
   b1: Block,
   b2: Block
