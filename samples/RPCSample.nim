@@ -42,6 +42,11 @@ const ARGUMENTS: Table[string, seq[char]] = {
   "system_quit": @[]
 }.toTable()
 
+proc readLine(): string =
+  result = stdin.readLine()
+  result.removePrefix(Whitespace)
+  result.removeSuffix(Whitespace)
+
 var
   client: AsyncSocket = newAsyncSocket()
   port: int = 5133
@@ -118,10 +123,10 @@ if paramCount() >= p:
 #If the method wasn't specified via the CLI, get it via the interactive prompt.
 if not payload.hasKey("method"):
   echo "What module is your method in?"
-  payload["method"] = % stdin.readLine()
+  payload["method"] = % readLine()
 
   echo "What method are you trying to call?"
-  payload["method"] = % (payload["method"].getStr() & "_" & stdin.readLine())
+  payload["method"] = % (payload["method"].getStr() & "_" & readLine())
 
   if not ARGUMENTS.hasKey(payload["method"].getStr()):
     echo "Invalid method."
@@ -133,22 +138,22 @@ if payload["params"].len == 0:
     case arg:
       of 's':
         echo "Please enter the next string argument for this method."
-        payload["params"].add(% stdin.readLine())
+        payload["params"].add(% readLine())
 
       of 'b':
         echo "Please enter the next binary argument for this method as hex."
         while true:
           try:
-            payload["params"].add(% parseHexStr(stdin.readLine()).toHex())
+            payload["params"].add(% parseHexStr(readLine()).toHex())
             break
           except ValueError:
-            echo "Non-hex value passed. Please enter an integer value."
+            echo "Non-hex value passed. Please enter a hex value."
 
       of 'i':
         echo "Please enter the next integer argument for this method."
         while true:
           try:
-            payload["params"].add(% parseInt(stdin.readLine()))
+            payload["params"].add(% parseInt(readLine()))
             break
           except ValueError:
             echo "Non-integer value passed. Please enter an integer value."
