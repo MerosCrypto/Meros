@@ -14,6 +14,7 @@ import json
 from pytest import raises
 
 from e2e.Libs.BLS import PrivateKey
+from e2e.Libs.Minisketch import Sketch
 
 from e2e.Classes.Transactions.Transactions import Send, Transactions
 
@@ -90,22 +91,39 @@ def BeatenTest(
     #RandomX cache keys and all that.
     blockWBeatenVerif: Block = Block.fromJSON(vectors["blockWithBeatenVerification"])
 
+    #The following code used to test behavior which was removed, in order to be more forgiving for nodes a tad behind.
+
     #Verify we can't add that SignedVerification now.
-    rpc.meros.signedElement(verif)
-    try:
-      rpc.meros.live.recv()
-      #Hijacks a random Exception type for our purposes.
-      raise MessageException("Meros didn't disconnect us after we sent a Verification for a beaten Transaction.")
-    except TestError:
-      pass
-    except MessageException as e:
-      raise TestError(e.message)
-    sleep(65)
-    rpc.meros.liveConnect(blockWBeatenVerif.header.last)
+    #rpc.meros.signedElement(verif)
+    #try:
+    #  rpc.meros.live.recv()
+    #  #Hijacks a random Exception type for our purposes.
+    #  raise MessageException("Meros didn't disconnect us after we sent a Verification for a beaten Transaction.")
+    #except TestError:
+    #  pass
+    #except MessageException as e:
+    #  raise TestError(e.message)
+    #sleep(65)
+    #rpc.meros.liveConnect(blockWBeatenVerif.header.last)
 
     #Verify we can't add a Block containing that Verification.
     rpc.meros.liveBlockHeader(blockWBeatenVerif.header)
+
+    #BlockBody sync request.
+    rpc.meros.sync.recv()
     rpc.meros.blockBody(blockWBeatenVerif)
+
+    #Sketch hash sync request.
+    hashReqs: bytes = rpc.meros.sync.recv()[37:]
+    for h in range(0, len(hashReqs), 8):
+      for packet in blockWBeatenVerif.body.packets:
+        if int.from_bytes(
+          hashReqs[h : h + 8],
+          byteorder="little"
+        ) == Sketch.hash(blockWBeatenVerif.header.sketchSalt, packet):
+          rpc.meros.packet(packet)
+          break
+
     try:
       rpc.meros.live.recv()
       raise MessageException("Meros didn't disconnect us after we sent a Block containing a Verification of a beaten Transaction.")
@@ -113,6 +131,7 @@ def BeatenTest(
       pass
     except MessageException as e:
       raise TestError(e.message)
+
     sleep(65)
     rpc.meros.liveConnect(blockWBeatenVerif.header.last)
     rpc.meros.syncConnect(blockWBeatenVerif.header.last)
