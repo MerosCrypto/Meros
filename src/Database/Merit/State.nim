@@ -6,8 +6,6 @@ import ../../Wallet/MinerWallet
 
 import ../Filesystem/DB/MeritDB
 
-import ../Consensus/Elements/objects/MeritRemovalObj
-
 import objects/BlockchainObj
 import BlockHeader, Block
 
@@ -60,11 +58,12 @@ proc cacheNextRemoval(
       panic("State tried to remove dead Merit yet couldn't get the old Block: " & e.msg)
 
     #Do nothing if they had their Merit removed.
-    var removals: seq[int] = state.loadHolderRemovals(nick)
-    for removal in removals:
-      if (removal < height) and (removal >= nonce):
+    try:
+      if state.db.loadRemovalHeight(nick) < height:
         state.pendingRemovals.addLast(-1)
         return
+    except DBReadError:
+      discard
 
     #Add the nickname.
     state.pendingRemovals.addLast(int(nick))
@@ -120,16 +119,17 @@ proc processBlock*(
       if state.statuses[nick] == MeritStatus.Pending:
         dec(state.pending)
 
+  #Mark participants to prevent their Merit from being locked.
   var participants: set[uint16]
   for packet in newBlock.body.packets:
     for holder in packet.holders:
       participants.incl(holder)
-
-  #Remove Merit from Merit Holders who had their Merit Removals archived in this Block.
   for elem in newBlock.body.elements:
     participants.incl(elem.holder)
-    if elem of MeritRemoval:
-      state.remove(elem.holder, blockchain.height - 1)
+
+  #Remove Merit from Merit Holders who had their Merit Removals archived in this Block.
+  for holder in newBlock.body.removals:
+    state.remove(holder, blockchain.height - 1)
 
   #Increment the amount of processed Blocks.
   inc(state.processedBlocks)
@@ -241,6 +241,7 @@ proc revert*(
     #Restore removed Merit.
     for removal in state.loadBlockRemovals(i):
       state[removal.nick] = removal.merit
+      state.hasMR.excl(removal.nick)
 
     #Grab the miner's nickname.
     nick = state.getNickname(revertingPast)
@@ -256,15 +257,14 @@ proc revert*(
       except IndexError as e:
         panic("State couldn't get a historical Block being revived into the State: " & e.msg)
 
-      #Don't add Merit if the miner had a MeritRemoval.
+      #Don't add Merit back if the miner has a MeritRemoval.
       var removed: bool = false
-      for removal in state.loadHolderRemovals(nick):
-        if (removal >= i - state.deadBlocks) and (removal < height):
-          removed = true
-          break
-
-      #Add back the Merit which died.
+      try:
+        removed = state.db.loadRemovalHeight(nick) < height
+      except DBReadError:
+        discard
       if not removed:
+        #Add back the Merit which died.
         state[nick] = state.merit[nick] + 1
 
     #If the miner was new to this Block, remove their nickname.
@@ -279,7 +279,7 @@ proc revert*(
   #Reload the Merit amounts.
   try:
     state.total = state.db.loadTotal(height - 1)
-    state.pending = state.db.loadPending(height)
+    state.pending = state.db.loadPending(height - 1)
     state.counted = state.db.loadCounted(height - 1)
   except DBReadError as e:
     panic("Couldn't load a historical Merit amount: " & e.msg)
@@ -306,3 +306,20 @@ proc pruneStatusesAndParticipations*(
   for h in state.holders.len ..< oldAmountOfHolders:
     state.db.overrideMeritStatuses(uint16(h), "")
     state.db.overrideLastParticipations(uint16(h), "")
+
+proc isValidHolderWithMerit*(
+  state: State,
+  holder: uint16
+): bool {.forceCheck: [].} =
+  #Verify the holder exists.
+  if holder >= uint16(state.holders.len):
+    logDebug "Asked if a holder who was never created is valid", holder = holder
+    return false
+  #Verify they can still participate on this chain.
+  elif state.hasMR.contains(holder):
+    logDebug "Asked if a holder who had a Merit Removal is valid", holder = holder
+    return false
+  #Check if they have Merit.
+  elif state[holder, state.processedBlocks] == 0:
+    logDebug "Asked if a holder who has no Merit is valid", holder = holder
+  result = true

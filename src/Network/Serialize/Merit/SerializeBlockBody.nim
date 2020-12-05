@@ -6,12 +6,7 @@ import ../../../Database/Merit/objects/BlockBodyObj
 
 import ../SerializeCommon
 
-import ../Consensus/[
-  SerializeVerification,
-  SerializeSendDifficulty,
-  SerializeDataDifficulty,
-  SerializeMeritRemoval
-]
+import ../Consensus/SerializeElement
 
 proc serialize*(
   body: BlockBody,

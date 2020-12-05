@@ -85,6 +85,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 - last must be equivalent to the hash of the current tail Block.
 - significant is greater than 0 (exclusive) and at most 26280 (inclusive).
 - miner is a valid, non-infinite, BLS Public Key if the miner is new or a valid nickname if the miner isn't new.
+- The miner hasn't been proven malicious yet.
 - time must be greater than the latest Block’s time.
 - signature must be valid.
 - hash must not overflow a 256-bit number when multiplied by the difficulty.
@@ -107,10 +108,8 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - Every Transaction's predecessors have Verification Packets either archived or in this Block.
 - Every Transaction either has yet to enter Epochs or is in Epochs.
 - Every Transaction doesn't compete with, or have parents which competed with and lost, finalized Transactions.
-- The sketch is properly constructed from the same data used to construct the Merkle.
 - Only new and unique Elements are archived.
 - No SendDifficulty or DataDifficulty skips a nonce for their Merit Holder. That said, the Block may skip a nonce if the skipped nonce is present later in the Block.
-- Every Element is valid and doesn't cause a MeritRemoval when combined with another Element either already on the Blockchain or in the same Block. That said, the Verification Packets still can as long as the matching MeritRemoval is included in the Block.
 - The aggregate signature is formed with the following algorithm:
 
 ```
@@ -124,7 +123,7 @@ if signatures.length != 0
   aggregate = signatures.aggregate()
 ```
 
-If the Block is valid, it's added, triggering four events. The first event is the addition of all included VerificationPackets and Elements. The second event is the emission of newly-minted Meros. The third event is the emission of newly-mined Merit. Any MeritRemovals included in the Block prevent the malicious Merit Holder from gaining newly-mined Merit that Block. The fourth event is the automated creation of a Data Transaction.
+If the Block is valid, it's added, triggering four events. The first event is the addition of all included VerificationPackets and Elements, as well as the accompanying removal of all Merit by any malicious holders (as proven by the included Verifications/Elements). The second event is the emission of newly-minted Meros. The third event is the emission of newly-mined Merit. Any malicious Merit Holders are incapable from gaining newly-mined Merit from this Block. The fourth event is the automated creation of a Data Transaction.
 
 On Block addition, a new Epoch is created. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch. If a new Transaction competes with an existing Transaction, all competitors (and competitors of competitors) are brought up into the new Epoch. If any descendants of the moved transactions now have an earlier Epoch than their parents, they too are brought up. Every Transaction in Epochs is updated with the list of Merit Holders who verified it. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the Unlocked Merit removed, and is then used to calculate rewards.
 
@@ -169,8 +168,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 `Checkpoint` has a variable message length; the 32-byte Block hash, 2-byte amount of Merit Holders, the Merit Holders (each represented by their 2-byte nickname), and the 48-byte aggregate signature.
 
 ### Violations in Meros
-
-- Meros doesn't check that if VerificationPackets in a Block cause MeritRemovals, the matching MeritRemoval is included in the Block.
 
 - Meros puts competitors in the first archived TX's Epoch, instead of bringing that TX forward.
 - Meros doesn't rollover rewards or use a negative sigmoid.

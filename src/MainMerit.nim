@@ -175,10 +175,10 @@ proc mainMerit(
     #Sync this Block.
     var
       newBlock: Block
-      elements: seq[BlockElement]
+      sortedElements: seq[BlockElement]
       verified: bool = false
     try:
-      (newBlock, elements) = await network.syncManager.sync(
+      (newBlock, sortedElements) = await network.syncManager.sync(
         merit.state,
         sketchyBlock,
         sketcher
@@ -199,16 +199,24 @@ proc mainMerit(
 
     logDebug "Synced Block", hash = newBlock.header.hash
 
+    #[
+    Flag malicious Merit Holders.
+    Doesn't actually call flag yet the remove counterpart.
+    Has to be done here in order to prevent an edge case which could cause two competing Transactions to be marked as verified.
+    One with a SignedVerification, one which just became verified with a VerificationPacket.
+    It'd require 31% of Merit, and wouldn't be finalized, yet it's still incorrect.
+    If the equivalent of #120 is implemented for Verifications, and that is handled below WITHOUT any async/threading in between
+    it'd still be secure in representation (no committing to LMDB/RPC requests).
+    That wouldn't make it correct/acceptable though.
+    ]#
+    try:
+      consensus[].remove(merit.blockchain, merit.state, newBlock.body.removals)
+    except KeyError as e:
+      panic("Couldn't get the Merit Removal of a holder who just had one archived: " & e.msg)
+
     #Add every Verification Packet.
     for packet in newBlock.body.packets:
       functions.consensus.addVerificationPacket(packet)
-
-    #Check who has their Merit removed.
-    var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
-    for elem in newBlock.body.elements:
-      if elem of MeritRemoval:
-        consensus[].flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
-        removed[elem.holder] = cast[MeritRemoval](elem)
 
     #Add the Block to the Blockchain.
     merit[].processBlock(newBlock)
@@ -226,7 +234,7 @@ proc mainMerit(
 
     #Implement https://github.com/MerosCrypto/Meros/issues/120.
     var mrs: seq[SignedMeritRemoval] = @[]
-    for elem in elements:
+    for elem in newBlock.body.elements:
       var
         existing: BlockElement
         sig: BLSSignature
@@ -238,22 +246,19 @@ proc mainMerit(
           of DataDifficulty as dd:
             existing = consensus.db.load(dd.holder, dd.nonce)
             sig = consensus.db.loadSignature(dd.holder, dd.nonce)
-          of MeritRemoval as _:
-            continue
           else:
             panic("The code implemented for issue #120 was handed an Element it doesn't recognize.")
       except DBReadError:
         continue
 
-      if existing.hashForMeritRemovalReason() != elem.hashForMeritRemovalReason():
+      if cast[Element](existing) != cast[Element](elem):
         mrs.add(
           newSignedMeritRemoval(
             elem.holder,
             true,
             elem,
             existing,
-            sig,
-            merit[].state.holders
+            sig
           )
         )
 
@@ -266,15 +271,8 @@ proc mainMerit(
       changes
     )
 
-    #Have the Consensus handle every person who suffered a MeritRemoval.
-    try:
-      for removee in removed.keys():
-        consensus[].remove(removed[removee], rewardsState.merit[removee])
-    except KeyError as e:
-      panic("Couldn't get the Merit Removal of a holder who just had one archived: " & e.msg)
-
     #Add every Element.
-    for elem in elements:
+    for elem in sortedElements:
       case elem:
         of SendDifficulty as sendDiff:
           functions.consensus.addSendDifficulty(sendDiff)
@@ -292,7 +290,7 @@ proc mainMerit(
     logDebug "Minting Meros", hash = newBlock.header.hash
 
     #Calculate the rewards.
-    var rewards: seq[Reward] = epoch.calculate(rewardsState, removed)
+    var rewards: seq[Reward] = epoch.calculate(rewardsState, newBlock.body.removals)
 
     #If there are rewards, create the Mint.
     var receivedMint: int = -1
@@ -593,6 +591,7 @@ proc mainMerit(
         testBlockHeader(
           merit.blockchain.miners,
           merit.state.holders,
+          merit.state.hasMR,
           merit.blockchain.tail.header,
           merit.blockchain.difficulties[^1],
           header
@@ -704,6 +703,7 @@ proc mainMerit(
       testBlockHeader(
         merit.blockchain.miners,
         merit.state.holders,
+        merit.state.hasMR,
         merit.blockchain.tail.header,
         merit.blockchain.difficulties[^1],
         header

@@ -1,5 +1,5 @@
 import algorithm
-import sets, tables
+import sequtils, sets, tables
 
 import chronos
 
@@ -174,6 +174,7 @@ proc syncSketchHashes*(
       panic("Couldn't send a SketchHashesSyncRequest to a Peer: " & e.msg)
 
 #Sync a Block's missing Transactions/VerificationPackets.
+#The second return value is sorted.
 proc sync*(
   manager: SyncManager,
   state: State,
@@ -394,7 +395,20 @@ proc sync*(
   logDebug "Added missing Transactions", hash = newBlock.data.header.hash
 
   #Verify the included packets.
+  var
+    #Holders for a TX from this Block specifically.
+    holdersForTX: Table[Hash[256], seq[uint16]]
+    #Track any competitors the Transactions have. Used to create MRs.
+    competitors: Table[Hash[256], seq[Hash[256]]] = initTable[Hash[256], seq[Hash[256]]]()
+    thisTXsCompetitors: seq[Hash[256]]
   for packet in result[0].body.packets:
+    holdersForTX[packet.hash] = packet.holders
+
+    #If we already tracked this TX, this Block doesn't only have unique packets.
+    if competitors.hasKey(packet.hash):
+      raise newLoggedException(ValueError, "Block includes two packets for the same Transaction.")
+    thisTXsCompetitors = @[]
+
     #Verify the predecessors of every Transaction are already mentioned on the chain OR also in this Block.
     var tx: Transaction
     try:
@@ -402,10 +416,23 @@ proc sync*(
     except IndexError as e:
       panic("Couldn't get a Transaction we're confirmed to have: " & e.msg)
 
-    if not ((tx of Claim) or ((tx of Data) and cast[Data](tx).isFirstData)):
+    if not ((tx of Data) and (cast[Data](tx).isFirstData or (tx.inputs[0].hash == manager.genesis))):
       for input in tx.inputs:
-        if not (manager.functions.consensus.hasArchivedPacket(input.hash) or includedTXs.contains(input.hash)):
+        if (
+          (not (tx of Claim)) and
+          (not (manager.functions.consensus.hasArchivedPacket(input.hash) or includedTXs.contains(input.hash)))
+        ):
           raise newLoggedException(ValueError, "Block's Transactions have predecessors which have yet to be mentioned on chain.")
+
+        #Track competitors while we're here.
+        thisTXsCompetitors &= manager.functions.transactions.getSpenders(input)
+
+    thisTXsCompetitors = thisTXsCompetitors.deduplicate()
+    for i in 0 ..< thisTXsCompetitors.len:
+      if thisTXsCompetitors[i] == packet.hash:
+        thisTXsCompetitors.del(i)
+        break
+    competitors[packet.hash] = thisTXsCompetitors
 
     #Get the status.
     var status: TransactionStatus
@@ -440,15 +467,15 @@ proc sync*(
   var
     newNonces: Table[uint16, int] = initTable[uint16, int]()
     hasElem: set[uint16] = {}
-    hasMR: set[uint16] = {}
   #Sort by nonce so we don't risk a gap.
   result[1].sort(
     proc (
       e1: BlockElement,
       e2: BlockElement
     ): int {.forceCheck: [].} =
-      var e1Nonce: int = -1
-      var e2Nonce: int = -1
+      var
+        e1Nonce: int = -1
+        e2Nonce: int = -1
 
       case e1:
         of SendDifficulty as sendDiff:
@@ -465,57 +492,94 @@ proc sync*(
       if e1Nonce < e2Nonce: -1 else: 1
   )
 
-  for elem in result[1]:
-    if hasMR.contains(elem.holder):
-      raise newLoggedException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
+  #Workaround for some scoping issues with manager during nested functions.
+  var managerLocal: SyncManager = manager
+  for e, elem in result[1]:
+    proc handleElementWithNonce(
+      elem: SendDifficulty or DataDifficulty
+    ) {.forceCheck: [
+      ValueError
+    ].} =
+      if not newNonces.hasKey(elem.holder):
+        newNonces[elem.holder] = managerLocal.functions.consensus.getArchivedNonce(elem.holder)
 
-    case elem:
-      of SendDifficulty as sendDiff:
-        if not newNonces.hasKey(sendDiff.holder):
-          newNonces[sendDiff.holder] = manager.functions.consensus.getArchivedNonce(sendDiff.holder)
+      try:
+        if elem.nonce > newNonces[elem.holder] + 1:
+          raise newLoggedException(ValueError, "Block has an Element which skips a nonce.")
+        elif elem.nonce < newNonces[elem.holder] + 1:
+          if elem.nonce <= managerLocal.functions.consensus.getArchivedNonce(elem.holder):
+            var archived: Element
+            try:
+              archived = managerLocal.functions.consensus.getElement(elem.holder, elem.nonce)
+            except IndexError as e:
+              panic("Couldn't get a Element with a nonce lower than the newest nonce for this holder: " & e.msg)
+            if elem == archived:
+              raise newLoggedException(ValueError, "Block contains an already archived Element.")
+            result[0].body.removals.incl(elem.holder)
+          else:
+            for e2 in 0 ..< e:
+              var otherNonce: int
+              #Case statement macro didn't resolve properly.
+              if result[1][e2] of SendDifficulty:
+                otherNonce = cast[SendDifficulty](result[1][e2]).nonce
+              elif result[1][e2] of DataDifficulty:
+                otherNonce = cast[DataDifficulty](result[1][e2]).nonce
+              else:
+                panic("Checking the nonce of an unknown Block Element.")
 
-        try:
-          if sendDiff.nonce != newNonces[sendDiff.holder] + 1:
-            #[
-            Ideally, we'd now check if this was an existing Element or a conflicting Element.
-            Unfortunately, MeritRemovals require the second Element to have an independent signature.
-            The Block's aggregate signature won't work as a proof.
-            So even though we can know there's a malicious Merit Holder, we can't tell the network.
-            If we then acted on this knowledge, we'd risk desyncing.
-            Therefore, we have to just reject the Block for being invalid.
-            ]#
-            raise newLoggedException(ValueError, "Block has an Element with an invalid nonce.")
+              if (elem.holder == result[1][e2].holder) and (elem.nonce == otherNonce):
+                if elem == result[1][e2]:
+                  raise newLoggedException(ValueError, "Block contains the same Element twice.")
+                result[0].body.removals.incl(elem.holder)
+        inc(newNonces[elem.holder])
+      except KeyError:
+        panic("Table doesn't have a value for a key we made sure we had.")
 
-          inc(newNonces[sendDiff.holder])
-        except KeyError:
-          panic("Table doesn't have a value for a key we made sure we had.")
-
-      of DataDifficulty as dataDiff:
-        if not newNonces.hasKey(dataDiff.holder):
-          newNonces[dataDiff.holder] = manager.functions.consensus.getArchivedNonce(dataDiff.holder)
-
-        try:
-          if dataDiff.nonce != newNonces[dataDiff.holder] + 1:
-            raise newLoggedException(ValueError, "Block has an Element with an invalid nonce.")
-
-          inc(newNonces[dataDiff.holder])
-        except KeyError:
-          panic("Table doesn't have a value for a key we made sure we had.")
-
-      of MeritRemoval as mr:
-        if hasElem.contains(mr.holder):
-          raise newLoggedException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
-
-        try:
-          await manager.functions.consensus.verifyUnsignedMeritRemoval(mr)
-        except ValueError as e:
-          raise e
-        except DataExists:
-          raise newLoggedException(ValueError, "Block has an old MeritRemoval.")
-        except Exception as e:
-          panic("Verifying a MeritRemoval threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
+    try:
+      case elem:
+        of SendDifficulty as sendDiff:
+          handleElementWithNonce(sendDiff)
+        of DataDifficulty as dataDiff:
+          handleElementWithNonce(dataDiff)
+    except ValueError as e:
+      raise e
     hasElem.incl(elem.holder)
+
+  #Generate any Competing Verification Merit Removals.
+  for packet in result[0].body.packets:
+    try:
+      thisTXsCompetitors = competitors[packet.hash]
+    except KeyError:
+      panic("Didn't register a competitors variable for a Transaction in this Block.")
+    if thisTXsCompetitors.len == 0:
+      continue
+
+    for holder in packet.holders:
+      if result[0].body.removals.contains(holder):
+        continue
+
+      for competitor in thisTXsCompetitors:
+        var compStatus: TransactionStatus
+        try:
+          compStatus = manager.functions.consensus.getStatus(competitor)
+        except IndexError as e:
+          panic("Couldn't get a status for a Transaction which spends an input mentioned in this Block: " & e.msg)
+
+        try:
+          if (
+            #Archived Competing Verification.
+            (compStatus.holders.contains(holder) and (not compStatus.pending.contains(holder))) or
+            #Competing Verification in this same Block.
+            (holdersForTX.hasKey(competitor) and holdersForTX[competitor].contains(holder))
+          ):
+            result[0].body.removals.incl(holder)
+
+          #If they have a pending Verification, we could create a Signed MeritRemoval at this point in time.
+          #Basically a new form of https://github.com/MerosCrypto/Meros/issues/120.
+          elif compStatus.pending.contains(holder):
+            discard
+        except KeyError as e:
+          panic("Couldn't get the holders for a Transaction in this Block: " & e.msg)
 
 proc syncBlockBody*(
   manager: SyncManager,

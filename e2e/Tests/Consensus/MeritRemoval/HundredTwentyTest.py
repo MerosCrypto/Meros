@@ -43,11 +43,7 @@ def HundredTwentyTest(
     #The signed Element should be the mempool's DataDifficulty.
     if rpc.meros.live.recv() != (
       MessageType.SignedMeritRemoval.toByte() +
-      PartialMeritRemoval(
-        blockchainDataDiff,
-        mempoolDataDiff,
-        0
-      ).signedSerialize()
+      PartialMeritRemoval(blockchainDataDiff, mempoolDataDiff, 0).serialize()
     ):
       raise TestError("Meros didn't create the partial Merit Removal.")
 

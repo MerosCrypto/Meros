@@ -71,16 +71,11 @@ proc reorganize(
     newWork: StUInt[128]
     #The last header we've processed.
     lastHeader: BlockHeader
-    #Reverted miners/holders.
-    reverted: tuple[
-      miners: Table[BLSPublicKey, uint16],
-      holders: seq[BLSPublicKey]
-    ] = merit.revertMinersAndHolders(lastCommonHeight)
-    #Alternate miners/holders. Needed to verify the alternate headers.
+    #Alternate miners/holders. Their status at the fork point advanced as we test new BlockHeaders.
     alternate: tuple[
       miners: Table[BLSPublicKey, uint16],
       holders: seq[BLSPublicKey]
-    ] = reverted
+    ] = merit.revertMinersAndHolders(lastCommonHeight)
     #In order to calculate it, we need to calculate the relevant difficulties.
     #This requires an accurate set of the difficulties leading up to it.
     difficulties: seq[uint64]
@@ -137,6 +132,13 @@ proc reorganize(
       testBlockHeader(
         alternate.miners,
         alternate.holders,
+        #[
+        We can't verify Blocks don't contain data from malicious Merit Holders.
+        We'd need to sync the bodies, which we do later.
+        While we could see if a malicious miner got Merit from a new Block, we couldn't find out which miners got a Merit Removal.
+        This means we'd be working off historical data, and it just really ends up not worth it.
+        ]#
+        {},
         lastHeader,
         difficulties[^1],
         result.headers[^1]

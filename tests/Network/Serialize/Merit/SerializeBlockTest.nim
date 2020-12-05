@@ -49,6 +49,7 @@ suite "SerializeBlock":
           newMinerWallet(),
           packets,
           elements,
+          {},
           newMinerWallet().sign($rand(4096)),
           uint32(rand(high(int32))),
           uint32(rand(high(int32)))
@@ -64,6 +65,7 @@ suite "SerializeBlock":
           newMinerWallet(),
           packets,
           elements,
+          {},
           newMinerWallet().sign($rand(4096)),
           uint32(rand(high(int32))),
           uint32(rand(high(int32)))

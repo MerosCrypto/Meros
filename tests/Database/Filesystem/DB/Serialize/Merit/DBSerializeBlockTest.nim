@@ -24,6 +24,7 @@ suite "DBSerializeBlock":
       last: Hash[256] = newRandomHash()
       packets: seq[VerificationPacket] = @[]
       elements: seq[BlockElement] = @[]
+      removals: set[uint16] = {}
       newBlock: Block
       reloaded: Block
 
@@ -32,6 +33,9 @@ suite "DBSerializeBlock":
       packets.add(newRandomVerificationPacket())
     for _ in 0 ..< rand(300):
       elements.add(newRandomBlockElement())
+    for h in 0 .. int(high(uint16)):
+      if rand(32) == 0:
+        removals.incl(uint16(h))
 
     if newMiner:
       newBlock = newBlankBlock(
@@ -43,6 +47,7 @@ suite "DBSerializeBlock":
         newMinerWallet(),
         packets,
         elements,
+        removals,
         newMinerWallet().sign($rand(4096)),
         uint32(rand(high(int32))),
         uint32(rand(high(int32)))
@@ -58,6 +63,7 @@ suite "DBSerializeBlock":
         newMinerWallet(),
         packets,
         elements,
+        removals,
         newMinerWallet().sign($rand(4096)),
         uint32(rand(high(int32))),
         uint32(rand(high(int32)))

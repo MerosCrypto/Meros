@@ -61,17 +61,11 @@ proc newRandomDataDifficulty*(
   result = newSignedDataDifficultyObj(nonce, difficulty)
   miner.sign(result)
 
-proc newRandomMeritRemoval*(
-  holder: uint16 = uint16(rand(high(int16)))
-): SignedMeritRemoval
-
 proc newRandomElement*(
   holder: uint16 = uint16(rand(high(int16))),
   verification: bool = true,
-  packet: bool = true,
   sendDifficulty: bool = true,
-  dataDifficulty: bool = true,
-  removal: bool = true
+  dataDifficulty: bool = true
 ): Element =
   var
     possibilities: set[int8] = {}
@@ -79,22 +73,17 @@ proc newRandomElement*(
 
   #Include all possibilities in the set.
   if verification: possibilities.incl(0)
-  if packet: possibilities.incl(1)
-  if sendDifficulty: possibilities.incl(2)
-  if dataDifficulty: possibilities.incl(3)
-  if removal: possibilities.incl(5)
+  if sendDifficulty: possibilities.incl(1)
+  if dataDifficulty: possibilities.incl(2)
 
   #Until r is a valid possibility, randomize it.
   while not (r in possibilities):
-    r = int8(rand(5))
+    r = int8(rand(2))
 
   case r:
     of 0: result = newRandomVerification(holder)
-    of 1: result = newRandomVerificationPacket(holder)
-    of 2: result = newRandomSendDifficulty(holder)
-    of 3: result = newRandomDataDifficulty(holder)
-    of 4: discard
-    of 5: result = newRandomMeritRemoval()
+    of 1: result = newRandomSendDifficulty(holder)
+    of 2: result = newRandomDataDifficulty(holder)
     else: check false
 
 proc newRandomMeritRemoval*(
@@ -102,44 +91,28 @@ proc newRandomMeritRemoval*(
 ): SignedMeritRemoval =
   var
     partial: bool = rand(1) == 0
-    e1: Element = newRandomElement(holder = holder, removal = false)
-    e2: Element = newRandomElement(holder = holder, removal = false)
+    e1: Element = newRandomElement(holder = holder)
+    e2: Element = newRandomElement(holder = holder)
     signatures: seq[BLSSignature] = @[]
-    lookup: seq[BLSPublicKey] = newSeq[BLSPublicKey](65536)
-
-  if e1 of VerificationPacket:
-    for holder in cast[VerificationPacket](e1).holders:
-      lookup[int(holder)] = newMinerWallet().publicKey
-  if e2 of VerificationPacket:
-    for holder in cast[VerificationPacket](e2).holders:
-      lookup[int(holder)] = newMinerWallet().publicKey
 
   if not partial:
     case e1:
       of Verification as verif:
         signatures.add(cast[SignedVerification](verif).signature)
-      of VerificationPacket as vp:
-        signatures.add(cast[SignedVerificationPacket](vp).signature)
       of SendDifficulty as sd:
         signatures.add(cast[SignedSendDifficulty](sd).signature)
       of DataDifficulty as dd:
         signatures.add(cast[SignedDataDifficulty](dd).signature)
-      of MeritRemoval as mr:
-        check false
       else:
         check false
 
   case e2:
     of Verification as verif:
       signatures.add(cast[SignedVerification](verif).signature)
-    of VerificationPacket as vp:
-      signatures.add(cast[SignedVerificationPacket](vp).signature)
     of SendDifficulty as sd:
       signatures.add(cast[SignedSendDifficulty](sd).signature)
     of DataDifficulty as dd:
       signatures.add(cast[SignedDataDifficulty](dd).signature)
-    of MeritRemoval as mr:
-      check false
     else:
       check false
 
@@ -148,14 +121,12 @@ proc newRandomMeritRemoval*(
     partial,
     e1,
     e2,
-    signatures.aggregate(),
-    lookup
+    signatures.aggregate()
   )
 
 proc newRandomBlockElement*(
   sendDifficulty: bool = true,
-  dataDifficulty: bool = true,
-  removal: bool = true
+  dataDifficulty: bool = true
 ): BlockElement =
   var
     possibilities: set[int8] = {}
@@ -164,15 +135,12 @@ proc newRandomBlockElement*(
   #Include all possibilities in the set.
   if sendDifficulty: possibilities.incl(0)
   if dataDifficulty: possibilities.incl(1)
-  if removal: possibilities.incl(3)
 
   #Until r is a valid possibility, randomize it.
   while not (r in possibilities):
-    r = int8(rand(3))
+    r = int8(rand(1))
 
   case r:
     of 0: result = newRandomSendDifficulty()
     of 1: result = newRandomDataDifficulty()
-    of 2: discard
-    of 3: result = newRandomMeritRemoval()
     else: check false

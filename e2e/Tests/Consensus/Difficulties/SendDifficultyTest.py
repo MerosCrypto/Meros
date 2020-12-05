@@ -22,8 +22,6 @@ def SendDifficultyTest(
   def vmr() -> None:
     verifyMeritRemoval(rpc, 52, 52, 0, False)
     vddStarting()
-  def vEarnedBack() -> None:
-    vddEarnedVote()
 
   #Create and execute a Liver/Syncer.
   with open("e2e/Vectors/Consensus/Difficulties/SendDifficulty.json", "r") as file:
@@ -35,8 +33,7 @@ def SendDifficultyTest(
         26: vddStarting,
         50: vddEarnedVote,
         51: vddVoted,
-        52: vmr,
-        102: vEarnedBack
+        52: vmr
       }
     ).live()
     Syncer(rpc, vectors).sync()

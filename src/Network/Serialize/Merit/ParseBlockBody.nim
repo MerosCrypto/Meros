@@ -55,5 +55,6 @@ proc parseBlockBody*(
     bodyStr[0 ..< HASH_LEN].toHash[:256](),
     @[],
     elements,
-    aggregate
+    aggregate,
+    {}
   )

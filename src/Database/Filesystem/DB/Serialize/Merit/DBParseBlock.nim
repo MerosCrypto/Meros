@@ -34,7 +34,7 @@ proc parseBlock*(
     INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
   )
 
-  #Packets Contents | Packets Length | Packets | Amount of Elements | Elements | Aggregate Signature
+  #Packets Contents | Packets Length | Packets | Amount of Elements | Elements | Aggregate Signature | Removals
   var
     packetsContents: Hash[256]
     packetsLen: int = bodyStr[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary()
@@ -51,6 +51,8 @@ proc parseBlock*(
     elements: seq[BlockElement] = @[]
 
     aggregate: BLSSignature
+
+    removals: set[uint16] = {}
 
   packetsContents = bodyStr[0 ..< HASH_LEN].toHash[:256]()
 
@@ -92,6 +94,10 @@ proc parseBlock*(
     aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
   except BLSError:
     raise newLoggedException(ValueError, "Invalid aggregate signature.")
+  i += BLS_SIGNATURE_LEN
+
+  for h in countup(i, bodyStr.len - 1, 2):
+    removals.incl(uint16(bodyStr[h ..< h + 2].fromBinary()))
 
   result = newBlockObj(
     header,
@@ -99,6 +105,7 @@ proc parseBlock*(
       packetsContents,
       packets,
       elements,
-      aggregate
+      aggregate,
+      removals
     )
   )

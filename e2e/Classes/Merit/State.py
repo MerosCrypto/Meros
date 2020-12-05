@@ -1,7 +1,5 @@
 from typing import List
 
-from e2e.Classes.Consensus.MeritRemoval import MeritRemoval
-
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.Block import Block
 from e2e.Classes.Merit.Blockchain import Blockchain
@@ -42,6 +40,8 @@ class State:
       self.balances[miner] -= 1
       self.merit -= 1
 
-    for elem in block.body.elements:
-      if isinstance(elem, MeritRemoval):
-        self.balances[elem.holder] = 0
+  def remove(
+    self,
+    holder: int
+  ) -> None:
+    self.balances[holder] = 0

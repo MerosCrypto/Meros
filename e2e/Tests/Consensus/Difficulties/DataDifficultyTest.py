@@ -22,8 +22,6 @@ def DataDifficultyTest(
   def vmr() -> None:
     verifyMeritRemoval(rpc, 52, 52, 0, False)
     vddStarting()
-  def vEarnedBack() -> None:
-    vddStarting()
 
   with open("e2e/Vectors/Consensus/Difficulties/DataDifficulty.json", "r") as file:
     vectors: List[Dict[str, Any]] = json.loads(file.read())
@@ -34,8 +32,7 @@ def DataDifficultyTest(
         26: vddStarting,
         50: vddEarnedVote,
         51: vddVoted,
-        52: vmr,
-        103: vEarnedBack
+        52: vmr
       }
     ).live()
     Syncer(rpc, vectors).sync()

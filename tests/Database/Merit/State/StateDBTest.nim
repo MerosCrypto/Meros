@@ -7,7 +7,6 @@ import ../../../../src/Database/Consensus/Elements/Elements
 import ../../../../src/Database/Merit/[Difficulty, Block, Blockchain, State]
 
 import ../../../Fuzzed
-import ../../Consensus/Elements/TestElements
 import ../TestMerit
 import ../CompareMerit
 
@@ -26,13 +25,13 @@ suite "StateDB":
       thresholds: seq[int] = @[]
 
       miners: seq[MinerWallet] = @[]
-      #Miners we can remove Merit from.
-      removable: seq[MinerWallet]
+      #Miners we removed Merit from.
+      removed: set[uint16] = {}
       #Selected miner to remove Merit from/for the next Block.
-      miner: int
+      miner: uint16
 
-      #Elements we're adding to the Block.
-      elements: seq[BlockElement]
+      #Miners we're about to remove Merit from.
+      toRemove: set[uint16] = {}
       mining: Block
 
   noFuzzTest "Verify.":
@@ -42,21 +41,18 @@ suite "StateDB":
       thresholds.add(state.nodeThresholdAt(r))
 
       #Remove Merit from a random amount of Merit Holders every few Blocks.
-      if rand(3) == 0:
-        removable = miners
-        for _ in 0 .. min(rand(2), high(miners)):
-          miner = rand(high(removable))
-          elements.add(
-            newRandomMeritRemoval(
-              state.reverseLookup(removable[miner].publicKey)
-            )
-          )
-          removable.del(miner)
+      if rand(5) == 0:
+        for _ in 0 .. min(rand(2), miners.len - removed.card - 1):
+          miner = uint16(rand(high(miners)))
+          while removed.contains(miner):
+            miner = uint16(rand(high(miners)))
+          removed.incl(miner)
+          toRemove.incl(miner)
 
       #Decide if this is a nickname or new miner Block.
-      if (miners.len == 0) or (rand(2) == 0):
+      if (miners.len == removed.card) or (rand(2) == 0):
         #New miner.
-        miner = miners.len
+        miner = uint16(miners.len)
         miners.add(newMinerWallet())
 
         #Create the Block with the new miner.
@@ -64,19 +60,21 @@ suite "StateDB":
           rx = blockchain.rx,
           last = blockchain.tail.header.hash,
           miner = miners[miner],
-          elements = elements
+          removals = toRemove
         )
       else:
         #Grab a random miner.
-        miner = rand(high(miners))
+        miner = uint16(rand(high(miners)))
+        while removed.contains(miner):
+          miner = uint16(rand(high(miners)))
 
         #Create the Block with the existing miner.
         mining = newBlankBlock(
           rx = blockchain.rx,
           last = blockchain.tail.header.hash,
-          nick = uint16(miner),
+          nick = miner,
           miner = miners[miner],
-          elements = elements
+          removals = toRemove
         )
 
       #Add it to the Blockchain and State.
@@ -86,8 +84,11 @@ suite "StateDB":
       #Commit the DB.
       db.commit(blockchain.height)
 
-      #Clear the Elements.
-      elements = @[]
+      #Clear the pending removals.
+      toRemove = {}
+
+      #Verify the malicious Merit Holders list is accurate.
+      check removed == state.hasMR
 
       #Reload and compare the States.
       compare(state, newState(db, 30, blockchain))

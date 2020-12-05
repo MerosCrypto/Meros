@@ -7,7 +7,6 @@ from e2e.Libs.BLS import PrivateKey, PublicKey
 from e2e.Classes.Transactions.Data import Data
 
 from e2e.Classes.Consensus.Verification import SignedVerification
-from e2e.Classes.Consensus.VerificationPacket import SignedVerificationPacket, SignedMeritRemovalVerificationPacket
 from e2e.Classes.Consensus.SendDifficulty import SignedSendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 from e2e.Classes.Consensus.MeritRemoval import SignedMeritRemoval
@@ -37,16 +36,10 @@ dataDiffMR: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiff)
 data: Data = Data(bytes(32), edPubKey.to_bytes())
 data.sign(edPrivKey)
 data.beat(SpamFilter(5))
+
 verif: SignedVerification = SignedVerification(data.hash)
 verif.sign(0, blsPrivKey)
-
-#Transform the Verification to a SignedMeritRemovalVerificationPacket.
-packet: SignedMeritRemovalVerificationPacket = SignedMeritRemovalVerificationPacket(
-  SignedVerificationPacket(data.hash),
-  [blsPubKey.serialize()],
-  verif.signature
-)
-verifMR: SignedMeritRemoval = SignedMeritRemoval(verif, packet)
+verifMR: SignedMeritRemoval = SignedMeritRemoval(verif, verif)
 
 with open("e2e/Vectors/Consensus/MeritRemoval/SameElement.json", "w") as vectors:
   vectors.write(

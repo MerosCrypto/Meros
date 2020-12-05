@@ -26,8 +26,8 @@ import Network/Serialize/Transactions/[
   SerializeData
 ]
 import Network/Serialize/Consensus/[
-  SerializeVerification,
-  SerializeVerificationPacket
+  SerializeElement,
+  SerializeMeritRemoval
 ]
 import Network/Serialize/Merit/SerializeBlockHeader
 

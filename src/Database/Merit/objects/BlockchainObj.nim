@@ -102,20 +102,25 @@ proc newBlockchainObj*(
     var genesisBlock: Block
     try:
       genesisBlock = newBlockObj(
-        0,
-        result.genesis,
-        Hash[256](),
-        0,
-        "".pad(4),
-        Hash[256](),
-        newBLSPublicKey(),
-        Hash[256](),
-        @[],
-        @[],
-        newBLSSignature(),
-        0,
-        0,
-        newBLSSignature()
+        newBlockHeaderObj(
+          0,
+          result.genesis,
+          Hash[256](),
+          0,
+          "".pad(4),
+          Hash[256](),
+          newBLSPublicKey(),
+          0,
+          0,
+          newBLSSignature()
+        ),
+        newBlockBodyObj(
+          Hash[256](),
+          @[],
+          @[],
+          newBLSSignature(),
+          {}
+        )
       )
       result.rx.hash(genesisBlock.header)
     except ValueError as e:

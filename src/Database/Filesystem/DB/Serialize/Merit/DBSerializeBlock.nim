@@ -6,9 +6,8 @@ import ../../../../Merit/Block
 import ../../../../../Network/Serialize/SerializeCommon
 
 import ../../../../../Network/Serialize/Consensus/[
-  SerializeVerification,
-  SerializeVerificationPacket,
-  SerializeMeritRemoval
+  SerializeElement,
+  SerializeVerificationPacket
 ]
 
 import ../../../../../Network/Serialize/Merit/SerializeBlockHeader
@@ -30,3 +29,6 @@ proc serialize*(
     result &= elem.serializeContents()
 
   result &= blockArg.body.aggregate.serialize()
+
+  for holder in blockArg.body.removals:
+    result &= holder.toBinary(NICKNAME_LEN)

@@ -21,16 +21,23 @@ const
 
   BLOCK_HEADER_DATA_LEN*: int = INT_LEN + HASH_LEN + HASH_LEN + NICKNAME_LEN + INT_LEN + HASH_LEN + BYTE_LEN
 
+  #These prefixes are used when creating signatures.
+  #With the exception of Verification's, they're also used in the BlockHeader's contents Merkle.
   VERIFICATION_PREFIX*:        int = 0
   VERIFICATION_PACKET_PREFIX*: int = 1
   SEND_DIFFICULTY_PREFIX*:     int = 2
   DATA_DIFFICULTY_PREFIX*:     int = 3
-  MERIT_REMOVAL_PREFIX*:       int = 5
+
+  #[
+  Merit Removals aren't signed.
+  Ever since implicit Merit Removals, they're no longer part of the contents Merkle.
+  That said, getLength still uses this for context when handling SignedMeritRemovals.
+  ]#
+  MERIT_REMOVAL_PREFIX*:       int = 255
 
   #Elements that can be in a MeritRemoval.
   MERIT_REMOVAL_ELEMENT_SET*: set[byte] = {
     byte(VERIFICATION_PREFIX),
-    byte(VERIFICATION_PACKET_PREFIX),
     byte(SEND_DIFFICULTY_PREFIX),
     byte(DATA_DIFFICULTY_PREFIX)
   }
@@ -38,8 +45,7 @@ const
   #Elements that can be in a Block.
   BLOCK_ELEMENT_SET*: set[byte] = {
     byte(SEND_DIFFICULTY_PREFIX),
-    byte(DATA_DIFFICULTY_PREFIX),
-    byte(MERIT_REMOVAL_PREFIX)
+    byte(DATA_DIFFICULTY_PREFIX)
   }
 
 type Handshake* = object

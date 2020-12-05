@@ -43,24 +43,7 @@ The result is an object, as follows:
     - `nonce`      (int)
     - `difficulty` (int)
 
-    When `descendant` == "MeritRemoval":
-    - `partial`  (bool):             Whether or not the first Element is already archived on the Blockchain.
-    - `elements` (array of objects): The two Elements which caused this MeritRemoval. If they're an Element which goes in a Block, they're formatted as they would be in a Block. Else....
-
-      When `descendant` == "Verification":
-      - `hash` (string)
-
-      When `descendant` == "VerificationPacket":
-      - `holders` (array of strings, each a BLS Public Key)
-      - `hash` (string)
-
-      When `descendant` == "SendDifficulty":
-      - `nonce`      (int)
-      - `difficulty` (string)
-
-      When `descendant` == "DataDifficulty":
-      - `nonce`      (int)
-      - `difficulty` (string)
+- `removals` (array of ints): Whoever got their Merit removed by this Block.
 
 - `aggregate` (string)
 
@@ -79,7 +62,7 @@ The result is an object, as follows:
 
 The result is an object, as follows:
 - `status`    (string): "Unlocked", "Locked", or "Pending".
-- `malicious` (bool)
+- `malicious` (bool): Whether or not this holder has a Merit Removal against them pending.
 - `merit`     (int)
 
 ### `getBlockTemplate`

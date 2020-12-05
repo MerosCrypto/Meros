@@ -24,29 +24,28 @@ def MultipleTest(
     SignedMeritRemoval.fromSignedJSON(vectors["removals"][1])
   ]
 
-  #Send and verify the MeritRemoval.
+  #Send and verify the MeritRemovals.
   def sendMeritRemovals() -> None:
-    removalBuf: bytes = rpc.meros.signedElement(removals[0])
-    if removalBuf != rpc.meros.live.recv():
+    if rpc.meros.meritRemoval(removals[0]) != rpc.meros.live.recv():
       raise TestError("Meros didn't send us the Merit Removal.")
     verifyMeritRemoval(rpc, 1, 1, removals[0].holder, True)
 
-    rpc.meros.signedElement(removals[1])
-    if removalBuf != rpc.meros.live.recv():
-      raise TestError("Meros didn't send us the first Merit Removal.")
+    if rpc.meros.meritRemoval(removals[1]) != rpc.meros.live.recv():
+      raise TestError("Meros didn't send us the new Merit Removal.")
     verifyMeritRemoval(rpc, 1, 1, removals[0].holder, True)
 
-  #Verify the holder has 0 Merit and is marked as malicious.
+  #Verify the holder has 0 Merit and isn't marked as malicious.
+  #Since they had one MeritRemoval archived, they're dead.
+  #They should have 0 merit, with the other MR being unaddable and therefore dropped.
   def verifyFirstMeritRemoval() -> None:
-    verifyMeritRemoval(rpc, 0, 0, removals[0].holder, True)
+    verifyMeritRemoval(rpc, 0, 0, removals[0].holder, False)
 
   Liver(
     rpc,
     vectors["blockchain"],
     callbacks={
       1: sendMeritRemovals,
-      2: verifyFirstMeritRemoval,
-      3: lambda: verifyMeritRemoval(rpc, 0, 0, removals[0].holder, False)
+      2: verifyFirstMeritRemoval
     }
   ).live()
 

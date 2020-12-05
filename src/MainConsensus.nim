@@ -4,7 +4,7 @@ proc syncMeritRemovalTransactions(
   functions: GlobalFunctionBox,
   consensus: ref Consensus,
   network: Network,
-  removal: MeritRemoval
+  removal: SignedMeritRemoval
 ): Future[void] {.forceCheck: [
   ValueError
 ], async.} =
@@ -18,31 +18,30 @@ proc syncMeritRemovalTransactions(
       discard functions.transactions.getTransaction(hash)
     except IndexError:
       try:
-        discard consensus[].getMeritRemovalTransaction(hash)
-      except IndexError:
-        try:
-          consensus[].addMeritRemovalTransaction(await syncAwait network.syncManager.syncTransaction(hash))
-        except DataMissing:
-          raise newLoggedException(ValueError, "Couldn't find the Transaction behind a MeritRemoval.")
-        except Exception as e:
-          panic("Syncing a MeritRemoval's Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        var tx: Transaction = await syncAwait network.syncManager.syncTransaction(hash)
+        case tx:
+          of Claim as claim:
+            functions.transactions.addClaim(claim, true)
+          of Send as send:
+            await functions.transactions.addSend(send, true)
+          of Data as data:
+            await functions.transactions.addData(data, true)
+          else:
+            panic("Tried to sync an unrecognized Transaction type used as the reason for a Merit Removal.")
+      except ValueError as e:
+        raise newLoggedException(ValueError, "Transaction used as the reason for a Merit Removal was invalid: " & e.msg)
+      except DataMissing as e:
+        raise newLoggedException(ValueError, "Couldn't sync a Transaction used as the reason for a Merit Removal: " & e.msg)
+      #Happens when two async tasks execute at the same time.
+      except DataExists:
+        discard
+      except Exception as e:
+        panic("Syncing a MeritRemoval's Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
   try:
-    case removal.element1:
-      of Verification as verif:
-        await syncMeritRemovalTransaction(verif.hash)
-      of MeritRemovalVerificationPacket as packet:
-        await syncMeritRemovalTransaction(packet.hash)
-      else:
-        discard
-
-    case removal.element2:
-      of Verification as verif:
-        await syncMeritRemovalTransaction(verif.hash)
-      of MeritRemovalVerificationPacket as packet:
-        await syncMeritRemovalTransaction(packet.hash)
-      else:
-        discard
+    if removal.element1 of Verification:
+      await syncMeritRemovalTransaction(cast[Verification](removal.element1).hash)
+      await syncMeritRemovalTransaction(cast[Verification](removal.element2).hash)
   except ValueError as e:
     raise e
   except Exception as e:
@@ -105,6 +104,17 @@ proc mainConsensus(
   ): int {.forceCheck: [].} =
     merit.state.nodeThresholdAt(epoch)
 
+  functions.consensus.getElement = proc (
+    holder: uint16,
+    nonce: int
+  ): BlockElement {.forceCheck: [
+    IndexError
+  ].} =
+    try:
+      result = consensus[].getElement(holder, nonce)
+    except IndexError as e:
+      raise e
+
   functions.consensus.getPending = proc (): tuple[
     packets: seq[VerificationPacket],
     elements: seq[BlockElement],
@@ -126,15 +136,17 @@ proc mainConsensus(
   ], async.} =
     logInfo "New Verification", holder = verif.holder, hash = verif.hash
 
-    var mr: bool
+    var mr: SignedMeritRemoval = nil
     try:
       try:
         consensus[].add(merit.state, verif)
       except DataMissing:
+        #Attempt to sync the Transaction.
         var tx: Transaction
         try:
           tx = await syncAwait network.syncManager.syncTransaction(verif.hash)
         except DataMissing:
+          #At least the peer which gave us this Verification should have this Transaction.
           raise newException(ValueError, "Verification is of a non-existent Transaction.")
         except Exception as e:
           panic("syncTransaction threw an error despite catching all errors: " & e.msg)
@@ -177,21 +189,18 @@ proc mainConsensus(
       raise e
     #MeritHolder committed a malicious act against the network.
     except MaliciousMeritHolder as e:
+      #Save the MeritRemoval to mr.
+      mr = e.removal
+
       #Flag the MeritRemoval.
-      consensus[].flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
+      #Flag is directly called to skip spending time verifying a MR we just created.
+      consensus[].flag(merit.blockchain, merit.state, mr.holder, mr)
 
-      #Set mr to true.
-      mr = true
-
-    if mr:
-      try:
-        #Broadcast the first MeritRemoval.
-        functions.network.broadcast(
-          MessageType.SignedMeritRemoval,
-          cast[SignedMeritRemoval](consensus.malicious[verif.holder][0]).signedSerialize()
-        )
-      except KeyError as e:
-        panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+    if not mr.isNil:
+      functions.network.broadcast(
+        MessageType.SignedMeritRemoval,
+        mr.serialize()
+      )
       return
 
     logInfo "Added Verification", holder = verif.holder, hash = verif.hash
@@ -224,7 +233,7 @@ proc mainConsensus(
   ].} =
     logInfo "New Send Difficulty", holder = sendDiff.holder, difficulty = sendDiff.difficulty
 
-    var mr: bool
+    var mr: SignedMeritRemoval = nil
     try:
       consensus[].add(merit.state, sendDiff)
     except ValueError as e:
@@ -232,21 +241,14 @@ proc mainConsensus(
     except DataExists as e:
       raise e
     except MaliciousMeritHolder as e:
-      #Flag the MeritRemoval.
-      consensus[].flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
+      mr = e.removal
+      consensus[].flag(merit.blockchain, merit.state, mr.holder, mr)
 
-      #Set mr to true.
-      mr = true
-
-    if mr:
-      try:
-        #Broadcast the first MeritRemoval.
-        functions.network.broadcast(
-          MessageType.SignedMeritRemoval,
-          cast[SignedMeritRemoval](consensus.malicious[sendDiff.holder][0]).signedSerialize()
-        )
-      except KeyError as e:
-        panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+    if not mr.isNil:
+      functions.network.broadcast(
+        MessageType.SignedMeritRemoval,
+        mr.serialize()
+      )
       return
 
     logInfo "Added Send Difficulty", holder = sendDiff.holder, difficulty = sendDiff.difficulty
@@ -272,7 +274,7 @@ proc mainConsensus(
   ].} =
     logInfo "New Data Difficulty", holder = dataDiff.holder, difficulty = dataDiff.difficulty
 
-    var mr: bool = false
+    var mr: SignedMeritRemoval = nil
     try:
       consensus[].add(merit.state, dataDiff)
     except ValueError as e:
@@ -280,21 +282,14 @@ proc mainConsensus(
     except DataExists as e:
       raise e
     except MaliciousMeritHolder as e:
-      #Flag the MeritRemoval.
-      consensus[].flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
+      mr = e.removal
+      consensus[].flag(merit.blockchain, merit.state, mr.holder, mr)
 
-      #Set mr to true.
-      mr = true
-
-    if mr:
-      try:
-        #Broadcast the first MeritRemoval.
-        functions.network.broadcast(
-          MessageType.SignedMeritRemoval,
-          cast[SignedMeritRemoval](consensus.malicious[dataDiff.holder][0]).signedSerialize()
-        )
-      except KeyError as e:
-        panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+    if not mr.isNil:
+      functions.network.broadcast(
+        MessageType.SignedMeritRemoval,
+        mr.serialize()
+      )
       return
 
     logInfo "Added Data Difficulty", holder = dataDiff.holder, difficulty = dataDiff.difficulty
@@ -305,43 +300,13 @@ proc mainConsensus(
       dataDiff.signedSerialize()
     )
 
-  functions.consensus.verifyUnsignedMeritRemoval = proc (
-    mr: MeritRemoval
-  ): Future[void] {.forceCheck: [
-    ValueError,
-    DataExists
-  ], async.} =
-    try:
-      await syncMeritRemovalTransactions(functions, consensus, network[], mr)
-    except ValueError as e:
-      raise e
-    except Exception as e:
-      panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    try:
-      consensus[].verify(mr, merit.state.holders)
-    except ValueError as e:
-      raise e
-    except DataExists as e:
-      #If it's cached, it's already been verified and it's not archived yet.
-      if not consensus.malicious.hasKey(mr.holder):
-        raise e
-
-      try:
-        for cachedMR in consensus.malicious[mr.holder]:
-          if mr.reason == cachedMR.reason:
-            return
-      except KeyError:
-        panic("Merit Holder confirmed to be in malicious doesn't have an entry in malicious.")
-      raise e
-
   functions.consensus.addSignedMeritRemoval = proc (
     mr: SignedMeritRemoval
   ): Future[void] {.forceCheck: [
     ValueError,
     DataExists
   ], async.} =
-    logInfo "New Merit Removal", holder = mr.holder, reason = mr.reason
+    logInfo "Found Merit Removal", holder = mr.holder
 
     try:
       await syncMeritRemovalTransactions(functions, consensus, network[], mr)
@@ -357,13 +322,12 @@ proc mainConsensus(
     except DataExists as e:
       raise e
 
-    logInfo "Added Merit Removal", holder = mr.holder, reason = mr.reason
+    logInfo "Added Merit Removal", holder = mr.holder
 
-    #Broadcast the first MeritRemoval.
-    try:
-      functions.network.broadcast(
-        MessageType.SignedMeritRemoval,
-        cast[SignedMeritRemoval](consensus.malicious[mr.holder][0]).signedSerialize()
-      )
-    except KeyError as e:
-      panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+    #Broadcast the new MeritRemoval.
+    #Historically, we broadcasted the first Merit Removal.
+    #This didn't have us propagate alternative reasons to blacklist a Merit Holder.
+    functions.network.broadcast(
+      MessageType.SignedMeritRemoval,
+      mr.serialize()
+    )

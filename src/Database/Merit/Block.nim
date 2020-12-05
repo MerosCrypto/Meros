@@ -11,13 +11,9 @@ import objects/BlockObj
 export BlockObj
 
 import ../../Network/Serialize/SerializeCommon
-
 import ../../Network/Serialize/Consensus/[
-  SerializeVerification,
-  SerializeVerificationPacket,
-  SerializeSendDifficulty,
-  SerializeDataDifficulty,
-  SerializeMeritRemoval
+  SerializeElement,
+  SerializeVerificationPacket
 ]
 
 proc verifySketchCheck*(
@@ -133,13 +129,10 @@ proc verifyAggregate*(
 
     #Iterate over every Element.
     for e in 0 ..< blockArg.body.elements.len:
-      if blockArg.body.elements[e] of MeritRemoval:
-        agInfos[blockArg.body.packets.len + e] = cast[MeritRemoval](blockArg.body.elements[e]).agInfo(lookup(blockArg.body.elements[e].holder))
-      else:
-        agInfos[blockArg.body.packets.len + e] = newBLSAggregationInfo(
-          lookup(blockArg.body.elements[e].holder),
-          blockArg.body.elements[e].serializeWithoutHolder()
-        )
+      agInfos[blockArg.body.packets.len + e] = newBLSAggregationInfo(
+        lookup(blockArg.body.elements[e].holder),
+        blockArg.body.elements[e].serializeWithoutHolder()
+      )
   #We have Verification Packets/Elements including Verifiers who don't exist.
   except IndexError:
     return false

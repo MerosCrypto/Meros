@@ -17,17 +17,12 @@ proc getRandomX*(): RandomX =
 
 proc newValidVerificationPacket*(
   holders: seq[BLSPublicKey],
-  exclude: seq[uint16] = @[],
+  exclude: set[uint16] = {},
   hash: Hash[256] = newRandomHash()
 ): VerificationPacket =
   result = newVerificationPacketObj(hash)
   for h in 0 ..< holders.len:
-    var found: bool = false
-    for e in exclude:
-      if uint16(h) == e:
-        found = true
-        break
-    if found:
+    if exclude.contains(uint16(h)):
       continue
 
     if rand(1) == 0:
@@ -35,17 +30,10 @@ proc newValidVerificationPacket*(
 
   #Make sure there's at least one holder.
   while result.holders.len == 0:
-    var
-      h: uint16 = uint16(rand(high(holders)))
-      found: bool = false
-    for e in exclude:
-      if h == e:
-        found = true
-        break
-    if found:
+    var h: uint16 = uint16(rand(high(holders)))
+    if exclude.contains(h):
       continue
-
-    result.holders.add(uint16(h))
+    result.holders.add(h)
 
 #Create a Block, with every setting optional.
 var lastTime {.threadvar.}: uint32
@@ -58,6 +46,7 @@ proc newBlankBlock*(
   miner: MinerWallet = newMinerWallet(),
   packets: seq[VerificationPacket] = @[],
   elements: seq[BlockElement] = @[],
+  removals: set[uint16] = {},
   aggregate: BLSSignature = newBLSSignature(),
   time: uint32 = 0,
   proof: uint32 = 0
@@ -69,18 +58,25 @@ proc newBlankBlock*(
 
   var contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(packets, elements)
   result = newBlockObj(
-    version,
-    last,
-    contents.contents,
-    significant,
-    sketchSalt,
-    newSketchCheck(sketchSalt, packets),
-    miner.publicKey,
-    contents.packets,
-    packets,
-    elements,
-    aggregate,
-    actualTime
+    newBlockHeaderObj(
+      version,
+      last,
+      contents.contents,
+      significant,
+      sketchSalt,
+      newSketchCheck(sketchSalt, packets),
+      miner.publicKey,
+      actualTime,
+      proof,
+      newBLSSignature()
+    ),
+    newBlockBodyObj(
+      contents.packets,
+      packets,
+      elements,
+      aggregate,
+      removals
+    )
   )
   rx.hash(miner, result.header, proof)
 
@@ -95,6 +91,7 @@ proc newBlankBlock*(
   miner: MinerWallet = newMinerWallet(),
   packets: seq[VerificationPacket] = @[],
   elements: seq[BlockElement] = @[],
+  removals: set[uint16] = {},
   aggregate: BLSSignature = newBLSSignature(),
   time: uint32 = 0,
   proof: uint32 = 0
@@ -106,17 +103,24 @@ proc newBlankBlock*(
 
   var contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(packets, elements)
   result = newBlockObj(
-    version,
-    last,
-    contents.contents,
-    significant,
-    sketchSalt,
-    newSketchCheck(sketchSalt, packets),
-    nick,
-    contents.packets,
-    packets,
-    elements,
-    aggregate,
-    actualTime
+    newBlockHeaderObj(
+      version,
+      last,
+      contents.contents,
+      significant,
+      sketchSalt,
+      newSketchCheck(sketchSalt, packets),
+      nick,
+      actualTime,
+      proof,
+      newBLSSignature()
+    ),
+    newBlockBodyObj(
+      contents.packets,
+      packets,
+      elements,
+      aggregate,
+      removals
+    )
   )
   rx.hash(miner, result.header, proof)

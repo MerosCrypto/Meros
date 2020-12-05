@@ -49,40 +49,6 @@ proc `%**`(
       result["nonce"] = % dataDiff.nonce
       result["difficulty"] = % dataDiff.difficulty
 
-    of MeritRemovalVerificationPacket as packet:
-      result["descendant"] = % "VerificationPacket"
-
-      result["hash"] = % $packet.hash
-      result["holders"] = % []
-      for holder in packet.holders:
-        try:
-          result["holders"].add(% $holder)
-        except KeyError as e:
-          panic("Couldn't add a holder to a VerificationPacket's JSON representation despite declaring an array for the holders: " & e.msg)
-
-    of MeritRemoval as mr:
-      result["descendant"] = % "MeritRemoval"
-
-      result["holder"] = % mr.holder
-      result["partial"] = % mr.partial
-
-      var
-        element1: JSONNode = %** mr.element1
-        element2: JSONNode = %** mr.element2
-
-      if element1.hasKey("holder"):
-        try:
-          element1.delete("holder")
-        except KeyError as e:
-          panic("Couldn't delete a key we confirmed was present: " & e.msg)
-      if element2.hasKey("holder"):
-        try:
-          element2.delete("holder")
-        except KeyError as e:
-          panic("Couldn't delete a key we confirmed was present: " & e.msg)
-
-      result["elements"] = % [element1, element2]
-
     else:
       panic("MeritModule's `%`(Element) passed an unsupported Element type.")
 
@@ -94,19 +60,19 @@ proc `%`(
   result = %* {
     "hash":   $blockArg.header.hash,
     "header": {
-      "version":   blockArg.header.version,
-      "last":    $blockArg.header.last,
-      "contents":  $blockArg.header.contents,
+      "version":      blockArg.header.version,
+      "last":         $blockArg.header.last,
+      "contents":     $blockArg.header.contents,
 
       "significant":  blockArg.header.significant,
       "sketchSalt":   blockArg.header.sketchSalt.toHex(),
       "sketchCheck":  $blockArg.header.sketchCheck,
 
-      "time":    blockArg.header.time,
-      "proof":   blockArg.header.proof,
-      "signature": $blockArg.header.signature
+      "time":         blockArg.header.time,
+      "proof":        blockArg.header.proof,
+      "signature":    $blockArg.header.signature
     },
-    "aggregate": $blockArg.body.aggregate
+    "aggregate":      $blockArg.body.aggregate
   }
 
   #Add the miner to the header.
@@ -136,6 +102,14 @@ proc `%`(
       result["elements"].add(%** elem)
   except KeyError as e:
     panic("Couldn't add an Element to a Block's JSON representation despite declaring an array for the Elements: " & e.msg)
+
+  #Add the removals.
+  result["removals"] = % []
+  try:
+    for holder in blockArg.body.removals:
+      result["removals"].add(% holder)
+  except KeyError as e:
+    panic("Couldn't add a removal to a Block's JSON representation despite declaring an array for the removals: " & e.msg)
 
 proc module*(
   functions: GlobalFunctionBox
@@ -344,7 +318,8 @@ proc module*(
               contents.packets,
               pending.packets,
               pending.elements,
-              pending.aggregate
+              pending.aggregate,
+              {}
             ).serialize(sketchSalt, pending.packets.len).toHex()
           }
         except ValueError as e:

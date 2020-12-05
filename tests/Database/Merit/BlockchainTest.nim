@@ -36,14 +36,22 @@ suite "Blockchain":
       databases: seq[Table[string, string]] = @[]
 
       #Used Element nonces.
-      elementNonces: Table[int, int] = initTable[int, int]()
+      elementNonces: Table[uint16, int] = initTable[uint16, int]()
+      #Removals that have happened.
+      removed: set[uint16] = {}
 
       packets: seq[VerificationPacket] = @[]
-      elements: seq[BlockElement]
+      elements: seq[BlockElement] = @[]
+      toRemove: set[uint16] = {}
       miners: seq[MinerWallet]
       #Selected miner for the next Block.
-      miner: int
+      miner: uint16
       mining: Block
+
+    proc getNonMaliciousHolder(): uint16 =
+      result = uint16(rand(high(miners)))
+      while removed.contains(result):
+        result = uint16(rand(high(miners)))
 
     proc backupDatabase() =
       databases.add(initTable[string, string]())
@@ -52,59 +60,46 @@ suite "Blockchain":
 
     #Iterate over 20 'rounds'.
     for i in 1 .. 20:
-      if state.holders.len != 0:
+      if state.holders.len != removed.card:
         #Randomize the Packets.
         packets = @[]
-        for _ in 0 ..< rand(300):
-          packets.add(newValidVerificationPacket(state.holders))
+        for _ in 0 ..< rand(0):#300):
+          packets.add(newValidVerificationPacket(state.holders, removed))
 
-        #Randomize the Elements.
+        #Randomize the Elements/removals.
         elements = @[]
+        toRemove = {}
         if rand(1) == 0:
-          var
-            holder: int = rand(high(miners))
-            elementNonce: int
-          try:
-            elementNonce = elementNonces[holder]
-          except KeyError:
-            elementNonce = 0
-          elementNonces[holder] = elementNonce + 1
+          for _ in 0 ..< 3:
+            var
+              holder: uint16 = getNonMaliciousHolder()
+              elementNonce: int
+            try:
+              elementNonce = elementNonces[holder]
+            except KeyError:
+              elementNonce = 0
+            elementNonces[holder] = elementNonce + 1
 
-          case rand(2):
-            of 0:
-              var sd: SignedSendDifficulty = newSignedSendDifficultyObj(elementNonce, uint32(rand(high(int32))))
-              miners[holder].sign(sd)
-              elements.add(sd)
-            of 1:
-              var dd: SignedDataDifficulty = newSignedDataDifficultyObj(elementNonce, uint32(rand(high(int32))))
-              miners[holder].sign(dd)
-              elements.add(dd)
-            of 2:
-              var
-                e1: SignedDataDifficulty
-                e2: SignedDataDifficulty
-              e1 = newSignedDataDifficultyObj(elementNonce, uint32(rand(high(int32))))
-              e2 = newSignedDataDifficultyObj(elementNonce, uint32(rand(high(int32))))
-              miners[holder].sign(e1)
-              miners[holder].sign(e2)
-
-              elements.add(newSignedMeritRemoval(
-                uint16(holder),
-                false,
-                e1,
-                e2,
-                @[e1.signature, e2.signature].aggregate(),
-                @[]
-              ))
-            else:
-              panic("Generated a number outside of the provided range.")
+            case rand(2):
+              of 0:
+                var sd: SignedSendDifficulty = newSignedSendDifficultyObj(elementNonce, uint32(rand(high(int32))))
+                miners[holder].sign(sd)
+                elements.add(sd)
+              of 1:
+                var dd: SignedDataDifficulty = newSignedDataDifficultyObj(elementNonce, uint32(rand(high(int32))))
+                miners[holder].sign(dd)
+                elements.add(dd)
+              of 2:
+                toRemove.incl(holder)
+              else:
+                panic("Generated a number outside of the provided range.")
 
       #Decide if this is a nickname or new miner Block.
-      if (miners.len == 0) or (rand(2) == 0):
+      if (miners.len == removed.card) or (rand(2) == 0):
         #New miner.
-        miner = miners.len
+        miner = uint16(miners.len)
         miners.add(newMinerWallet())
-        miners[^1].nick = uint16(miner)
+        miners[^1].nick = miner
 
         #Create the Block with the new miner.
         mining = newBlankBlock(
@@ -113,14 +108,17 @@ suite "Blockchain":
           blockchains[^1].tail.header.hash,
           uint16(rand(26279) + 1),
           char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
-          miners[miner],
+          miners[int(miner)],
           packets,
           elements,
+          toRemove,
           time = max(getTime(), blockchains[^1].tail.header.time + 1)
         )
       else:
         #Grab a random miner.
-        miner = rand(high(miners))
+        miner = uint16(rand(high(miners)))
+        while removed.contains(miner):
+          miner = uint16(rand(high(miners)))
 
         #Create the Block with the existing miner.
         mining = newBlankBlock(
@@ -129,10 +127,11 @@ suite "Blockchain":
           blockchains[^1].tail.header.hash,
           uint16(rand(26279) + 1),
           char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
-          uint16(miner),
-          miners[miner],
+          miner,
+          miners[int(miner)],
           packets,
           elements,
+          toRemove,
           time = max(getTime(), blockchains[^1].tail.header.time + 1)
         )
 
@@ -153,12 +152,16 @@ suite "Blockchain":
       testBlockHeader(
         blockchains[^1].miners,
         state.holders,
+        removed,
         blockchains[^1].tail.header,
         blockchains[^1].difficulties[^1],
         mining.header
       )
       blockchains[^1].processBlock(mining)
       discard state.processBlock(blockchains[^1])
+
+      removed = removed + toRemove
+      check removed == state.hasMR
 
       #Commit the DB.
       db.commit(blockchains[^1].height)

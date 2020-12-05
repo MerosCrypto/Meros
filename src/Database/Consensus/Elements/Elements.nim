@@ -2,15 +2,17 @@ import macros
 import algorithm
 
 import ../../../lib/[Errors, Util, Hash]
-import ../../../Wallet/MinerWallet
 
 import objects/[ElementObj, SignedElementObj]
 export ElementObj, SignedElementObj
 
 import Verification as VerificationFile
-import VerificationPacket as VerificationPacketFile
 import SendDifficulty as SendDifficultyFile
 import DataDifficulty as DataDifficultyFile
+
+#This line triggers an UnusedImport line, despite being exported below.
+#Adding {.push warning[UnusedImport]: off.} unfortunately doesn't help.
+import VerificationPacket as VerificationPacketFile
 import MeritRemoval as MeritRemovalFile
 
 export VerificationFile, VerificationPacketFile
@@ -89,14 +91,6 @@ proc `==`*(
       ):
         return false
 
-    of VerificationPacket as vp1:
-      if (
-        (not (e2 of VerificationPacket)) or
-        (vp1.holders.sorted() != cast[VerificationPacket](e2).holders.sorted()) or
-        (vp1.hash != cast[VerificationPacket](e2).hash)
-      ):
-        return false
-
     of SendDifficulty as sd1:
       if (
         (not (e2 of SendDifficulty)) or
@@ -115,34 +109,59 @@ proc `==`*(
       ):
         return false
 
-    of MeritRemovalVerificationPacket as mrvp1:
-      if (
-        (not (e2 of MeritRemovalVerificationPacket)) or
-        (mrvp1.holders.len != cast[MeritRemovalVerificationPacket](e2).holders.len) or
-        (mrvp1.hash != cast[MeritRemovalVerificationPacket](e2).hash)
-      ):
-        return false
-
-      for h in 0 ..< mrvp1.holders.len:
-        if mrvp1.holders[h] != cast[MeritRemovalVerificationPacket](e2).holders[h]:
-          return false
-
-    of MeritRemoval as mr1:
-      if (
-        (not (e2 of MeritRemoval)) or
-        (mr1.holder != cast[MeritRemoval](e2).holder) or
-        (mr1.partial != cast[MeritRemoval](e2).partial) or
-        (not (cast[Element](mr1.element1) == cast[Element](cast[MeritRemoval](e2).element1))) or
-        (not (cast[Element](mr1.element2) == cast[Element](cast[MeritRemoval](e2).element2))) or
-        (mr1.reason != cast[MeritRemoval](e2).reason)
-      ):
-        return false
-
     else:
       panic("Unsupported Element type used in equality check.")
 
-proc `!=`*(
-  e1: Element,
-  e2: Element
+#The following used to be Elements.
+#They're no longer, yet to prevent the reform from being too large a hassle, their code is preserved here.
+proc `==`*(
+  vp1: VerificationPacket,
+  vp2: VerificationPacket
 ): bool {.inline, forceCheck: [].} =
-  not (e1 == e2)
+  (vp1.hash == vp2.hash) and (sorted(vp1.holders) == sorted(vp2.holders))
+
+proc `==`*(
+  svp1: SignedVerificationPacket,
+  svp2: SignedVerificationPacket
+): bool {.inline, forceCheck: [].} =
+  (cast[VerificationPacket](svp1) == cast[VerificationPacket](svp2)) and
+  (svp1.signature == svp2.signature)
+
+proc `==`*(
+  mr1: SignedMeritRemoval,
+  mr2: SignedMeritRemoval
+): bool {.inline, forceCheck: [].} =
+  (
+    (mr1.holder == mr2.holder) and
+    (mr1.partial == mr2.partial) and (
+      ((mr1.element1 == mr2.element1) and (mr1.element2 == mr2.element2)) or
+      #If it's not a partial MeritRemoval, allow the Elements to be swapped.
+      ((not mr1.partial) and (mr1.element1 == mr2.element2) and (mr1.element2 == mr2.element1))
+    ) and
+    (mr1.signature == mr2.signature)
+  )
+
+#This should be a template/generic. That said, equality checking with refs is iffy.
+proc `!=`*(
+  x: Element,
+  y: Element
+): bool {.inline, forceCheck: [].} =
+  not (x == y)
+
+proc `!=`*(
+  x: VerificationPacket,
+  y: VerificationPacket
+): bool {.inline, forceCheck: [].} =
+  not (x == y)
+
+proc `!=`*(
+  x: SignedVerificationPacket,
+  y: SignedVerificationPacket
+): bool {.inline, forceCheck: [].} =
+  not (x == y)
+
+proc `!=`*(
+  x: SignedMeritRemoval,
+  y: SignedMeritRemoval
+): bool {.inline, forceCheck: [].} =
+  not (x == y)

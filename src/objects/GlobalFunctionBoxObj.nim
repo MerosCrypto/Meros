@@ -117,6 +117,13 @@ type
       epoch: int
     ): int {.gcsafe, raises: [].}
 
+    getElement*: proc (
+      holder: uint16,
+      nonce: int
+    ): BlockElement {.gcsafe, raises: [
+      IndexError
+    ].}
+
     getPending*: proc (): tuple[
       packets: seq[VerificationPacket],
       elements: seq[BlockElement],
@@ -152,10 +159,6 @@ type
       ValueError,
       DataExists
     ].}
-
-    verifyUnsignedMeritRemoval*: proc (
-      mr: MeritRemoval
-    ): Future[void] {.gcsafe.}
 
     addSignedMeritRemoval*: proc (
       mr: SignedMeritRemoval

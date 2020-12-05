@@ -39,11 +39,10 @@ suite "Consensus":
         5
       )
 
-      #Currently have Merit Removals.
-      malicious: Table[uint16, seq[MeritRemoval]] = initTable[uint16, seq[MeritRemoval]]()
+      removed: set[uint16] = {}
 
     #Create Merit Holders.
-    for h in 0 ..< 501:
+    for h in 0 .. 500:
       merit.state.merit.add(1)
       merit.state.statuses.add(MeritStatus.Unlocked)
       consensus.archive(merit.state, @[], @[], newEpoch(), StateChanges(incd: uint16(high(merit.state.merit)), decd: -1))
@@ -60,28 +59,23 @@ suite "Consensus":
             rand(1) == 0,
             sendDiff,
             dataDiff,
-            newMinerWallet().sign(""),
-            @[]
+            newMinerWallet().sign("")
           )
+        while removed.contains(removal.holder) and (not consensus.malicious.hasKey(removal.holder)):
+          removal.holder = uint16(rand(500))
+        removed.incl(removal.holder)
+
         sendDiff.holder = removal.holder
         dataDiff.holder = removal.holder
 
-        consensus.flag(merit.blockchain, merit.state, removal)
-        if malicious.hasKey(removal.holder):
-          malicious[removal.holder].add(removal)
-        else:
-          malicious[removal.holder] = @[cast[MeritRemoval](removal)]
+        consensus.flag(merit.blockchain, merit.state, removal.holder, removal)
 
       #Remove random MeritRemovals.
-      for holder in malicious.keys():
-        var mr: int = 0
-        while mr < malicious[holder].len:
-          if rand(1) == 0:
-            consensus.remove(malicious[holder][mr], 0)
-            merit.state.merit[int(holder)] = 0
-            malicious[holder].del(mr)
-            continue
-          inc(mr)
+      var removals: set[uint16] = {}
+      for holder in consensus.malicious.keys():
+        if rand(2) == 0:
+          removals.incl(holder)
+      consensus.remove(merit.blockchain, merit.state, removals)
 
       #Reload and compare the Consensus DAGs.
       compare(consensus, newConsensus(
@@ -132,6 +126,8 @@ suite "Consensus":
       packets: seq[VerificationPacket] = @[]
       #Elements to include in the next Block.
       elements: seq[BlockElement] = @[]
+      #Removals to include in the next Block.
+      removals: set[uint16] = {}
       #List of Transactions we didn't add every SignedVerification for.
       unsigned: seq[Hash[256]] = @[]
       #SignedVerification used to generate signatures.
@@ -145,7 +141,7 @@ suite "Consensus":
       var
         miner: MinerWallet
         mining: Block
-      if (rand(74) == 0) or (holders.len == 0):
+      if (rand(74) == 0) or (holders.len == merit.state.hasMR.card):
         miner = newMinerWallet()
         miner.nick = uint16(holders.len)
         holders.add(miner)
@@ -157,10 +153,13 @@ suite "Consensus":
           miner = miner,
           packets = packets,
           elements = elements,
+          removals = removals,
           aggregate = aggregate
         )
       else:
         var h: int = rand(high(holders))
+        while merit.state.hasMR.contains(uint16(h)):
+          h = rand(high(holders))
         miner = holders[h]
 
         mining = newBlankBlock(
@@ -171,6 +170,7 @@ suite "Consensus":
           miner = miner,
           packets = packets,
           elements = elements,
+          removals = removals,
           aggregate = aggregate
         )
 
@@ -178,12 +178,8 @@ suite "Consensus":
       for packet in mining.body.packets:
         consensus.add(merit.state, packet)
 
-      #Check who has their Merit removed.
-      var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
-      for elem in mining.body.elements:
-        if elem of MeritRemoval:
-          consensus.flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
-          removed[elem.holder] = cast[MeritRemoval](elem)
+      #Remove Merit.
+      consensus.remove(merit.blockchain, merit.state, removals)
 
       #Add a Block to the Blockchain to generate a holder.
       merit.processBlock(mining)
@@ -199,10 +195,6 @@ suite "Consensus":
 
       #Archive the Epochs.
       consensus.archive(merit.state, mining.body.packets, mining.body.elements, epoch, changes)
-
-      #Have the Consensus handle every person who suffered a MeritRemoval.
-      for removee in removed.keys():
-        consensus.remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
 
       #Add the elements.
       for elem in elements:
@@ -241,6 +233,10 @@ suite "Consensus":
 
       #Create a random amount of 'Transaction's.
       for _ in 0 ..< rand(2) + 1:
+        #Don't create any if there's no valid Merit Holders.
+        if holders.len == merit.state.hasMR.card:
+          break
+
         #Register the Transaction.
         var tx: Transaction = Transaction()
         tx.hash = newRandomHash()
@@ -252,7 +248,7 @@ suite "Consensus":
 
         #Grab random holders to sign the packet.
         for h in 0 ..< holders.len:
-          if rand(1) == 0:
+          if merit.state.hasMR.contains(uint16(h)) or (rand(1) == 0):
             continue
 
           packets[^1].holders.add(uint16(h))
@@ -271,6 +267,8 @@ suite "Consensus":
         #Make sure at least one holder signed the packet.
         if packets[^1].holders.len == 0:
           packets[^1].holders.add(uint16(rand(high(holders))))
+          while merit.state.hasMR.contains(packets[^1].holders[0]):
+            packets[^1].holders[0] = uint16(rand(high(holders)))
 
           sv = newSignedVerificationObj(packets[^1].hash)
           holders[int(packets[^1].holders[0])].sign(sv)
@@ -293,7 +291,7 @@ suite "Consensus":
 
           #Run against each Merit Holder.
           for h in 0 ..< holders.len:
-            if epoch[tx].contains(uint16(h)) or (rand(2) == 0):
+            if epoch[tx].contains(uint16(h)) or merit.state.hasMR.contains(uint16(h)) or (rand(2) == 0):
               continue
 
             #Add the holder.
@@ -315,40 +313,31 @@ suite "Consensus":
             packets.del(high(packets))
 
       #Add Difficulties.
-      var
-        holder: int = rand(holders.len - 1)
-        sendDiff: SignedSendDifficulty
-        dataDiff: SignedDataDifficulty
-      sendDiff = newSignedSendDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, uint32(rand(high(int32))))
-      sendDiff.holder = uint16(holder)
-      elements.add(sendDiff)
+      if holders.len != merit.state.hasMR.card:
+        var
+          holder: int = rand(holders.len - 1)
+          sendDiff: SignedSendDifficulty
+          dataDiff: SignedDataDifficulty
+        while merit.state.hasMR.contains(uint16(holder)):
+          holder = rand(holders.len - 1)
+        sendDiff = newSignedSendDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, uint32(rand(high(int32))))
+        sendDiff.holder = uint16(holder)
+        elements.add(sendDiff)
 
-      holder = rand(holders.len - 1)
-      dataDiff = newSignedDataDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, uint32(rand(high(int32))))
-      dataDiff.holder = uint16(holder)
-      elements.add(dataDiff)
+        holder = rand(holders.len - 1)
+        while merit.state.hasMR.contains(uint16(holder)):
+          holder = rand(holders.len - 1)
+        dataDiff = newSignedDataDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, uint32(rand(high(int32))))
+        dataDiff.holder = uint16(holder)
+        elements.add(dataDiff)
 
+      removals = {}
       if rand(125) == 0:
         #Add a Merit Removal.
-        holder = rand(holders.len - 1)
+        var holder: int = rand(holders.len - 1)
         while merit.state[uint16(holder), merit.state.processedBlocks] == 0:
           holder = rand(holders.len - 1)
-
-        var
-          e1: SendDifficulty
-          e2: DataDifficulty
-        e1 = newSendDifficultyObj(0, uint32(rand(high(int32))))
-        e1.holder = uint16(holder)
-        e2 = newDataDifficultyObj(0, uint32(rand(high(int32))))
-        e2.holder = uint16(holder)
-
-        elements.add(newMeritRemoval(
-          uint16(holder),
-          false,
-          e1,
-          e2,
-          merit.state.holders
-        ))
+        removals.incl(uint16(holder))
 
       #Mine the packets.
       mineBlock()

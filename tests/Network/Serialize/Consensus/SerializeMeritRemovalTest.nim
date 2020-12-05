@@ -15,14 +15,11 @@ suite "SerializeMeritRemoval":
   setup:
     var
       mr: SignedMeritRemoval = newRandomMeritRemoval()
-      reloadedMR: MeritRemoval = mr.serialize().parseMeritRemoval()
-      reloadedSMR: SignedMeritRemoval = mr.signedSerialize().parseSignedMeritRemoval()
+      reloadedSMR: SignedMeritRemoval = mr.serialize().parseSignedMeritRemoval()
 
   highFuzzTest "Compare the Elements/serializations.":
-    compare(mr, reloadedMR)
     compare(mr, reloadedSMR)
 
     check:
       mr.signature == reloadedSMR.signature
-      mr.serialize() == reloadedMR.serialize()
-      mr.signedSerialize() == reloadedSMR.signedSerialize()
+      mr.serialize() == reloadedSMR.serialize()
