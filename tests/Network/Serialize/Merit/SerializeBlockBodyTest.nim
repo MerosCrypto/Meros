@@ -43,7 +43,8 @@ suite "SerializeBlockBody":
         packetsContents,
         packets,
         elements,
-        newMinerWallet().sign($rand(4096))
+        newMinerWallet().sign($rand(4096)),
+        {}
       )
 
       #Verify the sketch doesn't have a collision.

@@ -19,6 +19,24 @@ proc newRandomVerification*(
   result = newSignedVerificationObj(hash)
   miner.sign(result)
 
+proc newRandomVerificationPacket*(
+  holder: uint16 = uint16(rand(high(int16))),
+  hash: Hash[256] = newRandomHash()
+): SignedVerificationPacket =
+  var miner: MinerWallet = newMinerWallet()
+
+  result = newSignedVerificationPacketObj(hash)
+
+  #Randomize the participating holders.
+  for h in 0 ..< rand(500) + 1:
+    if h == 0:
+      result.holders.add(holder)
+    else:
+      result.holders.add(uint16(rand(high(int16))))
+
+  #Set a random signature.
+  result.signature = miner.sign("")
+
 proc newRandomSendDifficulty*(
   holder: uint16 = uint16(rand(high(int16)))
 ): SignedSendDifficulty =

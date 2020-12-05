@@ -28,7 +28,7 @@ suite "Epochs":
       #Table of a hash to the block it first appeared on.
       first: Table[Hash[256], int] = initTable[Hash[256], int]()
       #Table of a hash to every nick which has already signed it.
-      signed: Table[Hash[256], seq[uint16]] = initTable[Hash[256], seq[uint16]]()
+      signed: Table[Hash[256], set[uint16]] = initTable[Hash[256], set[uint16]]()
 
       holders: seq[MinerWallet] = @[]
       miner: uint16
@@ -43,7 +43,9 @@ suite "Epochs":
         for _ in 0 ..< rand(20) + 2:
           packets.add(newValidVerificationPacket(state.holders))
           first[packets[^1].hash] = i
-          signed[packets[^1].hash] = packets[^1].holders
+          signed[packets[^1].hash] = {}
+          for h in packets[^1].holders:
+            signed[packets[^1].hash].incl(h)
 
         #Also create some packets using older hashes.
         for b in 1 ..< min(i, 5):
@@ -52,7 +54,7 @@ suite "Epochs":
               if first[packet.hash] + 6 > i:
                 continue
 
-              if signed[packet.hash].len == holders.len:
+              if signed[packet.hash].card == holders.len:
                 continue
 
               packets.add(newValidVerificationPacket(state.holders, signed[packet.hash], packet.hash))
