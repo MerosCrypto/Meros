@@ -306,6 +306,8 @@ proc newConfig*(): Config {.forceCheck: [].} =
   try:
     var dirs: seq[string] = result.dataDir.split("/")
     for d in 0 ..< dirs.len:
+      if dirs[d] == "":
+        continue
       discard existsOrCreateDir(dirs[0 .. d].joinPath())
   except OSError as e:
     doAssert(false, "Couldn't create the data directory due to an OSError: " & e.msg)
