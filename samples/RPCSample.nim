@@ -32,7 +32,7 @@ const ARGUMENTS: Table[string, seq[char]] = {
   "network_getPeers": @[],
 
   "personal_getMiner":    @[],
-  "personal_setMnemonic": @['b', 'b'],
+  "personal_setMnemonic": @['s', 's'],
   "personal_getMnemonic": @[],
   "personal_getAddress":  @[],
 
