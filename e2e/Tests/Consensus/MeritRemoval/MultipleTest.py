@@ -31,7 +31,7 @@ def MultipleTest(
     verifyMeritRemoval(rpc, 1, 1, removals[0].holder, True)
 
     if rpc.meros.meritRemoval(removals[1]) != rpc.meros.live.recv():
-      raise TestError("Meros didn't send us the first Merit Removal.")
+      raise TestError("Meros didn't send us the new Merit Removal.")
     verifyMeritRemoval(rpc, 1, 1, removals[0].holder, True)
 
   #Verify the holder has 0 Merit and isn't marked as malicious.
@@ -51,4 +51,4 @@ def MultipleTest(
 
   #Create and execute a Syncer to handle a Signed MeritRemoval.
   Syncer(rpc, vectors["blockchain"]).sync()
-  verifyMeritRemoval(rpc, 0, 0, removals[0].holder, True)
+  verifyMeritRemoval(rpc, 0, 0, removals[0].holder, False)
