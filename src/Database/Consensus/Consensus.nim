@@ -620,10 +620,19 @@ proc remove*(
   state: State,
   holders: set[uint16]
 ) {.forceCheck: [].} =
+  #Work around for the below flag, which checks for presence in the malicious table OR being passed as an arg.
+  #This guarantees the former.
+  #Flag should truly be done as a batch operaiton here, not only to avoid this, but also for efficiency.
+  #That said, that requires multiple malicious holders, which is unlikely (unless part of a dedicated DoS attack).
+  for holder in holders:
+    if not consensus.malicious.hasKey(holder):
+      consensus.malicious[holder] = @[]
+
   for holder in holders:
     logInfo "Archiving Merit Removal", holder = holder
 
-    #We do not call flag here. MainMerit calls it before it adds Verification Packets.
+    #Flag to cause recalculation of affected transactions.
+    consensus.flag(blockchain, state, holder, nil)
 
     #Clear any cached entries.
     consensus.malicious.del(holder)
