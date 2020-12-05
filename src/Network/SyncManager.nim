@@ -566,18 +566,18 @@ proc sync*(
           panic("Couldn't get a status for a Transaction which spends an input mentioned in this Block: " & e.msg)
 
         try:
-          #Has archived Verification for this Transaction.
-          #If they have a pending Verification, we could create a Signed MeritRemoval at this point in time.
-          #Basically a new form of https://github.com/MerosCrypto/Meros/issues/120.
-          if compStatus.pending.contains(holder):
-            discard
-          elif (
+          if (
             #Archived Competing Verification.
-            compStatus.holders.contains(holder) or
+            (compStatus.holders.contains(holder) and (not compStatus.pending.contains(holder))) or
             #Competing Verification in this same Block.
             (holdersForTX.hasKey(competitor) and holdersForTX[competitor].contains(holder))
           ):
             result[0].body.removals.incl(holder)
+
+          #If they have a pending Verification, we could create a Signed MeritRemoval at this point in time.
+          #Basically a new form of https://github.com/MerosCrypto/Meros/issues/120.
+          elif compStatus.pending.contains(holder):
+            discard
         except KeyError as e:
           panic("Couldn't get the holders for a Transaction in this Block: " & e.msg)
 
