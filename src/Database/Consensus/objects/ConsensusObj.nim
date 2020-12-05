@@ -717,8 +717,9 @@ proc getPending*(
       #There's no value in providing multiple Merit Removals for them.
       #There also is a risk if multiple Merit Removals share an Element we'll include a duplicate.
       #You can't argue with safety AND efficiency.
-      result.elements.add(cast[BlockElement](mr.element1))
       result.elements.add(cast[BlockElement](mr.element2))
+      if not mr.partial:
+        result.elements.add(cast[BlockElement](mr.element1))
       signatures.add(mr.signature)
       break
 

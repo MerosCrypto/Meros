@@ -251,7 +251,7 @@ proc mainMerit(
       except DBReadError:
         continue
 
-      if existing != elem:
+      if cast[Element](existing) != cast[Element](elem):
         mrs.add(
           newSignedMeritRemoval(
             elem.holder,

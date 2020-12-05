@@ -48,6 +48,8 @@ proc flag*(
   holder: uint16,
   removal: SignedMeritRemoval
 ) {.forceCheck: [].} =
+  logWarn "Flagging holder as malicious ", holder = holder
+
   if not removal.isNil:
     #Save it to the cache.
     if not consensus.malicious.hasKey(holder):

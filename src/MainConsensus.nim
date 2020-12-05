@@ -193,6 +193,7 @@ proc mainConsensus(
       mr = e.removal
 
       #Flag the MeritRemoval.
+      #Flag is directly called to skip spending time verifying a MR we just created.
       consensus[].flag(merit.blockchain, merit.state, mr.holder, mr)
 
     if not mr.isNil:
