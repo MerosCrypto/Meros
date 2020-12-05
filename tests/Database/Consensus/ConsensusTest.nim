@@ -39,11 +39,10 @@ suite "Consensus":
         5
       )
 
-      #Currently have Merit Removals.
-      malicious: Table[uint16, seq[MeritRemoval]] = initTable[uint16, seq[MeritRemoval]]()
+      removed: set[uint16] = {}
 
     #Create Merit Holders.
-    for h in 0 ..< 501:
+    for h in 0 .. 500:
       merit.state.merit.add(1)
       merit.state.statuses.add(MeritStatus.Unlocked)
       consensus.archive(merit.state, @[], @[], newEpoch(), StateChanges(incd: uint16(high(merit.state.merit)), decd: -1))
@@ -60,28 +59,23 @@ suite "Consensus":
             rand(1) == 0,
             sendDiff,
             dataDiff,
-            newMinerWallet().sign(""),
-            @[]
+            newMinerWallet().sign("")
           )
+        while removed.contains(removal.holder) and (not consensus.malicious.hasKey(removal.holder)):
+          removal.holder = uint16(rand(500))
+        removed.incl(removal.holder)
+
         sendDiff.holder = removal.holder
         dataDiff.holder = removal.holder
 
-        consensus.flag(merit.blockchain, merit.state, removal)
-        if malicious.hasKey(removal.holder):
-          malicious[removal.holder].add(removal)
-        else:
-          malicious[removal.holder] = @[cast[MeritRemoval](removal)]
+        consensus.flag(merit.blockchain, merit.state, removal.holder, removal)
 
       #Remove random MeritRemovals.
-      for holder in malicious.keys():
-        var mr: int = 0
-        while mr < malicious[holder].len:
-          if rand(1) == 0:
-            consensus.remove(malicious[holder][mr], 0)
-            merit.state.merit[int(holder)] = 0
-            malicious[holder].del(mr)
-            continue
-          inc(mr)
+      var removals: set[uint16] = {}
+      for holder in consensus.malicious.keys():
+        if rand(2) == 0:
+          removals.incl(holder)
+      consensus.remove(merit.blockchain, merit.state, removals)
 
       #Reload and compare the Consensus DAGs.
       compare(consensus, newConsensus(

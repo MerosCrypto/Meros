@@ -240,10 +240,11 @@ proc saveMaliciousProof*(
     nonce = db.get(HOLDER_MALICIOUS_PROOF_QUANTITY(mr.holder)).fromBinary() + 1
   except DBReadError:
     discard
-  db.put(HOLDER_MALICIOUS_PROOF(mr.holder, nonce), mr.serialize())
+  db.put(HOLDER_MALICIOUS_PROOF(mr.holder, nonce - 1), mr.serialize())
   db.put(HOLDER_MALICIOUS_PROOF_QUANTITY(mr.holder), nonce.toBinary())
 
   if not db.consensus.malicious.contains(mr.holder):
+    db.consensus.malicious.incl(mr.holder)
     var malicious: string = ""
     try:
       malicious = db.get(MALICIOUS_PROOFS())
@@ -391,8 +392,8 @@ proc loadMaliciousProofs*(
   except DBReadError:
     discard
 
-  for h in countup(0, malicious.len - 1, 2):
-    var holder: uint16 = uint16(malicious[h ..< h + 2].fromBinary())
+  for h in countup(0, malicious.len - 1, NICKNAME_LEN):
+    var holder: uint16 = uint16(malicious[h ..< h + NICKNAME_LEN].fromBinary())
     db.consensus.malicious.incl(holder)
     result[holder] = @[]
 
@@ -403,7 +404,7 @@ proc loadMaliciousProofs*(
         except ValueError as e:
           panic("Couldn't parse a MeritRemoval we saved to the database as a malicious proof: " & e.msg)
     except DBReadError:
-      result.del(holder)
+      panic("Malicious holder didn't have any proofs saved.")
 
 #[
 Delete a Transaction Status.
@@ -454,6 +455,8 @@ proc deleteMaliciousProofs*(
   db: DB,
   holder: uint16
 ) {.forceCheck: [].} =
+  db.consensus.malicious.excl(holder)
+
   #We actually don't want to delete any of these (https://github.com/MerosCrypto/Meros/issues/152).
   #We solely want to ignore them, which means removing the note to reload them as part of the cache.
   #Since implicit Merit Removals pemanently banned holders, we don't have to worry about overwrite.
@@ -463,7 +466,7 @@ proc deleteMaliciousProofs*(
   except DBReadError:
     return
 
-  for h in countup(0, malicious.len - 1, 2):
-    if holder == uint16(malicious[h ..< h + 2].fromBinary()):
-      db.put(MALICIOUS_PROOFS(), malicious[0 ..< h] & malicious[h + 2 ..< malicious.len])
+  for h in countup(0, malicious.len - 1, NICKNAME_LEN):
+    if holder == uint16(malicious[h ..< h + NICKNAME_LEN].fromBinary()):
+      db.put(MALICIOUS_PROOFS(), malicious[0 ..< h] & malicious[h + NICKNAME_LEN ..< malicious.len])
       break
