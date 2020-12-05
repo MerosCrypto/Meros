@@ -285,18 +285,14 @@ suite "ConsensusRevert":
       #Clear packets.
       packets = @[]
 
+      #Handle Merit Removals.
+      consensus.remove(merit.blockchain, merit.state, newBlock.body.removals)
+
       #Add every packet.
       verifications[newBlock.header.hash] = initTable[Hash[256], HashSet[uint16]]()
       for packet in newBlock.body.packets:
         verifications[newBlock.header.hash][packet.hash] = packet.holders.toHashSet()
         consensus.add(merit.state, packet)
-
-      #Check who has their Merit removed.
-      var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
-      for elem in newBlock.body.elements:
-        if elem of MeritRemoval:
-          consensus.flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
-          removed[elem.holder] = cast[MeritRemoval](elem)
 
       #Add the Block to the Blockchain.
       merit.processBlock(newBlock)
@@ -312,10 +308,6 @@ suite "ConsensusRevert":
       consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, changes)
       for tx in epoch.keys():
         finalizedStatuses[tx] = consensus.getStatus(tx)
-
-      #Have the Consensus handle every person who suffered a MeritRemoval.
-      for removee in removed.keys():
-        consensus.remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
 
       #Add the Elements.
       for elem in elements:
@@ -605,16 +597,12 @@ suite "ConsensusRevert":
               panic("Replaying an unknown Transaction type.")
           consensus.register(merit.state, tx, merit.blockchain.height)
 
+        #Handle Merit Removals.
+        consensus.remove(merit.blockchain, merit.state, newBlock.body.removals)
+
         #Add every packet.
         for packet in blocks[b].body.packets:
           consensus.add(merit.state, packet)
-
-        #Check who has their Merit removed.
-        var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
-        for elem in blocks[b].body.elements:
-          if elem of MeritRemoval:
-            consensus.flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
-            removed[elem.holder] = cast[MeritRemoval](elem)
 
         #Add back the Block.
         merit.processBlock(blocks[b])
@@ -628,10 +616,6 @@ suite "ConsensusRevert":
 
         #Archive the Epochs.
         consensus.archive(merit.state, blocks[b].body.packets, blocks[b].body.elements, epoch, changes)
-
-        #Have the Consensus handle every person who suffered a MeritRemoval.
-        for removee in removed.keys():
-          consensus.remove(removed[removee], rewardsState[removee, rewardsState.processedBlocks])
 
         #Add the elements.
         for elem in blocks[b].body.elements:
