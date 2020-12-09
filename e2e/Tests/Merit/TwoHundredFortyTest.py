@@ -94,8 +94,7 @@ def TwoHundredFourtyTest(
       (
         template["header"] +
         header.proof.to_bytes(4, byteorder="little") +
-        header.signature +
-        bytes.fromhex(template["body"])
+        header.signature
       ).hex()
     ]
   )

@@ -69,7 +69,7 @@ def HundredFiftyFiveTest(
   block.mine(blsPrivKey, blockchain.difficulty())
   blockchain.add(block)
 
-  rpc.call("merit", "publishBlock", [template["id"], block.serialize().hex()])
+  rpc.call("merit", "publishBlock", [template["id"], block.header.serialize().hex()])
 
   if MessageType(rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
     raise TestError("Meros didn't broadcast the Block we just published.")

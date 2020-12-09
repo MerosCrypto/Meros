@@ -70,11 +70,7 @@ def PartialArchiveTest(
       "publishBlock",
       [
         template["id"],
-        (
-          header +
-          proof.to_bytes(4, byteorder="little") +
-          sig
-        ).hex() + template["body"]
+        (header + proof.to_bytes(4, byteorder="little") + sig).hex()
       ]
     )
 

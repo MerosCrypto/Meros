@@ -83,8 +83,6 @@ def TElementTest(
   )
   if block.header.serializeHash()[:-4] != template["header"]:
     raise TestError("Failed to recreate the header.")
-  if block.body.serialize(block.header.sketchSalt) != bytes.fromhex(template["body"]):
-    raise TestError("Failed to recreate the body.")
 
   block.mine(blsPrivKey, merit.blockchain.difficulty())
   merit.blockchain.add(block)
@@ -98,8 +96,7 @@ def TElementTest(
       (
         template["header"] +
         block.header.proof.to_bytes(4, byteorder="little") +
-        block.header.signature +
-        block.body.serialize(block.header.sketchSalt)
+        block.header.signature
       ).hex()
     ]
   )
@@ -133,8 +130,6 @@ def TElementTest(
   )
   if block.header.serializeHash()[:-4] != template["header"]:
     raise TestError("Failed to recreate the header.")
-  if block.body.serialize(block.header.sketchSalt) != bytes.fromhex(template["body"]):
-    raise TestError("Failed to recreate the body.")
 
   block.mine(blsPrivKey, merit.blockchain.difficulty())
   merit.blockchain.add(block)
@@ -147,8 +142,7 @@ def TElementTest(
       (
         template["header"] +
         block.header.proof.to_bytes(4, byteorder="little") +
-        block.header.signature +
-        block.body.serialize(block.header.sketchSalt)
+        block.header.signature
       ).hex()
     ]
   )

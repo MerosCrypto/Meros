@@ -118,6 +118,7 @@ proc module*(
   #Shared between the getBlockTemplate/publishBlock routes.
   var
     sketchers: Table[int, Sketcher] = initTable[int, Sketcher]()
+    bodies: Table[int, string] = initTable[int, string]()
     sketchID: int = 0
 
   try:
@@ -265,8 +266,9 @@ proc module*(
           except KeyError as e:
             panic("Couldn't get a Sketcher we just created: " & e.msg)
 
-        #Delete the sketcher from 5 templates ago.
+        #Delete the template from 5 templates ago.
         sketchers.del(id - 5)
+        bodies.del(id - 5)
 
         #Create the Header.
         var
@@ -308,22 +310,24 @@ proc module*(
         except BLSError:
           panic("Couldn't create a temporary signature for a BlockHeader template.")
 
-        #Create the result.
+        #Create the body.
         try:
-          res["result"] = %* {
-            "id": id,
-            "key":  functions.merit.getRandomXCacheKey().toHex(),
-            "header": header,
-            "body": newBlockBodyObj(
-              contents.packets,
-              pending.packets,
-              pending.elements,
-              pending.aggregate,
-              {}
-            ).serialize(sketchSalt, pending.packets.len).toHex()
-          }
+          bodies[id] = newBlockBodyObj(
+            contents.packets,
+            pending.packets,
+            pending.elements,
+            pending.aggregate,
+            {}
+          ).serialize(sketchSalt, pending.packets.len)
         except ValueError as e:
           panic("Block Body had sketch collision: " & e.msg)
+
+        #Create the result.
+        res["result"] = %* {
+          "id": id,
+          "key":  functions.merit.getRandomXCacheKey().toHex(),
+          "header": header
+        }
 
       "publishBlock" = proc (
         res: JSONNode,
@@ -342,7 +346,9 @@ proc module*(
 
         var sketchyBlock: SketchyBlock
         try:
-          sketchyBlock = functions.merit.getRandomX().parseBlock(params[1].getStr().parseHexStr())
+          sketchyBlock = functions.merit.getRandomX().parseBlock(params[1].getStr().parseHexStr() & bodies[params[0].getInt()])
+        except KeyError:
+          raise newJSONRPCError(-2, "Invalid ID")
         except ValueError:
           raise newJSONRPCError(-3, "Invalid Block")
 

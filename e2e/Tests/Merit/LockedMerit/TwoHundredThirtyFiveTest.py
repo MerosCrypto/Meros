@@ -58,7 +58,7 @@ def TwoHundredThirtyFiveTest(
   block.mine(blsPrivKey, blockchain.difficulty())
   blockchain.add(block)
 
-  rpc.call("merit", "publishBlock", [template["id"], block.serialize().hex()])
+  rpc.call("merit", "publishBlock", [template["id"], block.header.serialize().hex()])
 
   #Send Meros a Data and receive its Verification to make sure it's verifying Transactions in the first place.
   data: Data = Data(bytes(32), edPubKey.to_bytes())
