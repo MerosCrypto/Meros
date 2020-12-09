@@ -274,6 +274,14 @@ proc module*(
         var
           contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(pending.packets, pending.elements)
           header: JSONNode = newJNull()
+          time: uint32 = getTime()
+
+        #Ensure the time is higher than the previous Block's.
+        try:
+          time = max(time, functions.merit.getBlockByHash(functions.merit.getTail()).header.time + 1)
+        except IndexError as e:
+          panic("Couldn't get the last Block despite grabbing it by the chain's tail: " & e.msg)
+
         try:
           var nick: uint16
           try:
@@ -287,7 +295,7 @@ proc module*(
               sketchSalt,
               newSketchCheck(sketchSalt, pending.packets),
               miner,
-              getTime(),
+              time,
               0,
               newBLSSignature()
             ).serializeTemplate().toHex()
@@ -301,7 +309,7 @@ proc module*(
               sketchSalt,
               newSketchCheck(sketchSalt, pending.packets),
               nick,
-              getTime(),
+              time,
               0,
               newBLSSignature()
             ).serializeTemplate().toHex()

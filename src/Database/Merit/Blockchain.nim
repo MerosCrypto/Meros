@@ -75,7 +75,7 @@ proc testBlockHeader*(
 
     key = lookup[header.minerNick]
 
-  if (header.time <= previous.time) or (header.time > getTime() + 30):
+  if (header.time <= previous.time) or (header.time > (getTime() + 300)):
     raise newLoggedException(ValueError, "Block has an invalid time.")
 
   try:
