@@ -160,10 +160,6 @@ proc revert*(
   state.revert(blockchain, height)
   state.pruneStatusesAndParticipations(oldAmountOfHolders)
 
-  #Miners we changed the Merit of.
-  #We should initially set this to blockchain[b].body.removals, instead of what we have both.
-  var changedMerit: HashSet[uint16] = initHashSet[uint16]()
-
   #Revert the Blocks.
   for b in countdown(blockchain.height - 1, height):
     try:
@@ -171,41 +167,15 @@ proc revert*(
       if blockchain[b].header.newMiner:
         blockchain.miners.del(blockchain[b].header.minerKey)
         blockchain.db.deleteHolder()
-        changedMerit.excl(uint16(blockchain.miners.len))
-      #Else, mark that this miner's Merit changed.
-      else:
-        changedMerit.incl(uint16(blockchain[b].header.minerNick))
-
-      #If this Block had a Merit Removal, mark the affected holder in changedMerit.
-      for holder in blockchain[b].body.removals:
-        changedMerit.incl(holder)
     except IndexError as e:
       panic("Couldn't grab the Block we're reverting past: " & e.msg)
-
-    #If this Block killed Merit, restore it.
-    if b > state.deadBlocks:
-      var deadBlock: Block
-      try:
-        deadBlock = blockchain[b - state.deadBlocks]
-      except IndexError as e:
-        panic("Couldn't grab the Block whose Merit died when the Block we're reverting past was added: " & e.msg)
-
-      if deadBlock.header.newMiner:
-        try:
-          changedMerit.incl(blockchain.miners[deadBlock.header.minerKey])
-        except KeyError as e:
-          panic("Couldn't get the nickname of a miner who's Merit died: " & e.msg)
-      else:
-        changedMerit.incl(deadBlock.header.minerNick)
-
-      for holder in deadBlock.body.removals:
-        changedMerit.incl(holder)
 
     #Delete the Block.
     try:
       blockchain.db.deleteBlock(b, blockchain[b].body.elements, blockchain[b].body.removals)
     except IndexError:
       panic("Couldn't get a Block's Elements before we deleted it.")
+
     #Rewind the cache.
     blockchain.rewindCache()
 
@@ -226,6 +196,12 @@ proc revert*(
   #Update the RandomX keys.
   blockchain.setCacheKeyAtHeight(blockchain.height)
 
-  #Update the Merit of everyone who had their Merit changed.
-  for holder in changedMerit:
-    blockchain.db.saveMerit(holder, state[holder, state.processedBlocks])
+  #[
+  Flush Merit balances.
+  As we did the above iteration, we used to keep track of the specific holders in a set.
+  Although technically less efficient, this has no meaningful performance impact yet is much easier to maintain.
+  Not to mention, this doesn't re-read any Blocks from the Database.
+  The old setup is only more performant if done on the State side of things, and then iterated over here.
+  ]#
+  for holder in 0 ..< state.merit.len:
+    blockchain.db.saveMerit(uint16(holder), state.merit[holder])
