@@ -114,9 +114,9 @@ proc processBlock*(
   if result.decd != -1:
     state[uint16(result.decd)] = state.merit[result.decd] - 1
     dec(state.total)
-    if state.statuses[nick] != MeritStatus.Locked:
+    if state.statuses[uint16(result.decd)] != MeritStatus.Locked:
       dec(state.counted)
-      if state.statuses[nick] == MeritStatus.Pending:
+      if state.statuses[uint16(result.decd)] == MeritStatus.Pending:
         dec(state.pending)
 
   #Mark participants to prevent their Merit from being locked.
@@ -129,6 +129,7 @@ proc processBlock*(
 
   #Remove Merit from Merit Holders who had their Merit Removals archived in this Block.
   for holder in newBlock.body.removals:
+    logWarn "State removing Merit of malicious holder", holder=holder
     state.remove(holder, blockchain.height - 1)
 
   #Increment the amount of processed Blocks.
@@ -136,7 +137,7 @@ proc processBlock*(
 
   #Update every holder's Merit Status.
   for h in 0 ..< state.statuses.len:
-    #Provide a clean status for a Merit Holder whose Merit died/was removed.
+    #Provide a clean status for a Merit Holder whose Merit died.
     if state.merit[h] == 0:
       state.statuses[h] = MeritStatus.Unlocked
       state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
