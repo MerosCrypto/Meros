@@ -49,7 +49,7 @@ for i in range(5):
   else:
     data = Data(data.hash, bytes(8))
 
-proto.add(0, [VerificationPacket(bytes.fromhex(data["hash"]), [0]) for data in datas])
+proto.add(0, [VerificationPacket(bytes.fromhex(data["hash"]), [0]) for data in datas[2:]])
 
 with open("e2e/Vectors/Merit/Sketches/TwoHundredSixtyThree.json", "w") as vectors:
   vectors.write(
