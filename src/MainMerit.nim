@@ -506,6 +506,7 @@ proc mainMerit(
           try:
             reorgInfo = await reorganize(
               database,
+              wallet,
               merit[],
               consensus,
               transactions,
@@ -536,6 +537,7 @@ proc mainMerit(
               logInfo "Reorganization failed", error = e.msg
               reorgRecover(
                 database,
+                wallet,
                 merit[],
                 consensus,
                 transactions,
@@ -547,6 +549,7 @@ proc mainMerit(
               logInfo "Reorganization failed", error = e.msg
               reorgRecover(
                 database,
+                wallet,
                 merit[],
                 consensus,
                 transactions,

@@ -339,3 +339,17 @@ proc useNonce*(
   db: WalletDB
 ) {.forceCheck: [].} =
   db.del(USING_ELEMENT_NONCE())
+
+proc delMinerNick*(
+  db: WalletDB
+) {.forceCheck: [].} =
+  db.miner.nick = 0
+  db.miner.initiated = false
+  try:
+    #Read it to check its existence.
+    #WalletDB del panics if the key doesn't exist.
+    discard db.get(MINER_NICK())
+    db.del(MINER_NICK())
+  except DBReadError:
+    #Key doesn't exist; do nothing.
+    discard
