@@ -35,7 +35,7 @@ def HundredTwentyFiveTest(
         MessageType.Syncing.toByte() +
         (0).to_bytes(1, "little") +
         (127).to_bytes(1, "little") +
-        (1).to_bytes(1, "little") + (6000).to_bytes(2, "little") +
+        (0).to_bytes(1, "little") + (6000).to_bytes(2, "little") +
         blockchain.blocks[0].header.hash,
         False
       )

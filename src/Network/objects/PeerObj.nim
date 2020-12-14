@@ -13,14 +13,17 @@ Right now, these are just used to say if a peer is accepting connections as a se
 In the future, it can be used for protocol extensions which allow optimizations without a hardfork.
 Or building a second layer communication network on top of the existing Meros network, through nodes who allow it.
 Adding a service that is greater than, or equal to, 128, requires using VarInt serialization.
+
+Ever since https://github.com/MerosCrypto/Meros/issues/270, this isn't true.
+This commentary about service bits is left as a generic explainer.
 ]#
-const SERVER_SERVICE*: uint = 0b1
+#const SERVER_SERVICE*: uint = 0b1
 
 type Peer* = ref object
   id*: int
   ip*: string
 
-  #Whether or not the server service bit has been set.
+  #Whether or not they can be connected to as a server.
   server*: bool
   #Port of their server, if one exists.
   port*: int

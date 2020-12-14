@@ -238,16 +238,6 @@ proc handle*(
     peer.close("Peer uses a different network.")
     return
 
-  if (
-    ((shake.services and SERVER_SERVICE) == SERVER_SERVICE) and
-    (not tAddy.isLoopback()) and
-    (not tAddy.isLinkLocal()) and
-    (not tAddy.isSiteLocal())
-  ):
-    peer.server = true
-
-  peer.port = shake.port
-
   #Create an artificial BlockTail message.
   msg = newMessage(MessageType.BlockchainTail, shake.hash)
 

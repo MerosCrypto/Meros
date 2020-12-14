@@ -1,10 +1,6 @@
 # Services
 
-The services byte(s) is a VarInt with a maximum serialized length of 4 bytes (28 bits). Bit masks are used to declare support for various functionality.
-
-- The lowest bit declares that the node is accepting connections via a server socket.
-
-Every other bit is currently unused.
+The services byte(s) is a VarInt with a maximum serialized length of 4 bytes (28 bits). Bit masks are used to declare support for various functionality. Every bit is currently unused.
 
 # Handshake
 

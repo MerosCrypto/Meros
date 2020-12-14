@@ -202,6 +202,15 @@ proc connect*(
     network.add(peer)
     network.sync[verified.ip] = peer.id
 
+  #Set the peer as a server.
+  if (
+    (not tAddy.isLoopback()) and
+    (not tAddy.isLinkLocal()) and
+    (not tAddy.isSiteLocal())
+  ):
+    peer.server = true
+  peer.port = port
+
   try:
     await network.unlockIP(address)
   except Exception as e:
@@ -339,6 +348,37 @@ proc handle(
     except Exception as e:
       panic("Unlocking an IP raised an Exception despite not raising any Exceptions: " & e.msg)
 
+    #Try connecting to them as a server.
+    proc discoverIfPeerIsServer() {.forceCheck: [], async.} =
+      try:
+        if (
+          (not peer.server) and
+          (not socket.remoteAddress.isLoopback()) and
+          (not socket.remoteAddress.isLinkLocal()) and
+          (not socket.remoteAddress.isSiteLocal())
+        ):
+          peer.port = handshake.message.parseHandshake().port
+
+          var tServerAddy: TransportAddress = socket.remoteAddress
+          tServerAddy.port = Port(peer.port)
+
+          #Connect/close the socket.
+          #This will very temporarily allocate a file handle, yet this code block doesn't check in with the FileLimitTracker.
+          #We can either not check if they're a server if we're approaching ulimit, or try and hit an Exception and assume they're not.
+          #Either way...
+          (await newSocket(tServerAddy)).safeClose("Closing socket used to discover if a peer is a server.")
+
+          #If this didn't raise, we did create a connection. Set server to true.
+          #This could be augmented with a check to make sure they sent Handshake/Syncing/Busy.
+          peer.server = true
+      #ULimit/invalid destination.
+      except Exception as e:
+        discard
+    try:
+      asyncCheck discoverIfPeerIsServer()
+    except Exception as e:
+      panic("Discovering if a peer is a valid server raised an Exception despite not raising anything: " & e.msg)
+
     try:
       if handshake.content == MessageType.Handshake:
         logDebug "Handling Live Server connection", id = peer.id, address = address
@@ -358,10 +398,6 @@ proc listen*(
   network: Network
 ) {.forceCheck: [], async.} =
   logDebug "Listening", port = network.liveManager.port
-
-  #Update the services byte.
-  network.liveManager.updateServices(SERVER_SERVICE)
-  network.syncManager.updateServices(SERVER_SERVICE)
 
   #Create the server.
   try:

@@ -22,14 +22,22 @@ def LANPeersTest(
   if len(meros.sync.recv(True)) != 2:
     raise TestError("Meros sent peers.")
 
-  #Create a new connection which identifies as a server.
+  #Create a server socket.
+  server: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  server.bind(("", 0))
+  server.listen(1)
+
+  #Connect again.
+  #Meros, if it doesn't realize we're a LAN peer, will try to connect to the above server to verify.
+  #Since we're a LAN peer, it shouldn't bother.
+  #Doesn't use MerosSocket so we can specify the port.
   serverConnection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   serverConnection.connect(("127.0.0.1", meros.tcp))
   serverConnection.send(
     MessageType.Syncing.toByte() +
-    (0).to_bytes(1, "little") +
-    (127).to_bytes(1, "little") +
-    (1).to_bytes(1, "little") + (6000).to_bytes(2, "little") +
+    meros.protocol.to_bytes(1, "little") +
+    meros.network.to_bytes(1, "little") +
+    (0).to_bytes(1, "little") + server.getsockname()[1].to_bytes(2, "little") +
     blockchain.blocks[0].header.hash,
     False
   )

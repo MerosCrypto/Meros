@@ -59,7 +59,7 @@ def BusyTest(
     if buf[1:] != (
       (0).to_bytes(1, "little") +
       (127).to_bytes(1, "little") +
-      (1).to_bytes(1, "little") + meros.tcp.to_bytes(2, "little") +
+      (0).to_bytes(1, "little") + meros.tcp.to_bytes(2, "little") +
       blockchain.blocks[0].header.hash
     ):
       busyServer.close()
@@ -92,7 +92,7 @@ def BusyTest(
       if buf[1:] != (
         (0).to_bytes(1, "little") +
         (127).to_bytes(1, "little") +
-        (1).to_bytes(1, "little") + meros.tcp.to_bytes(2, "little") +
+        (0).to_bytes(1, "little") + meros.tcp.to_bytes(2, "little") +
         blockchain.blocks[0].header.hash
       ):
         server.close()

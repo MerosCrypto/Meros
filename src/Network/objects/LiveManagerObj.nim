@@ -117,16 +117,6 @@ proc handle*(
     peer.close("Peer uses a different network.")
     return
 
-  if (
-    ((shake.services and SERVER_SERVICE) == SERVER_SERVICE) and
-    (not tAddy.isLoopback()) and
-    (not tAddy.isLinkLocal()) and
-    (not tAddy.isSiteLocal())
-  ):
-    peer.server = true
-
-  peer.port = shake.port
-
   #We don't bother with the initial tail as we do that for the Sync socket.
 
   #Receive and handle messages forever.
