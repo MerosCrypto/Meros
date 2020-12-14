@@ -372,7 +372,7 @@ proc handle(
           #This could be augmented with a check to make sure they sent Handshake/Syncing/Busy.
           peer.server = true
       #ULimit/invalid destination.
-      except Exception as e:
+      except Exception:
         discard
     try:
       asyncCheck discoverIfPeerIsServer()

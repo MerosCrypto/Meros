@@ -1,4 +1,4 @@
-import sets, tables
+import tables
 
 import stint
 
