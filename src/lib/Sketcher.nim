@@ -1,4 +1,4 @@
-import sets, tables
+import sets
 
 import mc_minisketch
 
@@ -93,13 +93,13 @@ proc toSketch(
   salt: string
 ): tuple[
   sketch: Sketch,
-  hashes: Table[uint64, int]
+  hashes: HashSet[uint64]
 ] {.forceCheck: [
   SaltError
 ].} =
   #Create the sketch.
   result.sketch = newSketch(64, 0, capacity)
-  result.hashes = initTable[uint64, int]()
+  result.hashes = initHashSet[uint64]()
 
   var hash: uint64
   for e in 0 ..< sketcher.len:
@@ -108,11 +108,11 @@ proc toSketch(
       #Hash the packet.
       hash = sketchHash(salt, sketcher[e].packet)
       #If there's a collision, throw.
-      if result.hashes.hasKey(hash):
+      if result.hashes.contains(hash):
         raise newLoggedException(SaltError, "Collision found while sketching values.")
 
       result.sketch.add(hash)
-      result.hashes[hash] = e
+      result.hashes.incl(hash)
 
 #Serialize a sketcher's sketch.
 proc serialize*(
@@ -148,7 +148,7 @@ proc merge*(
   #Get the sketch and the hashes of every packet.
   var sketch: tuple[
     sketch: Sketch,
-    hashes: Table[uint64, int]
+    hashes: HashSet[uint64]
   ]
   try:
     sketch = sketcher.toSketch(capacity, significant, salt)
@@ -169,18 +169,15 @@ proc merge*(
     result.packets.add(e.packet)
 
   #Iterate over the differences.
-  var
-    m: int = 0
-    offset: int = 0
+  var m: int = 0
   while m < result.missing.len:
     #If we have one of the differences, remove it from both packets and missing.
-    if sketch.hashes.hasKey(result.missing[m]):
-      try:
-        result.packets.delete(sketch.hashes[result.missing[m]] - offset)
-      except KeyError as e:
-        panic("Couldn't get the index a hash maps to despite checking with hasKey first: " & e.msg)
-      result.missing.delete(m)
-      inc(offset)
+    if sketch.hashes.contains(result.missing[m]):
+      for p in 0 ..< result.packets.len:
+        if sketchHash(salt, result.packets[p]) == result.missing[m]:
+          result.packets.del(p)
+          result.missing.del(m)
+          break
       continue
     inc(m)
 
