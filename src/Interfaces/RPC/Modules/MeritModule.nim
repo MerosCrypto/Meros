@@ -117,9 +117,10 @@ proc module*(
   #Table of usable Sketcher objects.
   #Shared between the getBlockTemplate/publishBlock routes.
   var
-    sketchers: Table[int, Sketcher] = initTable[int, Sketcher]()
-    bodies: Table[int, string] = initTable[int, string]()
+    sketchers: Table[int, Sketcher]
+    bodies: Table[int, string]
     sketchID: int = 0
+    lastTailUsedForTemplate: Hash[256] = Hash[256]()
 
   try:
     newRPCFunctions:
@@ -222,6 +223,11 @@ proc module*(
         except BLSError:
           raise newJSONRPCError(-4, "Invalid miner")
 
+        if lastTailUsedForTemplate != functions.merit.getTail():
+          sketchers = initTable[int, Sketcher]()
+          bodies = initTable[int, string]()
+          lastTailusedForTemplate = functions.merit.getTail()
+
         var
           #Pending packets/elements.
           pending: tuple[
@@ -265,10 +271,6 @@ proc module*(
             {.pop.}
           except KeyError as e:
             panic("Couldn't get a Sketcher we just created: " & e.msg)
-
-        #Delete the template from 5 templates ago.
-        sketchers.del(id - 5)
-        bodies.del(id - 5)
 
         #Create the Header.
         var
