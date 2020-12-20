@@ -1,5 +1,6 @@
 argon2-cffi==19.1.0
 ed25519==1.5
+bech32==1.2.0
 pytest==5.3.5
 pytest-xdist==1.32.0
 filelock==3.0.12

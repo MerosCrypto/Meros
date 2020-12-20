@@ -64,7 +64,7 @@ class RPC:
     #Raise an exception on error.
     result: Dict[str, Any] = json.loads(response)
     if "error" in result:
-      raise TestError(result["error"]["message"] + ".")
+      raise TestError(str(result["error"]["code"]) + " " + result["error"]["message"] + ".")
     return result["result"]
 
   def quit(

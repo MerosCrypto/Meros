@@ -31,8 +31,9 @@ const BCH_VALUES: array[5, uint32] = [
 
 #AddressType enum.
 #Right now, there's only PublicKey, yet in the future, there may PublicKeyHash/Stealth.
+#Cannot have gaps due to the below address verification code.
 type AddressType* = enum
-  PublicKey
+  PublicKey = 0
 
 #Address object. Specifically stores a decoded address.
 type Address* = object
@@ -86,8 +87,10 @@ func convert(
   data: seq[byte],
   fromBits: int,
   to: int,
-  pad: bool
-): seq[byte] {.forceCheck: [].} =
+  encoding: bool
+): seq[byte] {.forceCheck: [
+  ValueError
+].} =
   var
     acc: int = 0
     bits: int = 0
@@ -102,19 +105,28 @@ func convert(
       bits -= to
       result.add(byte((acc shr bits) and maxv))
 
-  if pad and (bits > 0):
-    result.add(byte((acc shl (to - bits)) and maxv))
+  #Handle padding.
+  if encoding:
+    if bits > 0:
+      result.add(byte((acc shl (to - bits)) and maxv))
+  elif (bits >= fromBits) or (((acc shl (to - bits)) and maxv) != 0):
+    raise newException(ValueError, "Invalid padding.")
 
 #Create a new address.
-func newAddress*(
+proc newAddress*(
   addyType: AddressType,
   dataArg: string
 ): string {.forceCheck: [].} =
   result = ADDRESS_HRP & "1"
-  var
-    data: seq[byte] = convert(cast[seq[byte]](char(addyType) & dataArg), 8, 5, true)
-    encoded: seq[byte] = data.concat(generateBCH(data))
-  for c in encoded:
+  var data: seq[byte]
+  try:
+    data = convert(cast[seq[byte]](char(addyType) & dataArg), 8, 5, true)
+  except ValueError:
+    panic("Padding check was run, and failed, when encoding a Bech32 string.")
+
+  for c in data:
+    result &= CHARACTERS[c]
+  for c in generateBCH(data):
     result &= CHARACTERS[c]
 
 #Checks if an address is valid.
@@ -125,7 +137,7 @@ func isValidAddress*(
     #Check the prefix.
     (address.substr(0, ADDRESS_HRP.len).toLower() != ADDRESS_HRP & "1") or
     #Check the length.
-    (address.len < ADDRESS_HRP.len + 6) or (90 < address.len) or
+    (address.len < ADDRESS_HRP.len + 6) or
     #Make sure it's all upper case or all lower case.
     (address.toLower() != address) and (address.toUpper() != address)
   ):
@@ -159,12 +171,19 @@ proc getEncodedData*(
     converted: seq[byte]
   for c in 0 ..< data.len - 6:
     converted.add(byte(CHARACTERS.find(data[c])))
-  converted = convert(converted, 5, 8, false)
-
   try:
-    result = Address(
-      addyType: AddressType(converted[0]),
-      data: converted[1 ..< converted.len]
-    )
-  except RangeError:
-    raise newLoggedException(ValueError, "Unknown address version.")
+    converted = convert(converted, 5, 8, false)
+  except ValueError as e:
+    raise e
+
+  if converted[0] > byte(high(AddressType)):
+    raise newLoggedException(ValueError, "Invalid address type.")
+  case AddressType(converted[0]):
+    of AddressType.PublicKey:
+      if converted.len != 33:
+        raise newLoggedException(ValueError, "Invalid Public Key.")
+
+  result = Address(
+    addyType: AddressType(converted[0]),
+    data: converted[1 ..< converted.len]
+  )

@@ -23,7 +23,7 @@ proc mainPersonal(
       raise e
 
   functions.personal.send = proc (
-    destination: string,
+    destinationArg: string,
     amountStr: string
   ): Future[Hash[256]] {.forceCheck: [
     ValueError,
@@ -34,9 +34,15 @@ proc mainPersonal(
       child: HDWallet
       #Spendable UTXOs.
       utxos: seq[FundedInput]
+      destination: Address
       amountIn: uint64
       amountOut: uint64
       send: Send
+
+    try:
+      destination = destinationArg.getEncodedData()
+    except ValueError as e:
+      raise e
 
     #Grab a child.
     try:
@@ -76,13 +82,9 @@ proc mainPersonal(
       raise newLoggedException(NotEnoughMeros, "Wallet didn't have enough money to create a Send.")
 
     #Create the outputs.
-    var outputs: seq[SendOutput]
-    try:
-      outputs = @[
-        newSendOutput(destination.getEncodedData(), amountOut)
-      ]
-    except ValueError as e:
-      raise e
+    var outputs: seq[SendOutput] = @[
+      newSendOutput(destination, amountOut)
+    ]
 
     #Add a change output.
     if amountIn != amountOut:

@@ -108,7 +108,7 @@ proc module*(
         try:
           res["result"] = % $(await functions.personal.send(params[0].getStr(), params[1].getStr()))
         except ValueError:
-          raise newJSONRPCError(-3, "Invalid amount")
+          raise newJSONRPCError(-3, "Invalid address/amount")
         except NotEnoughMeros:
           raise newJSONRPCError(1, "Not enough Meros")
         except Exception as e:

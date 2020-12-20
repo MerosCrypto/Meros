@@ -20,10 +20,10 @@ suite "Address":
       not "1pzry9x0s0muk".isValidAddress()
       not "bc1b4n0q5v".isValidAddress()
 
-  lowFuzzTest "Wallet address.":
-    var wallet: Wallet = newWallet("")
-
-    check:
-      wallet.address.isValidAddress()
-      wallet.address.getEncodedData().addyType == AddressType.PublicKey
-      wallet.publicKey.serialize() == cast[string](wallet.address.getEncodedData().data)
+  noFuzzTest "Wallet address.":
+    for _ in 0 ..< 100:
+      var wallet: Wallet = newWallet("")
+      check:
+        wallet.address.isValidAddress()
+        wallet.address.getEncodedData().addyType == AddressType.PublicKey
+        wallet.publicKey.serialize() == cast[string](wallet.address.getEncodedData().data)
