@@ -68,8 +68,8 @@ const
     MessageType.Data:  @[HASH_LEN, BYTE_LEN, -BYTE_LEN, BYTE_LEN, ED_SIGNATURE_LEN + INT_LEN],
 
     MessageType.SignedVerification:   @[NICKNAME_LEN + HASH_LEN + BLS_SIGNATURE_LEN],
-    MessageType.SignedSendDifficulty: @[NICKNAME_LEN + INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
-    MessageType.SignedDataDifficulty: @[NICKNAME_LEN + INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
+    MessageType.SignedSendDifficulty: @[NICKNAME_LEN + INT_LEN + DIFFICULTY_LEN + BLS_SIGNATURE_LEN],
+    MessageType.SignedDataDifficulty: @[NICKNAME_LEN + INT_LEN + DIFFICULTY_LEN + BLS_SIGNATURE_LEN],
     MessageType.SignedMeritRemoval:   @[NICKNAME_LEN + BYTE_LEN + BYTE_LEN, 0, 0, BLS_SIGNATURE_LEN - 1],
 
     MessageType.BlockHeader: @[BLOCK_HEADER_DATA_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN]

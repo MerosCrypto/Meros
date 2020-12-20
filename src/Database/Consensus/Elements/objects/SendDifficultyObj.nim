@@ -7,14 +7,14 @@ export ElementObj
 type
   SendDifficulty* = ref object of BlockElement
     nonce*: int
-    difficulty*: uint32
+    difficulty*: uint16
 
   SignedSendDifficulty* = ref object of SendDifficulty
     signature*: BLSSignature
 
 func newSendDifficultyObj*(
   nonce: int,
-  difficulty: uint32
+  difficulty: uint16
 ): SendDifficulty {.inline, forceCheck: [].} =
   SendDifficulty(
     nonce: nonce,
@@ -23,7 +23,7 @@ func newSendDifficultyObj*(
 
 func newSignedSendDifficultyObj*(
   nonce: int,
-  difficulty: uint32
+  difficulty: uint16
 ): SignedSendDifficulty {.inline, forceCheck: [].} =
   SignedSendDifficulty(
     nonce: nonce,

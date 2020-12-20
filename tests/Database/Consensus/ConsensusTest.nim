@@ -52,8 +52,8 @@ suite "Consensus":
       #Create three removals.
       for r in 0 ..< 3:
         var
-          sendDiff: SendDifficulty = newSendDifficultyObj(rand(200000), uint32(rand(high(int32))))
-          dataDiff: DataDifficulty = newDataDifficultyObj(sendDiff.nonce, uint32(rand(high(int32))))
+          sendDiff: SendDifficulty = newSendDifficultyObj(rand(200000), uint16(rand(high(int16))))
+          dataDiff: DataDifficulty = newDataDifficultyObj(sendDiff.nonce, uint16(rand(high(int16))))
           removal: SignedMeritRemoval = newSignedMeritRemoval(
             uint16(rand(500)),
             rand(1) == 0,
@@ -320,14 +320,14 @@ suite "Consensus":
           dataDiff: SignedDataDifficulty
         while merit.state.hasMR.contains(uint16(holder)):
           holder = rand(holders.len - 1)
-        sendDiff = newSignedSendDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, uint32(rand(high(int32))))
+        sendDiff = newSignedSendDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, uint16(rand(high(int16))))
         sendDiff.holder = uint16(holder)
         elements.add(sendDiff)
 
         holder = rand(holders.len - 1)
         while merit.state.hasMR.contains(uint16(holder)):
           holder = rand(holders.len - 1)
-        dataDiff = newSignedDataDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, uint32(rand(high(int32))))
+        dataDiff = newSignedDataDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, uint16(rand(high(int16))))
         dataDiff.holder = uint16(holder)
         elements.add(dataDiff)
 

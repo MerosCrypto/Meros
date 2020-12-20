@@ -6,6 +6,7 @@ const
   BYTE_LEN*:        int = 1
   PORT_LEN*:        int = 2
   NICKNAME_LEN*:    int = 2
+  DIFFICULTY_LEN*:  int = 2 #Refers to Send/Data, not Block.
   IP_LEN*:          int = 4
   INT_LEN*:         int = 4
   PEER_LEN*:        int = IP_LEN + PORT_LEN

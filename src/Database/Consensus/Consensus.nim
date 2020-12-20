@@ -35,8 +35,8 @@ proc newConsensus*(
   functions: GlobalFunctionBox,
   db: DB,
   state: State,
-  sendDiff: uint32,
-  dataDiff: uint32
+  sendDiff: uint16,
+  dataDiff: uint16
 ): Consensus {.inline, forceCheck: [].} =
   newConsensusObj(functions, db, state, sendDiff, dataDiff)
 
@@ -810,7 +810,7 @@ proc archive*(
     consensus.close.excl(hash)
 
   #Update the filters.
-  var difficulties: Table[uint16, uint32] = initTable[uint16, uint32]()
+  var difficulties: Table[uint16, uint16] = initTable[uint16, uint16]()
   for holder in changes.pending:
     try:
       difficulties[holder] = consensus.db.loadSendDifficulty(holder)
@@ -818,7 +818,7 @@ proc archive*(
       discard
   consensus.filters.send.handleBlock(state, changes, difficulties)
 
-  difficulties = initTable[uint16, uint32]()
+  difficulties = initTable[uint16, uint16]()
   for holder in changes.pending:
     try:
       difficulties[holder] = consensus.db.loadDataDifficulty(holder)
@@ -959,8 +959,8 @@ proc revert*(
   -- Kayaba
   ]#
   var
-    sendDiff: uint32 = consensus.filters.send.initialDifficulty
-    dataDiff: uint32 = consensus.filters.data.initialDifficulty
+    sendDiff: uint16 = consensus.filters.send.initialDifficulty
+    dataDiff: uint16 = consensus.filters.data.initialDifficulty
   consensus.filters.send = newSpamFilterObj(sendDiff)
   consensus.filters.data = newSpamFilterObj(dataDiff)
   for h in 0 ..< state.holders.len:

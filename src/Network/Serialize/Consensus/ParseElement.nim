@@ -20,12 +20,12 @@ proc getLength*(
       result = HASH_LEN
 
     of SEND_DIFFICULTY_PREFIX:
-      result = NICKNAME_LEN + INT_LEN + INT_LEN
+      result = NICKNAME_LEN + INT_LEN + DIFFICULTY_LEN
       if actual == MERIT_REMOVAL_PREFIX:
         result -= NICKNAME_LEN
 
     of DATA_DIFFICULTY_PREFIX:
-      result = NICKNAME_LEN + INT_LEN + INT_LEN
+      result = NICKNAME_LEN + INT_LEN + DIFFICULTY_LEN
       if actual == MERIT_REMOVAL_PREFIX:
         result -= NICKNAME_LEN
 

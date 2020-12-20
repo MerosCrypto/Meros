@@ -19,8 +19,8 @@ import CompareConsensus
 suite "ConsensusRevert":
   setup:
     var
-      initialSendDifficulty: uint32 = uint32(rand(high(int32)))
-      initialDataDifficulty: uint32 = uint32(rand(high(int32)))
+      initialSendDifficulty: uint16 = uint16(rand(high(int16)))
+      initialDataDifficulty: uint16 = uint16(rand(high(int16)))
 
     var
       db: DB = newTestDatabase()
@@ -90,8 +90,8 @@ suite "ConsensusRevert":
       pendingElementsRemoved: bool = true
       pendingElements: seq[Element] = @[]
       #Copy of each holder's Send/Data difficulties at each step.
-      sendDifficulties: Table[Hash[256], Table[uint16, uint32]] = initTable[Hash[256], Table[uint16, uint32]]()
-      dataDifficulties: Table[Hash[256], Table[uint16, uint32]] = initTable[Hash[256], Table[uint16, uint32]]()
+      sendDifficulties: Table[Hash[256], Table[uint16, uint16]] = initTable[Hash[256], Table[uint16, uint16]]()
+      dataDifficulties: Table[Hash[256], Table[uint16, uint16]] = initTable[Hash[256], Table[uint16, uint16]]()
       #Copy of the SpamFilters at every step.
       sendFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
       dataFilters: Table[Hash[256], SpamFilter] = initTable[Hash[256], SpamFilter]()
@@ -210,7 +210,7 @@ suite "ConsensusRevert":
 
         if rand(2) == 0:
           var
-            diff: uint32 = uint32(rand(high(int32)))
+            diff: uint16 = uint16(rand(high(int16)))
             sendDiff: SignedSendDifficulty
 
           inc(nonces[h])
@@ -237,7 +237,7 @@ suite "ConsensusRevert":
 
         if rand(2) == 0:
           var
-            diff: uint32 = uint32(rand(high(int32)))
+            diff: uint16 = uint16(rand(high(int16)))
             dataDiff: SignedDataDifficulty
 
           inc(nonces[h])
@@ -345,8 +345,8 @@ suite "ConsensusRevert":
       archivedNonces[merit.blockchain.tail.header.hash] = consensus.archived
 
       #Backup the difficulties.
-      sendDifficulties[merit.blockchain.tail.header.hash] = initTable[uint16, uint32]()
-      dataDifficulties[merit.blockchain.tail.header.hash] = initTable[uint16, uint32]()
+      sendDifficulties[merit.blockchain.tail.header.hash] = initTable[uint16, uint16]()
+      dataDifficulties[merit.blockchain.tail.header.hash] = initTable[uint16, uint16]()
       for h in 0 ..< holders.len:
         try:
           sendDifficulties[merit.blockchain.tail.header.hash][uint16(h)] = consensus.db.loadSendDifficulty(uint16(h))

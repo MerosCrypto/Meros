@@ -173,12 +173,12 @@ proc save*(
   sendDiff: SendDifficulty
 ) {.forceCheck: [].} =
   db.put(HOLDER_NONCE(sendDiff.holder), sendDiff.nonce.toBinary())
-  db.put(HOLDER_SEND_DIFFICULTY(sendDiff.holder), sendDiff.difficulty.toBinary(INT_LEN))
+  db.put(HOLDER_SEND_DIFFICULTY(sendDiff.holder), sendDiff.difficulty.toBinary(DIFFICULTY_LEN))
   db.put(SEND_DIFFICULTY_NONCE(sendDiff.holder), sendDiff.nonce.toBinary())
 
   db.put(
     BLOCK_ELEMENT(sendDiff.holder, sendDiff.nonce),
-    char(SEND_DIFFICULTY_PREFIX) & sendDiff.difficulty.toBinary(INT_LEN)
+    char(SEND_DIFFICULTY_PREFIX) & sendDiff.difficulty.toBinary(DIFFICULTY_LEN)
   )
 
 proc override*(
@@ -193,14 +193,14 @@ proc override*(
   db: DB,
   sendDiff: SendDifficulty
 ) {.forceCheck: [].} =
-  db.put(HOLDER_SEND_DIFFICULTY(sendDiff.holder), sendDiff.difficulty.toBinary(INT_LEN))
+  db.put(HOLDER_SEND_DIFFICULTY(sendDiff.holder), sendDiff.difficulty.toBinary(DIFFICULTY_LEN))
   db.put(SEND_DIFFICULTY_NONCE(sendDiff.holder), sendDiff.nonce.toBinary())
 
 proc override*(
   db: DB,
   dataDiff: DataDifficulty
 ) {.forceCheck: [].} =
-  db.put(HOLDER_DATA_DIFFICULTY(dataDiff.holder), dataDiff.difficulty.toBinary(INT_LEN))
+  db.put(HOLDER_DATA_DIFFICULTY(dataDiff.holder), dataDiff.difficulty.toBinary(DIFFICULTY_LEN))
   db.put(DATA_DIFFICULTY_NONCE(dataDiff.holder), dataDiff.nonce.toBinary())
 
 proc save*(
@@ -208,12 +208,12 @@ proc save*(
   dataDiff: DataDifficulty
 ) {.forceCheck: [].} =
   db.put(HOLDER_NONCE(dataDiff.holder), dataDiff.nonce.toBinary())
-  db.put(HOLDER_DATA_DIFFICULTY(dataDiff.holder), dataDiff.difficulty.toBinary(INT_LEN))
+  db.put(HOLDER_DATA_DIFFICULTY(dataDiff.holder), dataDiff.difficulty.toBinary(DIFFICULTY_LEN))
   db.put(DATA_DIFFICULTY_NONCE(dataDiff.holder), dataDiff.nonce.toBinary())
 
   db.put(
     BLOCK_ELEMENT(dataDiff.holder, dataDiff.nonce),
-    char(DATA_DIFFICULTY_PREFIX) & dataDiff.difficulty.toBinary(INT_LEN)
+    char(DATA_DIFFICULTY_PREFIX) & dataDiff.difficulty.toBinary(DIFFICULTY_LEN)
   )
 
 proc saveSignature*(
@@ -290,13 +290,11 @@ proc load*(
 proc loadSendDifficulty*(
   db: DB,
   holder: uint16
-): uint32 {.forceCheck: [
+): uint16 {.forceCheck: [
   DBReadError
 ].} =
   try:
-    result = uint32(db.get(HOLDER_SEND_DIFFICULTY(holder)).fromBinary())
-  except ValueError:
-    panic("Couldn't turn a 32-byte value into a 32-byte hash.")
+    result = uint16(db.get(HOLDER_SEND_DIFFICULTY(holder)).fromBinary())
   except DBReadError as e:
     raise e
 
@@ -312,13 +310,11 @@ proc loadSendDifficultyNonce*(
 proc loadDataDifficulty*(
   db: DB,
   holder: uint16
-): uint32 {.forceCheck: [
+): uint16 {.forceCheck: [
   DBReadError
 ].} =
   try:
-    result = uint32(db.get(HOLDER_DATA_DIFFICULTY(holder)).fromBinary())
-  except ValueError:
-    panic("Couldn't turn a 32-byte value into a 32-byte hash.")
+    result = uint16(db.get(HOLDER_DATA_DIFFICULTY(holder)).fromBinary())
   except DBReadError as e:
     raise e
 
@@ -344,18 +340,15 @@ proc load*(
   except DBReadError as e:
     fcRaise e
 
-  try:
-    case int(elem[0]):
-      of SEND_DIFFICULTY_PREFIX:
-        result = newSendDifficultyObj(nonce, uint32(elem[1 ..< 5].fromBinary()))
-        result.holder = holder
-      of DATA_DIFFICULTY_PREFIX:
-        result = newDataDifficultyObj(nonce, uint32(elem[1 ..< 5].fromBinary()))
-        result.holder = holder
-      else:
-        panic("Tried to load an unknown Block Element: " & $int(elem[0]))
-  except ValueError:
-    panic("Couldn't convert a 32-byte value to a 32-byte hash.")
+  case int(elem[0]):
+    of SEND_DIFFICULTY_PREFIX:
+      result = newSendDifficultyObj(nonce, uint16(elem[1 ..< 3].fromBinary()))
+      result.holder = holder
+    of DATA_DIFFICULTY_PREFIX:
+      result = newDataDifficultyObj(nonce, uint16(elem[1 ..< 3].fromBinary()))
+      result.holder = holder
+    else:
+      panic("Tried to load an unknown Block Element: " & $int(elem[0]))
 
 proc loadSignature*(
   db: DB,

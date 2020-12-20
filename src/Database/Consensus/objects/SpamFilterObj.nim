@@ -14,10 +14,10 @@ import ../../Merit/objects/StateObj
 type
   VotedDifficulty* = ref object
     when defined(merosTests):
-      difficulty*: uint32
+      difficulty*: uint16
       votes*: int
     else:
-      difficulty: uint32
+      difficulty: uint16
       votes: int
 
   SpamFilter* = object
@@ -40,12 +40,12 @@ type
       votes: Table[uint16, VotedDifficulty]
 
     #Initial difficulty.
-    initialDifficulty*: uint32
+    initialDifficulty*: uint16
     #Current difficulty.
-    difficulty*: uint32
+    difficulty*: uint16
 
 func newVotedDifficulty(
-  difficulty: uint32,
+  difficulty: uint16,
   votes: int
 ): VotedDifficulty {.inline, forceCheck: [].} =
   VotedDifficulty(
@@ -54,7 +54,7 @@ func newVotedDifficulty(
   )
 
 func newSpamFilterObj*(
-  difficulty: uint32
+  difficulty: uint16
 ): SpamFilter {.inline, forceCheck: [].} =
   SpamFilter(
     medianPos: -1,
@@ -176,7 +176,7 @@ proc update*(
   filter: var SpamFilter,
   state: State,
   holder: uint16,
-  difficulty: uint32
+  difficulty: uint16
 ) {.forceCheck: [].} =
   #Calculate the holder's votes.
   var votes: int = state.merit[holder] div 50
@@ -242,7 +242,7 @@ proc handleBlock*(
   filter: var SpamFilter,
   state: State,
   changes: StateChanges,
-  difficulties: Table[uint16, uint32]
+  difficulties: Table[uint16, uint16]
 ) {.forceCheck: [].} =
   #Only update votes if there's actually a Merit change.
   if (changes.decd == -1) or (changes.incd != uint16(changes.decd)):

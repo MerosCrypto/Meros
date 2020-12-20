@@ -76,8 +76,8 @@ live_lengths: Dict[MessageType, List[int]] = {
   MessageType.Data:  [32, 1, -1, 69],
 
   MessageType.SignedVerification:   [82],
-  MessageType.SignedSendDifficulty: [58],
-  MessageType.SignedDataDifficulty: [58],
+  MessageType.SignedSendDifficulty: [56],
+  MessageType.SignedDataDifficulty: [56],
   MessageType.SignedMeritRemoval:   [4, 0, 1, 0, 48],
 
   MessageType.BlockHeader: [107, 0, 56]
@@ -151,9 +151,9 @@ def recv(
         if result[-1] == 0:
           length = 32
         elif result[-1] == 2:
-          length = 8
+          length = 6
         elif result[-1] == 3:
-          length = 8
+          length = 6
         else:
           raise Exception("Meros sent an Element we don't recognize.")
 
@@ -168,27 +168,9 @@ def recv(
         for _ in range(elementsLen):
           result += socketRecv(connection, 1)
           if result[-1] == 2:
-            result += socketRecv(connection, 10)
+            result += socketRecv(connection, 8)
           elif result[-1] == 3:
-            result += socketRecv(connection, 10)
-          elif result[-1] == 4:
-            result += socketRecv(connection, 10)
-          elif result[-1] == 5:
-            result += socketRecv(connection, 4)
-            for e in range(2):
-              if result[-1] == 0:
-                result += socketRecv(connection, 32)
-              elif result[-1] == 1:
-                result += socketRecv(connection, 2)
-                result += socketRecv(connection, (int.from_bytes(result[-2:], byteorder="little") * 96) + 32)
-              elif result[-1] == 2:
-                result += socketRecv(connection, 8)
-              elif result[-1] == 3:
-                result += socketRecv(connection, 8)
-              elif result[-1] == 4:
-                result += socketRecv(connection, 8)
-              if e == 0:
-                result += socketRecv(connection, 1)
+            result += socketRecv(connection, 8)
           else:
             raise Exception("Block Body has an unknown element.")
 

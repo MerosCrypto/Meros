@@ -37,9 +37,9 @@ In the case no SendDifficulties have been added to the spam filter yet, the spam
 They have the following fields:
 
 - nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
-- difficulty: An unsigned 64-bit number representing the difficulty for the Send Transactions' spam filter.
+- difficulty: An unsigned 16-bit number representing the difficulty for the Send Transactions' spam filter.
 
-`SendDifficulty` has a message length of 10 bytes; the 2-byte holder, 4-byte nonce, and the 4-byte difficulty. The signature is produced with a prefix of "\2". That said, `SendDifficulty` is not a standalone message type.
+`SendDifficulty` has a message length of 8 bytes; the 2-byte holder, 4-byte nonce, and the 2-byte difficulty. The signature is produced with a prefix of "\2". That said, `SendDifficulty` is not a standalone message type.
 
 ### DataDifficulty
 
@@ -50,9 +50,9 @@ In the case no DataDifficulties have been added to the spam filter yet, the spam
 They have the following fields:
 
 - nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
-- difficulty: An unsigned 64-bit number representing the difficulty for the Data Transactions' spam filter.
+- difficulty: An unsigned 16-bit number representing the difficulty for the Data Transactions' spam filter.
 
-`DataDifficulty` has a message length of 10 bytes; the 2-byte holder, 4-byte nonce, and the 4-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type.
+`DataDifficulty` has a message length of 8 bytes; the 2-byte holder, 4-byte nonce, and the 2-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type.
 
 ### MeritRemoval
 

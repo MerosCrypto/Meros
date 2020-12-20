@@ -11,12 +11,12 @@ import ../../../src/Database/Consensus/objects/SpamFilterObj
 import ../../Fuzzed
 
 const
-  INITIAL_DIFFICULTY: uint32 = uint32(3)
-  OTHER_DIFFICULTY: uint32 = uint32(5)
+  INITIAL_DIFFICULTY: uint16 = uint16(3)
+  OTHER_DIFFICULTY: uint16 = uint16(5)
 
 #Recreate the VotedDifficulty object for testing purposes.
 type VotedDifficultyTest = object
-  difficulty: uint32
+  difficulty: uint16
   holders: seq[uint16]
 
 suite "SpamFilter":
@@ -61,7 +61,7 @@ suite "SpamFilter":
         incd: 1,
         decd: 0
       ),
-      initTable[uint16, uint32]()
+      initTable[uint16, uint16]()
     )
     check:
       filter.difficulty == INITIAL_DIFFICULTY
@@ -102,7 +102,7 @@ suite "SpamFilter":
       for i in 0 ..< 3:
         var
           holder: uint16 = uint16(rand(merit.len - 1))
-          difficulty: uint32
+          difficulty: uint16
         if merit[int(holder)] < 50:
           continue
 
@@ -145,7 +145,7 @@ suite "SpamFilter":
         else:
           var found: bool = true
           while found:
-            difficulty = uint32(rand(high(int32)))
+            difficulty = uint16(rand(high(int16)))
 
             #Break if no existing difficulty is the same.
             found = false
@@ -185,7 +185,7 @@ suite "SpamFilter":
             incd: incd,
             decd: -1
           ),
-          initTable[uint16, uint32]()
+          initTable[uint16, uint16]()
         )
 
       #Increment and decrement holders' Merit.
@@ -207,7 +207,7 @@ suite "SpamFilter":
             incd: incd,
             decd: decd
           ),
-          initTable[uint16, uint32]()
+          initTable[uint16, uint16]()
         )
 
         #Remove holders/difficulties which no longer have votes.
@@ -272,7 +272,7 @@ suite "SpamFilter":
       )
 
       #Turn weighted difficulties into a seq.
-      var unweighted: seq[uint32] = @[]
+      var unweighted: seq[uint16] = @[]
       for d in 0 ..< difficulties.len:
         var sum: int = 0
         for h in difficulties[d].holders:

@@ -12,13 +12,13 @@ proc parseDataDifficulty*(
   var dataDiffSeq: seq[string] = dataDiffStr.deserialize(
     NICKNAME_LEN,
     INT_LEN,
-    INT_LEN
+    DIFFICULTY_LEN
   )
 
   #Create the DataDifficulty.
   result = newDataDifficultyObj(
     dataDiffSeq[1].fromBinary(),
-    uint32(dataDiffSeq[2].fromBinary())
+    uint16(dataDiffSeq[2].fromBinary())
   )
   result.holder = uint16(dataDiffSeq[0].fromBinary())
 
@@ -31,7 +31,7 @@ proc parseSignedDataDifficulty*(
   var dataDiffSeq: seq[string] = dataDiffStr.deserialize(
     NICKNAME_LEN,
     INT_LEN,
-    INT_LEN,
+    DIFFICULTY_LEN,
     BLS_SIGNATURE_LEN
   )
 
@@ -39,7 +39,7 @@ proc parseSignedDataDifficulty*(
   try:
     result = newSignedDataDifficultyObj(
       dataDiffSeq[1].fromBinary(),
-      uint32(dataDiffSeq[2].fromBinary())
+      uint16(dataDiffSeq[2].fromBinary())
     )
     result.holder = uint16(dataDiffSeq[0].fromBinary())
     result.signature = newBLSSignature(dataDiffSeq[3])

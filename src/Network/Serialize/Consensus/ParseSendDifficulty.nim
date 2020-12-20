@@ -12,18 +12,15 @@ proc parseSendDifficulty*(
   var sendDiffSeq: seq[string] = sendDiffStr.deserialize(
     NICKNAME_LEN,
     INT_LEN,
-    INT_LEN
+    DIFFICULTY_LEN
   )
 
   #Create the SendDifficulty.
-  try:
-    result = newSendDifficultyObj(
-      sendDiffSeq[1].fromBinary(),
-      uint32(sendDiffSeq[2].fromBinary())
-    )
-    result.holder = uint16(sendDiffSeq[0].fromBinary())
-  except ValueError as e:
-    panic("Failed to parse a 32-byte hash: " & e.msg)
+  result = newSendDifficultyObj(
+    sendDiffSeq[1].fromBinary(),
+    uint16(sendDiffSeq[2].fromBinary())
+  )
+  result.holder = uint16(sendDiffSeq[0].fromBinary())
 
 proc parseSignedSendDifficulty*(
   sendDiffStr: string
@@ -34,7 +31,7 @@ proc parseSignedSendDifficulty*(
   var sendDiffSeq: seq[string] = sendDiffStr.deserialize(
     NICKNAME_LEN,
     INT_LEN,
-    INT_LEN,
+    DIFFICULTY_LEN,
     BLS_SIGNATURE_LEN
   )
 
@@ -42,11 +39,9 @@ proc parseSignedSendDifficulty*(
   try:
     result = newSignedSendDifficultyObj(
       sendDiffSeq[1].fromBinary(),
-      uint32(sendDiffSeq[2].fromBinary())
+      uint16(sendDiffSeq[2].fromBinary())
     )
     result.holder = uint16(sendDiffSeq[0].fromBinary())
     result.signature = newBLSSignature(sendDiffSeq[3])
-  except ValueError as e:
-    panic("Failed to parse a 32-byte hash: " & e.msg)
   except BLSError:
     raise newLoggedException(ValueError, "Invalid signature.")

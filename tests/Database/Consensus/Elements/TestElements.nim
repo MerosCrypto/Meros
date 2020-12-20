@@ -42,7 +42,7 @@ proc newRandomSendDifficulty*(
 ): SignedSendDifficulty =
   var
     nonce: int = rand(high(int32))
-    difficulty: uint32 = uint32(rand(high(int32)))
+    difficulty: uint16 = uint16(rand(high(int16)))
     miner: MinerWallet = newMinerWallet()
   miner.nick = holder
 
@@ -54,7 +54,7 @@ proc newRandomDataDifficulty*(
 ): SignedDataDifficulty =
   var
     nonce: int = rand(high(int32))
-    difficulty: uint32 = uint32(rand(high(int32)))
+    difficulty: uint16 = uint16(rand(high(int16)))
     miner: MinerWallet = newMinerWallet()
   miner.nick = holder
 
