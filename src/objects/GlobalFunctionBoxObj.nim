@@ -92,8 +92,8 @@ type
     ) {.gcsafe, raises: [].}
 
   ConsensusFunctionBox* = ref object
-    getSendDifficulty*: proc (): uint32 {.gcsafe, raises: [].}
-    getDataDifficulty*: proc (): uint32 {.gcsafe, raises: [].}
+    getSendDifficulty*: proc (): uint16 {.gcsafe, raises: [].}
+    getDataDifficulty*: proc (): uint16 {.gcsafe, raises: [].}
 
     isMalicious*: proc (
       nick: uint16,

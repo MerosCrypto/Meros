@@ -67,9 +67,9 @@ proc mainConsensus(
   except ValueError:
     panic("Invalid initial Send/Data difficulty.")
 
-  functions.consensus.getSendDifficulty = proc (): uint32 {.forceCheck: [].} =
+  functions.consensus.getSendDifficulty = proc (): uint16 {.forceCheck: [].} =
     consensus.filters.send.difficulty
-  functions.consensus.getDataDifficulty = proc (): uint32 {.forceCheck: [].} =
+  functions.consensus.getDataDifficulty = proc (): uint16 {.forceCheck: [].} =
     consensus.filters.data.difficulty
 
   functions.consensus.isMalicious = proc (

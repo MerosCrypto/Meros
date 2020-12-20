@@ -3,21 +3,28 @@ import tables
 import mc_lmdb
 
 import ../../../lib/[Errors, Util, Hash]
-import ../../../Wallet/[MinerWallet, Wallet]
+import ../../../Wallet/[MinerWallet, Wallet, HDWallet]
 
-import ../../Transactions/objects/[TransactionObj, DataObj]
+import ../../Transactions/objects/TransactionObj
+import ../../Transactions/Data as DataFile
 
 import ../../Merit/objects/EpochsObj
 
 import ../../../Network/Serialize/SerializeCommon
 
-import ../DB/Serialize/Transactions/DBSerializeTransaction
+import ../DB/Serialize/Transactions/[DBSerializeTransaction, ParseTransaction]
 
 template MNEMONIC(): string =
   "w"
 
 template DATA_TIP(): string =
   "d"
+
+#_TX added so the symbol doesn't conflict with the Data type.
+template DATA_TX(
+  hash: Hash[256]
+): string =
+  "d" & hash.serialize()
 
 template MINER_KEY(): string =
   "m"
@@ -275,21 +282,67 @@ proc setMinerNick*(
   db.put(MINER_KEY(), db.miner.privateKey.serialize())
   db.put(MINER_NICK(), nick.toBinary())
 
-proc saveDataTip*(
+proc stepData*(
   db: WalletDB,
-  hash: Hash[256]
-) {.forceCheck: [].} =
-  db.put(DATA_TIP(), hash.serialize())
-
-proc loadDataTip*(
-  db: WalletDB
-): Hash[256] {.forceCheck: [
-  DataMissing
+  dataStr: string,
+  wallet: HDWallet,
+  difficulty: uint16
+) {.forceCheck: [
+  ValueError
 ].} =
+  var
+    tip: Hash[256]
+    data: Data
   try:
-    result = db.get(DATA_TIP()).toHash[:256]()
+    tip = db.get(DATA_TIP()).toHash[:256]()
   except DBReadError:
-    raise newLoggedException(DataMissing, "No Data Tip available.")
+    try:
+      data = newData(Hash[256](), wallet.publicKey.serialize())
+    except ValueError as e:
+      panic("Failed to create an initial Data: " & e.msg)
+    wallet.sign(data)
+    data.mine(difficulty)
+    db.put(DATA_TX(data.hash), data.serialize())
+    db.put(DATA_TIP(), data.hash.serialize())
+    tip = data.hash
+  except ValueError as e:
+    panic("WalletDB didn't save a 32-byte hash as the Data tip: " & e.msg)
+
+  try:
+    data = newData(tip, dataStr)
+  except ValueError as e:
+    raise e
+  wallet.sign(data)
+  data.mine(difficulty)
+  db.put(DATA_TX(data.hash), data.serialize())
+  db.put(DATA_TIP(), data.hash.serialize())
+
+iterator loadDatasFromTip*(
+  db: WalletDB
+): Data {.forceCheck: [].} =
+  var
+    tip: Hash[256]
+    done: bool = false
+  try:
+    tip = db.get(DATA_TIP()).toHash[:256]()
+  except DBReadError:
+    done = true
+  except ValueError as e:
+    panic("WalletDB didn't save a 32-byte hash as the Data tip: " & e.msg)
+
+  while not done:
+    var data: Data
+    try:
+      data = cast[Data](parseTransaction(tip, db.get(DATA_TX(tip))))
+    except DBReadError as e:
+      panic("Couldn't get Data " & $tip & " mentioned in the Wallet DB: " & e.msg)
+    except ValueError as e:
+      panic("Couldn't load a Data from the WalletDB: " & e.msg)
+    yield data
+
+    if data.inputs[0].hash == Hash[256]():
+      done = true
+    tip = data.inputs[0].hash
 
 #Mark that we're verifying a Transaction.
 #Assumes if the function completes, the input was used.

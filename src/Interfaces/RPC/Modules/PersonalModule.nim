@@ -131,9 +131,7 @@ proc module*(
         try:
           res["result"] = % $(await functions.personal.data(params[0].getStr()))
         except ValueError:
-          raise newJSONRPCError(-3, "Invalid data length or missing datas")
-        except DataExists:
-          raise newJSONRPCError(0, "Data exists")
+          raise newJSONRPCError(-3, "Invalid data length")
         except Exception as e:
           panic("send threw an Exception despite catching everything: " & e.msg)
   except Exception as e:
