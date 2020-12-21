@@ -161,7 +161,7 @@ The created Data happens after Block addition the rest of Block addition is comp
 
 Every Block whose height modulo 5 is 0 has a corresponding Checkpoint. The Checkpoint's signers must represent a majority of the Unlocked and Pending Merit, where the signature is created by signing the Block hash. Without a Checkpoint, a Blockchain cannot advance.
 
-Even with Checkpoints, Blockchain reorganizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the Blockchain whose tail Block has the lower hash is the proper Blockchain.
+Even with Checkpoints, Blockchain reorganizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the Blockchain whose fork Block has the lower hash is the proper Blockchain.
 
 Checkpoints are important, not just to make 51% attacks harder, but also to stop people without Merit from being able to replace a Transaction via chain reorganization and defaulting manipulation. A Transaction can be replaced by having it verified via normal operation, then wiping out all the Blocks that archive its Verifications, and then adding in Blocks which have a competing Transaction default. Once the Transaction defaults, it is finalized, even if the original Verifications are eventually archived on the Blockchain. Since every Transaction has a Checkpoint during the time it takes to default, attackers cannot use a momentary hash power surge to force a Transaction to be verified.
 
