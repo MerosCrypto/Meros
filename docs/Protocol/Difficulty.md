@@ -61,7 +61,7 @@ The first difficulty of the window is removed from consideration as the relevant
 
 The `window.length / 10` Blocks with the most outlying difficulties from the median are removed from the window. When the window's length is even, the median is the higher difficulty. When both the lowest and the highest difficulties are as outlying as each other, the lower difficulty is removed.
 
-The new difficulty is defined as `max(sum(windowDifficulties) * 600 / (window[window.length - 1].header.time - window[0].header.time), 1)`, where 600 represents the Block time.
+The new difficulty is defined as `max(sum(windowDifficulties) * 600 / (window[window.length - 1].header.time - window[0].header.time), 1)`, where 600 represents the Block time. If the latest Block introduced a new miner, it is further mutated so `difficulty = difficulty * 11 / 10`.
 
 ### Violations in Meros:
 

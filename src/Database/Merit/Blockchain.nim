@@ -36,11 +36,14 @@ proc testBlockHeader*(
   lookup: seq[BLSPublicKey],
   hasMR: set[uint16],
   previous: BlockHeader,
-  difficulty: uint64,
+  difficultyArg: uint64,
   header: BlockHeader
 ) {.forceCheck: [
   ValueError
 ].} =
+  var difficulty: uint64 = difficultyArg
+  if header.newMiner:
+    difficulty = difficulty * 11 div 10
   if header.hash.overflows(difficulty):
     raise newLoggedException(ValueError, "Block doesn't beat the difficulty.")
 
@@ -106,7 +109,8 @@ proc processBlock*(
     blockchain.blockTime,
     windowLength,
     blockchain.difficulties,
-    time
+    time,
+    newBlock.header.newMiner
   ))
 
   blockchain.db.save(newBlock.header.hash, blockchain.difficulties[^1])

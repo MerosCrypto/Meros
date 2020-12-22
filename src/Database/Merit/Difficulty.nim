@@ -30,7 +30,8 @@ proc calculateNextDifficulty*(
   blockTime: StUInt[128],
   windowLength: int,
   difficultiesArg: seq[uint64],
-  time: uint32
+  time: uint32,
+  newMiner: bool
 ): uint64 {.forceCheck: [].} =
   if windowLength == 0:
     return difficultiesArg[0]
@@ -69,3 +70,6 @@ proc calculateNextDifficulty*(
     uint64(cast[string](newDifficulty.toBytesLE()[0 ..< 8]).fromBinary()),
     uint64(1)
   )
+
+  if newMiner:
+    result = result * 11 div 10

@@ -128,8 +128,12 @@ class BlockHeader:
   def mine(
     self,
     privKey: PrivateKey,
-    difficulty: int
+    difficultyArg: int
   ) -> None:
+    difficulty: int = difficultyArg
+    if self.newMiner:
+      difficulty = difficulty * 11 // 10
+
     self.proof = -1
     while (
       (self.proof == -1) or

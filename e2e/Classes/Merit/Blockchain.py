@@ -76,6 +76,8 @@ class Blockchain:
       self.difficulties.append(
         max(sum(windowDifficulties) * 60 // (window[-1].header.time - window[0].header.time), 1)
       )
+      if block.header.newMiner:
+        self.difficulties[-1] = self.difficulties[-1] * 11 // 10
 
     if block.header.newMiner:
       self.keys[block.header.minerKey] = len(self.keys)

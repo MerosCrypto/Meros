@@ -50,7 +50,6 @@ def PartialArchiveTest(
       raise TestError("New Block template doesn't have a properly recreated packet.")
 
     #Mining it further verifies the internal state.
-    difficulty: int = int(rpc.call("merit", "getDifficulty"), 16)
     header: bytes = bytes.fromhex(template["header"])
     proof: int = 0
     sig: bytes
@@ -60,7 +59,7 @@ def PartialArchiveTest(
       final: bytes = RandomX(initial + sig)
       if (
         int.from_bytes(final, "little") *
-        difficulty
+        template["difficulty"]
       ) < int.from_bytes(bytes.fromhex("FF" * 32), "little"):
         break
       proof += 1

@@ -134,7 +134,7 @@ proc module*(
         res: JSONNode,
         params: JSONNode
       ) {.forceCheck: [].} =
-        res["result"] = % functions.merit.getDifficulty().toHex()
+        res["result"] = % functions.merit.getDifficulty()
 
       "getBlock" = proc (
         res: JSONNode,
@@ -277,6 +277,7 @@ proc module*(
           contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(pending.packets, pending.elements)
           header: JSONNode = newJNull()
           time: uint32 = getTime()
+          difficulty: uint64 = functions.merit.getDifficulty()
 
         #Ensure the time is higher than the previous Block's.
         try:
@@ -301,6 +302,7 @@ proc module*(
               0,
               newBLSSignature()
             ).serializeTemplate().toHex()
+            difficulty = difficulty * 11 div 10
 
           if header.kind == JNull:
             header = % newBlockHeader(
@@ -336,7 +338,8 @@ proc module*(
         res["result"] = %* {
           "id": id,
           "key":  functions.merit.getRandomXCacheKey().toHex(),
-          "header": header
+          "header": header,
+          "difficulty": difficulty
         }
 
       "publishBlock" = proc (

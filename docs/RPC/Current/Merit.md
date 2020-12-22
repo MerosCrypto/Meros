@@ -6,7 +6,7 @@
 
 ### `getDifficulty`
 
-`getDifficulty` replies with the current difficulty. It takes in zero arguments and the result is a string of the difficulty.
+`getDifficulty` replies with the current difficulty. It takes in zero arguments and the result is an int of the difficulty. This should NOT be used by miners, as the difficulty is multiplied for new miners. `getBlockTemplate` is guaranteed to return the difficulty that a Block would be checked against.
 
 ### `getBlock`
 
@@ -71,9 +71,10 @@ The result is an object, as follows:
 - miner (string): BLS Public Key of the Miner.
 
 The result is an object, as follows:
-- `id`     (int): The template ID.
-- `key`    (string): The RandomX cache key.
-- `header` (string)
+- `id`         (int): The template ID.
+- `key`        (string): The RandomX cache key.
+- `header`     (string)
+- `difficulty` (int)
 
 Mining the Block occurs by hashing the header with a 4-byte proof appended. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature appended. If it beats the difficulty, it can be published by appending the 4-byte proof to the header, then appending the signature to the header, and then calling `merit_publishBlock` with the ID (see below).
 

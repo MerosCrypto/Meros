@@ -88,7 +88,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 - The miner hasn't been proven malicious yet.
 - time must be greater than the latest Block’s time.
 - signature must be valid.
-- hash must not overflow a 256-bit number when multiplied by the difficulty.
+- hash must not overflow a 256-bit number when multiplied by the difficulty. The difficulty checked against is `difficulty * 11 / 10` if this header introduces a new miner.
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 

@@ -186,7 +186,8 @@ proc reorganize(
       merit.blockchain.blockTime,
       windowLength,
       difficulties,
-      time
+      time,
+      result.headers[^1].newMiner
     )
 
     #Update the difficulty queue.

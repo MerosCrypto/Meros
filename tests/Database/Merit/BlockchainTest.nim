@@ -139,8 +139,12 @@ suite "Blockchain":
       blockchains[^1].rx.hash(miners[miner], mining.header, 0)
 
       #Mine it.
-      var iter: int = 1
-      while mining.header.hash.overflows(blockchains[^1].difficulties[^1]):
+      var
+        difficulty: uint64 = blockchains[^1].difficulties[^1]
+        iter: int = 1
+      if mining.header.newMiner:
+        difficulty = difficulty * 11 div 10
+      while mining.header.hash.overflows(difficulty):
         blockchains[^1].rx.hash(miners[miner], mining.header, mining.header.proof + 1)
         inc(iter)
         if iter mod 50 == 0:

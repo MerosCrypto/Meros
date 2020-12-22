@@ -16,7 +16,7 @@ def DifficultyTest(
   def checkDifficulty(
     block: int
   ) -> None:
-    if int(rpc.call("merit", "getDifficulty"), 16) != blockchain.difficulties[block]:
+    if rpc.call("merit", "getDifficulty") != blockchain.difficulties[block]:
       raise TestError("Difficulty doesn't match.")
 
   with open("e2e/Vectors/Merit/Difficulty.json", "r") as file:
