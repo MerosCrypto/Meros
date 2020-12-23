@@ -13,7 +13,7 @@ srcDir =  "src"
 skipExt = @["nim"]
 
 #Dependencies.
-requires "nim >= 1.2.4"
+requires "nim == 1.2.6"
 requires "https://github.com/MerosCrypto/Argon2 >= 1.1.2"
 requires "https://github.com/MerosCrypto/mc_randomx >= 0.9.4"
 requires "https://github.com/MerosCrypto/mc_bls >= 3.0.0"

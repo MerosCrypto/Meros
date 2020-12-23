@@ -7,7 +7,7 @@
 - CMake _(for RandomX)_
 - autoconf / automake / libtool _(for Minisketch)_
 - choosenim
-- Nim 1.2.4
+- Nim 1.2.6
 
 To install every prerequisite, run:
 
@@ -16,7 +16,7 @@ xcode-select --install
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 brew install git cmake autoconf automake libtool
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
-choosenim 1.2.4
+choosenim 1.2.6
 ```
 
 You will have to update your path, as according to choosenim, before running any Nim-related commands.
