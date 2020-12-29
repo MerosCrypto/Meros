@@ -17,7 +17,7 @@ proc serialize*(
   blockArg: Block
 ): string {.forceCheck: [].} =
   result =
-    blockArg.header.serialize() &
+    blockArg.header.serialize(0) &
     blockArg.body.packetsContents.serialize() &
     blockArg.body.packets.len.toBinary(INT_LEN)
 

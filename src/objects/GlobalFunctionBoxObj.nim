@@ -3,7 +3,7 @@ import sets
 
 import chronos
 
-import ../lib/[Errors, Hash, Sketcher]
+import ../lib/[Errors, Hash]
 import ../Wallet/[MinerWallet, Wallet]
 import ../Wallet/Wallet
 
@@ -225,25 +225,25 @@ type
 
     addBlockInternal*: proc (
       newBlock: SketchyBlock,
-      sketcher: Sketcher,
+      sketcher: seq[VerificationPacket],
       syncing: bool,
       lock: ref Lock
     ): Future[void] {.gcsafe.}
 
     addBlock*: proc (
       newBlock: SketchyBlock,
-      sketcher: Sketcher,
+      sketcher: seq[VerificationPacket],
       syncing: bool
     ): Future[void] {.gcsafe.}
 
     addBlockByHeaderInternal*: proc (
-      header: BlockHeader,
+      sketchyHeader: SketchyBlockHeader,
       syncing: bool,
       lock: ref Lock
     ): Future[void] {.gcsafe.}
 
     addBlockByHeader*: proc (
-      header: BlockHeader,
+      sketchyHeader: SketchyBlockHeader,
       syncing: bool
     ): Future[void] {.gcsafe.}
 

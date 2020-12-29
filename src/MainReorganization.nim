@@ -7,7 +7,7 @@ proc revertTo(
   consensus: ref Consensus,
   transactions: ref Transactions,
   height: int
-) =
+) {.forceCheck: [].} =
   if height == merit.blockchain.height:
     logInfo "No need to revert"
     return
@@ -55,14 +55,14 @@ proc reorganize(
   network: Network,
   lastCommonBlock: Hash[256],
   queue: seq[Hash[256]],
-  tail: BlockHeader
+  tail: SketchyBlockHeader
 ): Future[ReorganizationInfo] {.forceCheck: [
   ValueError,
   DataMissing,
   NotEnoughWork
 ], async.} =
   #Print the tail's last hash as we know that. We can't know its hash due to RandomX cache keys.
-  logInfo "Considering a reorganization", current = merit.blockchain.tail.header.hash, lastOfAlternate = tail.last, lastCommon = lastCommonBlock
+  logInfo "Considering a reorganization", current = merit.blockchain.tail.header.hash, lastOfAlternate = tail.data.last, lastCommon = lastCommonBlock
 
   #Existing work values.
   result.sharedWork = merit.blockchain.getChainWork(lastCommonBlock)
@@ -117,7 +117,7 @@ proc reorganize(
   for h in countdown(high(queue), -1):
     #Update the last header, if this isn't the first iteration (which means there's no headers).
     if h != high(queue):
-      lastHeader = result.headers[^1]
+      lastHeader = result.headers[^1].data
 
     #Sync the missing header in the queue, if it's not the tip.
     if h != -1:
@@ -129,7 +129,7 @@ proc reorganize(
         panic("Couldn't sync a BlockHeader despite catching all Exceptions: " & e.msg)
     else:
       result.headers.add(tail)
-    merit.blockchain.rx.hash(result.headers[^1])
+    merit.blockchain.rx.hash(result.headers[^1].data, result.headers[^1].packetsQuantity)
 
     #Verify the new header.
     #If this is the first header, the last header has already been initially set.
@@ -147,20 +147,20 @@ proc reorganize(
         {},
         lastHeader,
         difficulties[^1],
-        result.headers[^1]
+        result.headers[^1].data
       )
     except ValueError as e:
       raise e
 
     #Update the alternate miners/holders accordingly.
-    if result.headers[^1].newMiner:
-      alternate.miners[result.headers[^1].minerKey] = uint16(alternate.miners.len)
-      alternate.holders.add(result.headers[^1].minerKey)
+    if result.headers[^1].data.newMiner:
+      alternate.miners[result.headers[^1].data.minerKey] = uint16(alternate.miners.len)
+      alternate.holders.add(result.headers[^1].data.minerKey)
 
     #Calculate what would be the next difficulty.
     var
       windowLength: int = calculateWindowLength(altHeight)
-      time: uint32 = result.headers[^1].time
+      time: uint32 = result.headers[^1].data.time
       newDifficulty: uint64
     #Don't finish calculating the time if the windowLength is 0.
     #The calculation will error out with an invalid index.
@@ -180,14 +180,14 @@ proc reorganize(
         except IndexError as e:
           panic("Couldn't grab a Block with nonce " & $nonceToGrab & " despite the last common Block having a height of: " & $lastCommonHeight & ": " & e.msg)
       else:
-        time -= result.headers[nonceToGrab - lastCommonHeight].time
+        time -= result.headers[nonceToGrab - lastCommonHeight].data.time
 
     newDifficulty = calculateNextDifficulty(
       merit.blockchain.blockTime,
       windowLength,
       difficulties,
       time,
-      result.headers[^1].newMiner
+      result.headers[^1].data.newMiner
     )
 
     #Update the difficulty queue.
@@ -203,7 +203,7 @@ proc reorganize(
 
     #Update the key if needed.
     if (altHeight - 1) mod 384 == 0:
-      upcomingKey = result.headers[^1].hash.serialize()
+      upcomingKey = result.headers[^1].data.hash.serialize()
     elif (altHeight - 1) mod 384 == 12:
       merit.blockchain.rx.setCacheKey(upcomingKey)
 
@@ -213,7 +213,7 @@ proc reorganize(
     newWorkStr: string = newWork.toShortHex()
 
   #If the new chain has more work, reorganize to it.
-  result.altForkedBlock = result.headers[0].hash
+  result.altForkedBlock = result.headers[0].data.hash
   if (
     (newWork > oldWork) or
     ((newWork == oldWork) and (result.altForkedBlock < result.existingForkedBlock))

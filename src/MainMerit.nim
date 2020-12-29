@@ -132,7 +132,7 @@ proc mainMerit(
   #Handle full blocks.
   functions.merit.addBlockInternal = proc (
     sketchyBlock: SketchyBlock,
-    sketcherArg: Sketcher,
+    sketcherArg: seq[VerificationPacket],
     syncing: bool,
     lock: ref Lock
   ) {.forceCheck: [
@@ -159,18 +159,9 @@ proc mainMerit(
     logInfo "New Block", hash = sketchyBlock.data.header.hash, currentHeight = merit.blockchain.height
 
     #Construct a sketcher.
-    var sketcher: Sketcher = sketcherArg
+    var sketcher: seq[VerificationPacket] = sketcherArg
     if sketcher.len == 0:
-      sketcher = newSketcher(
-        (
-          proc (
-            nick: uint16
-          ): int {.raises: [].} =
-            functions.merit.getRawMerit(nick)
-        ),
-        functions.consensus.isMalicious,
-        cast[seq[VerificationPacket]](consensus[].getPending().packets)
-      )
+      sketcher = cast[seq[VerificationPacket]](consensus[].getPending().packets)
 
     #Sync this Block.
     var
@@ -332,7 +323,7 @@ proc mainMerit(
       #Broadcast the Block.
       functions.network.broadcast(
         MessageType.BlockHeader,
-        newBlock.header.serialize()
+        newBlock.header.serialize(uint32(newBlock.body.packets.len))
       )
 
       #If we got a Mint...
@@ -378,7 +369,7 @@ proc mainMerit(
 
   functions.merit.addBlock = proc (
     sketchyBlock: SketchyBlock,
-    sketcherArg: Sketcher,
+    sketcher: seq[VerificationPacket],
     syncing: bool
   ) {.forceCheck: [
     ValueError,
@@ -404,7 +395,7 @@ proc mainMerit(
     release(blockLock[])
 
     try:
-      await functions.merit.addBlockInternal(sketchyBlock, sketcherArg, syncing, blockLock)
+      await functions.merit.addBlockInternal(sketchyBlock, sketcher, syncing, blockLock)
     except ValueError as e:
       raise e
     except DataMissing as e:
@@ -413,7 +404,7 @@ proc mainMerit(
       panic("addBlock threw an Exception despite catching all Exceptions: " & e.msg)
 
   functions.merit.addBlockByHeaderInternal = proc (
-    header: BlockHeader,
+    sketchyHeader: SketchyBlockHeader,
     syncing: bool,
     lock: ref Lock
   ) {.forceCheck: [
@@ -444,7 +435,9 @@ proc mainMerit(
     If we do, we know the RandomX key.
     If we don't, we can iterate up the history in an ordered matter and find out any RandomX key used.
     ]#
-    var headerBlake: Hash[256] = Blake256(header.serializeHash())
+    var
+      header: BlockHeader = sketchyHeader.data
+      headerBlake: Hash[256] = Blake256(header.serializeHash(sketchyHeader.packetsQuantity))
     lockedBlock[] = headerBlake
 
     var sketchyBlock: SketchyBlock
@@ -513,7 +506,7 @@ proc mainMerit(
               network[],
               lastCommonBlock,
               queue,
-              header
+              sketchyHeader
             )
           except ValueError as e:
             release(lock[])
@@ -530,9 +523,9 @@ proc mainMerit(
             lockedBlock[] = Hash[256]()
             merit.blockchain.setCacheKeyAtHeight(merit.blockchain.height)
 
-          for header in reorgInfo.headers:
+          for sketchyHeader in reorgInfo.headers:
             try:
-              await functions.merit.addBlockByHeaderInternal(header, true, innerBlockLock)
+              await functions.merit.addBlockByHeaderInternal(sketchyHeader, true, innerBlockLock)
             except ValueError as e:
               logInfo "Reorganization failed", error = e.msg
               reorgRecover(
@@ -584,7 +577,7 @@ proc mainMerit(
         lockedBlock[] = headerBlake
 
       #Finally hash the header.
-      merit.blockchain.rx.hash(header)
+      merit.blockchain.rx.hash(header, sketchyHeader.packetsQuantity)
       if header.last != merit.blockchain.tail.header.hash:
         panic("Trying to add a Block which isn't after our current tail, despite calling reorganize and adding previous blocks.")
 
@@ -603,7 +596,7 @@ proc mainMerit(
         raise e
 
       try:
-        sketchyBlock = newSketchyBlockObj(header, await syncAwait network.syncManager.syncBlockBody(header.hash, header.contents))
+        sketchyBlock = newSketchyBlockObj(sketchyHeader, await syncAwait network.syncManager.syncBlockBody(header.hash, header.contents))
       except DataMissing as e:
         raise newLoggedException(ValueError, e.msg)
       except Exception as e:
@@ -629,7 +622,7 @@ proc mainMerit(
       panic("addBlock threw an Exception despite catching all Exceptions: " & e.msg)
 
   functions.merit.addBlockByHeader = proc (
-    header: BlockHeader,
+    header: SketchyBlockHeader,
     syncing: bool
   ) {.forceCheck: [
     ValueError,
@@ -666,7 +659,7 @@ proc mainMerit(
       #https://github.com/nim-lang/Nim/issues/13815 is the reason why.
       #That said, even when the issue is fixed, it'll be a while before 1.0.8.
       #This longer code will last until at least then.
-      var header: BlockHeader = await syncAwait network.syncManager.syncBlockHeaderWithoutHashing(hash)
+      var header: SketchyBlockHeader = await syncAwait network.syncManager.syncBlockHeaderWithoutHashing(hash)
       await functions.merit.addBlockByHeaderInternal(header, syncing, lock)
     except ValueError as e:
       raise e

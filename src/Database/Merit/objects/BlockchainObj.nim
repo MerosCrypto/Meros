@@ -106,7 +106,6 @@ proc newBlockchainObj*(
           0,
           result.genesis,
           Hash[256](),
-          0,
           "".pad(4),
           Hash[256](),
           newBLSPublicKey(),
@@ -122,7 +121,7 @@ proc newBlockchainObj*(
           {}
         )
       )
-      result.rx.hash(genesisBlock.header)
+      result.rx.hash(genesisBlock.header, 0)
     except ValueError as e:
       panic("Couldn't create the Genesis Block due to a ValueError: " & e.msg)
     except BLSError as e:

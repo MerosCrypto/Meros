@@ -20,7 +20,7 @@ const
   BLS_PUBLIC_KEY_LEN*: int = 96
   BLS_SIGNATURE_LEN*:  int = 48
 
-  BLOCK_HEADER_DATA_LEN*: int = INT_LEN + HASH_LEN + HASH_LEN + NICKNAME_LEN + INT_LEN + HASH_LEN + BYTE_LEN
+  BLOCK_HEADER_DATA_LEN*: int = INT_LEN + HASH_LEN + HASH_LEN + INT_LEN + INT_LEN + HASH_LEN + BYTE_LEN
 
   #These prefixes are used when creating signatures.
   #With the exception of Verification's, they're also used in the BlockHeader's contents Merkle.

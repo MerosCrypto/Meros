@@ -6,13 +6,14 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 import ../SerializeCommon
 
 proc serializeTemplate*(
-  header: BlockHeader
+  header: BlockHeader,
+  packets: uint32
 ): string {.inline, forceCheck: [].} =
   header.version.toBinary(INT_LEN) &
   header.last.serialize() &
   header.contents.serialize() &
 
-  header.significant.toBinary(NICKNAME_LEN) &
+  packets.toBinary(INT_LEN) &
   header.sketchSalt.pad(INT_LEN) &
   header.sketchCheck.serialize() &
 
@@ -22,13 +23,15 @@ proc serializeTemplate*(
   header.time.toBinary(INT_LEN)
 
 proc serializeHash*(
-  header: BlockHeader
+  header: BlockHeader,
+  packets: uint32
 ): string {.inline, forceCheck: [].} =
-  header.serializeTemplate() &
+  header.serializeTemplate(packets) &
   header.proof.toBinary(INT_LEN)
 
 proc serialize*(
-  header: BlockHeader
+  header: BlockHeader,
+  packets: uint32
 ): string {.inline, forceCheck: [].} =
-  header.serializeHash() &
+  header.serializeHash(packets) &
   header.signature.serialize()

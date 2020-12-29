@@ -22,11 +22,7 @@ proc serialize*(
   result = body.packetsContents.serialize() & capacity.toBinary(INT_LEN)
 
   try:
-    result &= newSketcher(body.packets).serialize(
-      capacity,
-      0,
-      sketchSalt
-    )
+    result &= body.packets.serialize(capacity, sketchSalt)
   except SaltError as e:
     raise newLoggedException(ValueError, "BlockBody's elements have a collision with the specified sketchSalt: " & e.msg)
 

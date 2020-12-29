@@ -15,15 +15,15 @@ proc parseBlock*(
 ].} =
   #Header | Body
   var
-    header: BlockHeader
+    header: SketchyBlockHeader
     body: SketchyBlockBody
 
   try:
     header = parseBlockHeaderWithoutHashing(blockStr)
-    rx.hash(header)
+    rx.hash(header.data, header.packetsQuantity)
     body = blockStr.substr(
       BLOCK_HEADER_DATA_LEN +
-      (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +
+      (if header.data.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +
       INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
     ).parseBlockBody()
   except ValueError as e:

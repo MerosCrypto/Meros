@@ -20,19 +20,21 @@ proc hash*(
   rx: RandomX,
   miner: MinerWallet,
   header: BlockHeader,
+  packets: uint32,
   proof: uint32
 ) {.forceCheck: [].} =
   header.proof = proof
-  rx.hash(miner, header, header.serializeHash(), proof)
+  rx.hash(miner, header, header.serializeHash(packets), proof)
 
 #Hash the header.
 proc hash*(
   rx: RandomX,
-  header: BlockHeader
+  header: BlockHeader,
+  packets: uint32
 ) {.forceCheck: [].} =
   rx.hash(
     header,
-    header.serializeHash()
+    header.serializeHash(packets)
   )
 
 #Create a sketchCheck Merkle.
@@ -91,20 +93,19 @@ proc newBlockHeader*(
   version: uint32,
   last: Hash[256],
   contents: Hash[256],
-  significant: uint16,
   sketchSalt: string,
   sketchCheck: Hash[256],
   miner: BLSPublicKey,
   time: uint32,
   proof: uint32 = 0,
   signature: BLSSignature = newBLSSignature(),
-  rx: RandomX = nil
+  rx: RandomX = nil,
+  packetsQuantity: uint32 = 0
 ): BlockHeader {.forceCheck: [].} =
   result = newBlockHeaderObj(
     version,
     last,
     contents,
-    significant,
     sketchSalt,
     sketchCheck,
     miner,
@@ -113,26 +114,25 @@ proc newBlockHeader*(
     signature
   )
   if (not signature.isInf) and (not rx.isNil):
-    rx.hash(result)
+    rx.hash(result, packetsQuantity)
 
 proc newBlockHeader*(
   version: uint32,
   last: Hash[256],
   contents: Hash[256],
-  significant: uint16,
   sketchSalt: string,
   sketchCheck: Hash[256],
   miner: uint16,
   time: uint32,
   proof: uint32 = 0,
   signature: BLSSignature = newBLSSignature(),
-  rx: RandomX = nil
+  rx: RandomX = nil,
+  packetsQuantity: uint32 = 0
 ): BlockHeader {.forceCheck: [].} =
   result = newBlockHeaderObj(
     version,
     last,
     contents,
-    significant,
     sketchSalt,
     sketchCheck,
     miner,
@@ -141,4 +141,4 @@ proc newBlockHeader*(
     signature
   )
   if (not signature.isInf) and (not rx.isNil):
-    rx.hash(result)
+    rx.hash(result, packetsQuantity)

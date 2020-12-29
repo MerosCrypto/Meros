@@ -7,17 +7,10 @@ import Errors, Hash
 import ../Database/Consensus/Elements/objects/VerificationPacketObj
 import ../Network/Serialize/Consensus/SerializeVerificationPacket
 
-type
-  SketchElement = object
-    packet*: VerificationPacket
-    significance*: int
-
-  Sketcher* = seq[SketchElement]
-
-  #SketchResult. List of Elements in both sketches and the missing hashes.
-  SketchResult* = object
-    packets*: seq[VerificationPacket]
-    missing*: seq[uint64]
+#SketchResult. List of Elements in both sketches and the missing hashes.
+type SketchResult* = object
+  packets*: seq[VerificationPacket]
+  missing*: seq[uint64]
 
 #Convert a VerificationPacket hash into something sketchable.
 proc sketchHash*(
@@ -26,50 +19,9 @@ proc sketchHash*(
 ): uint64 {.inline, forceCheck: [].} =
   Blake64(salt & packet.serialize())
 
-proc newSketcher*(
-  getMerit: proc (
-    nick: uint16
-  ): int {.gcsafe, raises: [].},
-  isMalicious: proc (
-    holder: uint16
-  ): bool {.gcsafe, raises: [].},
-  packets: seq[VerificationPacket]
-): Sketcher {.forceCheck: [].} =
-  result = @[]
-  for packet in packets:
-    var merit: int = 0
-    for holder in packet.holders:
-      if not holder.isMalicious:
-        merit += getMerit(holder)
-
-    result.add(SketchElement(
-      packet: packet,
-      significance: merit
-    ))
-
-proc newSketcher*(
-  packets: seq[VerificationPacket]
-): Sketcher {.forceCheck: [].} =
-  result = @[]
-  for packet in packets:
-    result.add(SketchElement(
-      packet: packet,
-      significance: 0
-    ))
-
-proc add*(
-  sketcher: var Sketcher,
-  packet: VerificationPacket,
-  significance: int
-) {.forceCheck: [].} =
-  sketcher.add(SketchElement(
-    packet: packet,
-    significance: significance
-  ))
-
 #Checks if the elements collide when the specified sketch salt is used.
 proc collides*(
-  sketcher: Sketcher,
+  sketcher: seq[VerificationPacket],
   salt: string
 ): bool {.forceCheck: [].} =
   var
@@ -78,18 +30,17 @@ proc collides*(
 
   for elem in sketcher:
     #Hash the packet.
-    hash = sketchHash(salt, elem.packet)
+    hash = sketchHash(salt, elem)
 
     #If there's a collision, return true.
     if hashes.contains(hash):
       return true
     hashes.incl(hash)
 
-#Convert a Sketcher to a Sketch.
+#Convert Packets to a Sketch.
 proc toSketch(
-  sketcher: Sketcher,
+  sketcher: seq[VerificationPacket],
   capacity: int,
-  significant: uint16,
   salt: string
 ): tuple[
   sketch: Sketch,
@@ -103,22 +54,19 @@ proc toSketch(
 
   var hash: uint64
   for e in 0 ..< sketcher.len:
-    #If it's significant, use it.
-    if sketcher[e].significance >= int(significant):
-      #Hash the packet.
-      hash = sketchHash(salt, sketcher[e].packet)
-      #If there's a collision, throw.
-      if result.hashes.contains(hash):
-        raise newLoggedException(SaltError, "Collision found while sketching values.")
+    #Hash the packet.
+    hash = sketchHash(salt, sketcher[e])
+    #If there's a collision, throw.
+    if result.hashes.contains(hash):
+      raise newLoggedException(SaltError, "Collision found while sketching values.")
 
-      result.sketch.add(hash)
-      result.hashes.incl(hash)
+    result.sketch.add(hash)
+    result.hashes.incl(hash)
 
 #Serialize a sketcher's sketch.
 proc serialize*(
-  sketcher: Sketcher,
+  sketcher: seq[VerificationPacket],
   capacity: int,
-  significant: uint16,
   salt: string
 ): string {.forceCheck: [
   SaltError
@@ -127,16 +75,15 @@ proc serialize*(
     return ""
 
   try:
-    result = sketcher.toSketch(capacity, significant, salt).sketch.serialize()
+    result = sketcher.toSketch(capacity, salt).sketch.serialize()
   except SaltError as e:
     raise e
 
 #Merge two sketches and return the shared/missing packets.
 proc merge*(
-  sketcher: Sketcher,
+  sketcher: seq[VerificationPacket],
   other: string,
   capacity: int,
-  significant: uint16,
   salt: string
 ): SketchResult {.forceCheck: [
   ValueError,
@@ -151,7 +98,7 @@ proc merge*(
     hashes: HashSet[uint64]
   ]
   try:
-    sketch = sketcher.toSketch(capacity, significant, salt)
+    sketch = sketcher.toSketch(capacity, salt)
   except SaltError as e:
     raise e
   #Merge the sketches.
@@ -166,7 +113,7 @@ proc merge*(
   #The packets are every packet in our sketcher, minus packets which showed up as a difference.
   result.packets = @[]
   for e in sketcher:
-    result.packets.add(e.packet)
+    result.packets.add(e)
 
   #Iterate over the differences.
   var m: int = 0
