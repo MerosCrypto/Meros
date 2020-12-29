@@ -15,9 +15,9 @@ BlockHeaders have the following fields:
 - version: Block version.
 - last: Last Block Hash.
 - contents: Merkle of the included Verification Packets and Elements.
-- significant: The threshold of what makes a Transaction significant.
+- packets: Quantity of included Verification Packets.
 - sketchSalt: The salt used when hashing elements for inclusion in sketches.
-- sketchCheck: Merkle of the Sketch Hashes of the included Verification packets.
+- sketchCheck: Merkle of the Sketch Hashes of the included Verification Packets.
 - miner: BLS Public Key, or miner nickname, to mint Merit to.
 - time: Time this Block was mined at.
 - proof: Arbitrary data used to beat the difficulty.
@@ -57,7 +57,7 @@ The genesis Block on the Meros mainnet Blockchain has a:
 - Header version of 0.
 - Header last of “MEROS_MAINNET” right padded with 0 bytes until it has a length of 32 bytes.
 - Zeroed out contents in the header.
-- significant of 0.
+- Header packets quantity of 0.
 - Zeroed sketchSalt in the header.
 - Zeroed out sketchCheck in the header.
 - Infinite miner key in the header.
@@ -83,7 +83,6 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 - version is 0.
 - last must be equivalent to the hash of the current tail Block.
-- significant is greater than 0 (exclusive) and at most 26280 (inclusive).
 - miner is a valid, non-infinite, BLS Public Key if the miner is new or a valid nickname if the miner isn't new.
 - The miner hasn't been proven malicious yet.
 - time must be greater than the latest Block’s time.
@@ -92,7 +91,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
-`BlockHeader` has a message length of either 165 or 259 bytes; the 4-byte version, 32-byte last hash, 32-byte contents hash, 2-byte significant, 4-byte sketchSalt, 32-byte sketchCheck hash, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 96-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 48-byte signature.
+`BlockHeader` has a message length of either 167 or 261 bytes; the 4-byte version, 32-byte last hash, 32-byte contents hash, 4-byte packets quantity, 4-byte sketchSalt, 32-byte sketchCheck hash, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 96-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 48-byte signature.
 
 ### BlockBody
 
@@ -100,11 +99,11 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 
 - The header is valid.
 - contents is the result of a properly constructed Merkle tree.
+- The Block has the same amount of Verification Packets as specified in its header.
 - The Block's included Verification Packets don't collide with the specified sketch salt.
 - sketchCheck is the result of a properly constructed Merkle tree.
 - Every Verification Packet is for an unique Transaction.
 - Every Verification Packet only contains new Verifications.
-- Every Verification Packet's Merit is greater than significant, where Merit is the current Merit balance ignoring its status of Unlocked/Locked/Pending.
 - Every Transaction's predecessors have Verification Packets either archived or in this Block.
 - Every Transaction either has yet to enter Epochs or is in Epochs.
 - Every Transaction doesn't compete with, or have parents which competed with and lost, finalized Transactions.

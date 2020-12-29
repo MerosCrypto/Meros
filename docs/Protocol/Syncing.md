@@ -12,9 +12,13 @@
 
 `CheckpointRequest` has a message length of 32 bytes; the Block's 32-byte hash. The expected response is a `Checkpoint` containing the Checkpoint for the specified Block.
 
-### BlockHeaderRequest and BlockBodyRequest
+### BlockHeaderRequest
 
-`BlockHeaderRequest` and `BlockBodyRequest` both have a message length of 32 bytes; the Block's 32-byte hash. The expected response to a `BlockHeaderRequest` is a `BlockHeader` containing the requested BlockHeader. The expected response to a `BlockBodyRequest` is a `BlockBody` containing the requested BlockBody.
+`BlockHeaderRequest` has a message length of 32 bytes; the Block's 32-byte hash. The expected response to a `BlockHeaderRequest` is a `BlockHeader` containing the requested BlockHeader.
+
+### BlockBodyRequest
+
+`BlockBodyRequest` has a message length of 36 bytes; the Block's 32-byte hash and a 4-byte capacity. The expected response to a `BlockBodyRequest` is a `BlockBody` containing the requested BlockBody using the specified capacity.
 
 ### SketchHashesRequest and SketchHashes
 
