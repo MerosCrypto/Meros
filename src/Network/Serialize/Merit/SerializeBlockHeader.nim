@@ -7,13 +7,12 @@ import ../SerializeCommon
 
 proc serializeTemplate*(
   header: BlockHeader,
-  packets: uint32
 ): string {.inline, forceCheck: [].} =
   header.version.toBinary(INT_LEN) &
   header.last.serialize() &
   header.contents.serialize() &
 
-  packets.toBinary(INT_LEN) &
+  header.packetsQuantity.toBinary(INT_LEN) &
   header.sketchSalt.pad(INT_LEN) &
   header.sketchCheck.serialize() &
 
@@ -23,15 +22,13 @@ proc serializeTemplate*(
   header.time.toBinary(INT_LEN)
 
 proc serializeHash*(
-  header: BlockHeader,
-  packets: uint32
+  header: BlockHeader
 ): string {.inline, forceCheck: [].} =
-  header.serializeTemplate(packets) &
+  header.serializeTemplate() &
   header.proof.toBinary(INT_LEN)
 
 proc serialize*(
-  header: BlockHeader,
-  packets: uint32
+  header: BlockHeader
 ): string {.inline, forceCheck: [].} =
-  header.serializeHash(packets) &
+  header.serializeHash() &
   header.signature.serialize()

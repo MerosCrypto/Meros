@@ -5,8 +5,6 @@ import stint
 import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
 
-import ../../Consensus/Elements/Elements
-
 import ../../Merit/objects/[BlockHeaderObj, BlockObj]
 
 import ../../../Network/Serialize/SerializeCommon
@@ -251,7 +249,7 @@ proc save*(
   nonce: int,
   blockArg: Block
 ) {.forceCheck: [].} =
-  db.put(BLAKE_HASH(Blake256(blockArg.header.serializeHash(uint32(blockArg.body.packets.len)))), "")
+  db.put(BLAKE_HASH(Blake256(blockArg.header.serializeHash())), "")
   db.put(INTERIM_HASH(blockArg.header.hash), blockArg.header.interimHash)
   db.put(BLOCK_HASH(blockArg.header.hash), blockArg.serialize())
   db.put(BLOCK_NONCE(nonce), blockArg.header.hash.serialize())
@@ -452,7 +450,7 @@ proc loadBlockHeader*(
   DBReadError
 ].} =
   try:
-    result = db.get(BLOCK_HASH(hash)).parseBlockHeader(db.get(INTERIM_HASH(hash)), hash).data
+    result = db.get(BLOCK_HASH(hash)).parseBlockHeader(db.get(INTERIM_HASH(hash)), hash)
   except Exception as e:
     raise newLoggedException(DBReadError, e.msg)
 
@@ -614,7 +612,7 @@ proc deleteUpcomingKey*(
 proc deleteBlock*(
   db: DB,
   nonce: int,
-  toDel: Block
+  removals: set[uint16]
 ) {.forceCheck: [].} =
   var hash: Hash[256]
   try:
@@ -627,7 +625,7 @@ proc deleteBlock*(
   db.del(BLOCK_NONCE(nonce))
   db.del(BLOCK_HEIGHT(hash))
   try:
-    db.del(BLAKE_HASH(Blake256(db.loadBlockHeader(hash).serializeHash(uint32(toDel.body.packets.len)))))
+    db.del(BLAKE_HASH(Blake256(db.loadBlockHeader(hash).serializeHash())))
   except DBReadError as e:
     panic("Couldn't load a BlockHeader we're trying to delete: " & e.msg)
   db.del(INTERIM_HASH(hash))
@@ -648,7 +646,7 @@ proc deleteBlock*(
   except DBReadError:
     discard
 
-  for holder in toDel.body.removals:
+  for holder in removals:
     #Delete their personal removals.
     db.del(HOLDER_REMOVAL(holder))
 

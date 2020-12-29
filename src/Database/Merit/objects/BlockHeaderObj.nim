@@ -1,4 +1,4 @@
-import ../../../lib/[Errors, Util, Hash]
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
 const EMPTY_HASH: Hash[256] = Hash[256](
@@ -8,6 +8,11 @@ const EMPTY_HASH: Hash[256] = Hash[256](
   ]
 )
 
+#Do not merge this into master.
+#Solely used to discover old usages of newBlockHeaderObj which expected a uint16 for the significant.
+#As it's now a uint32, most instances will be promoted. Hence this to force an error.
+type DistinctUInt32* = distinct uint32
+
 type BlockHeader* = ref object
   #Version.
   version*: uint32
@@ -16,6 +21,8 @@ type BlockHeader* = ref object
   #Merkle of the contents.
   contents*: Hash[256]
 
+  #Amount of packets included in the Block.
+  packetsQuantity*: uint32
   #Salt used when hasing sketch elements in order to avoid collisions.
   sketchSalt*: string
   #Merkle of the included sketch hashes.
@@ -43,6 +50,7 @@ func newBlockHeaderObj*(
   version: uint32,
   last: Hash[256],
   contents: Hash[256],
+  packetsQuantity: DistinctUInt32,
   sketchSalt: string,
   sketchCheck: Hash[256],
   miner: BLSPublicKey,
@@ -55,6 +63,7 @@ func newBlockHeaderObj*(
     last: last,
     contents: contents,
 
+    packetsQuantity: uint32(packetsQuantity),
     sketchSalt: sketchSalt,
     sketchCheck: sketchCheck,
 
@@ -69,6 +78,7 @@ func newBlockHeaderObj*(
   version: uint32,
   last: Hash[256],
   contents: Hash[256],
+  packetsQuantity: DistinctUInt32,
   sketchSalt: string,
   sketchCheck: Hash[256],
   miner: uint16,
@@ -80,6 +90,7 @@ func newBlockHeaderObj*(
     version: version,
     last: last,
 
+    packetsQuantity: uint32(packetsQuantity),
     contents: contents,
     sketchSalt: sketchSalt,
     sketchCheck: sketchCheck,

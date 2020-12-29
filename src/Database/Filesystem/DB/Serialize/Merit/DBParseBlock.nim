@@ -23,7 +23,7 @@ proc parseBlock*(
 
   #Parse the header.
   try:
-    header = blockStr.parseBlockHeader(interimHash, hash).data
+    header = blockStr.parseBlockHeader(interimHash, hash)
   except ValueError as e:
     raise e
 

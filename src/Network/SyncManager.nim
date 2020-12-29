@@ -269,7 +269,7 @@ proc sync*(
       panic("Syncing a Block's VerificationPackets threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
   #Check the header's packets quantity.
-  if uint32(packets.len) != newBlock.packetsQuantity:
+  if uint32(packets.len) != newBlock.data.header.packetsQuantity:
     raise newLoggedException(ValueError, "Header's amount of packets and sketchCheck don't line up.")
 
   #Verify the contents Merkle.
@@ -609,7 +609,7 @@ proc syncBlockBody*(
 proc syncBlockHeaderWithoutHashing*(
   manager: SyncManager,
   hash: Hash[256]
-): SyncFuture[SketchyBlockHeader] {.forceCheck: [].} =
+): SyncFuture[BlockHeader] {.forceCheck: [].} =
   #Get an ID.
   var id: int = manager.id
   inc(manager.id)
@@ -617,10 +617,10 @@ proc syncBlockHeaderWithoutHashing*(
   logDebug "Syncing Block Header", id = id, hash = hash
 
   #Create the future.
-  result = newSyncFuture[SketchyBlockHeader](
+  result = newSyncFuture[BlockHeader](
     manager,
     id,
-    newFuture[SketchyBlockHeader]("syncBlockHeaderWithoutHashing"),
+    newFuture[BlockHeader]("syncBlockHeaderWithoutHashing"),
     5
   )
 

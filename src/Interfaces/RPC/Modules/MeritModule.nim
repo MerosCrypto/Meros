@@ -284,13 +284,14 @@ proc module*(
               0,
               functions.merit.getTail(),
               contents.contents,
+              DistinctUInt32(pending.packets.len),
               sketchSalt,
               newSketchCheck(sketchSalt, pending.packets),
               miner,
               time,
               0,
               newBLSSignature()
-            ).serializeTemplate(uint32(pending.packets.len)).toHex()
+            ).serializeTemplate().toHex()
             difficulty = difficulty * 11 div 10
 
           if header.kind == JNull:
@@ -298,13 +299,14 @@ proc module*(
               0,
               functions.merit.getTail(),
               contents.contents,
+              DistinctUInt32(pending.packets.len),
               sketchSalt,
               newSketchCheck(sketchSalt, pending.packets),
               nick,
               time,
               0,
               newBLSSignature()
-            ).serializeTemplate(uint32(pending.packets.len)).toHex()
+            ).serializeTemplate().toHex()
         except IndexError as e:
           panic("Couldn't get the Block with a nonce one lower than the height: " & e.msg)
         except BLSError:

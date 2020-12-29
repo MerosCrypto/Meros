@@ -237,13 +237,13 @@ type
     ): Future[void] {.gcsafe.}
 
     addBlockByHeaderInternal*: proc (
-      sketchyHeader: SketchyBlockHeader,
+      sketchyHeader: BlockHeader,
       syncing: bool,
       lock: ref Lock
     ): Future[void] {.gcsafe.}
 
     addBlockByHeader*: proc (
-      sketchyHeader: SketchyBlockHeader,
+      sketchyHeader: BlockHeader,
       syncing: bool
     ): Future[void] {.gcsafe.}
 

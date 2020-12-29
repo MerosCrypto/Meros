@@ -347,10 +347,9 @@ proc handle*(
 
         of MessageType.BlockHeaderRequest:
           try:
-            var req: Block = manager.functions.merit.getBlockByHash(msg.message.toHash[:256]())
             res = newMessage(
               MessageType.BlockHeader,
-              req.header.serialize(uint32(req.body.packets.len))
+              manager.functions.merit.getBlockByHash(msg.message.toHash[:256]()).header.serialize()
             )
           except IndexError:
             res = newMessage(MessageType.DataMissing)
@@ -526,14 +525,14 @@ proc handle*(
 
         of MessageType.BlockHeader:
           try:
-            handleResponse[BlockHeaderSyncRequest, SketchyBlockHeader, Hash[256]](
+            handleResponse[BlockHeaderSyncRequest, BlockHeader, Hash[256]](
               manager,
               peer,
               msg,
               proc (
                 serialization: string,
                 check: Hash[256]
-              ): SketchyBlockHeader {.forceCheck: [
+              ): BlockHeader {.forceCheck: [
                 ValueError
               ].} =
                 try:

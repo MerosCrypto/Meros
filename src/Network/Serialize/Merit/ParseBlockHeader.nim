@@ -2,7 +2,6 @@ import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
 import ../../../Database/Merit/objects/BlockHeaderObj
-import ../../../Network/objects/SketchyBlockObj
 
 import ../SerializeCommon
 
@@ -10,7 +9,7 @@ proc parseBlockHeader*(
   headerStr: string,
   interimHash: string,
   hash: Hash[256]
-): SketchyBlockHeader {.forceCheck: [
+): BlockHeader {.forceCheck: [
   ValueError
 ].} =
   #Version | Last | Contents | Packets Quantity | Sketch Salt | Sketch Check | New Miner | Miner | Time | Proof | Signature
@@ -37,43 +36,39 @@ proc parseBlockHeader*(
   #Create the BlockHeader.
   try:
     if headerSeq[6] == "\0":
-      result = newSketchyBlockHeaderObj(
-        newBlockHeaderObj(
-          uint32(headerSeq[0].fromBinary()),
-          headerSeq[1].toHash[:256](),
-          headerSeq[2].toHash[:256](),
-          headerSeq[4],
-          headerSeq[5].toHash[:256](),
-          uint16(headerSeq[7].fromBinary()),
-          uint32(headerSeq[8].fromBinary()),
-          uint32(headerSeq[9].fromBinary()),
-          newBLSSignature(headerSeq[10])
-        ),
-        uint32(headerSeq[3].fromBinary())
+      result = newBlockHeaderObj(
+        uint32(headerSeq[0].fromBinary()),
+        headerSeq[1].toHash[:256](),
+        headerSeq[2].toHash[:256](),
+        DistinctUInt32(headerSeq[3].fromBinary()),
+        headerSeq[4],
+        headerSeq[5].toHash[:256](),
+        uint16(headerSeq[7].fromBinary()),
+        uint32(headerSeq[8].fromBinary()),
+        uint32(headerSeq[9].fromBinary()),
+        newBLSSignature(headerSeq[10])
       )
     else:
-      result = newSketchyBlockHeaderObj(
-          newBlockHeaderObj(
-          uint32(headerSeq[0].fromBinary()),
-          headerSeq[1].toHash[:256](),
-          headerSeq[2].toHash[:256](),
-          headerSeq[4],
-          headerSeq[5].toHash[:256](),
-          newBLSPublicKey(headerSeq[7]),
-          uint32(headerSeq[8].fromBinary()),
-          uint32(headerSeq[9].fromBinary()),
-          newBLSSignature(headerSeq[10])
-        ),
-        uint32(headerSeq[3].fromBinary())
+      result = newBlockHeaderObj(
+        uint32(headerSeq[0].fromBinary()),
+        headerSeq[1].toHash[:256](),
+        headerSeq[2].toHash[:256](),
+        DistinctUInt32(headerSeq[3].fromBinary()),
+        headerSeq[4],
+        headerSeq[5].toHash[:256](),
+        newBLSPublicKey(headerSeq[7]),
+        uint32(headerSeq[8].fromBinary()),
+        uint32(headerSeq[9].fromBinary()),
+        newBLSSignature(headerSeq[10])
       )
   except BLSError:
     raise newLoggedException(ValueError, "Invalid Public Key or Signature.")
 
   #Set the hashes.
-  result.data.interimHash = interimHash
-  result.data.hash = hash
+  result.interimHash = interimHash
+  result.hash = hash
 
 template parseBlockHeaderWithoutHashing*(
   header: string
-): SketchyBlockHeader =
+): BlockHeader =
   parseBlockHeader(header, "", Hash[256]())

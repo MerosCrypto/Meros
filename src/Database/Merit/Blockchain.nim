@@ -171,7 +171,7 @@ proc revert*(
 
     #Delete the Block.
     try:
-      blockchain.db.deleteBlock(b, blockchain[b])
+      blockchain.db.deleteBlock(b, blockchain[b].body.removals)
     except IndexError:
       panic("Couldn't get a Block's Elements before we deleted it.")
 

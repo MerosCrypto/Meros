@@ -33,7 +33,7 @@ type
 
   BlockHeaderSyncRequest* = ref object of SyncRequest
     check*: Hash[256]
-    result*: Future[SketchyBlockHeader]
+    result*: Future[BlockHeader]
 
   BlockBodySyncRequest* = ref object of SyncRequest
     check*: Hash[256]
@@ -83,7 +83,7 @@ proc newTransactionSyncRequest*(
   )
 
 proc newBlockHeaderSyncRequest*(
-  future: Future[SketchyBlockHeader],
+  future: Future[BlockHeader],
   hash: Hash[256]
 ): BlockHeaderSyncRequest {.inline, forceCheck: [].} =
   BlockHeaderSyncRequest(
