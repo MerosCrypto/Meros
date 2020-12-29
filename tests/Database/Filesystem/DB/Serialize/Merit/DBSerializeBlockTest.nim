@@ -42,7 +42,6 @@ suite "DBSerializeBlock":
         getRandomX(),
         uint32(rand(4096)),
         last,
-        uint16(rand(50000)),
         char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
         newMinerWallet(),
         packets,
@@ -57,7 +56,6 @@ suite "DBSerializeBlock":
         getRandomX(),
         uint32(rand(4096)),
         last,
-        uint16(rand(50000)),
         char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
         uint16(rand(high(int16))),
         newMinerWallet(),
@@ -68,6 +66,8 @@ suite "DBSerializeBlock":
         uint32(rand(high(int32))),
         uint32(rand(high(int32)))
       )
+
+    #No Sketch collision check os performed as this doesn't generate/save any sketch.
 
     reloaded = newBlock.serialize().parseBlock(newBlock.header.interimHash, newBlock.header.hash)
     compare(newBlock, reloaded)

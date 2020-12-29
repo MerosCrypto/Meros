@@ -106,7 +106,7 @@ proc newBlockchainObj*(
           0,
           result.genesis,
           Hash[256](),
-          DistinctUInt32(0),
+          0,
           "".pad(4),
           Hash[256](),
           newBLSPublicKey(),

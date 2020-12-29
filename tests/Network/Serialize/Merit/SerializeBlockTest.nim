@@ -44,7 +44,6 @@ suite "SerializeBlock":
           getRandomX(),
           uint32(rand(4096)),
           last,
-          uint16(rand(50000)),
           char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
           newMinerWallet(),
           packets,
@@ -59,7 +58,6 @@ suite "SerializeBlock":
           getRandomX(),
           uint32(rand(4096)),
           last,
-          uint16(rand(50000)),
           char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
           uint16(rand(high(int16))),
           newMinerWallet(),
@@ -72,7 +70,7 @@ suite "SerializeBlock":
         )
 
       #Verify the sketch doesn't have a collision.
-      if newSketcher(packets).collides(newBlock.header.sketchSalt):
+      if packets.collides(newBlock.header.sketchSalt):
         continue
       break
 
@@ -80,10 +78,9 @@ suite "SerializeBlock":
     reloaded = getRandomX().parseBlock(newBlock.serialize())
 
     #Create the Sketch and extract its elements.
-    sketchResult = newSketcher(packets).merge(
+    sketchResult = packets.merge(
       reloaded.sketch,
       reloaded.capacity,
-      0,
       reloaded.data.header.sketchSalt
     )
     check sketchResult.missing.len == 0

@@ -19,7 +19,7 @@ proc compare*(
     bh1.last == bh2.last
     bh1.contents == bh2.contents
 
-    bh1.significant == bh2.significant
+    bh1.packetsQuantity == bh2.packetsQuantity
     bh1.sketchSalt == bh2.sketchSalt
     bh1.sketchCheck == bh2.sketchCheck
 

@@ -48,7 +48,7 @@ suite "SerializeBlockBody":
       )
 
       #Verify the sketch doesn't have a collision.
-      if newSketcher(packets).collides(sketchSalt):
+      if packets.collides(sketchSalt):
         continue
       break
 
@@ -56,10 +56,9 @@ suite "SerializeBlockBody":
     reloaded = body.serialize(sketchSalt).parseBlockBody()
 
     #Create the Sketch and extract its elements.
-    sketchResult = newSketcher(packets).merge(
+    sketchResult = packets.merge(
       reloaded.sketch,
       reloaded.capacity,
-      0,
       sketchSalt
     )
     check sketchResult.missing.len == 0
