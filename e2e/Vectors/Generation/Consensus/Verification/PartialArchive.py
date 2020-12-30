@@ -36,7 +36,7 @@ for h in range(2):
       0,
       blockchain.last(),
       bytes(32),
-      1,
+      0,
       bytes(4),
       bytes(32),
       blsPubKeys[h].serialize(),

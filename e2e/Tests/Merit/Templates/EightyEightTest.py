@@ -114,7 +114,7 @@ def EightyEightTest(
       0,
       block.header.hash,
       BlockHeader.createContents(packets),
-      1,
+      len(packets),
       template["header"][-43 : -39],
       BlockHeader.createSketchCheck(template["header"][-43 : -39], packets),
       0,

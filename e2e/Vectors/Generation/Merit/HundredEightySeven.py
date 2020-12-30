@@ -18,7 +18,7 @@ for b in range(1, 3):
       0,
       blockchain.last(),
       bytes(32),
-      1,
+      0,
       bytes(4),
       bytes(32),
       privKey.toPublicKey().serialize(),

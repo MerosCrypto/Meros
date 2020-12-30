@@ -80,7 +80,7 @@ live_lengths: Dict[MessageType, List[int]] = {
   MessageType.SignedDataDifficulty: [56],
   MessageType.SignedMeritRemoval:   [4, 0, 1, 0, 48],
 
-  MessageType.BlockHeader: [107, 0, 56]
+  MessageType.BlockHeader: [109, 0, 56]
 }
 
 sync_lengths: Dict[MessageType, List[int]] = {
