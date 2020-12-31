@@ -22,9 +22,10 @@ proc verifySketchCheck*(
 ) {.raises: [
   ValueError
 ].} =
-  var sketchHashes: seq[uint64] = sorted(sketchHashesArg)
 
-  var calculated: Hash[256]
+  var
+    sketchHashes: seq[uint64] = sorted(sketchHashesArg)
+    calculated: Hash[256]
   if sketchHashes.len != 0:
     var leaves: seq[Hash[256]] = newSeq[Hash[256]](sketchHashes.len)
     for h in 0 ..< sketchHashes.len:

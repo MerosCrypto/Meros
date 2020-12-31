@@ -259,6 +259,9 @@ proc sync*(
 
     logDebug "Synced Sketch Hashes", hash = newBlock.data.header.hash
 
+  if uint32(packets.len + missingPackets.len) != newBlock.data.header.packetsQuantity:
+    raise newLoggedException(ValueError, "Invalid packets quantity.")
+
   #Sync the missing VerificationPackets.
   if missingPackets.len != 0:
     try:

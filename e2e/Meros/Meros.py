@@ -448,11 +448,12 @@ class Meros:
 
   def blockBody(
     self,
-    block: Block
+    block: Block,
+    capacity: int = -1
   ) -> bytes:
     res: bytes = (
       MessageType.BlockBody.toByte() +
-      block.body.serialize(block.header.sketchSalt)
+      block.body.serialize(block.header.sketchSalt, capacity)
     )
     self.sync.send(res)
     return res
