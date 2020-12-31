@@ -296,9 +296,9 @@ class Meros:
     self.live: MerosSocket
     self.sync: MerosSocket
 
-    #Transactions we've sent.
-    #Used by the Liver/Syncer.
+    #Used by the Liver/Syncer when tests send outside of its normal flow.
     self.sentTXs: Set[bytes] = set({})
+    self.sentVerifs: Dict[bytes, Set[int]] = {}
 
   def syncConnect(
     self,
@@ -400,6 +400,10 @@ class Meros:
   ) -> bytes:
     res: bytes = bytes()
     if isinstance(elem, SignedVerification):
+      if elem.hash not in self.sentVerifs:
+        self.sentVerifs[elem.hash] = set([elem.holder])
+      else:
+        self.sentVerifs[elem.hash].add(elem.holder)
       res = MessageType.SignedVerification.toByte()
     elif isinstance(elem, SignedDataDifficulty):
       res = MessageType.SignedDataDifficulty.toByte()

@@ -38,8 +38,7 @@ class Liver:
 
   #Send the Blockchain, as if it's being mined in real time, and verify it.
   def live(
-    self,
-    ignorePackets: List[bytes] = []
+    self
   ) -> None:
     #Handshake with the node.
     self.rpc.meros.liveConnect(self.merit.blockchain.blocks[0].header.hash)
@@ -54,9 +53,11 @@ class Liver:
       pendingPackets: List[bytes] = []
       pendingTXs: List[bytes] = []
       for packet in block.body.packets:
-        if packet.hash in ignorePackets:
-          continue
-        pendingPackets.append(packet.hash)
+        if not (
+          (packet.hash in self.rpc.meros.sentVerifs) and
+          (self.rpc.meros.sentVerifs[packet.hash] == set(packet.holders))
+        ):
+          pendingPackets.append(packet.hash)
 
         #Don't include sent Transactions or independently created Block Data.
         if not (
