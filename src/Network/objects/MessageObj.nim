@@ -86,7 +86,7 @@ const
     MessageType.BlockList:        @[BYTE_LEN, -HASH_LEN, HASH_LEN],
 
     MessageType.BlockHeaderRequest:  @[HASH_LEN],
-    MessageType.BlockBodyRequest:    @[HASH_LEN],
+    MessageType.BlockBodyRequest:    @[HASH_LEN + INT_LEN],
     MessageType.SketchHashesRequest: @[HASH_LEN],
     MessageType.SketchHashRequests:  @[HASH_LEN, INT_LEN, -SKETCH_HASH_LEN],
     MessageType.TransactionRequest:  @[HASH_LEN],

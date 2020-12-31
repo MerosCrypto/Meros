@@ -356,8 +356,8 @@ proc handle*(
 
         of MessageType.BlockBodyRequest:
           try:
-            var requested: Block = manager.functions.merit.getBlockByHash(msg.message.toHash[:256]())
-            res = newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt))
+            var requested: Block = manager.functions.merit.getBlockByHash(msg.message[0 ..< 32].toHash[:256]())
+            res = newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt, msg.message[32 ..< 36].fromBinary()))
           except ValueError as e:
             panic("Couldn't create a sketch for a BlockBody, despite being able to add it which means it has a valid sketch: " & e.msg)
           except IndexError:

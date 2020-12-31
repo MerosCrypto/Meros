@@ -591,7 +591,24 @@ proc mainMerit(
         raise e
 
       try:
-        sketchyBlock = newSketchyBlockObj(header, await syncAwait network.syncManager.syncBlockBody(header.hash, header.contents))
+        sketchyBlock = newSketchyBlockObj(
+          header,
+          await syncAwait network.syncManager.syncBlockBody(
+            header.hash,
+            header.contents,
+            min(
+              (
+                #Differences. This line here is extremely inefficient.
+                (header.packetsQuantity - uint32(consensus[].getPending().packets.len)) +
+                #Support a 20% variance.
+                (header.packetsQuantity div 5) +
+                #+1 in case packetsQuantity < 5.
+                1
+              ),
+              header.packetsQuantity
+            )
+          )
+        )
       except DataMissing as e:
         raise newLoggedException(ValueError, e.msg)
       except Exception as e:

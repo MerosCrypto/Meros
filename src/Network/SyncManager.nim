@@ -582,7 +582,8 @@ proc sync*(
 proc syncBlockBody*(
   manager: SyncManager,
   hash: Hash[256],
-  contents: Hash[256]
+  contents: Hash[256],
+  capacity: uint32
 ): SyncFuture[SketchyBlockBody] {.forceCheck: [].} =
   #Get an ID.
   var id: int = manager.id
@@ -599,7 +600,7 @@ proc syncBlockBody*(
   )
 
   #Create the request and register it.
-  var request: BlockBodySyncRequest = result.future.newBlockBodySyncRequest(hash, contents)
+  var request: BlockBodySyncRequest = result.future.newBlockBodySyncRequest(hash, contents, capacity)
   manager.requests[id] = request
 
   #Send the request to every peer.

@@ -18,7 +18,7 @@
 
 ### BlockBodyRequest
 
-`BlockBodyRequest` has a message length of 36 bytes; the Block's 32-byte hash and a 4-byte capacity. The expected response to a `BlockBodyRequest` is a `BlockBody` containing the requested BlockBody using the specified capacity.
+`BlockBodyRequest` has a message length of 36 bytes; the Block's 32-byte hash and a 4-byte capacity. The expected response to a `BlockBodyRequest` is a `BlockBody` containing the requested BlockBody using the specified capacity. That said, the specified capacity is not required to be used in the response.
 
 ### SketchHashesRequest and SketchHashes
 
