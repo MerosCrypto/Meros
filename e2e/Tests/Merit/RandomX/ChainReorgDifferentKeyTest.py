@@ -49,10 +49,7 @@ def ChainReorgDifferentKeyTest(
 
     diff = -30
     while diff != 0:
-      req = rpc.meros.sync.recv()
-      if req != (MessageType.BlockBodyRequest.toByte() + alt.blocks[diff].header.hash):
-        raise TestError("Meros didn't request a previous BlockBody.")
-      rpc.meros.blockBody(alt.blocks[diff])
+      rpc.meros.handleBlockBody(alt.blocks[diff])
       diff += 1
 
     if rpc.meros.live.recv() != header:

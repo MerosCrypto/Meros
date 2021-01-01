@@ -41,18 +41,14 @@ def ShorterChainMoreWorkTest(
 
     diff = -4
     while diff != -1:
-      req = rpc.meros.sync.recv()
-      if req != (MessageType.BlockHeaderRequest.toByte() + alt.blocks[diff].header.hash):
+      if rpc.meros.sync.recv() != (MessageType.BlockHeaderRequest.toByte() + alt.blocks[diff].header.hash):
         raise TestError("Meros didn't request a previous BlockHeader.")
       rpc.meros.syncBlockHeader(alt.blocks[diff].header)
       diff += 1
 
     diff = -4
     while diff != 0:
-      req = rpc.meros.sync.recv()
-      if req != (MessageType.BlockBodyRequest.toByte() + alt.blocks[diff].header.hash):
-        raise TestError("Meros didn't request a previous BlockBody.")
-      rpc.meros.blockBody(alt.blocks[diff])
+      rpc.meros.handleBlockBody(alt.blocks[diff])
       diff += 1
 
     if rpc.meros.live.recv() != header:

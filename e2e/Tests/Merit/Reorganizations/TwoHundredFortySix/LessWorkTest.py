@@ -45,8 +45,7 @@ def THFSLessWorkTest(
 
     diff = -14
     while diff != -1:
-      req = rpc.meros.sync.recv()
-      if req != (MessageType.BlockHeaderRequest.toByte() + alt.blocks[diff].header.hash):
+      if rpc.meros.sync.recv() != (MessageType.BlockHeaderRequest.toByte() + alt.blocks[diff].header.hash):
         raise TestError("Meros didn't request a previous BlockHeader.")
       rpc.meros.syncBlockHeader(alt.blocks[diff].header)
       diff += 1
@@ -55,10 +54,9 @@ def THFSLessWorkTest(
     #Break the chain early via a data missing.
     diff = -14
     while diff != 0:
-      req = rpc.meros.sync.recv()
-      if req != (MessageType.BlockBodyRequest.toByte() + alt.blocks[diff].header.hash):
-        raise TestError("Meros didn't request a previous BlockBody.")
       if diff == -10:
+        if rpc.meros.sync.recv()[:-4] != (MessageType.BlockBodyRequest.toByte() + alt.blocks[diff].header.hash):
+          raise TestError("Meros didn't request a previous BlockBody.")
         rpc.meros.dataMissing()
         sleep(35)
         for socket in [rpc.meros.live, rpc.meros.sync]:
@@ -66,7 +64,7 @@ def THFSLessWorkTest(
         #We could just edit the condition above, yet this keeps parity with the other reorg tests.
         break
       else:
-        rpc.meros.blockBody(alt.blocks[diff])
+        rpc.meros.handleBlockBody(alt.blocks[diff])
       diff += 1
 
     #Verify Meros at least went back to the fork point.

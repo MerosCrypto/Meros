@@ -94,7 +94,7 @@ sync_lengths: Dict[MessageType, List[int]] = {
   MessageType.BlockList:        [1, -32, 32],
 
   MessageType.BlockHeaderRequest:  [32],
-  MessageType.BlockBodyRequest:    [32],
+  MessageType.BlockBodyRequest:    [36],
   MessageType.SketchHashesRequest: [32],
   MessageType.SketchHashRequests:  [32, 4, -8],
   MessageType.TransactionRequest:  [32],
@@ -446,17 +446,36 @@ class Meros:
     self.sync.send(res)
     return res
 
-  def blockBody(
+  def rawBlockBody(
     self,
     block: Block,
-    capacity: int = -1
-  ) -> bytes:
-    res: bytes = (
+    capacity: int
+  ) -> None:
+    self.sync.send(
       MessageType.BlockBody.toByte() +
-      block.body.serialize(block.header.sketchSalt, capacity)
+      block.body.serialize(
+        block.header.sketchSalt,
+        capacity
+      )
     )
-    self.sync.send(res)
-    return res
+
+  def handleBlockBody(
+    self,
+    block: Block,
+    capacityOverride: int = -1
+  ) -> None:
+    msg: bytes = self.sync.recv()
+    if MessageType(msg[0]) != MessageType.BlockBodyRequest:
+      raise TestError("Meros didn't request a Block Body.")
+
+    blockHash: bytes = msg[1 : 33]
+    if blockHash != block.header.hash:
+      raise TestError("Meros requested a different Block Body.")
+
+    self.rawBlockBody(
+      block,
+      int.from_bytes(msg[33 : 37], byteorder="little") if capacityOverride == -1 else capacityOverride
+    )
 
   def sketchHashes(
     self,

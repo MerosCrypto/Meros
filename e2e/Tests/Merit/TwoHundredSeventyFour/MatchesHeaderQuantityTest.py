@@ -34,17 +34,13 @@ def MatchesHeaderQuantityTest(
 
   #Send a single Block to earn Merit.
   meros.liveBlockHeader(blocks[0].header)
-  if MessageType(meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-    raise TestError("Meros didn't request the BlockBody for this header.")
-  meros.blockBody(blocks[0])
+  meros.handleBlockBody(blocks[0])
 
   #Send the header.
   meros.liveBlockHeader(blocks[1].header)
 
   #Fail Sketch Resolution, and send a different amount of sketch hashes.
-  if MessageType(meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-    raise TestError("Meros didn't request the BlockBody for this header.")
-  meros.blockBody(blocks[1], 0)
+  meros.handleBlockBody(blocks[1], 0)
   if MessageType(meros.sync.recv()[0]) != MessageType.SketchHashesRequest:
     raise TestError("Meros didn't request the hashes after failing sketch resolution.")
 
@@ -73,9 +69,7 @@ def MatchesHeaderQuantityTest(
 
   #Send the header and a large enough sketch to cause resolution.
   meros.liveBlockHeader(blocks[1].header)
-  if MessageType(meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-    raise TestError("Meros didn't request the BlockBody for this header.")
-  meros.blockBody(blocks[1], 3)
+  meros.handleBlockBody(blocks[1], 3)
 
   #Should now have been disconnected thanks to having 5 hashes.
   try:

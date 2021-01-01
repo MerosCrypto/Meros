@@ -100,9 +100,7 @@ def TwoHundredThirtyFiveTest(
   #Sync the Blocks.
   for b in range(8):
     header: bytes = rpc.meros.liveBlockHeader(blockchain.blocks[b + 2].header)
-    if rpc.meros.sync.recv() != (MessageType.BlockBodyRequest.toByte() + blockchain.blocks[b + 2].header.hash):
-      raise TestError("Meros didn't request the BlockBody.")
-    rpc.meros.blockBody(blockchain.blocks[b + 2])
+    rpc.meros.handleBlockBody(blockchain.blocks[b + 2])
     if rpc.meros.live.recv() != header:
       raise TestError("Meros didn't send back the header.")
     if MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:

@@ -5,7 +5,6 @@ from pytest import raises
 
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
@@ -25,10 +24,7 @@ def DepthOneTest(
   #Send the alternate tip.
   def sendAlternateTip() -> None:
     header: bytes = rpc.meros.liveBlockHeader(alt.blocks[-1].header)
-    req: bytes = rpc.meros.sync.recv()
-    if req != (MessageType.BlockBodyRequest.toByte() + alt.blocks[-1].header.hash):
-      raise TestError("Meros didn't request the BlockBody.")
-    rpc.meros.blockBody(alt.blocks[-1])
+    rpc.meros.handleBlockBody(alt.blocks[-1])
 
     if rpc.meros.live.recv() != header:
       raise TestError("Meros didn't send back the BlockHeader.")

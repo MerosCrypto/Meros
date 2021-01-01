@@ -6,7 +6,7 @@ from pytest import raises
 
 from e2e.Classes.Merit.Blockchain import Block, Blockchain
 
-from e2e.Meros.Meros import MessageType, Meros
+from e2e.Meros.Meros import Meros
 
 from e2e.Tests.Errors import TestError, SuccessError
 
@@ -22,9 +22,7 @@ def HundredEightySevenTest(
 
   block: Block = Block.fromJSON(vectors[0])
   sent: bytes = meros.liveBlockHeader(block.header)
-  if meros.sync.recv() != MessageType.BlockBodyRequest.toByte() + block.header.hash:
-    raise TestError("Meros didn't request the matching BlockBody.")
-  meros.blockBody(block)
+  meros.handleBlockBody(block)
   if meros.live.recv() != sent:
     raise TestError("Meros didn't broadcast a BlockHeader.")
 

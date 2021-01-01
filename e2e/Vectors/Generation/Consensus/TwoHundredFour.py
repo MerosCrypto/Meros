@@ -1,3 +1,8 @@
+#READ THIS BEFORE MAKING ALTERATIONS!
+#This has a single Block and a List of Blocks.
+#That said, the test acts as if it's a single chain (1 block + 1 block).
+#This format cannot be relied on to behave as it presents itself.
+
 from typing import List
 from hashlib import blake2b
 import json
@@ -42,7 +47,7 @@ blocks.append(
       0,
       blockchain.last(),
       BlockHeader.createContents([vp]),
-      0,
+      1,
       bytes(4),
       BlockHeader.createSketchCheck(bytes(4), [vp]),
       0,

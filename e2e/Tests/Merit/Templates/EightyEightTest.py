@@ -47,23 +47,7 @@ def EightyEightTest(
     block = Block.fromJSON(json.loads(file.read())[0])
   merit.blockchain.add(block)
   rpc.meros.liveBlockHeader(block.header)
-
-  #Handle sync requests.
-  reqHash: bytes = bytes()
-  while True:
-    msg: bytes = rpc.meros.sync.recv()
-    if MessageType(msg[0]) == MessageType.BlockBodyRequest:
-      reqHash = msg[1 : 33]
-      if reqHash != block.header.hash:
-        raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
-
-      #Send the BlockBody.
-      rpc.meros.blockBody(block)
-      break
-
-    else:
-      raise TestError("Unexpected message sent: " + msg.hex().upper())
-
+  rpc.meros.handleBlockBody(block)
   if MessageType(rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
     raise TestError("Meros didn't broadcast the Block Header it just added.")
 

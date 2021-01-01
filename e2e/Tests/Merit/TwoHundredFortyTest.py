@@ -1,3 +1,7 @@
+#This test is about an issue in significant, which has been removed from the protocol.
+#When removing significant, it was ported over to packets quantity, at which point it found an issue there.
+#So it is still testing behavior and can be helpful; hence its persistence.
+
 from typing import Dict, Any
 import socket
 
@@ -48,9 +52,7 @@ def TwoHundredFourtyTest(
   rpc.meros.syncConnect(blockchain.blocks[0].header.hash)
   for b in range(1, 10):
     headerMsg: bytes = rpc.meros.liveBlockHeader(blockchain.blocks[b].header)
-    if MessageType(rpc.meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-      raise TestError("Meros didn't request the Block Body.")
-    rpc.meros.blockBody(blockchain.blocks[b])
+    rpc.meros.handleBlockBody(blockchain.blocks[b])
     if rpc.meros.live.recv() != headerMsg:
       raise TestError("Meros didn't broadcast back the Block Header.")
     if MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:

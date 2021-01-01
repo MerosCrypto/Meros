@@ -67,7 +67,7 @@ def HundredTwentyFourTest(
         if reqHash != blockchain.blocks[bB].header.hash:
           raise TestError("Meros asked for a Block Body that didn't belong to the next Block.")
 
-        rpc.meros.blockBody(blockchain.blocks[bB])
+        rpc.meros.rawBlockBody(blockchain.blocks[bB], len(blockchain.blocks[bB].body.packets))
         bB += 1
 
       else:

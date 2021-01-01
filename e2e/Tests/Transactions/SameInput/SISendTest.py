@@ -39,6 +39,7 @@ def SameInputTest(
 
     #Send the Block.
     rpc.meros.liveBlockHeader(block.header)
+    rpc.meros.handleBlockBody(block)
 
     #Handle sync requests.
     reqHash: bytes = bytes()
@@ -54,15 +55,7 @@ def SameInputTest(
           raise TestError("Meros sent a keep-alive.")
 
       msg: bytes = rpc.meros.sync.recv()
-      if MessageType(msg[0]) == MessageType.BlockBodyRequest:
-        reqHash = msg[1 : 33]
-        if reqHash != block.header.hash:
-          raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
-
-        #Send the BlockBody.
-        rpc.meros.blockBody(block)
-
-      elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
+      if MessageType(msg[0]) == MessageType.SketchHashesRequest:
         if not block.body.packets:
           raise TestError("Meros asked for Sketch Hashes from a Block without any.")
 

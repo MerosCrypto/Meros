@@ -41,8 +41,7 @@ def ChainReorgDifferentKeyTest(
 
     diff = -20
     while diff != -1:
-      req = rpc.meros.sync.recv()
-      if req != (MessageType.BlockHeaderRequest.toByte() + alt.blocks[diff].header.hash):
+      if rpc.meros.sync.recv() != (MessageType.BlockHeaderRequest.toByte() + alt.blocks[diff].header.hash):
         raise TestError("Meros didn't request a previous BlockHeader.")
       rpc.meros.syncBlockHeader(alt.blocks[diff].header)
       diff += 1
@@ -50,10 +49,7 @@ def ChainReorgDifferentKeyTest(
     #Advance the chain far enough to switch to the new key.
     diff = -20
     while diff != -11:
-      req = rpc.meros.sync.recv()
-      if req != (MessageType.BlockBodyRequest.toByte() + alt.blocks[diff].header.hash):
-        raise TestError("Meros didn't request a previous BlockBody.")
-      rpc.meros.blockBody(alt.blocks[diff])
+      rpc.meros.handleBlockBody(alt.blocks[diff])
       diff += 1
 
     #Cause the reorganization to fail.
@@ -81,10 +77,7 @@ def ChainReorgDifferentKeyTest(
         if rpc.meros.sync.recv() != (MessageType.BlockHeaderRequest.toByte() + main.blocks[b].header.hash):
           raise TestError("Meros didn't request the BlockHeader.")
         rpc.meros.syncBlockHeader(main.blocks[b].header)
-
-      if rpc.meros.sync.recv() != (MessageType.BlockBodyRequest.toByte() + main.blocks[b].header.hash):
-        raise TestError("Meros didn't request the BlockBody.")
-      rpc.meros.blockBody(main.blocks[b])
+      rpc.meros.handleBlockBody(main.blocks[b])
 
   Liver(
     rpc,

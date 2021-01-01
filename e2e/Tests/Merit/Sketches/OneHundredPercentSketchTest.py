@@ -5,7 +5,7 @@ from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Merit.Blockchain import Blockchain
 
-from e2e.Meros.Meros import MessageType, Meros
+from e2e.Meros.Meros import Meros
 
 from e2e.Tests.Errors import TestError
 
@@ -22,9 +22,7 @@ def OneHundredPercentSketchTest(
   meros.syncConnect(blockchain.blocks[0].header.hash)
 
   header: bytes = meros.liveBlockHeader(blockchain.blocks[1].header)
-  if MessageType(meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-    raise TestError("Meros didn't request a BlockBody for the header we just sent it.")
-  meros.blockBody(blockchain.blocks[1])
+  meros.handleBlockBody(blockchain.blocks[1])
   if meros.live.recv() != header:
     raise TestError("Meros didn't broadcast a BlockHeader for a Block it just added.")
 
@@ -37,8 +35,6 @@ def OneHundredPercentSketchTest(
       raise TestError("Meros didn't broadcast back a Verification.")
 
   header = meros.liveBlockHeader(blockchain.blocks[2].header)
-  if MessageType(meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-    raise TestError("Meros didn't request a BlockBody for the header we just sent it.")
-  meros.blockBody(blockchain.blocks[2])
+  meros.handleBlockBody(blockchain.blocks[2])
   if meros.live.recv() != header:
     raise TestError("Meros didn't broadcast a BlockHeader for a Block it just added.")
