@@ -8,7 +8,7 @@ import objects/ReorganizationInfoObj
 import objects/GlobalFunctionBoxObj
 import objects/ConfigObj
 
-import lib/[Errors, Util, Hash, Sketcher]
+import lib/[Errors, Util, Hash]
 import Wallet/[MinerWallet, Wallet]
 
 import Database/Filesystem/DB/DB
