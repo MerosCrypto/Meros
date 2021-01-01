@@ -179,7 +179,7 @@ proc sync*(
   manager: SyncManager,
   state: State,
   newBlock: SketchyBlock,
-  sketcher: Sketcher
+  sketcher: seq[VerificationPacket]
 ): Future[(Block, seq[BlockElement])] {.forceCheck: [
   ValueError,
   DataMissing
@@ -206,7 +206,6 @@ proc sync*(
       sketchResult = sketcher.merge(
         newBlock.sketch,
         newBlock.capacity,
-        newBlock.data.header.significant,
         newBlock.data.header.sketchSalt
       )
     except SaltError:
@@ -231,12 +230,10 @@ proc sync*(
     #Clear packets.
     packets = @[]
 
-    #Generate a Table of hashes we have in the Sketcher (which are over significance) to their packet.
+    #Generate a Table of hashes we have in the Sketcher to their packet.
     var lookup: Table[uint64, VerificationPacket] = initTable[uint64, VerificationPacket]()
     for elem in sketcher:
-      if elem.significance < int(newBlock.data.header.significant):
-        continue
-      lookup[sketchHash(newBlock.data.header.sketchSalt, elem.packet)] = elem.packet
+      lookup[sketchHash(newBlock.data.header.sketchSalt, elem)] = elem
 
     #Sync the list of sketch hashes.
     try:
@@ -262,6 +259,9 @@ proc sync*(
 
     logDebug "Synced Sketch Hashes", hash = newBlock.data.header.hash
 
+  if uint32(packets.len + missingPackets.len) != newBlock.data.header.packetsQuantity:
+    raise newLoggedException(ValueError, "Invalid packets quantity.")
+
   #Sync the missing VerificationPackets.
   if missingPackets.len != 0:
     try:
@@ -270,6 +270,10 @@ proc sync*(
       raise e
     except Exception as e:
       panic("Syncing a Block's VerificationPackets threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+  #Check the header's packets quantity.
+  if uint32(packets.len) != newBlock.data.header.packetsQuantity:
+    raise newLoggedException(ValueError, "Header's amount of packets and sketchCheck don't line up.")
 
   #Verify the contents Merkle.
   try:
@@ -445,8 +449,7 @@ proc sync*(
     if status.merit != -1:
       raise newLoggedException(ValueError, "Block has a Transaction out of Epochs.")
 
-    #Calculate the Merit to check the significant against.
-    var merit: int = 0
+    #Check the packet's holders.
     for holder in packet.holders:
       #Verify every holder in the packet has yet to be archived.
       if status.holders.contains(holder):
@@ -456,11 +459,6 @@ proc sync*(
 
       if int(holder) >= state.merit.len:
         raise newLoggedException(ValueError, "Block has a Verification from a non-existent holder.")
-      merit += state.merit[holder]
-
-    #Verify significant.
-    if merit < int(result[0].header.significant):
-      raise newLoggedException(ValueError, "Block has an invalid significant.")
 
   #Verify the included Elements.
   result[1] = result[0].body.elements
@@ -584,7 +582,8 @@ proc sync*(
 proc syncBlockBody*(
   manager: SyncManager,
   hash: Hash[256],
-  contents: Hash[256]
+  contents: Hash[256],
+  capacity: uint32
 ): SyncFuture[SketchyBlockBody] {.forceCheck: [].} =
   #Get an ID.
   var id: int = manager.id
@@ -601,7 +600,7 @@ proc syncBlockBody*(
   )
 
   #Create the request and register it.
-  var request: BlockBodySyncRequest = result.future.newBlockBodySyncRequest(hash, contents)
+  var request: BlockBodySyncRequest = result.future.newBlockBodySyncRequest(hash, contents, capacity)
   manager.requests[id] = request
 
   #Send the request to every peer.

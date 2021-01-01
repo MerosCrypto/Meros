@@ -44,9 +44,9 @@ def HundredSeventySevenTest(
       0,
       template["header"][4 : 36],
       template["header"][36 : 68],
-      int.from_bytes(template["header"][68 : 70], byteorder="little"),
-      template["header"][70 : 74],
-      template["header"][74 : 106],
+      int.from_bytes(template["header"][68 : 72], byteorder="little"),
+      template["header"][72 : 76],
+      template["header"][76 : 108],
       0,
       int.from_bytes(template["header"][-4:], byteorder="little")
     )

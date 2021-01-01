@@ -26,6 +26,7 @@ suite "SerializeBlock":
       packets: seq[VerificationPacket] = @[]
       elements: seq[BlockElement] = @[]
       newBlock: Block
+      capacity: int
       reloaded: SketchyBlock
       sketchResult: SketchResult
 
@@ -33,6 +34,9 @@ suite "SerializeBlock":
     #Randomize the packets.
     for _ in 0 ..< rand(300):
       packets.add(newRandomVerificationPacket())
+
+    #Old capacity formula which still has value here given how the new one is context dependent.
+    capacity = (packets.len div 5) + 1
 
     #Randomize the elements.
     for _ in 0 ..< rand(300):
@@ -44,7 +48,6 @@ suite "SerializeBlock":
           getRandomX(),
           uint32(rand(4096)),
           last,
-          uint16(rand(50000)),
           char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
           newMinerWallet(),
           packets,
@@ -59,7 +62,6 @@ suite "SerializeBlock":
           getRandomX(),
           uint32(rand(4096)),
           last,
-          uint16(rand(50000)),
           char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
           uint16(rand(high(int16))),
           newMinerWallet(),
@@ -72,24 +74,23 @@ suite "SerializeBlock":
         )
 
       #Verify the sketch doesn't have a collision.
-      if newSketcher(packets).collides(newBlock.header.sketchSalt):
+      if packets.collides(newBlock.header.sketchSalt):
         continue
       break
 
     #Serialize it and parse it back.
-    reloaded = getRandomX().parseBlock(newBlock.serialize())
+    reloaded = getRandomX().parseBlock(newBlock.serialize(capacity))
 
     #Create the Sketch and extract its elements.
-    sketchResult = newSketcher(packets).merge(
+    sketchResult = packets.merge(
       reloaded.sketch,
       reloaded.capacity,
-      0,
       reloaded.data.header.sketchSalt
     )
     check sketchResult.missing.len == 0
     reloaded.data.body.packets = sketchResult.packets
 
-    check newBlock.serialize() == reloaded.data.serialize()
+    check newBlock.serialize(capacity) == reloaded.data.serialize(capacity)
     compare(newBlock, reloaded.data)
 
     #Flip the newMiner bool.

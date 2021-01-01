@@ -80,7 +80,7 @@ live_lengths: Dict[MessageType, List[int]] = {
   MessageType.SignedDataDifficulty: [56],
   MessageType.SignedMeritRemoval:   [4, 0, 1, 0, 48],
 
-  MessageType.BlockHeader: [107, 0, 56]
+  MessageType.BlockHeader: [109, 0, 56]
 }
 
 sync_lengths: Dict[MessageType, List[int]] = {
@@ -94,7 +94,7 @@ sync_lengths: Dict[MessageType, List[int]] = {
   MessageType.BlockList:        [1, -32, 32],
 
   MessageType.BlockHeaderRequest:  [32],
-  MessageType.BlockBodyRequest:    [32],
+  MessageType.BlockBodyRequest:    [36],
   MessageType.SketchHashesRequest: [32],
   MessageType.SketchHashRequests:  [32, 4, -8],
   MessageType.TransactionRequest:  [32],
@@ -296,9 +296,9 @@ class Meros:
     self.live: MerosSocket
     self.sync: MerosSocket
 
-    #Transactions we've sent.
-    #Used by the Liver/Syncer.
+    #Used by the Liver/Syncer when tests send outside of its normal flow.
     self.sentTXs: Set[bytes] = set({})
+    self.sentVerifs: Dict[bytes, Set[int]] = {}
 
   def syncConnect(
     self,
@@ -400,6 +400,10 @@ class Meros:
   ) -> bytes:
     res: bytes = bytes()
     if isinstance(elem, SignedVerification):
+      if elem.hash not in self.sentVerifs:
+        self.sentVerifs[elem.hash] = set([elem.holder])
+      else:
+        self.sentVerifs[elem.hash].add(elem.holder)
       res = MessageType.SignedVerification.toByte()
     elif isinstance(elem, SignedDataDifficulty):
       res = MessageType.SignedDataDifficulty.toByte()
@@ -442,16 +446,36 @@ class Meros:
     self.sync.send(res)
     return res
 
-  def blockBody(
+  def rawBlockBody(
     self,
-    block: Block
-  ) -> bytes:
-    res: bytes = (
+    block: Block,
+    capacity: int
+  ) -> None:
+    self.sync.send(
       MessageType.BlockBody.toByte() +
-      block.body.serialize(block.header.sketchSalt)
+      block.body.serialize(
+        block.header.sketchSalt,
+        capacity
+      )
     )
-    self.sync.send(res)
-    return res
+
+  def handleBlockBody(
+    self,
+    block: Block,
+    capacityOverride: int = -1
+  ) -> None:
+    msg: bytes = self.sync.recv()
+    if MessageType(msg[0]) != MessageType.BlockBodyRequest:
+      raise TestError("Meros didn't request a Block Body.")
+
+    blockHash: bytes = msg[1 : 33]
+    if blockHash != block.header.hash:
+      raise TestError("Meros requested a different Block Body.")
+
+    self.rawBlockBody(
+      block,
+      int.from_bytes(msg[33 : 37], byteorder="little") if capacityOverride == -1 else capacityOverride
+    )
 
   def sketchHashes(
     self,

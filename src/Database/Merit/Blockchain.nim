@@ -50,11 +50,6 @@ proc testBlockHeader*(
   if header.version != 0:
     raise newLoggedException(ValueError, "BlockHeader has an invalid version.")
 
-  #This hardcoded magic number breaks this check on chains other than mainnet.
-  #We need to calculate this based off the fixed block reward of 50 and defined amount of dead blocks.
-  if (header.significant == 0) or (header.significant > uint16(26280)):
-    raise newLoggedException(ValueError, "Invalid significant.")
-
   var key: BLSPublicKey
   if header.newMiner:
     #Check a miner with a nickname isn't being marked as new.
@@ -176,7 +171,7 @@ proc revert*(
 
     #Delete the Block.
     try:
-      blockchain.db.deleteBlock(b, blockchain[b].body.elements, blockchain[b].body.removals)
+      blockchain.db.deleteBlock(b, blockchain[b].body.removals)
     except IndexError:
       panic("Couldn't get a Block's Elements before we deleted it.")
 

@@ -23,9 +23,7 @@ def MissingOneSketchTest(
   meros.syncConnect(blockchain.blocks[0].header.hash)
 
   header: bytes = meros.liveBlockHeader(blockchain.blocks[1].header)
-  if MessageType(meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-    raise TestError("Meros didn't request a BlockBody for the header we just sent it.")
-  meros.blockBody(blockchain.blocks[1])
+  meros.handleBlockBody(blockchain.blocks[1])
   if meros.live.recv() != header:
     raise TestError("Meros didn't broadcast a BlockHeader for a Block it just added.")
 
@@ -38,9 +36,7 @@ def MissingOneSketchTest(
       raise TestError("Meros didn't broadcast back a Verification.")
 
   header = meros.liveBlockHeader(blockchain.blocks[2].header)
-  if MessageType(meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-    raise TestError("Meros didn't request a BlockBody for the header we just sent it.")
-  meros.blockBody(blockchain.blocks[2])
+  meros.handleBlockBody(blockchain.blocks[2], 1)
 
   if MessageType(meros.sync.recv()[0]) != MessageType.SketchHashRequests:
     raise TestError("Meros didn't request the packet it's missing.")

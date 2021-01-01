@@ -6,13 +6,13 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 import ../SerializeCommon
 
 proc serializeTemplate*(
-  header: BlockHeader
+  header: BlockHeader,
 ): string {.inline, forceCheck: [].} =
   header.version.toBinary(INT_LEN) &
   header.last.serialize() &
   header.contents.serialize() &
 
-  header.significant.toBinary(NICKNAME_LEN) &
+  header.packetsQuantity.toBinary(INT_LEN) &
   header.sketchSalt.pad(INT_LEN) &
   header.sketchCheck.serialize() &
 

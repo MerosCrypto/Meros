@@ -21,6 +21,7 @@ suite "SerializeBlockBody":
       sketchSalt: string
       packetsContents: Hash[256] = newRandomHash()
       packets: seq[VerificationPacket] = @[]
+      capacity: int
       elements: seq[BlockElement] = @[]
       body: BlockBody
       reloaded: SketchyBlockBody
@@ -30,6 +31,9 @@ suite "SerializeBlockBody":
     #Randomize the packets.
     for _ in 0 ..< rand(300):
       packets.add(newRandomVerificationPacket())
+
+    #Old capacity formula which still has value here given how the new one is context dependent.
+    capacity = (packets.len div 5) + 1
 
     #Randomize the elements.
     for _ in 0 ..< rand(300):
@@ -48,25 +52,24 @@ suite "SerializeBlockBody":
       )
 
       #Verify the sketch doesn't have a collision.
-      if newSketcher(packets).collides(sketchSalt):
+      if packets.collides(sketchSalt):
         continue
       break
 
     #Serialize it and parse it back.
-    reloaded = body.serialize(sketchSalt).parseBlockBody()
+    reloaded = body.serialize(sketchSalt, capacity).parseBlockBody()
 
     #Create the Sketch and extract its elements.
-    sketchResult = newSketcher(packets).merge(
+    sketchResult = packets.merge(
       reloaded.sketch,
       reloaded.capacity,
-      0,
       sketchSalt
     )
     check sketchResult.missing.len == 0
     reloaded.data.packets = sketchResult.packets
 
     #Test the serialized versions.
-    check body.serialize(sketchSalt) == reloaded.data.serialize(sketchSalt)
+    check body.serialize(sketchSalt, capacity) == reloaded.data.serialize(sketchSalt, capacity)
 
     #Compare the BlockBodies.
     compare(body, reloaded.data)

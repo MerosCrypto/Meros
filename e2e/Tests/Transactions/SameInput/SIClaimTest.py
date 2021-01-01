@@ -33,17 +33,12 @@ def SameInputTest(
 
     #Send the Block.
     rpc.meros.liveBlockHeader(block.header)
+    rpc.meros.handleBlockBody(block)
 
     #Handle sync requests.
     while True:
       msg: bytes = rpc.meros.sync.recv()
-      if MessageType(msg[0]) == MessageType.BlockBodyRequest:
-        if msg[1 : 33] != block.header.hash:
-          raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
-
-        rpc.meros.blockBody(block)
-
-      elif MessageType(msg[0]) == MessageType.SketchHashRequests:
+      if MessageType(msg[0]) == MessageType.SketchHashRequests:
         if msg[1 : 33] != block.header.hash:
           raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
 

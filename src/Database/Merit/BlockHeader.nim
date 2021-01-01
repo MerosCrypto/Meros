@@ -28,7 +28,7 @@ proc hash*(
 #Hash the header.
 proc hash*(
   rx: RandomX,
-  header: BlockHeader
+  header: BlockHeader,
 ) {.forceCheck: [].} =
   rx.hash(
     header,
@@ -91,7 +91,7 @@ proc newBlockHeader*(
   version: uint32,
   last: Hash[256],
   contents: Hash[256],
-  significant: uint16,
+  packetsQuantity: uint32,
   sketchSalt: string,
   sketchCheck: Hash[256],
   miner: BLSPublicKey,
@@ -104,7 +104,7 @@ proc newBlockHeader*(
     version,
     last,
     contents,
-    significant,
+    packetsQuantity,
     sketchSalt,
     sketchCheck,
     miner,
@@ -119,7 +119,7 @@ proc newBlockHeader*(
   version: uint32,
   last: Hash[256],
   contents: Hash[256],
-  significant: uint16,
+  packetsQuantity: uint32,
   sketchSalt: string,
   sketchCheck: Hash[256],
   miner: uint16,
@@ -132,7 +132,7 @@ proc newBlockHeader*(
     version,
     last,
     contents,
-    significant,
+    packetsQuantity,
     sketchSalt,
     sketchCheck,
     miner,

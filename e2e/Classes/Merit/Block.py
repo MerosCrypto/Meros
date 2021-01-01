@@ -21,11 +21,6 @@ class Block:
   ) -> None:
     self.header.mine(privKey, difficulty)
 
-  def serialize(
-    self
-  ) -> bytes:
-    return self.header.serialize() + self.body.serialize(self.header.sketchSalt)
-
   def toJSON(
     self
   ) -> Dict[str, Any]:

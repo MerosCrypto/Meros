@@ -110,8 +110,7 @@ def BeatenTest(
     rpc.meros.liveBlockHeader(blockWBeatenVerif.header)
 
     #BlockBody sync request.
-    rpc.meros.sync.recv()
-    rpc.meros.blockBody(blockWBeatenVerif)
+    rpc.meros.handleBlockBody(blockWBeatenVerif)
 
     #Sketch hash sync request.
     hashReqs: bytes = rpc.meros.sync.recv()[37:]

@@ -113,7 +113,9 @@ class Syncer:
         if reqHash != self.blocks[-1].header.hash:
           raise TestError("Meros asked for a BlockBody other than the next Block's on the last BlockList.")
 
-        self.rpc.meros.blockBody(self.blocks[-1])
+        if int.from_bytes(msg[33 : 37], "little") != len(self.blocks[-1].body.packets):
+          raise Exception("Meros didn't request 100% of packets in the BlockBody when syncing.")
+        self.rpc.meros.rawBlockBody(self.blocks[-1], len(self.blocks[-1].body.packets))
         self.blockHashes.remove(self.blocks[-1].header.hash)
 
         #Set the packets/transactions which should be synced.
@@ -137,14 +139,6 @@ class Syncer:
         noVCMRs: bool = True
         if (self.packets == {}) and noVCMRs:
           del self.blocks[-1]
-
-      elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
-        reqHash = msg[1 : 33]
-        if reqHash != self.blocks[-1].header.hash:
-          raise TestError("Meros asked for Sketch Hashes that didn't belong to the header we just sent it.")
-
-        hashes: List[int] = list(self.packets)
-        self.rpc.meros.sketchHashes(hashes)
 
       elif MessageType(msg[0]) == MessageType.SketchHashRequests:
         reqHash = msg[1 : 33]

@@ -95,10 +95,11 @@ proc newBlockHeaderSyncRequest*(
 proc newBlockBodySyncRequest*(
   future: Future[SketchyBlockBody],
   hash: Hash[256],
-  contents: Hash[256]
+  contents: Hash[256],
+  capacity: uint32
 ): BlockBodySyncRequest {.inline, forceCheck: [].} =
   BlockBodySyncRequest(
-    msg: newMessage(MessageType.BlockBodyRequest, hash.serialize()),
+    msg: newMessage(MessageType.BlockBodyRequest, hash.serialize() & capacity.toBinary(INT_LEN)),
     check: contents,
     result: future
   )

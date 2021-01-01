@@ -57,7 +57,7 @@ def HundredFiftyFiveTest(
       0,
       blockchain.blocks[0].header.hash,
       bytes(32),
-      1,
+      0,
       bytes(4),
       bytes(32),
       blsPubKey,

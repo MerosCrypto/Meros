@@ -46,13 +46,11 @@ class PrototypeBlock:
     time: int,
     packets: List[VerificationPacket] = [],
     elements: List[Element] = [],
-    significant: int = 1,
     minerID: Union[PrivateKey, int] = 0
   ) -> None:
     #Store all the arguments relevant to this specific Block.
     self.packets: List[VerificationPacket] = list(packets)
     self.elements: List[Element] = list(elements)
-    self.significant: int = significant
     self.minerID: Union[PrivateKey, int] = minerID
     self.time: int = time
 
@@ -120,7 +118,7 @@ class PrototypeBlock:
         0,
         prev.hash,
         BlockHeader.createContents(self.packets, self.elements),
-        self.significant,
+        len(self.packets),
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), self.packets),
         minerID,
@@ -169,7 +167,6 @@ class PrototypeChain:
         #Create copies of the lists used as arguments to ensure we don't mutate the arguments.
         list(packets),
         list(elements),
-        1,
         miner
       )
     )

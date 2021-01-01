@@ -34,4 +34,4 @@ def HundredSeventyFiveTest(
     callbacks={
       7: sendDatasAndVerif
     }
-  ).live([verif.hash])
+  ).live()

@@ -5,8 +5,6 @@ import stint
 import ../../../lib/[Errors, Util, Hash]
 import ../../../Wallet/MinerWallet
 
-import ../../Consensus/Elements/Elements
-
 import ../../Merit/objects/[BlockHeaderObj, BlockObj]
 
 import ../../../Network/Serialize/SerializeCommon
@@ -614,7 +612,6 @@ proc deleteUpcomingKey*(
 proc deleteBlock*(
   db: DB,
   nonce: int,
-  elements: seq[BlockElement],
   removals: set[uint16]
 ) {.forceCheck: [].} =
   var hash: Hash[256]

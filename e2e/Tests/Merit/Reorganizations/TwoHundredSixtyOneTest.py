@@ -62,9 +62,7 @@ def TwoHundredSixtyOneTest(
     rpc.meros.syncBlockHeader(blankBlocks.blocks[1].header)
 
     for b in range(2):
-      if MessageType(rpc.meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-        raise TestError("Meros didn't request the next Block Body on the list.")
-      rpc.meros.blockBody(blankBlocks.blocks[b+1])
+      rpc.meros.handleBlockBody(blankBlocks.blocks[b+1])
 
   #Close the connection to give us time to mine Blocks without worrying about the handshake.
   rpc.meros.live.connection.close()
@@ -96,9 +94,7 @@ def TwoHundredSixtyOneTest(
     rpc.meros.syncBlockHeader(merit.blockchain.blocks[h + 1].header)
 
   for b in range(3):
-    if MessageType(rpc.meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-      raise TestError("Meros didn't request the next Block Body on the list.")
-    rpc.meros.blockBody(merit.blockchain.blocks[b + 1])
+    rpc.meros.handleBlockBody(merit.blockchain.blocks[b + 1])
 
   if MessageType(rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
     raise TestError("Meros didn't broadcast a Block it just synced.")

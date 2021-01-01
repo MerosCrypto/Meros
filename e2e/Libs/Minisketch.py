@@ -60,6 +60,8 @@ class Sketch:
     sketchSalt: bytes,
     packet: VerificationPacket
   ) -> None:
+    if self.capacity == 0:
+      return
     self.hashes.append(Sketch.hash(sketchSalt, packet))
     MinisketchLib.minisketch_add_uint64(self.sketch, c_uint64(self.hashes[-1]))
 

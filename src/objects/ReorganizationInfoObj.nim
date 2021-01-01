@@ -1,7 +1,7 @@
 import stint
 
 import ../lib/Hash
-import ../Database/Merit/BlockHeader
+import ../Database/Merit/objects/BlockHeaderObj
 
 type ReorganizationInfo* = object
   sharedWork*: StUInt[128]

@@ -27,9 +27,15 @@ def PruneUnaddableTest(
       if rpc.meros.liveTransaction(data) != rpc.meros.live.recv():
         raise TestError("Meros didn't send back the Data.")
 
-    #Send the beaten Data's descendant's verification.
-    if rpc.meros.signedElement(SignedVerification.fromSignedJSON(vectors["verification"])) != rpc.meros.live.recv():
+    #Send the winning descendant Data's verification.
+    verif: SignedVerification = SignedVerification.fromSignedJSON(vectors["verification"])
+    if rpc.meros.signedElement(verif) != rpc.meros.live.recv():
       raise TestError("Meros didn't send back the SignedVerification.")
+
+    #The Liver thinks we sent this packet, so it shouldn't have to.
+    #That said, that'd only be true if this was included in the Sketcher.
+    #As its parent is unmentioned, it won't be.
+    del rpc.meros.sentVerifs[verif.hash]
 
   def verifyAdded() -> None:
     for data in datas:

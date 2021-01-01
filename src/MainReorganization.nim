@@ -7,7 +7,7 @@ proc revertTo(
   consensus: ref Consensus,
   transactions: ref Transactions,
   height: int
-) =
+) {.forceCheck: [].} =
   if height == merit.blockchain.height:
     logInfo "No need to revert"
     return

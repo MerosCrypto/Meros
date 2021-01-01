@@ -2,7 +2,7 @@ import strutils
 import tables
 
 import ../../../lib/[Errors, Util, Hash]
-import ../../../lib/Sketcher as SketcherFile
+import ../../../lib/Sketcher
 import ../../../Wallet/MinerWallet
 
 import ../../../objects/GlobalFunctionBoxObj
@@ -64,7 +64,6 @@ proc `%`(
       "last":         $blockArg.header.last,
       "contents":     $blockArg.header.contents,
 
-      "significant":  blockArg.header.significant,
       "sketchSalt":   blockArg.header.sketchSalt.toHex(),
       "sketchCheck":  $blockArg.header.sketchCheck,
 
@@ -117,7 +116,7 @@ proc module*(
   #Table of usable Sketcher objects.
   #Shared between the getBlockTemplate/publishBlock routes.
   var
-    sketchers: Table[int, Sketcher]
+    sketchers: Table[int, seq[VerificationPacket]]
     bodies: Table[int, string]
     sketchID: int = 0
     lastTailUsedForTemplate: Hash[256] = Hash[256]()
@@ -224,7 +223,7 @@ proc module*(
           raise newJSONRPCError(-4, "Invalid miner")
 
         if lastTailUsedForTemplate != functions.merit.getTail():
-          sketchers = initTable[int, Sketcher]()
+          sketchers = initTable[int, seq[VerificationPacket]]()
           bodies = initTable[int, string]()
           lastTailusedForTemplate = functions.merit.getTail()
 
@@ -250,16 +249,7 @@ proc module*(
         #Verify the packets don't collide with our salt.
         while true:
           try:
-            sketchers[id] = newSketcher(
-              (
-                proc (
-                  nick: uint16
-                ): int {.raises: [].} =
-                  functions.merit.getRawMerit(nick)
-              ),
-              functions.consensus.isMalicious,
-              pending.packets
-            )
+            sketchers[id] = pending.packets
 
             sketchSalt = sketchSaltNum.toBinary(INT_LEN)
             if not sketchers[id].collides(sketchSalt):
@@ -294,7 +284,7 @@ proc module*(
               0,
               functions.merit.getTail(),
               contents.contents,
-              1,
+              uint32(pending.packets.len),
               sketchSalt,
               newSketchCheck(sketchSalt, pending.packets),
               miner,
@@ -309,7 +299,7 @@ proc module*(
               0,
               functions.merit.getTail(),
               contents.contents,
-              1,
+              uint32(pending.packets.len),
               sketchSalt,
               newSketchCheck(sketchSalt, pending.packets),
               nick,

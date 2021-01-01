@@ -26,9 +26,7 @@ def VUnknownSignedTest(
   rpc.meros.liveConnect(chain.blocks[0].header.hash)
   rpc.meros.syncConnect(chain.blocks[0].header.hash)
   header: bytes = rpc.meros.liveBlockHeader(chain.blocks[1].header)
-  if MessageType(rpc.meros.sync.recv()[0]) != MessageType.BlockBodyRequest:
-    raise TestError("Meros didn't ask for the body.")
-  rpc.meros.blockBody(chain.blocks[1])
+  rpc.meros.handleBlockBody(chain.blocks[1])
   if rpc.meros.live.recv() != header:
     raise TestError("Meros didn't broadcast the header.")
 

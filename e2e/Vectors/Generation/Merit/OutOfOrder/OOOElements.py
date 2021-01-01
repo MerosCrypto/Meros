@@ -27,7 +27,7 @@ for _ in range(24):
       0,
       blockchain.last(),
       bytes(32),
-      1,
+      0,
       bytes(4),
       bytes(32),
       0,
@@ -56,7 +56,7 @@ for _ in range(2):
       #Used so the type checkers realize List[SignedDataDifficulty] is a viable List[Element].
       #pylint: disable=unnecessary-comprehension
       BlockHeader.createContents([], [e for e in dataDiffs]),
-      1,
+      0,
       bytes(4),
       bytes(32),
       0,

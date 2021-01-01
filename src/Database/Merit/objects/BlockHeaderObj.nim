@@ -1,4 +1,4 @@
-import ../../../lib/[Errors, Util, Hash]
+import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
 
 const EMPTY_HASH: Hash[256] = Hash[256](
@@ -16,8 +16,8 @@ type BlockHeader* = ref object
   #Merkle of the contents.
   contents*: Hash[256]
 
-  #Amount of Merit required for a Transaction to be included.
-  significant*: uint16
+  #Amount of packets included in the Block.
+  packetsQuantity*: uint32
   #Salt used when hasing sketch elements in order to avoid collisions.
   sketchSalt*: string
   #Merkle of the included sketch hashes.
@@ -45,7 +45,7 @@ func newBlockHeaderObj*(
   version: uint32,
   last: Hash[256],
   contents: Hash[256],
-  significant: uint16,
+  packetsQuantity: uint32,
   sketchSalt: string,
   sketchCheck: Hash[256],
   miner: BLSPublicKey,
@@ -58,7 +58,7 @@ func newBlockHeaderObj*(
     last: last,
     contents: contents,
 
-    significant: significant,
+    packetsQuantity: packetsQuantity,
     sketchSalt: sketchSalt,
     sketchCheck: sketchCheck,
 
@@ -73,7 +73,7 @@ func newBlockHeaderObj*(
   version: uint32,
   last: Hash[256],
   contents: Hash[256],
-  significant: uint16,
+  packetsQuantity: uint32,
   sketchSalt: string,
   sketchCheck: Hash[256],
   miner: uint16,
@@ -84,9 +84,9 @@ func newBlockHeaderObj*(
   BlockHeader(
     version: version,
     last: last,
-    contents: contents,
 
-    significant: significant,
+    packetsQuantity: packetsQuantity,
+    contents: contents,
     sketchSalt: sketchSalt,
     sketchCheck: sketchCheck,
 

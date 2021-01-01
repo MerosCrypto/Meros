@@ -24,16 +24,13 @@ def TwoHundredTwentyEightTest(
   def send16AndInvalidAlt() -> None:
     #Send the Block after the fork from the main chain.
     header: bytes = rpc.meros.liveBlockHeader(main.blocks[16].header)
-    req: bytes = rpc.meros.sync.recv()
-    if req != (MessageType.BlockBodyRequest.toByte() + main.blocks[16].header.hash):
-      raise TestError("Meros didn't request the BlockBody for this Block from the main chain.")
-    rpc.meros.blockBody(main.blocks[16])
+    rpc.meros.handleBlockBody(main.blocks[16])
     if rpc.meros.live.recv() != header:
       raise TestError("Meros didn't send back the BlockHeader.")
 
     #Send the headers of the alt chain to trigger a re-org.
     header = rpc.meros.liveBlockHeader(alt.blocks[-1].header)
-    req = rpc.meros.sync.recv()
+    req: bytes = rpc.meros.sync.recv()
     if MessageType(req[0]) != MessageType.BlockListRequest:
       raise TestError("Meros didn't request the list of previous BlockHeaders.")
     if req[-32:] != alt.blocks[-2].header.hash:

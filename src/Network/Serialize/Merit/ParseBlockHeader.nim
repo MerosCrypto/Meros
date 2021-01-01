@@ -12,12 +12,12 @@ proc parseBlockHeader*(
 ): BlockHeader {.forceCheck: [
   ValueError
 ].} =
-  #Version | Last | Contents | Significant | Sketch Salt | Sketch Check | New Miner | Miner | Time | Proof | Signature
+  #Version | Last | Contents | Packets Quantity | Sketch Salt | Sketch Check | New Miner | Miner | Time | Proof | Signature
   var headerSeq: seq[string] = headerStr.deserialize(
     INT_LEN,
     HASH_LEN,
     HASH_LEN,
-    NICKNAME_LEN,
+    INT_LEN,
     INT_LEN,
     HASH_LEN,
     BYTE_LEN
@@ -40,7 +40,7 @@ proc parseBlockHeader*(
         uint32(headerSeq[0].fromBinary()),
         headerSeq[1].toHash[:256](),
         headerSeq[2].toHash[:256](),
-        uint16(headerSeq[3].fromBinary()),
+        uint32(headerSeq[3].fromBinary()),
         headerSeq[4],
         headerSeq[5].toHash[:256](),
         uint16(headerSeq[7].fromBinary()),
@@ -53,7 +53,7 @@ proc parseBlockHeader*(
         uint32(headerSeq[0].fromBinary()),
         headerSeq[1].toHash[:256](),
         headerSeq[2].toHash[:256](),
-        uint16(headerSeq[3].fromBinary()),
+        uint32(headerSeq[3].fromBinary()),
         headerSeq[4],
         headerSeq[5].toHash[:256](),
         newBLSPublicKey(headerSeq[7]),

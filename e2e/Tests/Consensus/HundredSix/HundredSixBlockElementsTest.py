@@ -39,9 +39,10 @@ def HundredSixBlockElementsTest(
 
     #Send the Block.
     rpc.meros.liveBlockHeader(block.header)
+    rpc.meros.handleBlockBody(block)
 
     #Flag of if the Block's Body synced.
-    doneSyncing: bool = False
+    doneSyncing: bool = len(block.body.packets) == 0
 
     #Handle sync requests.
     reqHash: bytes = bytes()
@@ -68,18 +69,7 @@ def HundredSixBlockElementsTest(
           raise TestError("Meros sent a keep-alive.")
 
       msg: bytes = rpc.meros.sync.recv()
-      if MessageType(msg[0]) == MessageType.BlockBodyRequest:
-        reqHash = msg[1 : 33]
-        if reqHash != block.header.hash:
-          raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
-
-        #Send the BlockBody.
-        rpc.meros.blockBody(block)
-
-        if len(block.body.packets) == 0:
-          doneSyncing = True
-
-      elif MessageType(msg[0]) == MessageType.SketchHashRequests:
+      if MessageType(msg[0]) == MessageType.SketchHashRequests:
         if not block.body.packets:
           raise TestError("Meros asked for Verification Packets from a Block without any.")
 

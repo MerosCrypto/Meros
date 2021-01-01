@@ -38,8 +38,7 @@ class Liver:
 
   #Send the Blockchain, as if it's being mined in real time, and verify it.
   def live(
-    self,
-    ignorePackets: List[bytes] = []
+    self
   ) -> None:
     #Handshake with the node.
     self.rpc.meros.liveConnect(self.merit.blockchain.blocks[0].header.hash)
@@ -50,13 +49,14 @@ class Liver:
       block: Block = self.merit.blockchain.blocks[b]
 
       #Set loop variables with pending data.
-      pendingBody: bool = True
       pendingPackets: List[bytes] = []
       pendingTXs: List[bytes] = []
       for packet in block.body.packets:
-        if packet.hash in ignorePackets:
-          continue
-        pendingPackets.append(packet.hash)
+        if not (
+          (packet.hash in self.rpc.meros.sentVerifs) and
+          (self.rpc.meros.sentVerifs[packet.hash] == set(packet.holders))
+        ):
+          pendingPackets.append(packet.hash)
 
         #Don't include sent Transactions or independently created Block Data.
         if not (
@@ -70,28 +70,18 @@ class Liver:
           pendingTXs.append(packet.hash)
 
       self.rpc.meros.liveBlockHeader(block.header)
+      self.rpc.meros.handleBlockBody(block)
 
       reqHash: bytes = bytes()
       while True:
         #If we sent every bit of data, break.
-        if ((not pendingBody) and (not pendingPackets) and (not pendingTXs)):
+        if (not pendingPackets) and (not pendingTXs):
           break
 
         #Receive the next message.
         msg: bytes = self.rpc.meros.sync.recv()
 
-        if MessageType(msg[0]) == MessageType.BlockBodyRequest:
-          reqHash = msg[1 : 33]
-
-          if not pendingBody:
-            raise TestError("Meros asked for the same Block Body multiple times.")
-          if reqHash != block.header.hash:
-            raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
-
-          self.rpc.meros.blockBody(block)
-          pendingBody = False
-
-        elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
+        if MessageType(msg[0]) == MessageType.SketchHashesRequest:
           reqHash = msg[1 : 33]
           if not block.body.packets:
             raise TestError("Meros asked for Sketch Hashes from a Block without any.")

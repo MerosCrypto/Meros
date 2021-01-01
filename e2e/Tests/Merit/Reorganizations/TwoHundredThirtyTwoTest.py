@@ -28,9 +28,7 @@ def TwoHundredThirtyTwoTest(
     toSend: Block
   ) -> None:
     rpc.meros.liveBlockHeader(toSend.header)
-    if rpc.meros.sync.recv() != (MessageType.BlockBodyRequest.toByte() + toSend.header.hash):
-      raise TestError("Meros didn't ask for this Block's body.")
-    rpc.meros.blockBody(toSend)
+    rpc.meros.handleBlockBody(toSend)
     if toSend.body.packets:
       if rpc.meros.sync.recv() != (
         MessageType.SketchHashRequests.toByte() +

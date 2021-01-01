@@ -132,7 +132,7 @@ proc mainMerit(
   #Handle full blocks.
   functions.merit.addBlockInternal = proc (
     sketchyBlock: SketchyBlock,
-    sketcherArg: Sketcher,
+    sketcherArg: seq[VerificationPacket],
     syncing: bool,
     lock: ref Lock
   ) {.forceCheck: [
@@ -159,18 +159,9 @@ proc mainMerit(
     logInfo "New Block", hash = sketchyBlock.data.header.hash, currentHeight = merit.blockchain.height
 
     #Construct a sketcher.
-    var sketcher: Sketcher = sketcherArg
+    var sketcher: seq[VerificationPacket] = sketcherArg
     if sketcher.len == 0:
-      sketcher = newSketcher(
-        (
-          proc (
-            nick: uint16
-          ): int {.raises: [].} =
-            functions.merit.getRawMerit(nick)
-        ),
-        functions.consensus.isMalicious,
-        cast[seq[VerificationPacket]](consensus[].getPending().packets)
-      )
+      sketcher = cast[seq[VerificationPacket]](consensus[].getPending().packets)
 
     #Sync this Block.
     var
@@ -330,10 +321,7 @@ proc mainMerit(
 
     if not syncing:
       #Broadcast the Block.
-      functions.network.broadcast(
-        MessageType.BlockHeader,
-        newBlock.header.serialize()
-      )
+      functions.network.broadcast(MessageType.BlockHeader, newBlock.header.serialize())
 
       #If we got a Mint...
       if receivedMint != -1:
@@ -378,7 +366,7 @@ proc mainMerit(
 
   functions.merit.addBlock = proc (
     sketchyBlock: SketchyBlock,
-    sketcherArg: Sketcher,
+    sketcher: seq[VerificationPacket],
     syncing: bool
   ) {.forceCheck: [
     ValueError,
@@ -404,7 +392,7 @@ proc mainMerit(
     release(blockLock[])
 
     try:
-      await functions.merit.addBlockInternal(sketchyBlock, sketcherArg, syncing, blockLock)
+      await functions.merit.addBlockInternal(sketchyBlock, sketcher, syncing, blockLock)
     except ValueError as e:
       raise e
     except DataMissing as e:
@@ -603,7 +591,24 @@ proc mainMerit(
         raise e
 
       try:
-        sketchyBlock = newSketchyBlockObj(header, await syncAwait network.syncManager.syncBlockBody(header.hash, header.contents))
+        sketchyBlock = newSketchyBlockObj(
+          header,
+          await syncAwait network.syncManager.syncBlockBody(
+            header.hash,
+            header.contents,
+            min(
+              (
+                #Differences. This line here is extremely inefficient.
+                (header.packetsQuantity - uint32(consensus[].getPending().packets.len)) +
+                #Support a 20% variance.
+                (header.packetsQuantity div 5) +
+                #+1 in case packetsQuantity < 5.
+                1
+              ),
+              header.packetsQuantity
+            )
+          )
+        )
       except DataMissing as e:
         raise newLoggedException(ValueError, e.msg)
       except Exception as e:

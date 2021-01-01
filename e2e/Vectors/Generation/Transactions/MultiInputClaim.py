@@ -73,7 +73,7 @@ for _ in range(5):
       0,
       merit.blockchain.last(),
       bytes(32),
-      1,
+      0,
       bytes(4),
       bytes(32),
       0,

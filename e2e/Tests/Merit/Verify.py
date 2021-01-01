@@ -20,17 +20,22 @@ def verifyBlockchain(
     raise TestError("Difficulty doesn't match.")
 
   for b in range(len(blockchain.blocks)):
+    ourBlock: Dict[str, Any] = blockchain.blocks[b].toJSON()
+    #Info Python saves so it can properly load from the vectors yet the Meros RPC excludes.
+    del ourBlock["header"]["packets"]
+
     blockJSON: Dict[str, Any] = rpc.call("merit", "getBlock", [b])
+    #Contextual info Python doesn't track.
     del blockJSON["removals"]
-    if blockJSON != blockchain.blocks[b].toJSON():
+    if blockJSON != ourBlock:
       raise TestError("Block doesn't match.")
 
+    #Test when indexing by the hash instead of the nonce.
     blockJSON = rpc.call(
       "merit",
       "getBlock",
       [blockchain.blocks[b].header.hash.hex().upper()]
     )
-    #Contextual info Python doesn't track.
     del blockJSON["removals"]
-    if blockJSON != blockchain.blocks[b].toJSON():
+    if blockJSON != ourBlock:
       raise TestError("Block doesn't match.")
