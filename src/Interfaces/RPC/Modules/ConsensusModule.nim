@@ -13,42 +13,25 @@ proc module*(
 ): RPCFunctions {.forceCheck: [].} =
   try:
     newRPCFunctions:
-      "getSendDifficulty" = proc (
-        res: JSONNode,
-        params: JSONNode
+      proc getSendDifficulty(
+        holder: Option[uint16] = none(uint16)
+      ): int {.forceCheck: [].} =
+        if holder.isSome:
+          result = functions.consensus.getSendDifficultyOfHolder(holder.unsafeGet())
+        else:
+          result = functions.consensus.getSendDifficulty()
+
+      proc getDataDifficulty(
+        holder: Option[uint16] = none(uint16)
+      ): int {.forceCheck: [].} =
+        if holder.isSome:
+          result = functions.consensus.getDataDifficultyOfHolder(holder.unsafeGet())
+        else:
+          result = functions.consensus.getDataDifficulty()
+
+      proc getStatus(
+        hash: Hash[256]
       ) {.forceCheck: [].} =
-        res["result"] = % functions.consensus.getSendDifficulty()
-
-      "getDataDifficulty" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [].} =
-        res["result"] = % functions.consensus.getDataDifficulty()
-
-      "getStatus" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError,
-        JSONRPCError
-      ].} =
-        #Verify the parameters.
-        if (
-          (params.len != 1) or
-          (params[0].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
-        #Extract the parameter.
-        var hash: Hash[256]
-        try:
-          var strHash: string = parseHexStr(params[0].getStr())
-          if strHash.len != 32:
-            raise newJSONRPCError(-3, "Invalid hash")
-          hash = strHash.toHash[:256]()
-        except ValueError:
-          raise newJSONRPCError(-3, "Invalid hash")
-
         #Get the Status.
         var status: TransactionStatus
         try:

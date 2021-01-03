@@ -22,10 +22,7 @@ The result is a bool of true.
 `broadcast` broadcasts existing local data. Because it's already been processed locally, its presumably already been broadcasted around the network. This is meant to cover for any local networking issues/propagation shortcomings that may occur.
 
 Arguments:
-- `transaction` (string): Optional; hash of the Transaction to broadcast.
+- `transaction` (string): Optional; hash of the Transaction to broadcast. When the Transaction is a Mint, this does nothing.
 - `block`       (string): Optional; hash of the Block to broadcast.
-- `element`     (object): Optional
-  - `holder` (int)
-  - `nonce`  (int)
 
 The result is a bool of true.

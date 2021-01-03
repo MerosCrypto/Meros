@@ -14,55 +14,67 @@ proc module*(
 ): RPCFunctions {.forceCheck: [].} =
   try:
     newRPCFunctions:
-      "connect" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ): Future[void] {.forceCheck: [
-        ParamError
+      proc connect(
+        ip: string,
+        port: int = DEFAULT_PORT
+      ): bool {.requireAuth, forceCheck: [
+        ValueError
       ], async.} =
-        #Verify the parameters length.
-        if (params.len != 1) and (params.len != 2):
-          raise newException(ParamError, "")
-
-        #Verify the paramters types.
-        if params[0].kind != JString:
-          raise newException(ParamError, "")
-
-        #Supply the optional port argument if needed.
-        if params.len == 1:
-          params.add(% DEFAULT_PORT)
-        if params[1].kind != JInt:
-          raise newException(ParamError, "")
-
+        result = true
         try:
-          await functions.network.connect(params[0].getStr(), params[1].getInt())
+          await functions.network.connect(address, port)
         except Exception as e:
           panic("MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
-      "getPeers" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ): Future[void] {.forceCheck: [], async.} =
-        res["result"] = % []
+      proc getPeers(): JSONNode {.forceCheck: [].} =
+        result = % []
 
         for client in functions.network.getPeers():
-          try:
-            res["result"].add(%* {
-              "ip": (
-                $int(client.ip[0]) & "." &
-                $int(client.ip[1]) & "." &
-                $int(client.ip[2]) & "." &
-                $int(client.ip[3])
-              ),
-              "server": client.server
-            })
-          except KeyError as e:
-            panic("Couldn't set the result: " & e.msg)
-
+          result.add(%* {
+            "ip": (
+              $int(client.ip[0]) & "." &
+              $int(client.ip[1]) & "." &
+              $int(client.ip[2]) & "." &
+              $int(client.ip[3])
+            ),
+            "server": client.server
+          })
           if client.server:
-            try:
-              res["result"][res["result"].len - 1]["port"] = % client.port
-            except KeyError as e:
-              panic("Couldn't add the port the result: " & e.msg)
+            result[result.len - 1]["port"] = % client.port
+
+      proc broadcast(
+        transaction: Option[Hash[256]] = none(Hash[256]),
+        _block: Option[Hash[256]] = none(Hash[256])
+      ): bool {.forceCheck: [
+        ParamsError,
+        JSONRPCError
+      ].} =
+        result = true
+
+        if transaction.isSome:
+          var tx: Transaction
+          try:
+            tx = functions.transactions.getTransaction(transaction.unsafeGet())
+          except IndexError:
+            raise newJSONRPCError(IndexError, "Transaction not found")
+          case tx:
+            of Mint as _:
+              discard
+            of Claim as claim:
+              functions.network.broadcast(MessageType.Claim, tx.serialize())
+            of Send as send:
+              functions.network.broadcast(MessageType.Send, tx.serialize())
+            of Data as data:
+              functions.network.broadcast(MessageType.Data, tx.serialize())
+
+        if _block.isSome():
+          try:
+            functions.network.broadcast(
+              MessageType.BlockHeader,
+              functions.merit.getBlock(_block.getUnsafe()).header.serialize()
+            )
+          except IndexError:
+            raise newJSONRPCError(IndexError, "Block not found")
+
   except Exception as e:
     panic("Couldn't create the Network Module: " & e.msg)

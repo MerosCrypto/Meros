@@ -22,6 +22,12 @@ import ../../../Network/Serialize/Merit/[
 
 import ../objects/RPCObj
 
+#BlockTemplate object, storing the info needed to create a template and publish a Block based off of one.
+type BlockTemplate = object
+  packets: seq[VerificationPacket]
+  body: string
+  contents: Table[uint32, tuple[packets: Hash[256], contents: Hash[256]]]
+
 #Element -> JSON.
 #This wouldn't work with %, broke everything with %*, so now we have this symbol.
 proc `%**`(
@@ -113,165 +119,149 @@ proc `%`(
 proc module*(
   functions: GlobalFunctionBox
 ): RPCFunctions {.forceCheck: [].} =
-  #Table of usable Sketcher objects.
-  #Shared between the getBlockTemplate/publishBlock routes.
   var
-    sketchers: Table[int, seq[VerificationPacket]]
-    bodies: Table[int, string]
-    sketchID: int = 0
+    templates: Table[uint32, BlockTemplate]
     lastTailUsedForTemplate: Hash[256] = Hash[256]()
 
   try:
     newRPCFunctions:
-      "getHeight" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [].} =
-        res["result"] = % functions.merit.getHeight()
+      proc getHeight(): int {.forceCheck: [].} =
+        functions.merit.getHeight()
 
-      "getDifficulty" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [].} =
-        res["result"] = % functions.merit.getDifficulty()
+      proc getDifficulty(): int {.forceCheck: [].} =
+        int(functions.merit.getDifficulty())
 
-      "getBlock" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError,
+      proc getBlock(
+        id: int or Hash[256]
+      ): JSONNode {.forceCheck: [
         JSONRPCError
       ].} =
-        #Verify the parameters length.
-        if params.len != 1:
-          raise newException(ParamError, "")
-
-        #Get the Block.
-        if params[0].kind == JInt:
+        var res: Block
+        when id is int:
           try:
-            res["result"] = % functions.merit.getBlockByNonce(params[0].getInt())
+            result = % functions.merit.getBlockByNonce(id)
           except IndexError:
-            raise newJSONRPCError(-2, "Block not found", %* {
+            raise newJSONRPCError(IndexError, "Block not found", %* {
               "height": functions.merit.getHeight()
             })
-        elif params[0].kind == JString:
+        else:
           try:
-            var strHash: string = parseHexStr(params[0].getStr())
-            if strHash.len != 32:
-              raise newJSONRPCError(-3, "Invalid hash")
-            res["result"] = % functions.merit.getBlockByHash(strHash.toHash[:256]())
+            result = % functions.merit.getBlockByHash(id)
           except IndexError:
-            raise newJSONRPCError(-2, "Block not found")
-          except ValueError:
-            raise newJSONRPCError(-3, "Invalid hash")
+            raise newJSONRPCError(IndexError, "Block not found")
         else:
           raise newException(ParamError, "")
 
-      "getTotalMerit" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [].} =
-        res["result"] = % functions.merit.getTotalMerit()
-
-      "getUnlockedMerit" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [].} =
-        res["result"] = % functions.merit.getUnlockedMerit()
-
-      "getMerit" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError
+      proc getPublicKey(
+        holder: uint16
+      ): string {.forceCheck: [
+        JSONRPCError
       ].} =
-        #Verify the parameters length.
-        if (
-          (params.len != 1) or
-          (params[0].kind != JInt) or
-          (params[0].getInt() >= 65536)
-        ):
-          raise newException(ParamError, "")
+        try:
+          result = functions.merit.getPublicKey(holder)
+        except IndexError:
+          raise newJSONRPCError(IndexError, "Nickname doesn't exist")
 
-        #Extract the parameter.
-        var nick: uint16 = uint16(params[0].getInt())
+      proc getNickname(
+        key: BLSPublicKey
+      ): int {.forceCheck: [
+        JSONRPCError
+      ].} =
+        try:
+          result = functions.merit.getNickname(key)
+        except IndexError:
+          raise newJSONRPCError(IndexError, "Key doesn't have a nickname assigned")
 
-        #Create the result.
-        res["result"] = %* {
+      proc getTotalMerit(): int {.forceCheck: [].} =
+        % functions.merit.getTotalMerit()
+
+      proc getUnlockedMerit(): int {.forceCheck: [].} =
+        % functions.merit.getUnlockedMerit()
+
+      proc getMerit(
+        nick: int
+      ): JSONNode {.forceCheck: [
+        JSONRPCError
+      ].} =
+        if holder > high(uint16):
+          raise newJSONRPCError(ValueError, "Invalid nickname")
+
+        result = %* {
           "status": if functions.merit.isUnlocked(nick): "Unlocked" elif functions.merit.isPending(nick): "Pending" else: "Locked",
           "malicious": functions.consensus.isMalicious(nick),
           "merit": functions.merit.getRawMerit(nick)
         }
 
-      "getBlockTemplate" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError,
+      proc getBlockTemplate(
+        miner: BLSPublicKey
+      ): JSONNode {.forceCheck: [
         JSONRPCError
       ].} =
-        #Verify and extract the parameter.
-        if (params.len != 1) or (params[0].kind != JString):
-          raise newException(ParamError, "")
-
-        var miner: BLSPublicKey
-        try:
-          miner = newBLSPublicKey(params[0].getStr().parseHexStr())
-        except ValueError:
-          raise newJSONRPCError(-3, "Invalid miner")
-        except BLSError:
-          raise newJSONRPCError(-4, "Invalid miner")
-
         if lastTailUsedForTemplate != functions.merit.getTail():
-          sketchers = initTable[int, seq[VerificationPacket]]()
-          bodies = initTable[int, string]()
-          lastTailusedForTemplate = functions.merit.getTail()
+          templates = initTable[uint32, BlockTemplate]()
 
+        #Create a new template if needed, as determined by our second-accuracy.
+        #If we already created a template for this second, just use it (see https://github.com/MerosCrypto/Meros/issues/278).
         var
-          #Pending packets/elements.
-          pending: tuple[
-            packets: seq[VerificationPacket],
-            elements: seq[BlockElement],
-            aggregate: BLSSignature
-          ] = functions.consensus.getPending()
+          time: uint32 = getTime()
+          blockTemplate: BlockTemplate
+        if not templates.hasKey(time):
+          var
+            pending: tuple[
+              packets: seq[VerificationPacket],
+              elements: seq[BlockElement],
+              aggregate: BLSSignature
+            ] = functions.consensus.getPending()
+            sketchSalt: string = newString(4)
 
-          #ID for this Sketcher.
-          id: int = sketchID
-          #Sketch salt we're using with the packets.
-          sketchSaltNum: uint32
-          #Actual sketch salt.
-          sketchSalt: string
-        sketchSalt = newString(4)
-        randomFill(sketchSalt)
-        sketchSaltNum = cast[uint32](sketchSalt.fromBinary())
-        inc(sketchID)
+          #Create the new template.
+          blockTemplate = BlockTemplate(
+            packets: pending.packets,
+            contents: newContents(pending.packets, pending.elements),
+            body: ""
+          )
 
-        #Verify the packets don't collide with our salt.
-        while true:
-          try:
-            sketchers[id] = pending.packets
+          #Randomize the sketch salt. Prevents malicious actors from trying to cause collisions against "\0\0\0\0".
+          randomFill(sketchSalt)
 
-            sketchSalt = sketchSaltNum.toBinary(INT_LEN)
-            if not sketchers[id].collides(sketchSalt):
-              break
-
+          #Verify the packets don't collide with our salt.
+          while blockTemplate.packets.collides(sketchSalt):
             #This shouldn't be needed as sketchSaltNum is a uint32.
             {.push checks: off.}
+            sketchSaltNum = cast[uint32](sketchSalt.fromBinary())
             inc(sketchSaltNum)
             {.pop.}
+            sketchSalt = sketchSaltNum.toBinary(INT_LEN)
+
+          #Create the body for the template.
+          try:
+            blockTemplate.body = newBlockBodyObj(
+              blockTemplate.packets,
+              pending.elements,
+              pending.aggregate,
+              {}
+            ).serialize(sketchSalt, blockTemplate.packets.len)
+          except ValueError as e:
+            panic("BlockBody's sketch has a collision despite mining a salt which doesn't.")
+
+          #Save the template.
+          templates[time] = blockTemplate
+
+        else:
+          try:
+            blockTemplate = templates[time]
           except KeyError as e:
-            panic("Couldn't get a Sketcher we just created: " & e.msg)
+            panic("Couldn't get the Block Template for this second despite confirming its existence: " & e.msg)
 
         #Create the Header.
         var
-          contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(pending.packets, pending.elements)
           header: JSONNode = newJNull()
-          time: uint32 = getTime()
           difficulty: uint64 = functions.merit.getDifficulty()
+          headerTime: uint32
 
         #Ensure the time is higher than the previous Block's.
         try:
-          time = max(time, functions.merit.getBlockByHash(functions.merit.getTail()).header.time + 1)
+          headerTime = max(time, functions.merit.getBlockByHash(functions.merit.getTail()).header.time + 1)
         except IndexError as e:
           panic("Couldn't get the last Block despite grabbing it by the chain's tail: " & e.msg)
 
@@ -283,12 +273,12 @@ proc module*(
             header = % newBlockHeader(
               0,
               functions.merit.getTail(),
-              contents.contents,
+              blockTemplate.contents.contents,
               uint32(pending.packets.len),
               sketchSalt,
               newSketchCheck(sketchSalt, pending.packets),
               miner,
-              time,
+              headerTime,
               0,
               newBLSSignature()
             ).serializeTemplate().toHex()
@@ -298,12 +288,12 @@ proc module*(
             header = % newBlockHeader(
               0,
               functions.merit.getTail(),
-              contents.contents,
+              blockTemplate.contents.contents,
               uint32(pending.packets.len),
               sketchSalt,
               newSketchCheck(sketchSalt, pending.packets),
               nick,
-              time,
+              headerTime,
               0,
               newBLSSignature()
             ).serializeTemplate().toHex()
@@ -312,67 +302,50 @@ proc module*(
         except BLSError:
           panic("Couldn't create a temporary signature for a BlockHeader template.")
 
-        #Create the body.
-        try:
-          bodies[id] = newBlockBodyObj(
-            contents.packets,
-            pending.packets,
-            pending.elements,
-            pending.aggregate,
-            {}
-          ).serialize(sketchSalt, pending.packets.len)
-        except ValueError as e:
-          panic("Block Body had sketch collision: " & e.msg)
-
         #Create the result.
-        res["result"] = %* {
-          "id": id,
+        result = %* {
+          "id": time,
           "key":  functions.merit.getRandomXCacheKey().toHex(),
           "header": header,
           "difficulty": difficulty
         }
 
-      "publishBlock" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ): Future[void] {.forceCheck: [
-        ParamError,
+      proc publishBlock(
+        id: int,
+        _block: string
+      ): Future[bool] {.forceCheck: [
         JSONRPCError
       ], async.} =
-        #Verify the parameters.
-        if (
-          (params.len != 2) or
-          (params[0].kind != JInt) or
-          (params[1].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
-        var sketchyBlock: SketchyBlock
+        var
+          blockTemplate: string
+          sketchyBlock: SketchyBlock
         try:
-          sketchyBlock = functions.merit.getRandomX().parseBlock(params[1].getStr().parseHexStr() & bodies[params[0].getInt()])
+          blockTemplate = templates[id]
         except KeyError:
-          raise newJSONRPCError(-2, "Invalid ID")
+          raise newJSONRPCError(KeyError, "Invalid ID")
+        try:
+          sketchyBlock = functions.merit.getRandomX().parseBlock(_block.parseHexStr() & blockTemplate.body)
         except ValueError:
-          raise newJSONRPCError(-3, "Invalid Block")
+          raise newJSONRPCError(ValueError, "Invalid Block")
 
         #Test the Block Header.
         try:
           functions.merit.testBlockHeader(sketchyBlock.data.header)
         except ValueError:
-          raise newJSONRPCError(-3, "Invalid Block")
+          raise newJSONRPCError(ValueError, "Invalid Block")
 
         try:
           await functions.merit.addBlock(
             sketchyBlock,
-            sketchers[params[0].getInt()],
+            blockTemplate.packets,
             false
           )
         except KeyError:
-          raise newJSONRPCError(-2, "Invalid ID")
+          raise newJSONRPCError(KeyError, "Invalid ID")
         except ValueError:
-          raise newJSONRPCError(-3, "Invalid Block")
+          raise newJSONRPCError(ValueError, "Invalid Block")
         except DataMissing:
-          raise newJSONRPCError(-1, "Missing Block-referenced data")
+          panic("Missing Block-referenced data despite creating this Block's body")
         except Exception as e:
           panic("addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
   except Exception as e:

@@ -91,92 +91,45 @@ proc module*(
 ): RPCFunctions {.forceCheck: [].} =
   try:
     newRPCFunctions:
-      "getTransaction" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError,
+      proc getTransaction(
+        hash: Hash[256]
+      ): JSONNode {.forceCheck: [
         JSONRPCError
       ].} =
-        #Verify the parameters.
-        if (
-          (params.len != 1) or
-          (params[0].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
         #Get the Transaction.
         try:
-          var strHash: string = parseHexStr(params[0].getStr())
-          if strHash.len != 32:
-            raise newJSONRPCError(-3, "Invalid hash")
-          res["result"] = % functions.transactions.getTransaction(strHash.toHash[:256]())
+          result = % functions.transactions.getTransaction()
         except IndexError:
-          raise newJSONRPCError(-2, "Transaction not found")
-        except ValueError:
-          raise newJSONRPCError(-3, "Invalid hash")
+          raise newJSONRPCError(IndexError, "Transaction not found")
 
-      "getUTXOs" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError
+      proc getUTXOs(
+        address: Address
+      ): JSONNode {.forceCheck: [
+        JSONRPCError
       ].} =
-        #Verify the parameters.
-        if (
-          (params.len != 1) or
-          (params[0].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
         #Get the UTXOs.
-        var
-          decodedAddy: Address
-          utxos: seq[FundedInput]
-        try:
-          decodedAddy = Address.getEncodedData(params[0].getStr())
-        except ValueError:
-          raise newException(ParamError, "")
-
+        var utxos: seq[FundedInput]
         case decodedAddy.addyType:
           of AddressType.PublicKey:
-            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](decodedAddy.data)))
+            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](address.data)))
 
-        res["result"] = % []
+        result = % []
         for utxo in utxos:
-          try:
-            res["result"].add(%* {
-              "hash": $utxo.hash,
-              "nonce": utxo.nonce
-            })
-          except KeyError as e:
-            panic("Couldn't append to the list of UTXOs despite just creating it: " & e.msg)
+          result.add(%* {
+            "hash": $utxo.hash,
+            "nonce": utxo.nonce
+          })
 
-      "getBalance" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError
+      proc getBalance(
+        address: Address
+      ): string {.forceCheck: [
+        ValueError
       ].} =
-        #Verify the parameters.
-        if (
-          (params.len != 1) or
-          (params[0].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
         #Get the UTXOs.
-        var
-          decodedAddy: Address
-          utxos: seq[FundedInput]
-        try:
-          decodedAddy = Address.getEncodedData(params[0].getStr())
-        except ValueError:
-          raise newException(ParamError, "")
-
-        case decodedAddy.addyType:
+        var utxos: seq[FundedInput]
+        case address.addyType:
           of AddressType.PublicKey:
-            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](decodedAddy.data)))
+            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](address.data)))
 
         var balance: uint64 = 0
         for utxo in utxos:
@@ -184,34 +137,44 @@ proc module*(
             balance += cast[SendOutput](functions.transactions.getTransaction(utxo.hash).outputs[utxo.nonce]).amount
           except IndexError as e:
             panic("Failed to get a Transaction which was a spendable UTXO: " & e.msg)
-        res["result"] = % $balance
+        result = $balance
 
-      "publishSend" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError,
+      proc publishTransaction(
+        _type: string
+        transaction: hex
+      ): bool {.forceCheck: [
         JSONRPCError
       ], async.} =
-        if (
-          (params.len != 1) or
-          (params[0].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
         try:
-          await functions.transactions.addSend(
-            parseSend(
-              params[0].getStr().parseHexStr(),
-              functions.consensus.getSendDifficulty()
-            )
-          )
+          var difficulty: uint32
+          case _type:
+            of "Claim":
+              await functions.transactions.addClaim(parseClaim(transaction))
+            of "Send":
+              difficulty = functions.consensus.getSendDifficulty()
+              await functions.transactions.addSend(
+                parseSend(transaction, difficulty)
+              )
+            of "Data":
+              difficulty = functions.consensus.getDataDifficulty()
+              await functions.transactions.addData(
+                parseData(transaction, functions.consensus.getDataDifficulty())
+              )
+            else:
+              raise newJSONRPCError(ValueError, "Invalid Transaction type specified")
+        except JSONRPCError as e:
+          raise e
         except ValueError as e:
-          raise newJSONRPCError(-3, "Invalid send: " & e.msg)
+          raise newJSONRPCError(ValueError, "Transaction is invalid: " & e.msg)
         except DataExists:
-          discard
+          raise newJSONRPCError(DataExists, "Transaction was already added")
+        except Spam:
+          raise newJSONRPCError(Spam, "Transaction didn't beat the spam filter", %* {
+            difficulty: difficulty
+          })
         except Exception as e:
-          panic("addSend raised an Exception despite catching all errors: " & e.msg)
-        res["result"] = % true
+          panic("Adding a Transaction raised an Exception despite catching all errors: " & e.msg)
+
+        result = true
   except Exception as e:
     panic("Couldn't create the Transactions Module: " & e.msg)

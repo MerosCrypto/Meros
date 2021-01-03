@@ -13,29 +13,29 @@ The result is an object, as follows:
 - `inputs` (array of objects, each as follows)
   - `hash` (string)
 
-  	When (`descendant` == "claim") or (`descendant` == "send"):
+  	When (`descendant` == "Claim") or (`descendant` == "Send"):
     - `nonce` (int)
 
 - `outputs` (array of objects, each as follows)
   - `amount` (string)
 
-    When `descendant` == "mint":
+    When `descendant` == "Mint":
     - `key` (int): Miner nickname.
 
-    When `descendant` == "claim" or `descendant` == "send":
+    When `descendant` == "Claim" or `descendant` == "Send":
     - `key` (string): Ed25519 Public Key.
 
 - `hash` (string)
 
-	When `descendant` == "claim":
+	When `descendant` == "Claim":
   - `signature` (string)
 
-	When `descendant` == "send":
+	When `descendant` == "Send":
   - `signature` (string)
   - `proof`     (int)
   - `argon`     (string)
 
-	When `descendant` == "data":
+	When `descendant` == "Data":
   - `data`      (string)
   - `signature` (string)
   - `proof`     (int)
@@ -66,7 +66,7 @@ The result is a string of the balance.
 `publishTransaction` accepts a serialized Transaction, attempts to add it to the local Transactions DAG, and on success, broadcasts it to the network.
 
 Arguments:
-- `type`        (string): "claim", "send", or "data".
+- `type`        (string): "Claim", "Send", or "Data".
 - `transaction` (string): Serialized Transaction.
 
 The result is a bool of if the transaction was successfully added. This will return true if the transaction is valid yet already exists, though it will NOT be broadcasted again in that case.

@@ -48,15 +48,6 @@ The result is an object, as follows:
 
 - `aggregate` (string)
 
-### `getNickname`
-
-`getNickname` replies with a Merit Holder's nickname.
-
-Arguments:
-- `key` (string): Merit Holder's BLS Public Key.
-
-The result is an int of the nickname.
-
 ### `getPublicKey`
 
 `getPublicKey` replies with the specified Merit Holder's BLS Public Key.
@@ -65,6 +56,15 @@ Arguments:
 - `nick` (int)
 
 The result is an string of the BLS Public Key.
+
+### `getNickname`
+
+`getNickname` replies with a Merit Holder's nickname.
+
+Arguments:
+- `key` (string): Merit Holder's BLS Public Key.
+
+The result is an int of the nickname.
 
 ### `getTotalMerit`
 
