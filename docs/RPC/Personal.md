@@ -1,21 +1,8 @@
 # Personal Module
 
-### `setMeritHolder`
-
-`setMeritHolder` sets the BLS Private Key to use for the Merit Holder, replacing the existing one. This is irreversible and will delete the existing Private Key.
-
-Arguments:
-- `privateKey` (string): Optional; creates a new Private Key if omitted.
-
-The result is a bool of true.
-
-### `getMeritHolder`
-
-`getMeritHolder` replies with the BLS Private Key of the node's Merit Holder. The result is a string of the Private Key.
-
 ### `setMnemonic`
 
-`setMnemonic` creates a new Wallet using the passed in Mnemonic and password and sets the node's Wallet to it. This is irreversible and will delete the existing Wallet.
+`setMnemonic` creates a new wallet using the passed in mnemonic and password. This is irreversible and will delete the existing wallet, having the node lose all access to the current Merit Holder and all funds.
 
 Arguments:
 - `mnemonic` (string): Optional; creates a new Mnemonic if omitted.
@@ -25,7 +12,11 @@ The result is a bool of true.
 
 ### `getMnemonic`
 
-`getMnemonic` replies with the node's Wallet's mnemonic, without its password. The result is a string of the mnemonic.
+`getMnemonic` replies with the wallet's mnemonic, without its password. The result is a string of the mnemonic.
+
+### `getMeritHolderKey`
+
+`getMeritHolderKey` replies with the BLS Private Key of the node's Merit Holder. The result is a string of the Private Key.
 
 ### `getParentPublicKey`
 
