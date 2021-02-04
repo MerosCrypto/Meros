@@ -8,7 +8,7 @@ Arguments:
 - `address` (string): IP address or domain. Cannot be IPv6.
 - `port`    (int):    Optional; defaults to 5132 if omitted.
 
-The result is a bool of true.
+The result is a bool of true, regardless of if the connection succeeded. This will never return an error.
 
 ### `getPeers`
 
