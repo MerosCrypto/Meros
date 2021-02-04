@@ -1,6 +1,16 @@
+import options
+import strutils
+
 import chronos
 
 import ../../../lib/Errors
+import ../../../lib/Hash
+
+import ../../../Database/Transactions/Transaction
+
+import ../../../Network/objects/MessageObj
+import ../../../Network/Serialize/Transactions/[SerializeClaim, SerializeSend, SerializeData]
+import ../../../Network/Serialize/Merit/SerializeBlockHeader
 
 import ../../../objects/GlobalFunctionBoxObj
 
@@ -11,18 +21,15 @@ const DEFAULT_PORT {.intdefine.}: int = 5132
 
 proc module*(
   functions: GlobalFunctionBox
-): RPCFunctions {.forceCheck: [].} =
+): RPCHandle {.forceCheck: [].} =
   try:
-    newRPCFunctions:
+    result = newRPCHandle:
       proc connect(
         ip: string,
-        port: int = DEFAULT_PORT
-      ): bool {.requireAuth, forceCheck: [
-        ValueError
-      ], async.} =
-        result = true
+        port: Option[int] = some(DEFAULT_PORT)
+      ) {.#[requireAuth,]# forceCheck: [], async.} =
         try:
-          await functions.network.connect(address, port)
+          await functions.network.connect(ip, port.unsafeGet())
         except Exception as e:
           panic("MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
@@ -44,13 +51,10 @@ proc module*(
 
       proc broadcast(
         transaction: Option[Hash[256]] = none(Hash[256]),
-        _block: Option[Hash[256]] = none(Hash[256])
-      ): bool {.forceCheck: [
-        ParamsError,
+        blockHash: Option[Hash[256]] = none(Hash[256])
+      ) {.forceCheck: [
         JSONRPCError
       ].} =
-        result = true
-
         if transaction.isSome:
           var tx: Transaction
           try:
@@ -60,18 +64,18 @@ proc module*(
           case tx:
             of Mint as _:
               discard
-            of Claim as claim:
+            of Claim as _:
               functions.network.broadcast(MessageType.Claim, tx.serialize())
-            of Send as send:
+            of Send as _:
               functions.network.broadcast(MessageType.Send, tx.serialize())
-            of Data as data:
+            of Data as _:
               functions.network.broadcast(MessageType.Data, tx.serialize())
 
-        if _block.isSome():
+        if blockHash.isSome():
           try:
             functions.network.broadcast(
               MessageType.BlockHeader,
-              functions.merit.getBlock(_block.getUnsafe()).header.serialize()
+              functions.merit.getBlockByHash(blockHash.unsafeGet()).header.serialize()
             )
           except IndexError:
             raise newJSONRPCError(IndexError, "Block not found")

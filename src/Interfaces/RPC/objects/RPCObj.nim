@@ -1,100 +1,208 @@
 import macros
+import options
 import tables
 import json
 export tables, json
 
 import chronos
-export chronos
 
 import ../../../lib/Errors
 
+import ../../../Wallet/Address
+
 type
-  RPCFunction = proc (
-    res: JSONNode,
-    params: JSONNode
+  RPCReplyFunction* = proc (
+    res: JSONNode
   ): Future[void] {.gcsafe.}
 
-  RPCFunctions* = Table[string, RPCFunction]
+  RPCHandle* = proc (
+    req: JSONNode,
+    reply: RPCReplyFunction
+  ): Future[void] {.gcsafe.}
 
   RPC* = ref object
-    alive*: bool
-
-    functions*: RPCFunctions
-    quit*: proc () {.gcsafe, raises: [].}
+    handle*: RPCHandle
 
     toRPC*: ptr Channel[JSONNode]
     toGUI*: ptr Channel[JSONNode]
 
     server*: StreamServer
+    alive*: bool
 
-macro newRPCFunctions*(
+  #Stub replaced with a string; used to signify to parse the string from hex.
+  hex* = object
+
+template retrieveFromJSON*[T](
+  value: JSONNode,
+  expectedType: typedesc[T]
+# Auto as hex != string
+): auto =
+  when expectedType is Option:
+    some(retrieveFromJSON(value, type(T().get())))
+  else:
+    when expectedType is SomeInteger:
+      if value.kind != JInt:
+        raise newLoggedException(ParamError, "")
+      let num: int = value.getInt()
+      if (num < int(low(T))) or (num > int(high(T))):
+        raise newLoggedException(ParamError, "")
+      T(num)
+
+    elif expectedType is string:
+      if value.kind != JString:
+        raise newLoggedException(ParamError, "")
+      value.getStr()
+
+    elif expectedType is hex:
+      if value.kind != JString:
+        raise newLoggedException(ParamError, "")
+      var res: string
+      try:
+        res = value.getStr().parseHexStr()
+      except ValueError:
+        raise newLoggedException(ParamError, "")
+      res
+
+    elif expectedType is Hash[256]:
+      if value.kind != JString:
+        raise newLoggedException(ParamError, "")
+      var res: string
+      try:
+        res = value.getStr().parseHexStr()
+        if res.len != 32:
+          raise newLoggedException(ParamError, "")
+      except ValueError:
+        raise newLoggedException(ParamError, "")
+      res.toHash[:256]()
+
+    elif expectedType is Address:
+      if value.kind != JString:
+        raise newLoggedException(ParamError, "")
+      var res: Address
+      try:
+        res = value.getStr().getEncodedData()
+      except ValueError:
+        raise newLoggedException(ParamError, "")
+      res
+
+    else:
+      {.error: "Trying to get an unknown type from JSON.".}
+
+macro newRPCHandle*(
   routes: untyped
 ): untyped =
-  #Create a toTable call.
-  result = newNimNode(nnkAsgn).add(
-    ident("result"),
-    newCall(
-      ident("toTable")
-    ).add(
-      newNimNode(nnkTableConstr)
+  #The generated function is a RPCHandle.
+  #It needs to embody the functions passed in (routes), and also have a switch statement.
+  #Said switch must format the parameters for the target function.
+  #It finally needs to handle the reply logic.
+
+  var
+    body: NimNode = newStmtList(
+      newEmptyNode(),
+      #Default result of true.
+      newVarStmt(ident("MACRO_res"), newCall(ident("%"), newLit(true)))
     )
+    switch: NimNode = newNimNode(nnkCaseStmt).add(
+      quote do:
+        getStr(MACRO_rawReq["method"])
+    )
+
+  for route in routes:
+    switch.add(newNimNode(nnkOfBranch))
+
+    var
+      argHandling: NimNode = newStmtList()
+      routeCall: NimNode = newCall(route[0])
+    for argument in route[3][1 ..< route[3].len]:
+      var internalName: NimNode = ident("MACRO_ARGUMENT_" & argument[0].strVal)
+
+      #If this is an option, and it's not present, we supply a value.
+      #Else, we fail.
+      var optionOrFail: NimNode
+      if (argument[1].kind == nnkBracketExpr) and (argument[1][0].strVal == "Option"):
+        optionOrFail = newAssignment(internalName, argument[2])
+      else:
+        optionOrFail = quote do:
+          raise newLoggedException(ParamError, "")
+
+      let
+        argumentName: string = argument[0].strVal
+        argumentType: NimNode = argument[1]
+      var argumentActualType: NimNode = argumentType
+      #Doesn't support Option[hex], something currently unused and unsupported elsewhere as well.
+      if (argumentType.kind == nnkIdent) and (argumentType.strVal == "hex"):
+        argumentActualType = ident("string")
+
+      argHandling.add(
+        quote do:
+          var `internalName`: `argumentActualType`
+          #Doesn't use a DotExpr for a more minimal AST.
+          if hasKey(MACRO_rawReq["params"], `argumentName`):
+            `internalName` = retrieveFromJSON(MACRO_rawReq["params"][`argumentName`], `argumentType`)
+          else:
+            `optionOrFail`
+      )
+
+      #Make sure it's passed to the function.
+      routeCall.add(internalName)
+
+    var hasAsyncPragma: bool = false
+    for pragma in route[4]:
+      if (pragma.kind == nnkIdent) and (pragma.strVal == "async"):
+        hasAsyncPragma = true
+
+    var returnType: NimNode = route[3][0]
+    if hasAsyncPragma:
+      if returnType.kind == nnkBracketExpr:
+        returnType = returnType[0]
+      #If this is async, add an await.
+      routeCall = quote do:
+        await `routeCall`
+
+    #If it's not void, set MACRO_res.
+    if (
+      (returnType.kind != nnkEmpty) or
+      (
+        (returnType.kind == nnkIdent) and
+        (returnType.strVal != "void")
+      )
+    ):
+      routeCall = quote do:
+        MACRO_res = %(`routeCall`)
+
+    let caseBody: NimNode = argHandling
+    caseBody.add(routeCall)
+    switch[^1].add(newStrLitNode(route[0].strVal), caseBody)
+
+  switch.add(newNimNode(nnkElse))
+  switch[^1].add(
+    quote do:
+      raise newJSONRPCError(-32601, "Method not found")
   )
 
-  #Add each route.
-  for route in routes:
-    #Make sure they're closures.
-    route[1].addPragma(ident("closure"))
-    #Also add the gcsafe pragma for Chronos.
-    route[1].addPragma(ident("gcsafe"))
+  body[0] = routes
+  # Replace instances of hex/remove default argument values
+  # First is solely used as a tag, latter is since they shouldn't be needed
+  for r in 0 ..< body[0].len:
+    for i in 1 ..< body[0][r][3].len:
+      #Doesn't support Option[hex] which we don't use.
+      if (body[0][r][3][i][1].kind == nnkIdent) and (body[0][r][3][i][1].strVal == "hex"):
+        body[0][r][3][i][1] = ident("string")
+      body[0][r][3][i][2] = newNimNode(nnkEmpty)
+  body.add(switch)
 
-    #Make sure they're async.
-    var async: bool = false
-    for pragma in route[1][4]:
-      if (pragma.kind == nnkIdent) and (pragma.strVal == "async"):
-        async = true
-    if not async:
-      route[1].addPragma(ident("async"))
-      route[1][3][0] = newNimNode(nnkBracketExpr).add(
+  result = newProc(
+    newEmptyNode(),
+    @[
+      newNimNode(nnkBracketExpr).add(
         ident("Future"),
         ident("void")
-      )
-
-    result[1][1].add(
-      newNimNode(nnkExprColonExpr).add(
-        route[0],
-        route[1]
-      )
-    )
-
-#Combine multiple RPCFunctions together.
-proc merge*(
-  rpcs: varargs[
-    tuple[prefix: string, rpc: RPCFunctions]
-  ]
-): RPCFunctions {.raises: [].} =
-  result = initTable[string, RPCFunction]()
-
-  for rpc in rpcs:
-    for key in rpc.rpc.keys():
-      try:
-        result[rpc.prefix & key] = rpc.rpc[key]
-      except KeyError as e:
-        panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
-      except Exception as e:
-        panic("Couldn't set a value in a table: " & e.msg)
-
-proc newRPCObj*(
-  functions: RPCFunctions,
-  quit: proc () {.gcsafe, raises: [].},
-  toRPC: ptr Channel[JSONNode],
-  toGUI: ptr Channel[JSONNode]
-): RPC {.inline, forceCheck: [].} =
-  RPC(
-    alive: true,
-
-    functions: functions,
-    quit: quit,
-
-    toRPC: toRPC,
-    toGUI: toGUI
+      ),
+      newIdentDefs(ident("MACRO_rawReq"), ident("JSONNode")),
+      newIdentDefs(ident("MACRO_reply"), ident("RPCReplyFunction"))
+    ],
+    body,
+    nnkLambda,
+    quote do:
+      {.closure, async, gcsafe.}
   )

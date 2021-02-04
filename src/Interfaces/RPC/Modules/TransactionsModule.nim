@@ -1,14 +1,18 @@
 import strutils
 import json
 
+import chronos
+
 import ../../../lib/[Errors, Util, Hash]
 
-import ../../../Wallet/[MinerWallet, Wallet, Address]
-import ../../../Wallet/Address
+import ../../../Wallet/[MinerWallet, Wallet]
+import ../../../Wallet/Address as AddressFile
 
 import ../../../Database/Transactions/Transactions
 
+import ../../../Network/Serialize/Transactions/ParseClaim
 import ../../../Network/Serialize/Transactions/ParseSend
+import ../../../Network/Serialize/Transactions/ParseData
 
 import ../../../objects/GlobalFunctionBoxObj
 
@@ -88,9 +92,9 @@ proc `%`(
 
 proc module*(
   functions: GlobalFunctionBox
-): RPCFunctions {.forceCheck: [].} =
+): RPCHandle {.forceCheck: [].} =
   try:
-    newRPCFunctions:
+    result = newRPCHandle:
       proc getTransaction(
         hash: Hash[256]
       ): JSONNode {.forceCheck: [
@@ -98,18 +102,16 @@ proc module*(
       ].} =
         #Get the Transaction.
         try:
-          result = % functions.transactions.getTransaction()
+          result = % functions.transactions.getTransaction(hash)
         except IndexError:
           raise newJSONRPCError(IndexError, "Transaction not found")
 
       proc getUTXOs(
         address: Address
-      ): JSONNode {.forceCheck: [
-        JSONRPCError
-      ].} =
+      ): JSONNode {.forceCheck: [].} =
         #Get the UTXOs.
         var utxos: seq[FundedInput]
-        case decodedAddy.addyType:
+        case address.addyType:
           of AddressType.PublicKey:
             utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](address.data)))
 
@@ -122,9 +124,7 @@ proc module*(
 
       proc getBalance(
         address: Address
-      ): string {.forceCheck: [
-        ValueError
-      ].} =
+      ): string {.forceCheck: [].} =
         #Get the UTXOs.
         var utxos: seq[FundedInput]
         case address.addyType:
@@ -140,16 +140,16 @@ proc module*(
         result = $balance
 
       proc publishTransaction(
-        _type: string
+        txType: string,
         transaction: hex
-      ): bool {.forceCheck: [
+      ) {.forceCheck: [
         JSONRPCError
       ], async.} =
         try:
           var difficulty: uint32
-          case _type:
+          case txType:
             of "Claim":
-              await functions.transactions.addClaim(parseClaim(transaction))
+              functions.transactions.addClaim(parseClaim(transaction))
             of "Send":
               difficulty = functions.consensus.getSendDifficulty()
               await functions.transactions.addSend(
@@ -168,13 +168,11 @@ proc module*(
           raise newJSONRPCError(ValueError, "Transaction is invalid: " & e.msg)
         except DataExists:
           raise newJSONRPCError(DataExists, "Transaction was already added")
-        except Spam:
+        except Spam as spam:
           raise newJSONRPCError(Spam, "Transaction didn't beat the spam filter", %* {
-            difficulty: difficulty
+            "difficulty": spam.difficulty
           })
         except Exception as e:
           panic("Adding a Transaction raised an Exception despite catching all errors: " & e.msg)
-
-        result = true
   except Exception as e:
     panic("Couldn't create the Transactions Module: " & e.msg)
