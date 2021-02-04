@@ -29,16 +29,17 @@ const BCH_VALUES: array[5, uint32] = [
   uint32(0X2A1462B3)
 ]
 
-#AddressType enum.
-#Right now, there's only PublicKey, yet in the future, there may PublicKeyHash/Stealth.
-#Cannot have gaps due to the below address verification code.
-type AddressType* = enum
-  PublicKey = 0
+type
+  #AddressType enum.
+  #Right now, there's only PublicKey, yet in the future, there may PublicKeyHash/Stealth.
+  #Cannot have gaps due to the below address verification code.
+  AddressType* = enum
+    PublicKey = 0
 
-#Address object. Specifically stores a decoded address.
-type Address* = object
-  addyType*: AddressType
-  data*: seq[byte]
+  #Address object. Specifically stores a decoded address.
+  Address* = object
+    addyType*: AddressType
+    data*: seq[byte]
 
 #BCH Polymod function.
 func polymod(

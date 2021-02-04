@@ -1,6 +1,8 @@
 import strutils
 import tables
 
+import chronos
+
 import ../../../lib/[Errors, Util, Hash]
 import ../../../lib/Sketcher
 import ../../../Wallet/MinerWallet
@@ -24,9 +26,10 @@ import ../objects/RPCObj
 
 #BlockTemplate object, storing the info needed to create a template and publish a Block based off of one.
 type BlockTemplate = object
+  sketchSalt: string
   packets: seq[VerificationPacket]
   body: string
-  contents: Table[uint32, tuple[packets: Hash[256], contents: Hash[256]]]
+  contents: tuple[packets: Hash[256], contents: Hash[256]]
 
 #Element -> JSON.
 #This wouldn't work with %, broke everything with %*, so now we have this symbol.
@@ -66,18 +69,18 @@ proc `%`(
   result = %* {
     "hash":   $blockArg.header.hash,
     "header": {
-      "version":      blockArg.header.version,
-      "last":         $blockArg.header.last,
-      "contents":     $blockArg.header.contents,
+      "version":     blockArg.header.version,
+      "last":        $blockArg.header.last,
+      "contents":    $blockArg.header.contents,
 
-      "sketchSalt":   blockArg.header.sketchSalt.toHex(),
-      "sketchCheck":  $blockArg.header.sketchCheck,
+      "sketchSalt":  blockArg.header.sketchSalt.toHex(),
+      "sketchCheck": $blockArg.header.sketchCheck,
 
-      "time":         blockArg.header.time,
-      "proof":        blockArg.header.proof,
-      "signature":    $blockArg.header.signature
+      "time":        blockArg.header.time,
+      "proof":       blockArg.header.proof,
+      "signature":   $blockArg.header.signature
     },
-    "aggregate":      $blockArg.body.aggregate
+    "aggregate":     $blockArg.body.aggregate
   }
 
   #Add the miner to the header.
@@ -118,13 +121,13 @@ proc `%`(
 
 proc module*(
   functions: GlobalFunctionBox
-): RPCFunctions {.forceCheck: [].} =
+): auto {.forceCheck: [].} =
   var
     templates: Table[uint32, BlockTemplate]
     lastTailUsedForTemplate: Hash[256] = Hash[256]()
 
   try:
-    newRPCFunctions:
+    result = newRPCHandle:
       proc getHeight(): int {.forceCheck: [].} =
         functions.merit.getHeight()
 
@@ -132,25 +135,32 @@ proc module*(
         int(functions.merit.getDifficulty())
 
       proc getBlock(
-        id: int or Hash[256]
+        id: JSONNode
       ): JSONNode {.forceCheck: [
+        ParamError,
         JSONRPCError
       ].} =
-        var res: Block
-        when id is int:
+        if id.kind == JInt:
           try:
-            result = % functions.merit.getBlockByNonce(id)
+            result = % functions.merit.getBlockByNonce(retrieveFromJSON(id, int))
+          except ParamError as e:
+            raise e
+          except JSONRPCError as e:
+            panic("getBlock's retrieveFromJSON (int) call caused a JSONRPCError, when it shouldn't call any of those paths: " & e.msg)
           except IndexError:
             raise newJSONRPCError(IndexError, "Block not found", %* {
               "height": functions.merit.getHeight()
             })
+
         else:
           try:
-            result = % functions.merit.getBlockByHash(id)
+            result = % functions.merit.getBlockByHash(retrieveFromJSON(id, Hash[256]))
+          except ParamError as e:
+            raise e
+          except JSONRPCError as e:
+            panic("getBlock's retrieveFromJSON (Hash[256]) call caused a JSONRPCError, when it shouldn't call any of those paths: " & e.msg)
           except IndexError:
             raise newJSONRPCError(IndexError, "Block not found")
-        else:
-          raise newException(ParamError, "")
 
       proc getPublicKey(
         holder: uint16
@@ -158,13 +168,13 @@ proc module*(
         JSONRPCError
       ].} =
         try:
-          result = functions.merit.getPublicKey(holder)
+          result = $ functions.merit.getPublicKey(holder)
         except IndexError:
           raise newJSONRPCError(IndexError, "Nickname doesn't exist")
 
       proc getNickname(
         key: BLSPublicKey
-      ): int {.forceCheck: [
+      ): uint16 {.forceCheck: [
         JSONRPCError
       ].} =
         try:
@@ -173,19 +183,14 @@ proc module*(
           raise newJSONRPCError(IndexError, "Key doesn't have a nickname assigned")
 
       proc getTotalMerit(): int {.forceCheck: [].} =
-        % functions.merit.getTotalMerit()
+        functions.merit.getTotalMerit()
 
       proc getUnlockedMerit(): int {.forceCheck: [].} =
-        % functions.merit.getUnlockedMerit()
+        functions.merit.getUnlockedMerit()
 
       proc getMerit(
-        nick: int
-      ): JSONNode {.forceCheck: [
-        JSONRPCError
-      ].} =
-        if holder > high(uint16):
-          raise newJSONRPCError(ValueError, "Invalid nickname")
-
+        nick: uint16
+      ): JSONNode {.forceCheck: [].} =
         result = %* {
           "status": if functions.merit.isUnlocked(nick): "Unlocked" elif functions.merit.isPending(nick): "Pending" else: "Locked",
           "malicious": functions.consensus.isMalicious(nick),
@@ -194,9 +199,7 @@ proc module*(
 
       proc getBlockTemplate(
         miner: BLSPublicKey
-      ): JSONNode {.forceCheck: [
-        JSONRPCError
-      ].} =
+      ): JSONNode {.forceCheck: [].} =
         if lastTailUsedForTemplate != functions.merit.getTail():
           templates = initTable[uint32, BlockTemplate]()
 
@@ -228,21 +231,25 @@ proc module*(
           while blockTemplate.packets.collides(sketchSalt):
             #This shouldn't be needed as sketchSaltNum is a uint32.
             {.push checks: off.}
-            sketchSaltNum = cast[uint32](sketchSalt.fromBinary())
+            var sketchSaltNum: uint32 = cast[uint32](sketchSalt.fromBinary())
             inc(sketchSaltNum)
             {.pop.}
             sketchSalt = sketchSaltNum.toBinary(INT_LEN)
 
+          #Set the salt now that it's been proven valid.
+          blockTemplate.sketchSalt = sketchSalt
+
           #Create the body for the template.
           try:
             blockTemplate.body = newBlockBodyObj(
+              blockTemplate.contents.packets,
               blockTemplate.packets,
               pending.elements,
               pending.aggregate,
               {}
-            ).serialize(sketchSalt, blockTemplate.packets.len)
+            ).serialize(blockTemplate.sketchSalt, blockTemplate.packets.len)
           except ValueError as e:
-            panic("BlockBody's sketch has a collision despite mining a salt which doesn't.")
+            panic("BlockBody's sketch has a collision despite mining a salt which doesn't: " & e.msg)
 
           #Save the template.
           templates[time] = blockTemplate
@@ -274,9 +281,9 @@ proc module*(
               0,
               functions.merit.getTail(),
               blockTemplate.contents.contents,
-              uint32(pending.packets.len),
-              sketchSalt,
-              newSketchCheck(sketchSalt, pending.packets),
+              uint32(blockTemplate.packets.len),
+              blockTemplate.sketchSalt,
+              newSketchCheck(blockTemplate.sketchSalt, blockTemplate.packets),
               miner,
               headerTime,
               0,
@@ -289,9 +296,9 @@ proc module*(
               0,
               functions.merit.getTail(),
               blockTemplate.contents.contents,
-              uint32(pending.packets.len),
-              sketchSalt,
-              newSketchCheck(sketchSalt, pending.packets),
+              uint32(blockTemplate.packets.len),
+              blockTemplate.sketchSalt,
+              newSketchCheck(blockTemplate.sketchSalt, blockTemplate.packets),
               nick,
               headerTime,
               0,
@@ -311,20 +318,20 @@ proc module*(
         }
 
       proc publishBlock(
-        id: int,
-        _block: string
+        id: uint32,
+        newBlock: string
       ): Future[bool] {.forceCheck: [
         JSONRPCError
       ], async.} =
         var
-          blockTemplate: string
+          blockTemplate: BlockTemplate
           sketchyBlock: SketchyBlock
         try:
           blockTemplate = templates[id]
         except KeyError:
           raise newJSONRPCError(KeyError, "Invalid ID")
         try:
-          sketchyBlock = functions.merit.getRandomX().parseBlock(_block.parseHexStr() & blockTemplate.body)
+          sketchyBlock = functions.merit.getRandomX().parseBlock(newBlock.parseHexStr() & blockTemplate.body)
         except ValueError:
           raise newJSONRPCError(ValueError, "Invalid Block")
 

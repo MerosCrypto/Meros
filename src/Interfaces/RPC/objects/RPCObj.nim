@@ -8,6 +8,7 @@ import chronos
 
 import ../../../lib/Errors
 
+import ../../../Wallet/MinerWallet
 import ../../../Wallet/Address
 
 type
@@ -35,54 +36,61 @@ type
 template retrieveFromJSON*[T](
   value: JSONNode,
   expectedType: typedesc[T]
-# Auto as hex != string
+#Auto as hex != string (and so on).
 ): auto =
   when expectedType is Option:
     some(retrieveFromJSON(value, type(T().get())))
   else:
-    when expectedType is SomeInteger:
+    #NOP for raw JSONNode.
+    when expectedType is JSONNode:
+      value
+    elif expectedType is SomeInteger:
       if value.kind != JInt:
-        raise newLoggedException(ParamError, "")
+        #This function uses ParamError + message, an oddity, as ParamError has a hardcoded error message.
+        #While that still applies to the actual RPC, this improves logging.
+        raise newLoggedException(ParamError, "retrieveFromJSON expected int.")
       let num: int = value.getInt()
       if (num < int(low(T))) or (num > int(high(T))):
-        raise newLoggedException(ParamError, "")
+        raise newLoggedException(ParamError, "retrieveFromJSON expected an int within a specific range.")
       T(num)
 
     elif expectedType is string:
       if value.kind != JString:
-        raise newLoggedException(ParamError, "")
+        raise newLoggedException(ParamError, "retrieveFromJSON expected a string.")
       value.getStr()
 
     elif expectedType is hex:
-      if value.kind != JString:
-        raise newLoggedException(ParamError, "")
       var res: string
       try:
-        res = value.getStr().parseHexStr()
+        res = retrieveFromJSON(value, string).parseHexStr()
       except ValueError:
-        raise newLoggedException(ParamError, "")
+        raise newLoggedException(ParamError, "retrieveFromJSON expected a hex string.")
       res
 
     elif expectedType is Hash[256]:
-      if value.kind != JString:
-        raise newLoggedException(ParamError, "")
-      var res: string
-      try:
-        res = value.getStr().parseHexStr()
-        if res.len != 32:
-          raise newLoggedException(ParamError, "")
-      except ValueError:
-        raise newLoggedException(ParamError, "")
+      var res: string = retrieveFromJSON(value, hex)
+      if res.len != 32:
+        raise newLoggedException(ParamError, "retrieveFromJSON expected a 32-byte hex string (64 chars).")
       res.toHash[:256]()
 
+    elif expectedType is BLSPublicKey:
+      var resStr: string = retrieveFromJSON(value, hex)
+      if resStr.len != 192:
+        raise newLoggedException(ParamError, "retrieveFromJSON expected a 96-byte hex string (192 chars).")
+
+      var res: BLSPublicKey
+      try:
+        res = newBLSPublicKey(resStr)
+      except BLSError as e:
+        raise newJSONRPCError(ValueError, "Invalid BLS Public Key: " & e.msg)
+      res
+
     elif expectedType is Address:
-      if value.kind != JString:
-        raise newLoggedException(ParamError, "")
       var res: Address
       try:
-        res = value.getStr().getEncodedData()
-      except ValueError:
-        raise newLoggedException(ParamError, "")
+        res = retrieveFromJSON(value, string).getEncodedData()
+      except ValueError as e:
+        raise newLoggedException(ParamError, "retrieveFromJSON expected a string that is a valid address: " & e.msg)
       res
 
     else:
