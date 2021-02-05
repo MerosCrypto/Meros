@@ -95,7 +95,7 @@ proc newRPC*(
           #Technically invalid method field.
           req.hasKey("method") and (req["method"].kind == JString) and
           #Unstructured parameters.
-          req.hasKey("params") and ((req["params"].kind == JArray) or (req["params"].kind == JObject))
+          ((not req.hasKey("params")) or ((req["params"].kind == JArray) or (req["params"].kind == JObject)))
         ):
           try:
             await reply(newError(newJNull(), -32600, "Invalid Request"))
@@ -104,6 +104,10 @@ proc newRPC*(
           return
       except KeyError as e:
         panic("Couldn't get a RPC request's field despite confirming its existence: " & e.msg)
+
+      #Supply params if they were omitted.
+      if not req.hasKey("params"):
+        req["params"] = newJObject()
 
       #While array parameters are technically valid, they aren't used by Meros.
       try:
@@ -146,7 +150,8 @@ proc newRPC*(
           })
         except Exception as e:
           panic("Couldn't call reply about how we're quitting due to an Exception despite reply not naturally throwing anything: " & e.msg)
-        quit()
+
+        functions.system.quit()
 
       #Find the matching RPC module and pass it off.
       for rpc in modules:
@@ -154,37 +159,38 @@ proc newRPC*(
           #Remove the prefix so only the method is returned.
           req["method"] = % methodStr[rpc.prefix.len ..< methodStr.len]
 
-        #This has no raises pragma and should only raise ParamError/JSONRPCError.
-        #That said, we also have to bubble up AssertionErrors and handle Exceptions.
-        #There may also be a KeyError floating...
-        try:
-          await rpc.handle(req, reply)
-        #If there was an invalid parameter, create the proper error response.
-        except ParamError:
+          #This has no raises pragma and should only raise ParamError/JSONRPCError.
+          #That said, we also have to bubble up AssertionErrors and handle Exceptions.
+          #There may also be a KeyError floating...
           try:
-            await reply(newError(req["id"], -32602, "Invalid params"))
-          except KeyError as e:
-            panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+            await rpc.handle(req, reply)
+          #If there was an invalid parameter, create the proper error response.
+          except ParamError:
+            try:
+              await reply(newError(req["id"], -32602, "Invalid params"))
+            except KeyError as e:
+              panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+            except Exception as e:
+              panic("Couldn't call reply about a ParamError due to an Exception despite reply not naturally throwing anything: " & e.msg)
+
+          #If there was an invalid value, create the proper response.
+          except JSONRPCError as e:
+            try:
+              await reply(newError(req["id"], e.code, e.msg, e.data))
+            except KeyError as e:
+              panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+            except Exception as e:
+              panic("Couldn't call reply about a JSONRPCError due to an Exception despite reply not naturally throwing anything: " & e.msg)
+
+          #If we panic, make sure it bubbles up.
+          except AssertionError as e:
+            panic("RPC caused a panic: " & e.msg)
+
+          #If we hit a raw Exception, likely from the async runtime, panic.
           except Exception as e:
-            panic("Couldn't call reply about a ParamError due to an Exception despite reply not naturally throwing anything: " & e.msg)
+            panic("Raw Exception from the RPC, which may be something OTHER than async: " & e.msg)
 
-        #If there was an invalid value, create the proper response.
-        except JSONRPCError as e:
-          try:
-            await reply(newError(req["id"], e.code, e.msg, e.data))
-          except KeyError as e:
-            panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
-          except Exception as e:
-            panic("Couldn't call reply about a JSONRPCError due to an Exception despite reply not naturally throwing anything: " & e.msg)
-
-        #If we panic, make sure it bubbles up.
-        except AssertionError as e:
-          panic("RPC caused a panic: " & e.msg)
-
-        #If we hit a raw Exception, likely from the async runtime, panic.
-        except Exception as e:
-          panic("Raw Exception from the RPC, which may be something OTHER than async: " & e.msg)
-        break
+          break
 
   result = RPC(
     handle: createHandler(),
@@ -311,7 +317,11 @@ proc createSocketHandler(
             replyArg: JSONNode
           ) {.forceCheck: [], async.} =
             try:
-              if (await socket.write($replyArg)) != replyArg.len:
+              if (await socket.write($(%* {
+                "jsonrpc": "2.0",
+                "id": parsedData["id"],
+                "result": replyArg
+              }))) != ($replyArg).len:
                 raise newException(SocketError, "Client disconnected while receiving")
             except Exception as e:
               logWarn "Couldn't respond to RPC socket client", reason = e.msg

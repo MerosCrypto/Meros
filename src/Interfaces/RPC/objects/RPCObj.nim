@@ -199,6 +199,12 @@ macro newRPCHandle*(
       body[0][r][3][i][2] = newNimNode(nnkEmpty)
   body.add(switch)
 
+  #Call reply.
+  body.add(
+    quote do:
+      await MACRO_reply(MACRO_res)
+  )
+
   result = newProc(
     newEmptyNode(),
     @[
