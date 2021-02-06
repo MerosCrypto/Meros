@@ -1,8 +1,8 @@
 # Errors
 
-- Spam: 2
-- NotEnoughMeros: 1
-- DataExists: 0
+- Spam: 1
+- NotEnoughMeros: 0
 
-- IndexError: -1
-- ValueError: -2
+- DataMissing: -1
+- IndexError: -2
+- ValueError: -3

@@ -120,15 +120,15 @@ proc newJSONRPCError*[T: Exception or int](
   when error is int:
     result.code = error
   elif error is Spam:
-    result.code = 2
-  elif error is NotEnoughMeros:
     result.code = 1
-  elif error is DataExists:
+  elif error is NotEnoughMeros:
     result.code = 0
-  elif error is IndexError:
+  elif error is DataMissing:
     result.code = -1
-  elif error is ValueError:
+  elif error is IndexError:
     result.code = -2
+  elif error is ValueError:
+    result.code = -3
   else:
     {.error: "Unknown Exception type passed to newJSONRPCError".}
   result.data = data

@@ -70,3 +70,9 @@ Arguments:
 - `transaction` (string): Serialized Transaction.
 
 The result is a bool of if the transaction was successfully added. This will return true if the transaction is valid yet already exists, though it will NOT be broadcasted again in that case.
+
+### `publishTransactionWithoutWork`
+
+`publishTransactionWithoutWork` accepts a serialized Transaction, without work, generates work for it against the current difficulty, and then attempts to add it to the local Transactions DAG. Upon success, it's broadcasted to the network. This method requires authentication.
+
+The inputs and outputs of this function match `publishTransaction` exactly.

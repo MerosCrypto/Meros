@@ -5,6 +5,7 @@ import ../../../Database/Transactions/objects/SendObj
 
 import ../SerializeCommon
 
+#A theoretical version of the function supporting missing work is available at https://gist.github.com/kayabaNerve/a03fdc506a00069e81c29afc5d6816bb.
 proc parseSend*(
   sendStr: string,
   diff: uint32
@@ -18,6 +19,15 @@ proc parseSend*(
   let outputLenPos: int = BYTE_LEN + (int(sendStr[0]) * (HASH_LEN + BYTE_LEN))
   if sendStr.len < outputLenPos + BYTE_LEN:
     raise newLoggedException(ValueError, "parseSend not handed enough data to get the amount of outputs.")
+  if sendStr.len != (
+    BYTE_LEN +
+    (sendStr[0].fromBinary() * (HASH_LEN + BYTE_LEN)) +
+    BYTE_LEN +
+    (sendStr[outputLenPos].fromBinary() * (ED_PUBLIC_KEY_LEN + MEROS_LEN)) +
+    ED_SIGNATURE_LEN +
+    INT_LEN
+  ):
+    raise newLoggedException(ValueError, "parseSend handed the wrong amount of data.")
 
   #Inputs Length | Inputs | Outputs Length | Signature | Proof
   var sendSeq: seq[string] = sendStr.deserialize(

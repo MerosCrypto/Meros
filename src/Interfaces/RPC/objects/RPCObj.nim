@@ -1,5 +1,7 @@
 import macros
+
 import options
+import strutils
 import json
 
 import chronos
@@ -137,7 +139,7 @@ macro newRPCHandle*(
           raise newLoggedException(ParamError, "")
 
       let
-        argumentName: string = argument[0].strVal
+        argumentName: string = argument[0].strVal.replace("_JSON")
         argumentType: NimNode = argument[1]
 
       #Enable direct access to request/reply; used by quit.

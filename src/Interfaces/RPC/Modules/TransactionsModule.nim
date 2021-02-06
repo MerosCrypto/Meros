@@ -14,6 +14,10 @@ import ../../../Network/Serialize/Transactions/ParseClaim
 import ../../../Network/Serialize/Transactions/ParseSend
 import ../../../Network/Serialize/Transactions/ParseData
 
+#Used solely when generating work for Transactions about to be published.
+import ../../../Network/Serialize/Transactions/SerializeSend
+import ../../../Network/Serialize/Transactions/SerializeData
+
 import ../../../objects/GlobalFunctionBoxObj
 
 import ../objects/RPCObj
@@ -140,14 +144,14 @@ proc module*(
         result = $balance
 
       proc publishTransaction(
-        txType: string,
+        type_JSON: string,
         transaction: hex
       ) {.forceCheck: [
         JSONRPCError
       ], async.} =
         try:
           var difficulty: uint32
-          case txType:
+          case type_JSON:
             of "Claim":
               functions.transactions.addClaim(parseClaim(transaction))
             of "Send":
@@ -167,12 +171,41 @@ proc module*(
         except ValueError as e:
           raise newJSONRPCError(ValueError, "Transaction is invalid: " & e.msg)
         except DataExists:
-          raise newJSONRPCError(DataExists, "Transaction was already added")
+          return
         except Spam as spam:
           raise newJSONRPCError(Spam, "Transaction didn't beat the spam filter", %* {
             "difficulty": spam.difficulty
           })
         except Exception as e:
           panic("Adding a Transaction raised an Exception despite catching all errors: " & e.msg)
+
+      proc publishTransactionWithoutWork(
+        type_JSON: string,
+        transaction: hex
+      ) {.requireAuth, forceCheck: [
+        JSONRPCError
+      ], async.} =
+        try:
+          case type_JSON:
+            of "Claim":
+              await publishTransaction(type_JSON, transaction)
+            of "Send":
+              let send: Send = parseSend(transaction & "".pad(4), uint32(0))
+              send.mine(uint32(functions.consensus.getSendDifficulty()))
+              await publishTransaction(type_JSON, send.serialize())
+            of "Data":
+              let data: Data = parseData(transaction & "".pad(4), uint32(0))
+              data.mine(uint32(functions.consensus.getSendDifficulty()))
+              await publishTransaction(type_JSON, data.serialize())
+            else:
+              raise newJSONRPCError(ValueError, "Invalid Transaction type specified")
+        except ValueError as e:
+          raise newJSONRPCError(ValueError, "Transaction is invalid: " & e.msg)
+        except Spam as e:
+          panic("Transaction we're generating work for was labelled Spam: " & e.msg)
+        except JSONRPCError as e:
+          raise e
+        except Exception as e:
+          panic("Calling publishTransactionWithoutWork raised an Exception despite catching all errors: " & e.msg)
   except Exception as e:
     panic("Couldn't create the Transactions Module: " & e.msg)
