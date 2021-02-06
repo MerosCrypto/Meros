@@ -14,11 +14,11 @@ proc module*(
   try:
     result = newRPCHandle:
       proc quit(
-        req: JSONRPCRequest,
+        req: RPCRequest,
         reply: RPCReplyFunction
       ) {.requireAuth, forceCheck: [], async.} =
         try:
-          await reply(% {
+          await reply(%* {
             "jsonrpc": "2.0",
             "id": req["id"],
             "result": true

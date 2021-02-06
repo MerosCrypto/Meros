@@ -1,15 +1,10 @@
 import macros
 import options
-import tables
 import json
-export tables, json
 
 import chronos
 
 import ../../../lib/Errors
-
-import ../../../Wallet/MinerWallet
-import ../../../Wallet/Address
 
 type
   RPCReplyFunction* = proc (
