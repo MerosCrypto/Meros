@@ -18,7 +18,8 @@ type
 
   RPCHandle* = proc (
     req: JSONNode,
-    reply: RPCReplyFunction
+    reply: RPCReplyFunction,
+    authed: bool
   ): Future[void] {.gcsafe.}
 
   RPC* = ref object
@@ -44,10 +45,16 @@ template retrieveFromJSON*[T](
     #NOP for raw JSONNode.
     when expectedType is JSONNode:
       value
-    elif expectedType is SomeInteger:
-      if value.kind != JInt:
+
+    elif expectedType is bool:
+      if value.kind != JBool:
         #This function uses ParamError + message, an oddity, as ParamError has a hardcoded error message.
         #While that still applies to the actual RPC, this improves logging.
+        raise newLoggedException(ParamError, "retrieveFromJSON expected bool.")
+      value.getBool()
+
+    elif expectedType is SomeInteger:
+      if value.kind != JInt:
         raise newLoggedException(ParamError, "retrieveFromJSON expected int.")
       let num: int = value.getInt()
       if (num < int(low(T))) or (num > int(high(T))):
@@ -67,13 +74,14 @@ template retrieveFromJSON*[T](
         raise newLoggedException(ParamError, "retrieveFromJSON expected a hex string.")
       res
 
-    elif expectedType is Hash[256]:
+    #Stops erroring when the Hash symbol isn't in scope.
+    elif $(expectedType) == "Hash[256]":
       var res: string = retrieveFromJSON(value, hex)
       if res.len != 32:
         raise newLoggedException(ParamError, "retrieveFromJSON expected a 32-byte hex string (64 chars).")
       res.toHash[:256]()
 
-    elif expectedType is BLSPublicKey:
+    elif $(expectedType) == "G2":
       var resStr: string = retrieveFromJSON(value, hex)
       if resStr.len != 192:
         raise newLoggedException(ParamError, "retrieveFromJSON expected a 96-byte hex string (192 chars).")
@@ -85,7 +93,7 @@ template retrieveFromJSON*[T](
         raise newJSONRPCError(ValueError, "Invalid BLS Public Key: " & e.msg)
       res
 
-    elif expectedType is Address:
+    elif $(expectedType) == "Address":
       var res: Address
       try:
         res = retrieveFromJSON(value, string).getEncodedData()
@@ -94,7 +102,7 @@ template retrieveFromJSON*[T](
       res
 
     else:
-      {.error: "Trying to get an unknown type from JSON.".}
+      {.error: "Trying to get an unknown type from JSON: " & $expectedType.}
 
 macro newRPCHandle*(
   routes: untyped
@@ -136,6 +144,16 @@ macro newRPCHandle*(
       let
         argumentName: string = argument[0].strVal
         argumentType: NimNode = argument[1]
+
+      #Enable direct access to request/reply; used by quit.
+      if argumentType.kind == nnkIdent:
+        if argumentType.strVal == "RPCRequest":
+          routeCall.add(ident("MACRO_rawReq"))
+          continue
+        elif argumentType.strVal == "RPCReplyFunction":
+          routeCall.add(ident("MACRO_reply"))
+          continue
+
       var argumentActualType: NimNode = argumentType
       #Doesn't support Option[hex], something currently unused and unsupported elsewhere as well.
       if (argumentType.kind == nnkIdent) and (argumentType.strVal == "hex"):
@@ -154,10 +172,16 @@ macro newRPCHandle*(
       #Make sure it's passed to the function.
       routeCall.add(internalName)
 
-    var hasAsyncPragma: bool = false
+    var
+      hasAsyncPragma: bool = false
+      requiresAuth: bool = false
     for pragma in route[4]:
-      if (pragma.kind == nnkIdent) and (pragma.strVal == "async"):
-        hasAsyncPragma = true
+      if pragma.kind == nnkIdent:
+        if pragma.strVal == "async":
+          hasAsyncPragma = true
+        elif pragma.strVal == "requireAuth":
+          requiresAuth = true
+          continue
 
     var returnType: NimNode = route[3][0]
     if hasAsyncPragma:
@@ -178,6 +202,13 @@ macro newRPCHandle*(
       routeCall = quote do:
         MACRO_res = %(`routeCall`)
 
+    #Authorization check.
+    if requiresAuth:
+      routeCall = quote do:
+        if not MACRO_authed:
+          raise newException(RPCAuthorizationError, "401 Unauthorized")
+        `routeCall`
+
     let caseBody: NimNode = argHandling
     caseBody.add(routeCall)
     switch[^1].add(newStrLitNode(route[0].strVal), caseBody)
@@ -189,20 +220,34 @@ macro newRPCHandle*(
   )
 
   body[0] = routes
-  # Replace instances of hex/remove default argument values
-  # First is solely used as a tag, latter is since they shouldn't be needed
   for r in 0 ..< body[0].len:
+    #Replace instances of artificial types/remove default argument values.
+    #Former are solely used as tags, latter is since they shouldn't be needed.
     for i in 1 ..< body[0][r][3].len:
       #Doesn't support Option[hex] which we don't use.
-      if (body[0][r][3][i][1].kind == nnkIdent) and (body[0][r][3][i][1].strVal == "hex"):
-        body[0][r][3][i][1] = ident("string")
+      if body[0][r][3][i][1].kind == nnkIdent:
+        if body[0][r][3][i][1].strVal == "hex":
+          body[0][r][3][i][1] = ident("string")
+        elif body[0][r][3][i][1].strVal == "RPCRequest":
+          body[0][r][3][i][1] = ident("JSONNode")
       body[0][r][3][i][2] = newNimNode(nnkEmpty)
+
+    #Also remove requireAuth pragmas, since they're handled above and don't actually exist.
+    for p in 0 ..< body[0][r][4].len:
+      if (body[0][r][4][p].kind == nnkIdent) and (body[0][r][4][p].strVal == "requireAuth"):
+        body[0][r][4].del(p)
+        break
+
   body.add(switch)
 
   #Call reply.
   body.add(
     quote do:
-      await MACRO_reply(MACRO_res)
+      await MACRO_reply(%* {
+        "jsonrpc": "2.0",
+        "id": MACRO_rawReq["id"],
+        "result": MACRO_res
+      })
   )
 
   result = newProc(
@@ -213,7 +258,8 @@ macro newRPCHandle*(
         ident("void")
       ),
       newIdentDefs(ident("MACRO_rawReq"), ident("JSONNode")),
-      newIdentDefs(ident("MACRO_reply"), ident("RPCReplyFunction"))
+      newIdentDefs(ident("MACRO_reply"), ident("RPCReplyFunction")),
+      newIdentDefs(ident("MACRO_authed"), ident("bool"))
     ],
     body,
     nnkLambda,

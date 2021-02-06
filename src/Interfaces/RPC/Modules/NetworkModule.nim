@@ -27,7 +27,7 @@ proc module*(
       proc connect(
         ip: string,
         port: Option[int] = some(DEFAULT_PORT)
-      ) {.#[requireAuth,]# forceCheck: [], async.} =
+      ) {.requireAuth, forceCheck: [], async.} =
         try:
           await functions.network.connect(ip, port.unsafeGet())
         except Exception as e:

@@ -10,6 +10,7 @@ import objects/RPCObj
 export RPCObj.RPC
 
 import Modules/[
+  SystemModule,
   TransactionsModule,
   #ConsensusModule,
   #PersonalModule,
@@ -54,6 +55,7 @@ proc newRPC*(
   toGUI: ptr Channel[JSONNode]
 ): RPC {.forceCheck: [].} =
   var modules: seq[tuple[prefix: string, handle: RPCHandle]] = @[
+    (prefix: "system_",       handle: SystemModule.module(functions)),
     (prefix: "transactions_", handle: TransactionsModule.module(functions)),
     #(prefix: "consensus_",    handle: ConsensusModule.module(functions)),
     #(prefix: "personal_",     handle: PersonalModule.module(functions)),
@@ -64,7 +66,8 @@ proc newRPC*(
   proc createHandler(): RPCHandle {.forceCheck: [].} =
     result = proc (
       req: JSONNode,
-      reply: RPCReplyFunction
+      reply: RPCReplyFunction,
+      authed: bool
     ): Future[void] {.forceCheck: [], async.} =
       #If this doesn't have an ID field, error. It's either an invalid request or notification.
       if not req.hasKey("id"):
@@ -135,25 +138,14 @@ proc newRPC*(
         except Exception as e:
           panic("Couldn't call reply about additional fields due to an Exception despite reply not naturally throwing anything: " & e.msg)
 
-      #Override for quit.
       var methodStr: string
       try:
         methodStr = req["method"].getStr()
       except KeyError as e:
         panic("Couldn't get the ID of the request despite confirming its existence: " & e.msg)
-      if methodStr == "system_quit":
-        try:
-          await reply(%* {
-            "jsonrpc": "2.0",
-            "id": req["id"],
-            "result": true
-          })
-        except Exception as e:
-          panic("Couldn't call reply about how we're quitting due to an Exception despite reply not naturally throwing anything: " & e.msg)
-
-        functions.system.quit()
 
       #Find the matching RPC module and pass it off.
+      var replied: bool = false
       for rpc in modules:
         if methodStr.startsWith(rpc.prefix):
           #Remove the prefix so only the method is returned.
@@ -163,7 +155,7 @@ proc newRPC*(
           #That said, we also have to bubble up AssertionErrors and handle Exceptions.
           #There may also be a KeyError floating...
           try:
-            await rpc.handle(req, reply)
+            await rpc.handle(req, reply, authed)
           #If there was an invalid parameter, create the proper error response.
           except ParamError:
             try:
@@ -190,7 +182,14 @@ proc newRPC*(
           except Exception as e:
             panic("Raw Exception from the RPC, which may be something OTHER than async: " & e.msg)
 
+          replied = true
           break
+
+      if not replied:
+        try:
+          await reply(newError(req["id"], -32601, "Method not found"))
+        except Exception as e:
+          panic("Couldn't call reply about the method not being found due to an Exception despite reply not naturally throwing anything: " & e.msg)
 
   result = RPC(
     handle: createHandler(),
@@ -241,6 +240,7 @@ proc start*(
             panic("Couldn't send to a dead thread: " & e.msg)
           except Exception as e:
             panic("Sending over a channel threw an Exception: " & e.msg)
+        , true
       )
       await rpcFuture
     except Exception as e:
@@ -257,6 +257,10 @@ proc createSocketHandler(
     server: StreamServer,
     socket: StreamTransport
   ) {.forceCheck: [], async.} =
+    #Authed or not.
+    #True while we have yet to set up an auth method.
+    var authed: bool = true
+
     #Handle the client.
     while not socket.closed():
       #Read in a message.
@@ -317,11 +321,7 @@ proc createSocketHandler(
             replyArg: JSONNode
           ) {.forceCheck: [], async.} =
             try:
-              if (await socket.write($(%* {
-                "jsonrpc": "2.0",
-                "id": parsedData["id"],
-                "result": replyArg
-              }))) != ($replyArg).len:
+              if (await socket.write($replyArg)) != ($replyArg).len:
                 raise newException(SocketError, "Client disconnected while receiving")
             except Exception as e:
               logWarn "Couldn't respond to RPC socket client", reason = e.msg
@@ -330,6 +330,7 @@ proc createSocketHandler(
               except Exception:
                 discard
               return
+          , authed
         )
         await rpcFuture
       except Exception as e:
