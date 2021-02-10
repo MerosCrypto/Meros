@@ -2,4 +2,4 @@
 
 ### `quit`
 
-`quit` will finish up all current operations and safely shutdown Meros. The result is always true, regardless of what happens.
+`quit` will finish up all current operations and safely shutdown Meros. This will never error and always has a result of true, regardless of what happens.

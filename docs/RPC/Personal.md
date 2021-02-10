@@ -2,11 +2,11 @@
 
 ### `setMnemonic`
 
-`setMnemonic` creates a new wallet using the passed in mnemonic and password. This is irreversible and will delete the existing Wallet, having the node lose all access to the current Merit Holder and all funds.
+`setMnemonic` creates a new wallet using the passed in Mnemonic and password. This is irreversible and will delete the existing Wallet, having the node lose all access to the current Merit Holder and all funds.
 
 Arguments:
-- `mnemonic` (string): Optional; creates a new Mnemonic if omitted.
-- `password` (string): Optional; defaults to "" if omitted, as according to the BIP 39 spec.
+- `mnemonic` (string; optional): Creates a new Mnemonic if omitted.
+- `password` (string; optional): Defaults to "" if omitted, as according to the BIP 39 spec.
 
 The result is a bool of true.
 
@@ -15,14 +15,14 @@ The result is a bool of true.
 `setParentPublicKey` deletes the existing Wallet on the node, in an irreversible manner, losing all access to the current Merit Holder and all funds. It sets the Wallet to track the specified Parent Public Key, presumably one returned from `getParentPublicKey`. This will disable any operations requiring access to the private key, as well as all Merit Holder related operations. That said, this will preserve the functionality of address generation, `getTransactionTemplate`, and more, enabling Watch Wallet functionality.
 
 Arguments:
-- `account` (int): The account this Public Key maps to.
-- `key`     (string): The Parent Public Key.
+- `account` (int):    Account this Public Key maps to.
+- `key`     (string): Parent Public Key.
 
 The result is a bool of true.
 
 ### `getMnemonic`
 
-`getMnemonic` replies with the wallet's mnemonic, without its password. The result is a string of the mnemonic.
+`getMnemonic` replies with the Wallet's Mnemonic, without any password needed to use it. The result is a string of the Mnemonic.
 
 ### `getMeritHolderKey`
 
@@ -30,23 +30,23 @@ The result is a bool of true.
 
 ### `getParentPublicKey`
 
-`getParentPublicKey` replies with the Parent Public Key for the specified account of the node's HD Wallet, after applying BIP 44 purpose/coin type/account derivation. If the account isn't known to the node, this method will create it.
+`getParentPublicKey` replies with the Parent Public Key for the specified account of the node's HD Wallet. If the account isn't known to the node, this method will create it.
 
 Arguments:
-- `account`  (int):    Optional; defaults to 0.
-- `password` (string): Optional if the account was already created; defaults to "".
+- `account`  (int;    optional): Defaults to 0.
+- `password` (string; optional): Only optional if the account was already created; defaults to "".
 
-The result is a string of the Parent Public Key.
+The result is a string of the specified Parent Public Key.
 
 ### `getAddress`
 
-`getAddress` replies with a newly generated address.
+`getAddress` replies with a newly generated address. If the account used isn't known to the node, this method will create it.
 
 Arguments:
-- `account`  (int):    Optional; defaults to 0; used in hardened derivation.
-- `change`   (bool):   Optional; defaults to false.
-- `index`    (int):    Optional; defaults to the first unused index. If an index above the hardened threshold is specified, hardened derivation is used. If the next unused index is used, and it's above the hardened threshold, this will error.
-- `password` (string): Optional if the account was already created; defaults to "".
+- `account`  (int;    optional): Defaults to 0.
+- `change`   (bool;   optional): Defaults to false.
+- `index`    (int;    optional): Defaults to the first unused index. If an index above the hardened threshold is specified, hardened derivation is used. If the next unused index is used, and it's above the hardened threshold, this will error.
+- `password` (string; optional): Only optional if the account was already created and a non-hardened index is specified; defaults to "".
 
 The result is a string of the generated address.
 
@@ -55,6 +55,7 @@ The result is a string of the generated address.
 `send` creates and publishes a Send using the Wallet on the node.
 
 Arguments:
+- `account` (int; optional): The account to send from. Defaults to 0.
 - `outputs` (array of objects)
   - `address` (string)
   - `amount`  (string)
@@ -66,14 +67,18 @@ The result is a string of the hash.
 `data` creates and publishes a Data using the Wallet on the node.
 
 Arguments:
-- `hex`  (bool):   Optional; defaults to false. When true, data is treated as bytes. Else, as text.
-- `data` (string): Must be at least 1 byte and at most 256 bytes.
+- `account` (int; optional):  The account to send from. Defaults to 0.
+- `hex`     (bool; optional): Defaults to false. When true, data is treated as bytes, instead of as text.
+- `data`    (string):         Must be at least 1 byte and at most 256 bytes.
 
 The result is a string of the hash.
 
 ### `getUTXOs`
 
-`getUTXOs` replies with every UTXO known to this Wallet. If you only want the UTXOs for a specific address, use `transactions_getUTXOs`.
+`getUTXOs` replies with every UTXO known to the specified account. If you only want the UTXOs for a specific address, use `transactions_getUTXOs`.
+
+Arguments:
+- `account` (int; optional): Defaults to 0.
 
 The result is an array of objects, each as follows:
 - `address` (string)
@@ -85,10 +90,13 @@ The result is an array of objects, each as follows:
 `getTransactionTemplate` replies with a signable transaction template usable by a Meros instance with the relevant private keys.
 
 Arguments:
-- `amount`      (string): Amount to send.
-- `destination` (string): Address to send to.
-- `from`        (array of strings; optional): Addresses to use the UTXOs of. This will fail if the specified addresses don't have enough Meros, even if the wallet does.
-- `change`      (string; optional): Address to use as change.
+- `amount`      (string):                     Amount to send.
+- `destination` (string):                     Address to send to.
+- `account`     (int; optional):              Account to send from.
+- `from`        (array of strings; optional): Addresses to use the UTXOs of.
+- `change`      (string; optional):           Address to use as change.
+
+This method will error if both `account` and `from` arguments are provided.
 
 The result is an object, as follows:
 - `type`: Type of the Transaction.

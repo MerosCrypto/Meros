@@ -2,11 +2,11 @@
 
 ### `connect`
 
-`connect` attempts to connect to another Meros node. It requires authentication.
+`connect` attempts to connect to another Meros node. This method requires authentication.
 
 Arguments:
-- `address` (string): IP address or domain. Cannot be IPv6.
-- `port`    (int):    Optional; defaults to 5132 if omitted.
+- `address` (string):        IPv4 address or domain. Cannot be IPv6.
+- `port`    (int; optional): Defaults to 5132 if omitted.
 
 The result is a bool of true, regardless of if the connection succeeded. This will never return an error.
 
@@ -22,7 +22,7 @@ The result is a bool of true, regardless of if the connection succeeded. This wi
 `broadcast` broadcasts existing local data. Because it's already been processed locally, its presumably already been broadcasted around the network. This is meant to cover for any local networking issues/propagation shortcomings that may occur.
 
 Arguments:
-- `transaction` (string): Optional; hash of the Transaction to broadcast. When the Transaction is a Mint, this does nothing.
-- `block`       (string): Optional; hash of the Block to broadcast.
+- `transaction` (string; optional): Hash of the Transaction to broadcast.
+- `block`       (string; optional): Hash of the Block to broadcast.
 
 The result is a bool of true.

@@ -5,7 +5,7 @@
 `getSendDifficulty` replies with the Send Difficulty.
 
 Arguments:
-- `holder` (int): Optional.
+- `holder` (int; optional)
 
 The result is an int of the current difficulty if the Merit Holder isn't specified. If one is, the result is an int of what the specified Merit Holder voted.
 
@@ -14,7 +14,7 @@ The result is an int of the current difficulty if the Merit Holder isn't specifi
 `getDataDifficulty` replies with the Data Difficulty.
 
 Arguments:
-- `holder` (int): Optional.
+- `holder` (int; optional)
 
 The result is an int of the current difficulty if the Merit Holder isn't specified. If one is, the result is an int of what the specified Merit Holder voted.
 
