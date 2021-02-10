@@ -1,4 +1,9 @@
-import ../../../lib/[Errors, Hash, Util]
+import options
+import json
+
+import chronos
+
+import ../../../lib/[Errors, Util]
 import ../../../Wallet/[MinerWallet, Wallet]
 
 import ../../../objects/GlobalFunctionBoxObj
@@ -7,93 +12,67 @@ import ../objects/RPCObj
 
 proc module*(
   functions: GlobalFunctionBox
-): RPCFunctions {.forceCheck: [].} =
+): RPCHandle {.forceCheck: [].} =
   try:
-    newRPCFunctions:
-      "getMiner" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [].} =
-        res["result"] = % $functions.personal.getMinerWallet().privateKey
-
-      "setMnemonic" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError,
+    result = newRPCHandle:
+      proc setMnemonic(
+        mnemonic: Option[string] = some(""),
+        password: string = ""
+      ) {.requireAuth, forceCheck: [
         JSONRPCError
       ].} =
-        #Verify the params len.
-        if params.len > 2:
-          raise newException(ParamError, "")
-        #Verify the params' types.
-        for param in params:
-          if param.kind != JString:
-            raise newException(ParamError, "")
-
-        #Fill in optional params.
-        while params.len < 2:
-          params.add(% "")
-
-        #Create the Wallet.
         try:
-          functions.personal.setMnemonic(params[0].getStr(), params[1].getStr())
+          functions.personal.setMnemonic(mnemonic.unsafeGet(), password)
         except ValueError:
-          raise newJSONRPCError(-3, "Invalid Mnemonic")
+          raise newJSONRPCError(ValueError, "Invalid mnemonic")
 
-      "getMnemonic" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [].} =
-        res["result"] = % functions.personal.getWallet().mnemonic.sentence
+      #[proc setParentPublicKey(
+        account: uint32,
+        key: EdPublicKey
+      ) {.requireAuth, forceCheck: [].} =
+        raise newJSONRPCError(ValueError, "setParentPublicKey isn't implemented")]#
 
-      "getAddress" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError,
+      proc getMnemonic(): string {.requireAuth, forceCheck: [].} =
+        functions.personal.getWallet().mnemonic.sentence
+
+      proc getMeritHolderKey(): string {.requireAuth, forceCheck: [].} =
+        $functions.personal.getMinerWallet().publicKey
+
+      proc getAddress(
+        account: Option[uint32] = some(uint32(0)),
+        change: Option[bool] = some(false),
+        index: Option[uint32] = none(uint32),
+        password: Option[string] = some("")
+      ): string {.requireAuth, forceCheck: [
         JSONRPCError
       ].} =
-        #Supply optional parameters.
-        if params.len == 0:
-          params.add(% 0)
-        if params.len == 1:
-          params.add(% false)
-
-        #Verify the params.
-        if (
-          (params.len != 2) or
-          (params[0].kind != JInt) or
-          (params[1].kind != JBool)
-        ):
-          raise newException(ParamError, "")
-
         #Get the account in question.
         var wallet: HDWallet = functions.personal.getWallet()
         try:
-          wallet = wallet[uint32(params[0].getInt())]
+          wallet = wallet[account.unsafeGet()]
         except ValueError:
-          raise newJSONRPCError(-3, "Unusable account")
+          raise newJSONRPCError(ValueError, "Unusable account")
 
         #Get the tree in question.
         try:
-          if params[1].getBool():
-            wallet = wallet.derive(1)
-          else:
-            wallet = wallet.derive(0)
+          wallet = wallet.derive(if change.unsafeGet(): 1 else: 0)
         except ValueError as e:
           panic("Unusable external/internal trees despite checking for their validity: " & e.msg)
 
         #Get the child.
-        try:
-          res["result"] = % wallet.next().address
-        except ValueError:
-          raise newJSONRPCError(-3, "Tree has no valid children")
+        if index.isNone():
+          try:
+            result = wallet.next().address
+          except ValueError:
+            raise newJSONRPCError(ValueError, "Tree has no valid children remaining")
+        else:
+          try:
+            result = wallet[index.unsafeGet()].address
+          except ValueError:
+            raise newJSONRPCError(ValueError, "Index isn't viable")
 
-      "send" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
+      #[proc send(
+      ) {.requireAuth, forceCheck: [
         ParamError,
         JSONRPCError
       ], async.} =
@@ -114,10 +93,8 @@ proc module*(
         except Exception as e:
           panic("send threw an Exception despite catching everything: " & e.msg)
 
-      "data" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
+      proc data(
+      ) {.requireAuth, forceCheck: [
         ParamError,
         JSONRPCError
       ], async.} =
@@ -133,6 +110,6 @@ proc module*(
         except ValueError:
           raise newJSONRPCError(-3, "Invalid data length")
         except Exception as e:
-          panic("send threw an Exception despite catching everything: " & e.msg)
+          panic("send threw an Exception despite catching everything: " & e.msg)]#
   except Exception as e:
     panic("Couldn't create the Consensus Module: " & e.msg)

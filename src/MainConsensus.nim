@@ -69,8 +69,27 @@ proc mainConsensus(
 
   functions.consensus.getSendDifficulty = proc (): uint16 {.forceCheck: [].} =
     consensus.filters.send.difficulty
+  functions.consensus.getSendDifficultyOfHolder = proc (
+    holder: uint16
+  ): uint16 {.forceCheck: [
+    IndexError
+  ].} =
+    try:
+      result = database.loadSendDifficulty(holder)
+    except DBReadError:
+      raise newException(IndexError, "Holder doesn't have a SendDifficulty.")
+
   functions.consensus.getDataDifficulty = proc (): uint16 {.forceCheck: [].} =
     consensus.filters.data.difficulty
+  functions.consensus.getDataDifficultyOfHolder = proc (
+    holder: uint16
+  ): uint16 {.forceCheck: [
+    IndexError
+  ].} =
+    try:
+      result = database.loadDataDifficulty(holder)
+    except DBReadError:
+      raise newException(IndexError, "Holder doesn't have a DataDifficulty.")
 
   functions.consensus.isMalicious = proc (
     nick: uint16

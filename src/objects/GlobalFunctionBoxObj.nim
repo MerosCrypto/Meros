@@ -93,7 +93,18 @@ type
 
   ConsensusFunctionBox* = ref object
     getSendDifficulty*: proc (): uint16 {.gcsafe, raises: [].}
+    getSendDifficultyOfHolder*: proc (
+      holder: uint16
+    ): uint16 {.gcsafe, raises: [
+      IndexError
+    ].}
+
     getDataDifficulty*: proc (): uint16 {.gcsafe, raises: [].}
+    getDataDifficultyOfHolder*: proc (
+      holder: uint16
+    ): uint16 {.gcsafe, raises: [
+      IndexError
+    ].}
 
     isMalicious*: proc (
       nick: uint16,

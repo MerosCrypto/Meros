@@ -1,4 +1,5 @@
 import strutils
+import json
 
 import chronos
 
@@ -12,9 +13,9 @@ export RPCObj.RPC
 import Modules/[
   SystemModule,
   TransactionsModule,
-  #ConsensusModule,
-  #PersonalModule,
+  ConsensusModule,
   MeritModule,
+  PersonalModule,
   NetworkModule
 ]
 
@@ -57,9 +58,9 @@ proc newRPC*(
   var modules: seq[tuple[prefix: string, handle: RPCHandle]] = @[
     (prefix: "system_",       handle: SystemModule.module(functions)),
     (prefix: "transactions_", handle: TransactionsModule.module(functions)),
-    #(prefix: "consensus_",    handle: ConsensusModule.module(functions)),
-    #(prefix: "personal_",     handle: PersonalModule.module(functions)),
+    (prefix: "consensus_",    handle: ConsensusModule.module(functions)),
     (prefix: "merit_",        handle: MeritModule.module(functions)),
+    (prefix: "personal_",     handle: PersonalModule.module(functions)),
     (prefix: "network_",      handle: NetworkModule.module(functions))
   ]
 

@@ -122,7 +122,7 @@ proc `%`(
 
 proc module*(
   functions: GlobalFunctionBox
-): auto {.forceCheck: [].} =
+): RPCHandle {.forceCheck: [].} =
   var
     templates: Table[uint32, BlockTemplate]
     lastTailUsedForTemplate: Hash[256] = Hash[256]()
