@@ -31,3 +31,4 @@ The result is an object, as follows:
 - `threshold`  (int):              Merit needed to become verified.
 - `verified`   (bool):             Whether or not the Transaction is verified.
 - `competing`  (bool):             Whether or not the Transaction has competitors. If it does, and isn't already verified, it can only be verified at the end of its Epoch.
+- `beaten`     (bool):             Whether or not the Transaction was finalized with less Merit than a competitor.

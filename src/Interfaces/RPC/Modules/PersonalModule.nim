@@ -1,4 +1,5 @@
 import options
+import parseutils
 import json
 
 import chronos
@@ -26,17 +27,27 @@ proc module*(
         except ValueError:
           raise newJSONRPCError(ValueError, "Invalid mnemonic")
 
-      #[proc setParentPublicKey(
-        account: uint32,
+      proc setParentPublicKey(
+        account: uint32 = 0,
         key: EdPublicKey
-      ) {.requireAuth, forceCheck: [].} =
-        raise newJSONRPCError(ValueError, "setParentPublicKey isn't implemented")]#
+      ) {.requireAuth, forceCheck: [
+        JSONRPCError
+      ].} =
+        raise newJSONRPCError(ValueError, "personal_setParentPublicKey isn't implemented")
 
       proc getMnemonic(): string {.requireAuth, forceCheck: [].} =
         functions.personal.getWallet().mnemonic.sentence
 
       proc getMeritHolderKey(): string {.requireAuth, forceCheck: [].} =
         $functions.personal.getMinerWallet().publicKey
+
+      proc getParentPublicKey(
+        account: uint32 = 0,
+        password: string = ""
+      ): string {.requireAuth, forceCheck: [
+        JSONRPCError
+      ].} =
+        raise newJSONRPCError(ValueError, "personal_getParentPublicKey isn't implemented")
 
       proc getAddress(
         account: Option[uint32] = some(uint32(0)),
@@ -71,45 +82,77 @@ proc module*(
           except ValueError:
             raise newJSONRPCError(ValueError, "Index isn't viable")
 
-      #[proc send(
-      ) {.requireAuth, forceCheck: [
+      proc send(
+        account: uint32,
+        outputs: JSONNode,
+        password: string
+      ): string {.requireAuth, forceCheck: [
         ParamError,
         JSONRPCError
-      ], async.} =
-        #Verify the params.
-        if (
-          (params.len != 2) or
-          (params[0].kind != JString) or
-          (params[1].kind != JString)
-        ):
-          raise newException(ParamError, "")
+      ].} =
+        if outputs.kind != JArray:
+          raise newException(ParamError, "Outputs weren't in an array")
 
-        try:
-          res["result"] = % $(await functions.personal.send(params[0].getStr(), params[1].getStr()))
-        except ValueError:
-          raise newJSONRPCError(-3, "Invalid address/amount")
-        except NotEnoughMeros:
-          raise newJSONRPCError(1, "Not enough Meros")
-        except Exception as e:
-          panic("send threw an Exception despite catching everything: " & e.msg)
+        var outputSeq: seq[tuple[address: Address, amount: uint64]] = @[]
+        for output in outputs:
+          try:
+            if not (
+              (output.kind == JObject) and
+              (output.len == 2) and
+              output.hasKey("address") and (output["address"].kind == JString) and
+              output.hasKey("amount") and (output["amount"].kind == JString)
+            ):
+              raise newException(ParamError, "An output wasn't a properly structured object")
+          except KeyError as e:
+            panic("Couldn't check the type of a field despite guaranteeing its existence: " & e.msg)
+
+          try:
+            outputSeq.add((address: output["address"].getStr().getEncodedData(), amount: uint64(0)))
+            #No idea how this behaves on x86 platforms.
+            #A runtime parse/serialize check would work, yet it'd only support fractional Meros values in an int32.
+            #That makes this the only feasible option, for now.
+            #-- Kayaba
+            when not (BiggestUInt is uint64):
+              {.error: "Lack of uint64 availability breaks JSON-RPC parsing.".}
+            #Returned value is amount of parsed characters; not relevant to us nor worth the length check.
+            #This will error on overflow.
+            discard parseBiggestUInt(output["amount"].getStr(), outputSeq[^1].amount)
+          except KeyError as e:
+            panic("Couldn't get a field despite guaranteeing its existence: " & e.msg)
+          except ValueError as e:
+            raise newJSONRPCError(ValueError, "Invalid address or amount: " & e.msg)
+
+        raise newJSONRPCError(ValueError, "personal_send isn't implemented")
 
       proc data(
+        account: uint32,
+        hex: bool,
+        data: string,
+        password: string = ""
       ) {.requireAuth, forceCheck: [
+        JSONRPCError
+      ].} =
+        raise newJSONRPCError(ValueError, "personal_data isn't implemented")
+
+      proc getUTXOs(
+        account: uint32
+      ): JSONNode {.requireAuth, forceCheck: [
+        JSONRPCError
+      ].} =
+        raise newJSONRPCError(ValueError, "personal_getUTXOs isn't implemented")
+
+      proc getTransactionTemplate(
+        amount: string,
+        destination: string,
+        account: Option[uint32] = none(uint32),
+        from_JSON: Option[seq[string]] = none(seq[string]),
+        change: Option[string] = none(string)
+      ): JSONNode {.requireAuth, forceCheck: [
         ParamError,
         JSONRPCError
-      ], async.} =
-        #Verify the params.
-        if (
-          (params.len != 1) or
-          (params[0].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
-        try:
-          res["result"] = % $(await functions.personal.data(params[0].getStr()))
-        except ValueError:
-          raise newJSONRPCError(-3, "Invalid data length")
-        except Exception as e:
-          panic("send threw an Exception despite catching everything: " & e.msg)]#
+      ].} =
+        if account.isSome() and from_JSON.isSome():
+          raise newLoggedException(ParamError, "personal_getUTXOs had both account and from set")
+        raise newJSONRPCError(ValueError, "personal_getUTXOs isn't implemented")
   except Exception as e:
     panic("Couldn't create the Consensus Module: " & e.msg)

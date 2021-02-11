@@ -1,6 +1,7 @@
 import macros
 
 import options
+import sequtils
 import strutils
 import json
 
@@ -33,11 +34,18 @@ type
 
 template retrieveFromJSON*[T](
   value: JSONNode,
-  expectedType: typedesc[T]
+  expectedType: typedesc[seq[T]] or typedesc[T]
 #Auto as hex != string (and so on).
 ): auto =
   when expectedType is Option:
     some(retrieveFromJSON(value, type(T().get())))
+  elif expectedType is seq:
+    if value.kind != JArray:
+      #This function uses ParamError + message, an oddity, as ParamError has a hardcoded error message.
+      #While that still applies to the actual RPC, this improves logging.
+      raise newLoggedException(ParamError, "retrieveFromJSON wanted a seq and didn't get a JSON array.")
+
+    mapIt(toSeq(value.items), retrieveFromJSON(it, type(T)))
   else:
     #NOP for raw JSONNode.
     when expectedType is JSONNode:
@@ -45,8 +53,6 @@ template retrieveFromJSON*[T](
 
     elif expectedType is bool:
       if value.kind != JBool:
-        #This function uses ParamError + message, an oddity, as ParamError has a hardcoded error message.
-        #While that still applies to the actual RPC, this improves logging.
         raise newLoggedException(ParamError, "retrieveFromJSON expected bool.")
       value.getBool()
 
@@ -78,6 +84,13 @@ template retrieveFromJSON*[T](
         raise newLoggedException(ParamError, "retrieveFromJSON expected a 32-byte hex string (64 chars).")
       res.toHash[:256]()
 
+    elif $(expectedType) == "EdPublicKey":
+      var res: string = retrieveFromJSON(value, hex)
+      if res.len != 32:
+        raise newLoggedException(ParamError, "retrieveFromJSON expected a 32-byte hex string (64 chars).")
+      newEdPublicKey(res)
+
+    #BLS Public Key.
     elif $(expectedType) == "G2":
       var resStr: string = retrieveFromJSON(value, hex)
       if resStr.len != 192:
@@ -129,13 +142,12 @@ macro newRPCHandle*(
     for argument in route[3][1 ..< route[3].len]:
       var internalName: NimNode = ident("MACRO_ARGUMENT_" & argument[0].strVal)
 
-      #If this is an option, and it's not present, we supply a value.
-      #Else, we fail.
-      var optionOrFail: NimNode
-      if (argument[1].kind == nnkBracketExpr) and (argument[1][0].strVal == "Option"):
-        optionOrFail = newAssignment(internalName, argument[2])
+      #If the argument isn't present, use the default value or fail.
+      var defaultOrFail: NimNode
+      if argument[2].kind != nnkEmpty:
+        defaultOrFail = newAssignment(internalName, argument[2])
       else:
-        optionOrFail = quote do:
+        defaultOrFail = quote do:
           raise newLoggedException(ParamError, "")
 
       let
@@ -163,7 +175,7 @@ macro newRPCHandle*(
           if hasKey(MACRO_rawReq["params"], `argumentName`):
             `internalName` = retrieveFromJSON(MACRO_rawReq["params"][`argumentName`], `argumentType`)
           else:
-            `optionOrFail`
+            `defaultOrFail`
       )
 
       #Make sure it's passed to the function.
