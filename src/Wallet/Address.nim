@@ -111,7 +111,7 @@ func convert(
     if bits > 0:
       result.add(byte((acc shl (to - bits)) and maxv))
   elif (bits >= fromBits) or (((acc shl (to - bits)) and maxv) != 0):
-    raise newException(ValueError, "Invalid padding.")
+    raise newLoggedException(ValueError, "Invalid address padding.")
 
 #Create a new address.
 proc newAddress*(

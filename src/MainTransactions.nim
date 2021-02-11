@@ -82,7 +82,7 @@ proc syncPrevious(
       ((final of Send) and (not ((tx of Claim) or (tx of Send)))) or
       ((final of Data) and (not (tx of Data)))
     ):
-      raise newException(ValueError, "Transaction has an invalid input.")
+      raise newLoggedException(ValueError, "Transaction has an invalid input.")
 
     if (
       (
@@ -93,7 +93,7 @@ proc syncPrevious(
         cast[Data](tx).argon.overflows(cast[Data](tx).getDifficultyFactor() * functions.consensus.getDataDifficulty())
       )
     ):
-      raise newException(ValueError, "Transaction doesn't pass the spam check.")
+      raise newLoggedException(ValueError, "Transaction doesn't pass the spam check.")
 
     queue.add(tx)
 
@@ -201,7 +201,7 @@ proc mainTransactions(
     except DataExists as e:
       raise e
     except DataMissing:
-      raise newException(ValueError, "Transaction has a non-existent input.")
+      raise newLoggedException(ValueError, "Transaction has a non-existent input.")
     except Exception as e:
       panic("syncPrevious threw an Exception despite catching everything: " & e.msg)
 
@@ -244,7 +244,7 @@ proc mainTransactions(
     except DataExists as e:
       raise e
     except DataMissing:
-      raise newException(ValueError, "Transaction has a non-existent input.")
+      raise newLoggedException(ValueError, "Transaction has a non-existent input.")
     except Exception as e:
       panic("syncPrevious threw an Exception despite catching everything: " & e.msg)
 

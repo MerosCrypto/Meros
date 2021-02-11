@@ -427,7 +427,7 @@ proc finalize*(
 
       try:
         if consensus.getStatus(input.hash).merit == -1:
-          raise newException(UnfinalizedParents, "Family requires another family to finalize first.")
+          raise newLoggedException(UnfinalizedParents, "Family requires another family to finalize first.")
       except IndexError as e:
         #This would generally be a panic, yet there is a single case where it isn't.
         #If this input is a Mint, it won't have a status.
