@@ -203,7 +203,7 @@ macro newRPCHandle*(
     if requiresAuth:
       routeCall = quote do:
         if not MACRO_authed:
-          raise newException(RPCAuthorizationError, "401 Unauthorized")
+          raise newLoggedException(RPCAuthorizationError, "401 Unauthorized")
         `routeCall`
 
     let caseBody: NimNode = argHandling

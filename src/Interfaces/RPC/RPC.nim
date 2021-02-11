@@ -304,7 +304,7 @@ proc createSocketHandler(
         try:
           let res: string = $(newError(newJNull(), -32700, "Parse error"))
           if (await socket.write(res)) != res.len:
-            raise newException(SocketError, "Client disconnected while receiving the parse error")
+            raise newLoggedException(SocketError, "Client disconnected while receiving the parse error")
           return
         except Exception as e:
           logWarn "Couldn't respond to RPC socket client who sent invalid JSON", reason = e.msg
@@ -323,7 +323,7 @@ proc createSocketHandler(
           ) {.forceCheck: [], async.} =
             try:
               if (await socket.write($replyArg)) != ($replyArg).len:
-                raise newException(SocketError, "Client disconnected while receiving")
+                raise newLoggedException(SocketError, "Client disconnected while receiving")
             except Exception as e:
               logWarn "Couldn't respond to RPC socket client", reason = e.msg
               try:
