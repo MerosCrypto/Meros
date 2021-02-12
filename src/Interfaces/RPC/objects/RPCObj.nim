@@ -93,7 +93,7 @@ template retrieveFromJSON*[T](
     #BLS Public Key.
     elif $(expectedType) == "G2":
       var resStr: string = retrieveFromJSON(value, hex)
-      if resStr.len != 192:
+      if resStr.len != 96:
         raise newLoggedException(ParamError, "retrieveFromJSON expected a 96-byte hex string (192 chars).")
 
       var res: BLSPublicKey

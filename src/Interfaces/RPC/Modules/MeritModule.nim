@@ -320,7 +320,7 @@ proc module*(
 
       proc publishBlock(
         id: uint32,
-        newBlock: string
+        header: string
       ): Future[bool] {.forceCheck: [
         JSONRPCError
       ], async.} =
@@ -332,7 +332,7 @@ proc module*(
         except KeyError:
           raise newJSONRPCError(KeyError, "Invalid ID")
         try:
-          sketchyBlock = functions.merit.getRandomX().parseBlock(newBlock.parseHexStr() & blockTemplate.body)
+          sketchyBlock = functions.merit.getRandomX().parseBlock(header.parseHexStr() & blockTemplate.body)
         except ValueError:
           raise newJSONRPCError(ValueError, "Invalid Block")
 

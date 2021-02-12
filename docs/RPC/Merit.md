@@ -107,6 +107,6 @@ Mining the Block occurs by hashing the header with a 4-byte proof appended. Afte
 
 Arguments:
 - `id`    (int):    ID of the template used.
-- `block` (string): The serialized BlockHeader.
+- `header` (string): The serialized BlockHeader.
 
 The result is a bool of true.

@@ -28,6 +28,10 @@ The result is a bool of true.
 
 `getMeritHolderKey` replies with the BLS Private Key of the node's Merit Holder. The result is a string of the Private Key.
 
+### `getMeritHolderNick`
+
+`getMeritHolderKey` replies with the nickname of the node's Merit Holder. The result is an int of the nickname.
+
 ### `getParentPublicKey`
 
 `getParentPublicKey` replies with the Parent Public Key for the specified account of the node's HD Wallet. If the account isn't known to the node, this method will create it.

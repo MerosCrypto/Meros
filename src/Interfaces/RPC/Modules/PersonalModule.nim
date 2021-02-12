@@ -39,7 +39,15 @@ proc module*(
         functions.personal.getWallet().mnemonic.sentence
 
       proc getMeritHolderKey(): string {.requireAuth, forceCheck: [].} =
-        $functions.personal.getMinerWallet().publicKey
+        $functions.personal.getMinerWallet().privateKey
+
+      proc getMeritHolderNick(): uint16 {.requireAuth, forceCheck: [
+        JSONRPCError
+      ].} =
+        try:
+          result = functions.merit.getNickname(functions.personal.getMinerWallet().publicKey)
+        except IndexError:
+          raise newJSONRPCError(IndexError, "Wallet doesn't have a Merit Holder nickname assigned")
 
       proc getParentPublicKey(
         account: uint32 = 0,
