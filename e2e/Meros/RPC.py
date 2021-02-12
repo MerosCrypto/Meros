@@ -1,4 +1,4 @@
-from typing import Dict, List, Any
+from typing import Dict, Any
 from os import remove
 from time import sleep
 import json
@@ -21,7 +21,7 @@ class RPC:
     self,
     module: str,
     method: str,
-    args: List[Any] = []
+    args: Dict[str, Any] = {}
   ) -> Any:
     try:
       self.socket.send(

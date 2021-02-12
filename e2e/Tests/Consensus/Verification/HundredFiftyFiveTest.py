@@ -33,7 +33,7 @@ def HundredFiftyFiveTest(
     edPrivKeys[1].get_verifying_key()
   ]
 
-  blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMiner")))
+  blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMeritHolderKey")))
   blsPubKey: bytes = blsPrivKey.toPublicKey().serialize()
 
   blockchain: Blockchain = Blockchain()
@@ -48,7 +48,9 @@ def HundredFiftyFiveTest(
   template: Dict[str, Any] = rpc.call(
     "merit",
     "getBlockTemplate",
-    [blsPubKey.hex()]
+    {
+      "miner": blsPubKey.hex()
+    }
   )
 
   #Mine a Block.
@@ -69,7 +71,14 @@ def HundredFiftyFiveTest(
   block.mine(blsPrivKey, blockchain.difficulty())
   blockchain.add(block)
 
-  rpc.call("merit", "publishBlock", [template["id"], block.header.serialize().hex()])
+  rpc.call(
+    "merit",
+    "publishBlock",
+    {
+      "id": template["id"],
+      "header": block.header.serialize().hex()
+    }
+  )
 
   if MessageType(rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
     raise TestError("Meros didn't broadcast the Block we just published.")

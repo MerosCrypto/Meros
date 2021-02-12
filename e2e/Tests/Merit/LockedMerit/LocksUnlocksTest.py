@@ -18,13 +18,13 @@ def LocksUnlocksTest(
       raise TestError("Meros didn't return the correct amount of Unlocked Merit.")
 
     if height < 9:
-      if rpc.call("merit", "getMerit", [0])["status"] != "Unlocked":
+      if rpc.call("merit", "getMerit", {"nick": 0})["status"] != "Unlocked":
         raise TestError("Merit was locked early.")
     elif height == 9:
-      if rpc.call("merit", "getMerit", [0])["status"] != "Locked":
+      if rpc.call("merit", "getMerit", {"nick": 0})["status"] != "Locked":
         raise TestError("Merit wasn't locked.")
     elif height < 19:
-      if rpc.call("merit", "getMerit", [0])["status"] != "Pending":
+      if rpc.call("merit", "getMerit", {"nick": 0})["status"] != "Pending":
         raise TestError("Merit was unlocked early.")
     elif height == 19:
       #This may be the first global used in this codebase.
@@ -32,7 +32,7 @@ def LocksUnlocksTest(
       #pylint: disable=global-statement
       global correctVectorsHeight
       correctVectorsHeight = True
-      if rpc.call("merit", "getMerit", [0])["status"] != "Unlocked":
+      if rpc.call("merit", "getMerit", {"nick": 0})["status"] != "Unlocked":
         raise TestError("Merit wasn't unlocked.")
 
   with open("e2e/Vectors/Merit/LockedMerit/LocksUnlocks.json", "r") as file:

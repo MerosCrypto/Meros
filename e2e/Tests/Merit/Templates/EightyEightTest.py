@@ -77,7 +77,7 @@ def EightyEightTest(
 
   #Verify the block template has no verifications.
   if bytes.fromhex(
-    rpc.call("merit", "getBlockTemplate", [blsPubKey])["header"]
+    rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey})["header"]
   )[36 : 68] != bytes(32):
     raise TestError("Block template has Verification Packets.")
 
@@ -86,7 +86,7 @@ def EightyEightTest(
   sleep(0.5)
 
   #Verify the block template has both verifications.
-  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", [blsPubKey])
+  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey})
   template["header"] = bytes.fromhex(template["header"])
   packets: List[VerificationPacket] = [VerificationPacket(datas[0].hash, [0]), VerificationPacket(datas[1].hash, [0])]
   if template["header"][36 : 68] != BlockHeader.createContents(packets):
@@ -119,14 +119,14 @@ def EightyEightTest(
   rpc.call(
     "merit",
     "publishBlock",
-    [
-      template["id"],
-      (
+    {
+      "id": template["id"],
+      "header": (
         template["header"] +
         block.header.proof.to_bytes(4, byteorder="little") +
         block.header.signature
       ).hex()
-    ]
+    }
   )
 
   verifyBlockchain(rpc, merit.blockchain)

@@ -29,7 +29,7 @@ def TwoHundredThirtyFiveTest(
   edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
   #Mine one Block to the node.
-  blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMiner")))
+  blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMeritHolderKey")))
   blsPubKey: bytes = blsPrivKey.toPublicKey().serialize()
 
   #Call getBlockTemplate just to get an ID.
@@ -37,7 +37,7 @@ def TwoHundredThirtyFiveTest(
   template: Dict[str, Any] = rpc.call(
     "merit",
     "getBlockTemplate",
-    [blsPubKey.hex()]
+    {"miner": blsPubKey.hex()}
   )
 
   #Mine a Block.
@@ -58,7 +58,14 @@ def TwoHundredThirtyFiveTest(
   block.mine(blsPrivKey, blockchain.difficulty())
   blockchain.add(block)
 
-  rpc.call("merit", "publishBlock", [template["id"], block.header.serialize().hex()])
+  rpc.call(
+    "merit",
+    "publishBlock",
+    {
+      "id": template["id"],
+      "header": block.header.serialize().hex()
+    }
+  )
 
   #Send Meros a Data and receive its Verification to make sure it's verifying Transactions in the first place.
   data: Data = Data(bytes(32), edPubKey.to_bytes())
@@ -112,7 +119,7 @@ def TwoHundredThirtyFiveTest(
   #Therefore, if the above last Block had its Data verified, this issue should be closed.
   #That said, the timing is a bit too tight for comfort.
   #Better safe than sorry. Hence why the code after this check exists.
-  if rpc.call("merit", "getMerit", [0])["status"] != "Locked":
+  if rpc.call("merit", "getMerit", {"nick": 0})["status"] != "Locked":
     raise TestError("Merit wasn't locked when it was supposed to be.")
 
   #Send it a Transaction and make sure Meros verifies it, despite having its Merit locked.

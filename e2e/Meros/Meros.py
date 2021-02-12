@@ -511,8 +511,7 @@ class Meros:
             {
               "jsonrpc": "2.0",
               "id": 0,
-              "method": "system_quit",
-              "params": []
+              "method": "system_quit"
             }
           ),
           "utf-8"

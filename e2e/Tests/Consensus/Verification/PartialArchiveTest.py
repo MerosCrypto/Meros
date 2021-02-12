@@ -29,7 +29,7 @@ def PartialArchiveTest(
     SignedVerification.fromSignedJSON(vectors["verifs"][1])
   ]
 
-  key: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMiner")))
+  key: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMeritHolderKey")))
 
   def sendDataAndVerifications() -> None:
     if rpc.meros.liveTransaction(data) != rpc.meros.live.recv():
@@ -40,12 +40,12 @@ def PartialArchiveTest(
 
     #As we don't have a quality RPC route for this, we need to use getTemplate.
     if bytes.fromhex(
-      rpc.call("merit", "getBlockTemplate", [key.toPublicKey().serialize().hex()])["header"]
+      rpc.call("merit", "getBlockTemplate", {"miner": key.toPublicKey().serialize().hex()})["header"]
     )[36 : 68] != BlockHeader.createContents([VerificationPacket(data.hash, [0, 1])]):
       raise TestError("New Block template doesn't have a properly created packet.")
 
   def verifyRecreation() -> None:
-    template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", [key.toPublicKey().serialize().hex()])
+    template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": key.toPublicKey().serialize().hex()})
     if bytes.fromhex(template["header"])[36 : 68] != BlockHeader.createContents([VerificationPacket(data.hash, [1])]):
       raise TestError("New Block template doesn't have a properly recreated packet.")
 
@@ -67,10 +67,10 @@ def PartialArchiveTest(
     rpc.call(
       "merit",
       "publishBlock",
-      [
-        template["id"],
-        (header + proof.to_bytes(4, byteorder="little") + sig).hex()
-      ]
+      {
+        "id": template["id"],
+        "header": (header + proof.to_bytes(4, byteorder="little") + sig).hex()
+      }
     )
 
     raise SuccessError("Stop Liver from trying to verify the vector chain which doesn't have this Block.")

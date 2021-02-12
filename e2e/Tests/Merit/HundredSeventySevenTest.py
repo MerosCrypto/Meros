@@ -26,7 +26,7 @@ def HundredSeventySevenTest(
   rpc: RPC
 ) -> None:
   #Grab the keys.
-  blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMiner")))
+  blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMeritHolderKey")))
   blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
   #Faux Blockchain used to calculate the difficulty.
@@ -37,7 +37,7 @@ def HundredSeventySevenTest(
   #The next 6 pop it from the Epochs.
   #One more is to verify the next is popped as well.
   for b in range(0, 8):
-    template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", [blsPubKey.serialize().hex()])
+    template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey.serialize().hex()})
     template["header"] = bytes.fromhex(template["header"])
 
     header: BlockHeader = BlockHeader(
@@ -70,14 +70,14 @@ def HundredSeventySevenTest(
     rpc.call(
       "merit",
       "publishBlock",
-      [
-        template["id"],
-        (
+      {
+        "id": template["id"],
+        "header": (
           template["header"] +
           header.proof.to_bytes(4, byteorder="little") +
           header.signature
         ).hex()
-      ]
+      }
     )
 
     if rpc.meros.live.recv() != rpc.meros.liveBlockHeader(header):

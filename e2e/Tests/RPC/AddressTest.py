@@ -21,7 +21,7 @@ def test(
   try:
     if isinstance(address, bytes):
       address = encodeAddress(address)
-    rpc.call("personal", "send", [address, "1"])
+    rpc.call("personal", "send", {"outputs": [{"address": address, "amount": "1"}]})
     #Raise a TestError with a different code than expected to ensure the below check is run and fails.
     raise TestError("0 ")
   except TestError as e:

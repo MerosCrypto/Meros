@@ -12,7 +12,7 @@ def KeepUnlockedTest(
   def verifyUnlocked(
     _: int
   ) -> None:
-    if rpc.call("merit", "getMerit", [0])["status"] != "Unlocked":
+    if rpc.call("merit", "getMerit", {"nick": 0})["status"] != "Unlocked":
       raise TestError("Meros didn't keep Merit unlocked.")
 
   with open("e2e/Vectors/Merit/LockedMerit/KeepUnlocked.json", "r") as file:

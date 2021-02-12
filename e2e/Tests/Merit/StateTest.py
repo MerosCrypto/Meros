@@ -31,7 +31,7 @@ def StateTest(
     meritSum: int = 0
     for miner in range(len(state.balances)):
       meritSum += state.balances[miner]
-      if rpc.call("merit", "getMerit", [miner]) != {
+      if rpc.call("merit", "getMerit", {"nick": miner}) != {
         "status": "Unlocked",
         "malicious": False,
         "merit": state.balances[miner]

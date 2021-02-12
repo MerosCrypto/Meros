@@ -23,10 +23,10 @@ def UnionedFamiliesMultipleWinnersTest(
 
   def verifyMultipleWon() -> None:
     for send in [sends[1], *sends[3:]]:
-      if rpc.call("consensus", "getStatus", [send.hash.hex()])["verified"]:
+      if rpc.call("consensus", "getStatus", {"hash": send.hash.hex()})["verified"]:
         raise TestError("Meros verified a transaction which was beaten by another transaction.")
     for send in [sends[0], sends[2]]:
-      if not rpc.call("consensus", "getStatus", [send.hash.hex()])["verified"]:
+      if not rpc.call("consensus", "getStatus", {"hash": send.hash.hex()})["verified"]:
         raise TestError("Meros didn't verify the verified transaction for each original family.")
 
   Liver(
