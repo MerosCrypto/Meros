@@ -1,3 +1,10 @@
+#Tests handling of Addresses by the RPC.
+#Checks checksum mutability such as https://github.com/sipa/bech32/issues/51.
+#Also checks:
+# - Blatantly incorrect checksums.
+# - Incorrect lengths.
+# - Unsupported address types.
+
 from typing import Union, List, Tuple
 
 import os
@@ -5,7 +12,7 @@ import os
 from bech32 import CHARSET, convertbits, bech32_encode, bech32_decode
 
 from e2e.Meros.RPC import RPC
-from e2e.Tests.Errors import TestError
+from e2e.Tests.Errors import MessageException, TestError
 
 def encodeAddress(
   data: bytes
@@ -18,47 +25,49 @@ def test(
   invalid: bool,
   msg: str
 ) -> None:
+  if isinstance(address, bytes):
+    address = encodeAddress(address)
+
   try:
-    if isinstance(address, bytes):
-      address = encodeAddress(address)
-    rpc.call("personal", "send", {"outputs": [{"address": address, "amount": "1"}]})
-    #Raise a TestError with a different code than expected to ensure the below check is run and fails.
-    raise TestError("0 ")
+    rpc.call("transactions", "getBalance", {"address": address})
+    #If the call passed, and the address is invalid, raise.
+    if invalid:
+      raise MessageException(msg)
   except TestError as e:
-    if int(e.message.split(" ")[0]) != (-3 if invalid else 1):
+    if int(e.message.split(" ")[0]) != -32602:
+      raise Exception("Non-ParamError was raised by this RPC call, which shouldn't be able to raise anything else.")
+    if not invalid:
       raise TestError(msg)
+  except MessageException as e:
+    raise TestError(e.message)
 
 def AddressTest(
   rpc: RPC
 ) -> None:
-  #Sanity test.
-  test(rpc, bytes(33), False, "Meros didn't use the NotEnoughMeros error when trying to send while having 0 Meros.")
-
   #Test a variety of valid addresses.
   for _ in range(50):
-    test(rpc, bytes([0]) + os.urandom(32), False, "Meros didn't use the NotEnoughMeros error when trying to send while having 0 Meros.")
+    test(rpc, bytes([0]) + os.urandom(32), False, "Meros rejected a valid address.")
 
   #Invalid checksum.
-  invalidChecksum: str = encodeAddress(bytes(33))
+  invalidChecksum: str = encodeAddress(os.urandom(33))
   if invalidChecksum[-1] != 'q':
     invalidChecksum = invalidChecksum[:-1] + 'q'
   else:
     invalidChecksum = invalidChecksum[:-1] + 't'
-  test(rpc, invalidChecksum, True, "Meros accepted an address with an invalid checksum")
+  test(rpc, invalidChecksum, True, "Meros accepted an address with an invalid checksum.")
 
-  #Invalid version byte. 255 was used as it's expected version bytes will become VarInts if ever needed.
-  #That said, even 127 is high enough we're likely to never come close.
-  test(rpc, bytes([255]) + bytes(32), True, "Meros accepted an address with an invalid version byte.")
+  #Invalid version byte.
+  test(rpc, bytes([255]) + os.urandom(32), True, "Meros accepted an address with an invalid version byte.")
 
   #Invalid length.
-  test(rpc, bytes(32), True, "Meros accepted an address with an invalid length.")
-  test(rpc, bytes(34), True, "Meros accepted an address with an invalid length.")
+  test(rpc, os.urandom(32), True, "Meros accepted an address with an invalid length.")
+  test(rpc, os.urandom(34), True, "Meros accepted an address with an invalid length.")
 
-  #Create a random address for us to mutate.
+  #Create a random address for us to mutate while preserving the checksum.
   randomKey: bytes = os.urandom(32)
   unchanged: str = encodeAddress(bytes([0]) + randomKey)
   #Sanity check against it.
-  test(rpc, unchanged, False, "Meros didn't use the NotEnoughMeros error when trying to send while having 0 Meros.")
+  test(rpc, unchanged, False, "Meros rejected a valid address.")
 
   #Mutate it as described in https://github.com/sipa/bech32/issues/51#issuecomment-496797984.
   #Since we can insert any amount of 'q's, run this ten times.
@@ -75,6 +84,6 @@ def AddressTest(
     #Sanity check that our mutation worked.
     decoded: Union[Tuple[None, None], Tuple[str, List[int]]] = bech32_decode(mutated)
     if decoded is Tuple[None, None]:
-      raise TestError("Mutation stopped the checksum from passing.")
+      raise Exception("Mutation stopped the checksum from passing.")
 
     test(rpc, mutated, True, "Meros accepted an address which had been mutated yet still passed the checksum.")
