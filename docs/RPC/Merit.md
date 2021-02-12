@@ -86,6 +86,10 @@ The result is an object, as follows:
 - `malicious` (bool):   Whether or not this holder has a Merit Removal against them pending.
 - `merit`     (int)
 
+### `getSupply`
+
+`getSupply` replies with the total amount of minted Meros in existence. The result is an int of the current supply.
+
 ### `getBlockTemplate`
 
 `getBlockTemplate` replies with a template for mining a Block.
