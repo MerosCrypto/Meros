@@ -53,7 +53,7 @@ proc `%`(
 
       try:
         for o in 0 ..< result["outputs"].len:
-          result["outputs"][o]["key"] = % $cast[MintOutput](mint.outputs[o]).key
+          result["outputs"][o]["nick"] = % cast[MintOutput](mint.outputs[o]).key
       except KeyError as e:
         panic("Couldn't add a Mint's output's key to its output: " & e.msg)
 

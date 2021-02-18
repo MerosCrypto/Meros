@@ -20,7 +20,7 @@ The result is an object, as follows:
   - `amount` (string)
 
     When `descendant` == "Mint":
-    - `key` (int): Miner nickname.
+    - `nick` (int): Miner nickname.
 
     When `descendant` == "Claim" or `descendant` == "Send":
     - `key` (string): Ed25519 Public Key.
