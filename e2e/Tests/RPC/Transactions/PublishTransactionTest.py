@@ -83,7 +83,6 @@ def PublishTransactionTest(
     verifyTransaction(rpc, data)
 
     #Create a new Send/Data and publish them without work.
-    print("Handling Send")
     sendSentWithoutWork: Send = Send([(send.hash, 0)], [(pubKey.to_bytes(), claim.amount)])
     sendSentWithoutWork.sign(sentToKey)
     sendSentWithoutWork.beat(sendFilter)
