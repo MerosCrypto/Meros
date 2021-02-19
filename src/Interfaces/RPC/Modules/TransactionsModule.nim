@@ -193,7 +193,7 @@ proc module*(
               await publishTransaction(type_JSON, send.serialize())
             of "Data":
               let data: Data = parseData(transaction & "".pad(4), uint32(0))
-              data.mine(uint32(functions.consensus.getSendDifficulty()))
+              data.mine(uint32(functions.consensus.getDataDifficulty()))
               await publishTransaction(type_JSON, data.serialize())
             else:
               raise newJSONRPCError(ValueError, "Invalid Transaction type specified")

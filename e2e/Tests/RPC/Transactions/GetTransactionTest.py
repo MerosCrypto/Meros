@@ -13,6 +13,7 @@ from e2e.Meros.Liver import Liver
 
 from e2e.Tests.Errors import TestError
 
+#pylint: disable=too-many-statements
 def GetTransactionTest(
   rpc: RPC
 ) -> None:
