@@ -33,13 +33,11 @@ The result is an object, as follows:
 	When `descendant` == "Send":
   - `signature` (string)
   - `proof`     (int)
-  - `argon`     (string)
 
 	When `descendant` == "Data":
   - `data`      (string)
   - `signature` (string)
   - `proof`     (int)
-  - `argon`     (string)
 
 ### `getUTXOs`
 

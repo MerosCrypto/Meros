@@ -83,7 +83,6 @@ proc `%`(
 
       result["signature"] = % $send.signature
       result["proof"] = % send.proof
-      result["argon"] = % $send.argon
 
     of Data as data:
       result["descendant"] = % "Data"
@@ -92,7 +91,6 @@ proc `%`(
 
       result["signature"] = % $data.signature
       result["proof"] = % data.proof
-      result["argon"] = % $data.argon
 
 proc module*(
   functions: GlobalFunctionBox
