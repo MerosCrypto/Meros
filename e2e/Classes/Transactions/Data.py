@@ -69,8 +69,7 @@ class Data(
       "data": self.data.hex().upper(),
       "signature": self.signature.hex().upper(),
 
-      "proof": self.proof,
-      "argon": self.argon.hex().upper()
+      "proof": self.proof
     }
 
   @staticmethod

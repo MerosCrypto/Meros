@@ -96,8 +96,7 @@ class Send(
       "hash": self.hash.hex().upper(),
 
       "signature": self.signature.hex().upper(),
-      "proof": self.proof,
-      "argon": self.argon.hex().upper()
+      "proof": self.proof
     }
     for txInput in self.inputs:
       result["inputs"].append({
