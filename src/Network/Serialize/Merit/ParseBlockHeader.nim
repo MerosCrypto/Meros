@@ -23,6 +23,15 @@ proc parseBlockHeader*(
     BYTE_LEN
   )
 
+  if headerSeq[6] == "\0":
+    #< as the DBs call this will full blocks. Easier than detecting length and passing that splice.
+    if headerStr.len < 167:
+      raise newLoggedException(ValueError, "parseBlockHeader not handed enough data for an existing miner header.")
+  #This also handles the edge case where the flag is empty, as the string wasn't even long enough for that.
+  else:
+    if headerStr.len < 261:
+      raise newLoggedException(ValueError, "parseBlockHeader not handed enough data for a new miner header.")
+
   #Extract the rest of the header.
   headerSeq = headerSeq & headerStr[
     BLOCK_HEADER_DATA_LEN ..< headerStr.len

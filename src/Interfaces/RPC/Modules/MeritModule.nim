@@ -201,8 +201,10 @@ proc module*(
       proc getBlockTemplate(
         miner: BLSPublicKey
       ): JSONNode {.forceCheck: [].} =
-        if lastTailUsedForTemplate != functions.merit.getTail():
+        let tail: Hash[256] = functions.merit.getTail()
+        if lastTailUsedForTemplate != tail:
           templates = initTable[uint32, BlockTemplate]()
+          lastTailusedForTemplate = tail
 
         #Create a new template if needed, as determined by our second-accuracy.
         #If we already created a template for this second, just use it (see https://github.com/MerosCrypto/Meros/issues/278).
@@ -269,7 +271,7 @@ proc module*(
 
         #Ensure the time is higher than the previous Block's.
         try:
-          headerTime = max(time, functions.merit.getBlockByHash(functions.merit.getTail()).header.time + 1)
+          headerTime = max(time, functions.merit.getBlockByHash(tail).header.time + 1)
         except IndexError as e:
           panic("Couldn't get the last Block despite grabbing it by the chain's tail: " & e.msg)
 
@@ -280,7 +282,7 @@ proc module*(
           except IndexError:
             header = % newBlockHeader(
               0,
-              functions.merit.getTail(),
+              tail,
               blockTemplate.contents.contents,
               uint32(blockTemplate.packets.len),
               blockTemplate.sketchSalt,
@@ -295,7 +297,7 @@ proc module*(
           if header.kind == JNull:
             header = % newBlockHeader(
               0,
-              functions.merit.getTail(),
+              tail,
               blockTemplate.contents.contents,
               uint32(blockTemplate.packets.len),
               blockTemplate.sketchSalt,
@@ -320,7 +322,7 @@ proc module*(
 
       proc publishBlock(
         id: uint32,
-        header: string
+        header: hex
       ): Future[bool] {.forceCheck: [
         JSONRPCError
       ], async.} =
@@ -330,9 +332,9 @@ proc module*(
         try:
           blockTemplate = templates[id]
         except KeyError:
-          raise newJSONRPCError(KeyError, "Invalid ID")
+          raise newJSONRPCError(IndexError, "Invalid ID")
         try:
-          sketchyBlock = functions.merit.getRandomX().parseBlock(header.parseHexStr() & blockTemplate.body)
+          sketchyBlock = functions.merit.getRandomX().parseBlock(header & blockTemplate.body)
         except ValueError:
           raise newJSONRPCError(ValueError, "Invalid Block")
 
