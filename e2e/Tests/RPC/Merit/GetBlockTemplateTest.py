@@ -4,6 +4,7 @@ import json
 
 import ed25519
 
+from e2e.Libs.RandomX import RandomX
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Data import Data
@@ -12,6 +13,7 @@ from e2e.Classes.Consensus.SpamFilter import SpamFilter
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.SendDifficulty import SignedSendDifficulty
+from e2e.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 
 from e2e.Classes.Merit.BlockHeader import BlockHeader
 from e2e.Classes.Merit.BlockBody import BlockBody
@@ -59,9 +61,7 @@ def getBlockTemplateTest(
       bytes(4),
       bytes(32),
       PrivateKey(k).toPublicKey().serialize(),
-      int(startTime),
-      0,
-      bytes(48)
+      int(startTime)
     ).serialize()[:-52]
     #Skip over the randomized sketch salt.
     if (bytesHeader[:72] + bytesHeader[76:]) != (serializedHeader[:72] + serializedHeader[76:]):
@@ -174,11 +174,20 @@ def getBlockTemplateTest(
   rpc.meros.live.connection.close()
   rpc.meros.sync.connection.close()
   #Sleep to reset the connection state.
-  time.sleep(31)
+  time.sleep(35)
 
   #Create and mine the Block.
+  header: BlockHeader = BlockHeader(
+    0,
+    blockchain.blocks[-1].header.hash,
+    bytes(32),
+    0,
+    bytes(4),
+    bytes(32),
+    PrivateKey(0).toPublicKey().serialize(),
+    0,
+  )
   miningStart: int = 0
-  header: BlockHeader
   #If this block takes longer than 10 seconds to mine, try another.
   #Low future time (20 seconds) is chosen due to feasibility + supporting lowering the FTL in the future.
   while time.time() > miningStart + 10:
@@ -197,12 +206,16 @@ def getBlockTemplateTest(
       int(time.time()) + 20,
     )
     header.mine(PrivateKey((miningStart % 100) + 10), blockchain.difficulty() * 11 // 10)
+  blockchain.add(Block(header, BlockBody()))
 
   #Send it and verify it.
   rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
   rpc.meros.syncConnect(blockchain.blocks[0].header.hash)
   rpc.meros.liveBlockHeader(header)
   rpc.meros.rawBlockBody(Block(header, BlockBody()), 0)
+  rpc.meros.live.connection.close()
+  rpc.meros.sync.connection.close()
+  time.sleep(1)
 
   #Ensure a stable template ID.
   currTime: float = time.time()
@@ -216,3 +229,69 @@ def getBlockTemplateTest(
     raise TestError("Template ID isn't the time when the previous Block is in the future.")
   if int.from_bytes(bytes.fromhex(template["header"])[-4:], "little") != (header.time + 1):
     raise TestError("Meros didn't handle generating a template off a Block in the future properly.")
+
+  #Verify a Block with three Elements from a holder, where two form a Merit Removal.
+  #Only the two which cause a MeritRemoval should be included.
+  #Mine a Block to a new miner and clear the current template with it (might as well).
+  #Also allows us to test template clearing.
+  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(1).toPublicKey().serialize().hex()})
+  #Mine the Block.
+  proof: int = -1
+  tempHash: bytes = bytes()
+  tempSignature: bytes = bytes()
+  while (
+    (proof == -1) or
+    ((int.from_bytes(tempHash, "little") * (blockchain.difficulty() * 11 // 10)) > int.from_bytes(bytes.fromhex("FF" * 32), "little"))
+  ):
+    proof += 1
+    tempHash = RandomX(bytes.fromhex(template["header"]) + proof.to_bytes(4, "little"))
+    tempSignature = PrivateKey(1).sign(tempHash).serialize()
+    tempHash = RandomX(tempHash + tempSignature)
+  rpc.call("merit", "publishBlock", {"id": template["id"], "header": template["header"] + proof.to_bytes(4, "little").hex() + tempSignature.hex()})
+  time.sleep(1)
+
+  #Verify the template was cleared.
+  currTime: float = time.time()
+  time.sleep(1 - (currTime - int(currTime)))
+  currTime = time.time()
+  bytesHeader: bytes = bytes.fromhex(rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(0).toPublicKey().serialize().hex()})["header"])
+  serializedHeader: bytes = BlockHeader(
+    0,
+    tempHash,
+    bytes(32),
+    0,
+    bytes(4),
+    bytes(32),
+    0,
+    #Ensures that the previous time manipulation doesn't come back to haunt us.
+    max(int(currTime), blockchain.blocks[-1].header.time + 1)
+  ).serialize()[:-52]
+  #Skip over the randomized sketch salt and time (which we don't currently have easy access to).
+  if (bytesHeader[:72] + bytesHeader[76:-4]) != (serializedHeader[:72] + serializedHeader[76:-4]):
+    raise TestError("Template wasn't cleared.")
+
+  #Sleep so we can reconnect.
+  time.sleep(35)
+  rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
+
+  #Finally create the Elements.
+  dataDiff: SignedDataDifficulty = SignedDataDifficulty(1, 0)
+  dataDiff.sign(2, PrivateKey(1))
+  rpc.meros.signedElement(dataDiff)
+  sendDiffs: List[SignedSendDifficulty] = [
+    SignedSendDifficulty(1, 1),
+    SignedSendDifficulty(2, 1)
+  ]
+  for sd in sendDiffs:
+    sd.sign(2, PrivateKey(1))
+    rpc.meros.signedElement(sd)
+  time.sleep(1)
+
+  if bytes.fromhex(
+    rpc.call(
+      "merit",
+      "getBlockTemplate",
+      {"miner": PrivateKey(0).toPublicKey().serialize().hex()}
+    )["header"]
+  )[36:68] != BlockHeader.createContents([], [elem for elem in sendDiffs[::-1]]):
+    raise TestError("Meros didn't include just the malicious Elements in its new template.")
