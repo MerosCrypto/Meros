@@ -6,6 +6,7 @@ import ed25519
 from e2e.Classes.Transactions.Transactions import Claim, Send, Data, Transactions
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
+from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
@@ -56,6 +57,8 @@ def PublishTransactionTest(
       }
     ):
       raise TestError("Publishing a valid Transaction didn't return true.")
+    if rpc.meros.live.recv()[1:] != claim.serialize():
+      raise TestError("publishTransaction didn't broadcast the Transaction.")
 
     if not rpc.call(
       "transactions",
@@ -66,6 +69,8 @@ def PublishTransactionTest(
       }
     ):
       raise TestError("Publishing a valid Transaction didn't return true.")
+    if rpc.meros.live.recv()[1:] != send.serialize():
+      raise TestError("publishTransaction didn't broadcast the Transaction.")
 
     if not rpc.call(
       "transactions",
@@ -76,6 +81,8 @@ def PublishTransactionTest(
       }
     ):
       raise TestError("Publishing a valid Transaction didn't return true.")
+    if rpc.meros.live.recv()[1:] != data.serialize():
+      raise TestError("publishTransaction didn't broadcast the Transaction.")
 
     #Verify all three were entered properly.
     verifyTransaction(rpc, claim)
@@ -100,6 +107,8 @@ def PublishTransactionTest(
       }
     ):
       raise TestError("Publishing a valid Transaction without work didn't return true.")
+    if rpc.meros.live.recv()[1:] != sendSentWithoutWork.serialize():
+      raise TestError("publishTransaction didn't broadcast the Transaction.")
 
     if not rpc.call(
       "transactions",
@@ -110,6 +119,8 @@ def PublishTransactionTest(
       }
     ):
       raise TestError("Publishing a valid Transaction without work didn't return true.")
+    if rpc.meros.live.recv()[1:] != dataSentWithoutWork.serialize():
+      raise TestError("publishTransaction didn't broadcast the Transaction.")
 
     #Call verify now, which will test ours with work against Meros's with generated work.
     #Both should terminate on the earliest valid proof, making them identical.
@@ -126,6 +137,8 @@ def PublishTransactionTest(
       }
     ):
       raise TestError("Publishing an existing Transaction didn't return true.")
+    if MessageType(rpc.meros.live.recv()[0]) == MessageType.Data:
+      raise TestError("publishTransaction broadcasted an existing Transaction.")
 
     #No arguments.
     try:
