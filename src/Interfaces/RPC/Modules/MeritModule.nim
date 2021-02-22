@@ -74,6 +74,7 @@ proc `%`(
       "last":        $blockArg.header.last,
       "contents":    $blockArg.header.contents,
 
+      "packets":     blockArg.header.packetsQuantity,
       "sketchSalt":  blockArg.header.sketchSalt.toHex(),
       "sketchCheck": $blockArg.header.sketchCheck,
 
@@ -143,6 +144,8 @@ proc module*(
       ].} =
         if block_JSON.kind == JInt:
           try:
+            #Ensure this is within uint boundaries, raising a ParamError if not.
+            discard retrieveFromJSON(block_JSON, uint)
             result = % functions.merit.getBlockByNonce(retrieveFromJSON(block_JSON, int))
           except ParamError as e:
             raise e

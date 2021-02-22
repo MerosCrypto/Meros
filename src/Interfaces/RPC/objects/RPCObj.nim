@@ -60,8 +60,13 @@ template retrieveFromJSON*[T](
       if value.kind != JInt:
         raise newLoggedException(ParamError, "retrieveFromJSON expected int.")
       let num: int = value.getInt()
-      if (num < int(low(T))) or (num > int(high(T))):
+      if num < int(low(T)):
         raise newLoggedException(ParamError, "retrieveFromJSON expected an int within a specific range.")
+      #Needed as high(uint) can't be converted to an int. Safe as all positive int values will fit into a uint.
+      #The check for a positive value is performed above, thanks to the low check.
+      when expectedType is not uint:
+         if (num > int(high(T))):
+           raise newLoggedException(ParamError, "retrieveFromJSON expected an int within a specific range.")
       T(num)
 
     elif expectedType is string:
