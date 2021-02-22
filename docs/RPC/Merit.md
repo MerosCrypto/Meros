@@ -35,13 +35,12 @@ The result is an object, as follows:
 - `elements` (array of objects, each as follows)
   - `descendant` (string)
   - `holder`     (int)
+  - `nonce`      (int)
 
     When `descendant` == "SendDifficulty":
-    - `nonce`      (int)
     - `difficulty` (int)
 
     When `descendant` == "DataDifficulty":
-    - `nonce`      (int)
     - `difficulty` (int)
 
 - `removals` (array of ints): Whoever got their Merit removed by this Block.
@@ -110,7 +109,7 @@ Mining the Block occurs by hashing the header with a 4-byte proof appended. Afte
 `publishBlock` adds a Block to the local Blockchain, and if it's valid, publishes it.
 
 Arguments:
-- `id`    (int):    ID of the template used.
+- `id`    (int):     ID of the template used.
 - `header` (string): The serialized BlockHeader.
 
 The result is a bool of true.
