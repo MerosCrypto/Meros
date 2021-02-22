@@ -13,7 +13,7 @@
 `getBlock` replies with the requested Block.
 
 Arguments:
-- `id` (int/string): Either the nonce or hash.
+- `block` (int/string): Either the nonce or hash.
 
 The result is an object, as follows:
 - `hash`   (string)

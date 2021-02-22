@@ -136,14 +136,14 @@ proc module*(
         int(functions.merit.getDifficulty())
 
       proc getBlock(
-        id: JSONNode
+        block_JSON: JSONNode
       ): JSONNode {.forceCheck: [
         ParamError,
         JSONRPCError
       ].} =
-        if id.kind == JInt:
+        if block_JSON.kind == JInt:
           try:
-            result = % functions.merit.getBlockByNonce(retrieveFromJSON(id, int))
+            result = % functions.merit.getBlockByNonce(retrieveFromJSON(block_JSON, int))
           except ParamError as e:
             raise e
           except JSONRPCError as e:
@@ -155,7 +155,7 @@ proc module*(
 
         else:
           try:
-            result = % functions.merit.getBlockByHash(retrieveFromJSON(id, Hash[256]))
+            result = % functions.merit.getBlockByHash(retrieveFromJSON(block_JSON, Hash[256]))
           except ParamError as e:
             raise e
           except JSONRPCError as e:

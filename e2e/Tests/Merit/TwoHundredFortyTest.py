@@ -105,5 +105,5 @@ def TwoHundredFourtyTest(
   #This is essential as our chain isn't equivalent.
   ourHeader: Dict[str, Any] = header.toJSON()
   del ourHeader["packets"]
-  if rpc.call("merit", "getBlock", {"id": header.hash.hex()})["header"] != ourHeader:
+  if rpc.call("merit", "getBlock", {"block": header.hash.hex()})["header"] != ourHeader:
     raise TestError("Header wasn't added to the blockchain.")

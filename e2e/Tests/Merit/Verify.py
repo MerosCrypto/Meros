@@ -24,7 +24,7 @@ def verifyBlockchain(
     #Info Python saves so it can properly load from the vectors yet the Meros RPC excludes.
     del ourBlock["header"]["packets"]
 
-    blockJSON: Dict[str, Any] = rpc.call("merit", "getBlock", {"id": b})
+    blockJSON: Dict[str, Any] = rpc.call("merit", "getBlock", {"block": b})
     #Contextual info Python doesn't track.
     del blockJSON["removals"]
     if blockJSON != ourBlock:
@@ -34,7 +34,7 @@ def verifyBlockchain(
     blockJSON = rpc.call(
       "merit",
       "getBlock",
-      {"id": blockchain.blocks[b].header.hash.hex().upper()}
+      {"block": blockchain.blocks[b].header.hash.hex().upper()}
     )
     del blockJSON["removals"]
     if blockJSON != ourBlock:
