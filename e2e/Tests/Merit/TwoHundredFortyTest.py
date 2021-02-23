@@ -104,6 +104,5 @@ def TwoHundredFourtyTest(
   #To verify the entire chain, we just need to verify this last header.
   #This is essential as our chain isn't equivalent.
   ourHeader: Dict[str, Any] = header.toJSON()
-  del ourHeader["packets"]
   if rpc.call("merit", "getBlock", {"block": header.hash.hex()})["header"] != ourHeader:
     raise TestError("Header wasn't added to the blockchain.")
