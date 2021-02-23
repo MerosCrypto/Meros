@@ -19,24 +19,6 @@ import Modules/[
   NetworkModule
 ]
 
-#Add an error response to an existing JSONNode.
-proc error(
-  res: JSONNode,
-  code: int,
-  msg: string,
-  data: JSONNode = nil
-) {.forceCheck: [].} =
-  res["error"] = %* {
-    "code": code,
-    "message": msg
-  }
-
-  try:
-    if not data.isNil:
-      res["error"]["data"] = data
-  except KeyError as e:
-    panic("Couldn't set an error's data field, despite just creating the data: " & e.msg)
-
 #Create a new error response.
 proc newError(
   id: JSONNode,
@@ -46,9 +28,22 @@ proc newError(
 ): JSONNode {.forceCheck: [].} =
   result = %* {
     "jsonrpc": "2.0",
-    "id": id
+    "id": id,
+    "error": {
+      "code": code,
+      #These shouldn't have periods, as exemplified by the spec's lack of periods on official messages.
+      #Meros follows that standard, yet its own exceptions use periods.
+      #That means quoted exceptions will create a message ending with a period.
+      #Hence the if statement.
+      "message": if msg[^1] == '.': msg[0 ..< msg.len - 1] else: msg
+    }
   }
-  error(result, code,msg, data)
+
+  try:
+    if not data.isNil:
+      result["error"]["data"] = data
+  except KeyError as e:
+    panic("Couldn't set an error's data field, despite just creating the error: " & e.msg)
 
 proc newRPC*(
   functions: GlobalFunctionBox,

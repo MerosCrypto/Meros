@@ -1,4 +1,4 @@
-from typing import Dict, List, Iterator, Any
+from typing import Dict, List, Any
 import time
 import json
 
@@ -24,6 +24,12 @@ from e2e.Meros.RPC import RPC
 
 from e2e.Tests.Errors import TestError
 
+#Sleep to the next second, giving almost an entire second for clock-based operations.
+def nextSecond() -> float:
+  startTime: float = time.time()
+  time.sleep(1 - (startTime - int(startTime)))
+  return time.time()
+
 def getBlockTemplateTest(
   rpc: RPC
 ) -> None:
@@ -31,24 +37,21 @@ def getBlockTemplateTest(
   edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
   blockchain: Blockchain = Blockchain()
 
+  #Get multiple templates to verify they share an ID if they're requested within the same second.
   templates: List[Dict[str, Any]] = []
-  startTime: float = time.time()
-  #Jump to the next second.
-  time.sleep(1 - (startTime - int(startTime)))
-  startTime = time.time()
+  startTime: float = nextSecond()
   for k in range(5):
     templates.append(rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(k).toPublicKey().serialize().hex()}))
-  endTime: float = time.time()
-  if int(startTime) != int(endTime):
+  if int(startTime) != int(time.time()):
     #Testing https://github.com/MerosCrypto/Meros/issues/278 has a much more forgiving timer of < 1 second each.
     #That said, this test was written on the fair assumption of all the above taking place in a single second.
     raise Exception("getBlockTemplate is incredibly slow, to the point an empty Block template takes > 0.2 seconds to grab, invalidating this test.")
 
-  templatesIter: Iterator[Dict[str, Any]] = iter(templates)
-  for k in range(5):
-    template: Dict[str, Any] = next(templatesIter)
+  for k, template in zip(range(5), templates):
     if template["id"] != int(startTime):
       raise TestError("Template ID isn't the time.")
+
+    #Also check general accuracy.
     if bytes.fromhex(template["key"]) != blockchain.genesis:
       raise TestError("Template has the wrong RandomX key.")
 
@@ -70,17 +73,15 @@ def getBlockTemplateTest(
     if template["difficulty"] != (blockchain.difficulty() * 11 // 10):
       raise TestError("Template's difficulty is wrong.")
 
-  currTime: float = time.time()
-  #Again sleep to the next second.
-  time.sleep(1 - (currTime - int(currTime)))
-  currTime = time.time()
-
+  currTime: int = int(nextSecond())
   template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(0).toPublicKey().serialize().hex()})
-  if template["id"] != int(currTime):
+  if template["id"] != currTime:
     raise TestError("Template ID wasn't advanced with the time.")
-  template["id"] = int(endTime)
 
-  if int.from_bytes(bytes.fromhex(template["header"])[-4:], "little") != int(currTime):
+  #Override the ID to enable easy comparison against a historical template.
+  template["id"] = int(startTime)
+
+  if int.from_bytes(bytes.fromhex(template["header"])[-4:], "little") != currTime:
     raise TestError("The header has the wrong time.")
   template["header"] = (
     bytes.fromhex(template["header"])[:72] +
@@ -88,7 +89,7 @@ def getBlockTemplateTest(
     bytes.fromhex(templates[0]["header"])[72 : 76] +
     bytes.fromhex(template["header"])[76 : -4] +
     #Also use its time.
-    int(endTime).to_bytes(4, "little")
+    int(startTime).to_bytes(4, "little")
   ).hex().upper()
 
   if template != templates[0]:
@@ -109,8 +110,7 @@ def getBlockTemplateTest(
     raise Exception("Didn't successfully send Meros the Block.")
 
   #Get a new template so Meros realizes the template situation has changed.
-  #Also clear our list of templates which should no longer be valid adter this call.
-  templates = [rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(0).toPublicKey().serialize().hex()})]
+  rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(0).toPublicKey().serialize().hex()})
 
   try:
     rpc.call("merit", "publishBlock", {"id": int(startTime), "header": ""})
@@ -218,14 +218,13 @@ def getBlockTemplateTest(
   time.sleep(1)
 
   #Ensure a stable template ID.
-  currTime: float = time.time()
-  time.sleep(1 - (currTime - int(currTime)))
+  currTime = int(nextSecond())
   template = rpc.call(
     "merit",
     "getBlockTemplate",
     {"miner": PrivateKey(0).toPublicKey().serialize().hex()}
   )
-  if template["id"] != int(time.time()):
+  if template["id"] != currTime:
     raise TestError("Template ID isn't the time when the previous Block is in the future.")
   if int.from_bytes(bytes.fromhex(template["header"])[-4:], "little") != (header.time + 1):
     raise TestError("Meros didn't handle generating a template off a Block in the future properly.")
@@ -251,9 +250,7 @@ def getBlockTemplateTest(
   time.sleep(1)
 
   #Verify the template was cleared.
-  currTime: float = time.time()
-  time.sleep(1 - (currTime - int(currTime)))
-  currTime = time.time()
+  currTime = int(nextSecond())
   bytesHeader: bytes = bytes.fromhex(rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(0).toPublicKey().serialize().hex()})["header"])
   serializedHeader: bytes = BlockHeader(
     0,
@@ -264,7 +261,7 @@ def getBlockTemplateTest(
     bytes(32),
     0,
     #Ensures that the previous time manipulation doesn't come back to haunt us.
-    max(int(currTime), blockchain.blocks[-1].header.time + 1)
+    max(currTime, blockchain.blocks[-1].header.time + 1)
   ).serialize()[:-52]
   #Skip over the randomized sketch salt and time (which we don't currently have easy access to).
   if (bytesHeader[:72] + bytesHeader[76:-4]) != (serializedHeader[:72] + serializedHeader[76:-4]):
@@ -293,5 +290,7 @@ def getBlockTemplateTest(
       "getBlockTemplate",
       {"miner": PrivateKey(0).toPublicKey().serialize().hex()}
     )["header"]
+  #`elem for elem` is used due to Pyright not handling inheritance properly when nested.
+  #pylint: disable=unnecessary-comprehension
   )[36:68] != BlockHeader.createContents([], [elem for elem in sendDiffs[::-1]]):
     raise TestError("Meros didn't include just the malicious Elements in its new template.")

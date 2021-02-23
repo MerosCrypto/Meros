@@ -174,7 +174,7 @@ def PublishTransactionTest(
       )
       raise TestError("")
     except TestError as e:
-      if str(e) != "-3 Transaction is invalid: parseSend handed the wrong amount of data..":
+      if str(e) != "-3 Transaction is invalid: parseSend handed the wrong amount of data.":
         raise TestError("publishTransaction didn't error when passed a non-parsable Send (a Data).")
 
     #Invalid Data (signature).
@@ -195,7 +195,7 @@ def PublishTransactionTest(
       )
       raise TestError("")
     except TestError as e:
-      if str(e) != "-3 Transaction is invalid: Data has an invalid Signature..":
+      if str(e) != "-3 Transaction is invalid: Data has an invalid Signature.":
         raise TestError("publishTransaction didn't error when passed an invalid Transaction.")
 
     #Spam.
