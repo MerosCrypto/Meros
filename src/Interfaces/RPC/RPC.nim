@@ -62,7 +62,7 @@ proc newRPC*(
   proc createHandler(): RPCHandle {.forceCheck: [].} =
     result = proc (
       req: JSONNode,
-      reply: RPCReplyFunction,
+      reply: OuterRPCReplyFunction,
       authed: bool
     ): Future[void] {.forceCheck: [], async.} =
       #If this doesn't have an ID field, error. It's either an invalid request or notification.
@@ -152,6 +152,9 @@ proc newRPC*(
           #There may also be a KeyError floating...
           try:
             await rpc.handle(req, reply, authed)
+          #Not authorized.
+          except RPCAuthorizationError:
+            await reply(false)
           #If there was an invalid parameter, create the proper error response.
           except ParamError:
             try:
@@ -228,14 +231,17 @@ proc start*(
       let rpcFuture: Future[void] = rpc.handle(
         data.msg,
         proc (
-          reply: JSONNode
+          reply: bool or JSONNode
         ) {.forceCheck: [], async.} =
-          try:
-            rpc.toGUI[].send(reply)
-          except DeadThreadError as e:
-            panic("Couldn't send to a dead thread: " & e.msg)
-          except Exception as e:
-            panic("Sending over a channel threw an Exception: " & e.msg)
+          when reply is bool:
+            panic("GUI was told it's unauthorized to make RPC calls.")
+          else:
+            try:
+              rpc.toGUI[].send(reply)
+            except DeadThreadError as e:
+              panic("Couldn't send to a dead thread: " & e.msg)
+            except Exception as e:
+              panic("Sending over a channel threw an Exception: " & e.msg)
         , true
       )
       await rpcFuture
@@ -260,46 +266,21 @@ proc createSocketHandler(
     #Handle the client.
     while not socket.closed():
       #Read in a message.
-      var
-        data: string = ""
-        counter: int = 0
-        oldLen: int = 1
-      while true:
-        try:
-          data &= cast[string](await socket.read(1))
-        except Exception:
-          try:
-            socket.close()
-          except Exception:
-            discard
-          return
-
-        if data.len != oldLen:
-          try:
-            socket.close()
-          except Exception:
-            discard
-          return
-        inc(oldLen)
-
-        if data[^1] == data[0]:
-          inc(counter)
-        elif (data[^1] == ']') and (data[0] == '['):
-          dec(counter)
-        elif (data[^1] == '}') and (data[0] == '{'):
-          dec(counter)
-        if counter == 0:
-          break
+      let body: string
+      try:
+        body = await socket.readHTTP()
+        if body == "":
+          continue
+      except Exception as e:
+        panic("readHTTP threw an error despite not naturally throwing anything: " & e.msg)
 
       #Handle the message.
       var parsedData: JSONNode
       try:
-        parsedData = parseJSON(data)
+        parsedData = parseJSON(body)
       except Exception:
         try:
-          let res: string = $(newError(newJNull(), -32700, "Parse error"))
-          if (await socket.write(res)) != res.len:
-            raise newLoggedException(SocketError, "Client disconnected while receiving the parse error")
+          await socket.writeHTTP($(newError(newJNull(), -32700, "Parse error")))
           return
         except Exception as e:
           logWarn "Couldn't respond to RPC socket client who sent invalid JSON", reason = e.msg
@@ -314,18 +295,20 @@ proc createSocketHandler(
         let rpcFuture: Future[void] = rpc.handle(
           parsedData,
           proc (
-            replyArg: JSONNode
+            replyArg: bool or JSONNode
           ) {.forceCheck: [], async.} =
-            try:
-              if (await socket.write($replyArg)) != ($replyArg).len:
-                raise newLoggedException(SocketError, "Client disconnected while receiving")
-            except Exception as e:
-              logWarn "Couldn't respond to RPC socket client", reason = e.msg
+            when replyArg is bool:
+              await socket.unauthorized()
+            else:
               try:
-                socket.close()
-              except Exception:
-                discard
-              return
+                await socket.writeHTTP($replyArg)
+              except Exception as e:
+                logWarn "Couldn't respond to RPC socket client", reason = e.msg
+                try:
+                  socket.close()
+                except Exception:
+                  discard
+                return
           , authed
         )
         await rpcFuture

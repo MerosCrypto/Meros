@@ -14,6 +14,10 @@ type
     res: JSONNode
   ): Future[void] {.gcsafe.}
 
+  OuterRPCReplyFunction* = proc (
+    res: bool or JSONNode
+  ): Future[void] {.gcsafe.}
+
   RPCHandle* = proc (
     req: JSONNode,
     reply: RPCReplyFunction,
