@@ -44,7 +44,7 @@ def TElementTest(
   dataDiff: SignedDataDifficulty = SignedDataDifficulty(0, 0, 0)
   dataDiff.sign(0, blsPrivKey)
   rpc.meros.signedElement(dataDiff)
-  sleep(0.5)
+  sleep(1.5)
 
   #Verify the block template has the DataDifficulty.
   template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey})
@@ -90,7 +90,7 @@ def TElementTest(
   dataDiff = SignedDataDifficulty(3, 0, 0)
   dataDiff.sign(0, blsPrivKey)
   rpc.meros.signedElement(dataDiff)
-  sleep(0.5)
+  sleep(1.5)
 
   #Verify the block template has a MeritRemoval.
   #Thanks to implicit Merit Removals, this just means it has the new difficulty.

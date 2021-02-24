@@ -73,7 +73,7 @@ def EightyEightTest(
 
   #Only transmit the second.
   rpc.meros.signedElement(verifs[1])
-  sleep(0.5)
+  sleep(1.5)
 
   #Verify the block template has no verifications.
   if bytes.fromhex(
@@ -83,7 +83,7 @@ def EightyEightTest(
 
   #Transmit the first signed verification.
   rpc.meros.signedElement(verifs[0])
-  sleep(0.5)
+  sleep(1.5)
 
   #Verify the block template has both verifications.
   template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey})
