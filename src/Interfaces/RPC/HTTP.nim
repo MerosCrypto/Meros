@@ -46,7 +46,7 @@ proc sendHTTP(
   try:
     await socket.send(res)
     #Supposed to close after this response.
-    if socket.headers.hasKey("Connection") and (socket.headers["Connection"] == "close"):
+    if not (socket.headers.hasKey("Connection") and (socket.headers["Connection"] == "keep-alive")):
       socket.close()
   except KeyError as e:
     panic("Couldn't get the Connection header despite confirming its existence: " & e.msg)
@@ -107,10 +107,9 @@ proc readHTTP*(
   while not socket.closed():
     block thisReq:
       #Needed to prevent an async lockup; I'm actually not sure where such lockup occurs.
-      #That said, this also serves to rate limit HTTP requests, yet only by socket (not too effective).
       #-- Kayaba
       try:
-        await sleepAsync(10.milliseconds)
+        await sleepAsync(1)
       except Exception as e:
         panic("Couldn't sleep before receving the next HTTP request: " & e.msg)
 
