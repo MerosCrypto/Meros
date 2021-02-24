@@ -3,7 +3,8 @@ from enum import Enum
 from subprocess import Popen
 from time import sleep
 import socket
-import json
+
+import requests
 
 from e2e.Classes.Transactions.Transaction import Transaction
 from e2e.Classes.Transactions.Claim import Claim
@@ -503,21 +504,11 @@ class Meros:
     self
   ) -> None:
     if not self.calledQuit:
-      rpcConnection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      rpcConnection.connect(("127.0.0.1", self.rpc))
-      rpcConnection.send(
-        bytes(
-          json.dumps(
-            {
-              "jsonrpc": "2.0",
-              "id": 0,
-              "method": "system_quit"
-            }
-          ),
-          "utf-8"
-        )
-      )
-      rpcConnection.close()
+      requests.post("http://127.0.0.1:" + str(self.rpc), json={
+        "jsonrpc": "2.0",
+        "id": 0,
+        "method": "system_quit"
+      })
       self.calledQuit = True
 
     while self.process.poll() is None:
