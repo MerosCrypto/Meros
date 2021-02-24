@@ -84,6 +84,17 @@ proc recv*(
   except Exception as e:
     raise newLoggedException(SocketError, "Couldn't read from this socket: " & e.msg)
 
+#Used by the RPC, which shares this socket code.
+proc readLine*(
+  socket: Socket
+): Future[string] {.forceCheck: [
+  SocketError
+], async.} =
+  try:
+    result = cast[string](await socket.stream.readLine())
+  except Exception as e:
+    raise newLoggedException(SocketError, "Couldn't read from this socket: " & e.msg)
+
 proc closed*(
   socket: Socket
 ): bool {.inline, forceCheck: [].} =

@@ -9,6 +9,7 @@ import ../../objects/[ConfigObj, GlobalFunctionBoxObj]
 
 import objects/RPCObj
 export RPCObj.RPC
+import HTTP
 
 import Modules/[
   SystemModule,
@@ -62,7 +63,7 @@ proc newRPC*(
   proc createHandler(): RPCHandle {.forceCheck: [].} =
     result = proc (
       req: JSONNode,
-      reply: OuterRPCReplyFunction,
+      reply: RPCReplyFunction,
       authed: bool
     ): Future[void] {.forceCheck: [], async.} =
       #If this doesn't have an ID field, error. It's either an invalid request or notification.
@@ -154,7 +155,10 @@ proc newRPC*(
             await rpc.handle(req, reply, authed)
           #Not authorized.
           except RPCAuthorizationError:
-            await reply(false)
+            try:
+              await reply(%* {"unauthorized": true})
+            except Exception as e:
+              panic("reply threw an Exception despite not naturally throwing anything: " & e.msg)
           #If there was an invalid parameter, create the proper error response.
           except ParamError:
             try:
@@ -231,17 +235,14 @@ proc start*(
       let rpcFuture: Future[void] = rpc.handle(
         data.msg,
         proc (
-          reply: bool or JSONNode
+          reply: JSONNode
         ) {.forceCheck: [], async.} =
-          when reply is bool:
-            panic("GUI was told it's unauthorized to make RPC calls.")
-          else:
-            try:
-              rpc.toGUI[].send(reply)
-            except DeadThreadError as e:
-              panic("Couldn't send to a dead thread: " & e.msg)
-            except Exception as e:
-              panic("Sending over a channel threw an Exception: " & e.msg)
+          try:
+            rpc.toGUI[].send(reply)
+          except DeadThreadError as e:
+            panic("Couldn't send to a dead thread: " & e.msg)
+          except Exception as e:
+            panic("Sending over a channel threw an Exception: " & e.msg)
         , true
       )
       await rpcFuture
@@ -257,20 +258,24 @@ proc createSocketHandler(
 ): Future[void] {.gcsafe.} {.inline, forceCheck: [].} =
   result = proc (
     server: StreamServer,
-    socket: StreamTransport
+    socketArg: StreamTransport
   ) {.forceCheck: [], async.} =
-    #Authed or not.
-    #True while we have yet to set up an auth method.
-    var authed: bool = true
+    logTrace "RPC connection occurred"
+
+    var
+      socket: RPCSocket = newRPCSocket(socketArg)
+      #Authed or not.
+      #True while we have yet to set up an auth method.
+      authed: bool = true
 
     #Handle the client.
     while not socket.closed():
       #Read in a message.
-      let body: string
+      var body: string
       try:
         body = await socket.readHTTP()
-        if body == "":
-          continue
+        if socket.closed():
+          break
       except Exception as e:
         panic("readHTTP threw an error despite not naturally throwing anything: " & e.msg)
 
@@ -283,32 +288,26 @@ proc createSocketHandler(
           await socket.writeHTTP($(newError(newJNull(), -32700, "Parse error")))
           return
         except Exception as e:
-          logWarn "Couldn't respond to RPC socket client who sent invalid JSON", reason = e.msg
-          try:
-            socket.close()
-          except Exception:
-            discard
-          return
+          panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
 
       try:
         #See above instance for clarification.
         let rpcFuture: Future[void] = rpc.handle(
           parsedData,
           proc (
-            replyArg: bool or JSONNode
+            replyArg: JSONNode
           ) {.forceCheck: [], async.} =
-            when replyArg is bool:
-              await socket.unauthorized()
-            else:
+            if replyArg.hasKey("unauthorized"):
               try:
-                await socket.writeHTTP($replyArg)
+                await socket.httpUnauthorized()
               except Exception as e:
-                logWarn "Couldn't respond to RPC socket client", reason = e.msg
-                try:
-                  socket.close()
-                except Exception:
-                  discard
-                return
+                panic("httpUnauthorized threw an error despite not naturally throwing anything: " & e.msg)
+              return
+
+            try:
+              await socket.writeHTTP($replyArg)
+            except Exception as e:
+              panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
           , authed
         )
         await rpcFuture

@@ -1,6 +1,9 @@
+import strutils
 import tables
 
 import chronos
+
+import ../../lib/Errors
 
 import objects/RPCObj
 
@@ -18,13 +21,12 @@ const STATUSES: Table[int, string] = {
   411: "Length Required",
   412: "Precondition Failed",
   413: "Payload Too Large",
-  417: "Expectation Failed"
+  417: "Expectation Failed",
   505: "HTTP Version Not Supported"
 }.toTable()
 
 proc sendHTTP(
   socket: RPCSocket,
-  req: HTTPRequest
   code: int,
   body: string = ""
 ) {.forceCheck: [], async.} =
@@ -34,83 +36,95 @@ proc sendHTTP(
   except KeyError as e:
     panic("Couldn't get a status's message despite having a constant table and only using a select few: " & e.msg)
 
-  for header in req.headers.keys():
+  for header in socket.headers.keys():
     try:
-      res &= header & ": " & req.headers[header] & "\r\n"
+      res &= header & ": " & socket.headers[header] & "\r\n"
     except KeyError as e:
       panic("Couldn't get a header despite confirming its existence: " & e.msg)
-  res &= "\r\n"
-  res &= json
+  res &= "\r\n" & body
 
   try:
-    #Error when sending.
-    if res.len != await socket.write(res):
-      await socket.close()
+    await socket.send(res)
     #Supposed to close after this response.
-    if req.headers.hasKey("Connection") and (req.headers["Connection"] == "close"):
+    if socket.headers.hasKey("Connection") and (socket.headers["Connection"] == "close"):
       socket.close()
   except KeyError as e:
     panic("Couldn't get the Connection header despite confirming its existence: " & e.msg)
   except Exception as e:
     logWarn "Couldn't send a response to a RPC client; this may supposed to be fatal", err = e.msg
     try:
-      await socket.close()
+      socket.close()
     #Move on.
     except Exception:
       discard
 
 proc httpStatus(
   socket: RPCSocket,
-  req: HTTPRequest,
   code: int
 ) {.forceCheck: [], async.} =
   if code == 405:
-    req.headers["Allow"] = "HEAD, GET, POST"
+    socket.headers["Allow"] = "HEAD, GET, POST"
 
   try:
-    socket.sendHTTP(req, code)
+    await socket.sendHTTP(code)
   except Exception as e:
     panic("sendHTTP threw an Exception despite not naturally throwing anything: " & e.msg)
 
 proc writeHTTP*(
   socket: RPCSocket,
-  req: HTTPRequest,
   json: string
 ) {.forceCheck: [], async.} =
-  if not req.headers.hasKey("Content-Type"):
-    req.headers["Content-Type"] = "application/json"
-  req.headers["Content-Length"] = $json.len
-  req.headers["Cache-Control"] = "no-store"
+  if not socket.headers.hasKey("Content-Type"):
+    socket.headers["Content-Type"] = "application/json"
+  socket.headers["Content-Length"] = $json.len
+  socket.headers["Cache-Control"] = "no-store"
   try:
-    socket.sendHTTP(req, 200, json)
+    await socket.sendHTTP(200, json)
   except Exception as e:
     panic("sendHTTP threw an Exception despite not naturally throwing anything: " & e.msg)
 
-proc unauthorized*(
-  socket: RPCSocket,
-  req: HTTPRequest
+proc httpUnauthorized*(
+  socket: RPCSocket
 ) {.forceCheck: [], async.} =
   try:
-    socket.httpStatus(req, 401)
+    await socket.httpStatus(401)
   except Exception as e:
     panic("sendHTTP threw an Exception despite not naturally throwing anything: " & e.msg)
-
-continue ->: break thisReq (block)
 
 #Reads a RPC call over HTTP and returns it.
 #Non-RPC calls, such as HEAD/GET, are handled without returning.
 proc readHTTP*(
   socket: RPCSocket
-): string {.async.} =
+): Future[string] {.forceCheck: [], async.} =
+  template HTTP_STATUS(
+    code: int
+  ) =
+    try:
+      await socket.httpStatus(code)
+    except Exception as e:
+      panic("Couldn't send a HTTP status despite httpStatus not naturally throwing anything: " & e.msg)
+
   while not socket.closed():
     block thisReq:
+      #Needed to prevent an async lockup; I'm actually not sure where such lockup occurs.
+      #That said, this also serves to rate limit HTTP requests, yet only by socket (not too effective).
+      #-- Kayaba
+      try:
+        await sleepAsync(10.milliseconds)
+      except Exception as e:
+        panic("Couldn't sleep before receving the next HTTP request: " & e.msg)
+
       #Clear the socket's last headers.
       socket.headers = initTable[string, string]()
 
-      var line: seq[string] = @[]
-
       #Read the start line.
-      line = await socket.readLine()
+      var line: string
+      try:
+        line = await socket.readLine()
+      except Exception as e:
+        panic("Couldn't read the start line despite readLine not naturally throwing anything: " & e.msg)
+      if socket.closed:
+        return
       #Verify this is a start line. If it's not, move on.
       #Rather naive check, yet should work well enough.
       #Generally used since we process headers as they come in, instead of reading the entire message first.
@@ -118,41 +132,48 @@ proc readHTTP*(
       let startLine: seq[string] = line.split(" ")
       if (
         (startLine.len != 3) or
-        (startLine[0] != startLine[0].toUpperCase()) or
+        (startLine[0] != startLine[0].toUpperAscii()) or
         (not startLine[1].contains("/")) or
         (startLine[2][0 ..< 7] != "HTTP/1.")
       ):
         continue
 
-      let startLine: seq[string] = line.split(" ")
-      if startLine.length != 3:
-        socket.httpStatus(400)
+      #Now that we've confirmed it's the start line, handle it.
+      if startLine.len != 3:
+        HTTP_STATUS(400)
+        continue
       case startLine[0]:
         of "HEAD", "GET":
-          await socket.httpStatus(404)
+          HTTP_STATUS(404)
           continue
         of "POST":
           discard
         else:
-          await socket.httpStatus(405)
+          HTTP_STATUS(405)
           continue
       if startLine[2] != "HTTP/1.1":
-        await socket.httpStatus(505)
+        HTTP_STATUS(505)
         continue
 
       #First header/blank line for header section termination.
-      line = await socket.readLine()
-      let parts: seq[string] = line.split(" ")
+      try:
+        line = await socket.readLine()
+      except Exception as e:
+        panic("Couldn't read a header despite readLine not naturally throwing anything: " & e.msg)
+      if socket.closed:
+        return
       var
+        parts: seq[string]
         #expectContinue: bool = false
         contentLength: int = -1
       while line != "":
+        parts = line.split(" ")
         #[
         #Process this header.
         if line == "Expect: 100-continue":
           expectContinue = true
           line = await socket.readLine()
-          continue
+          break thisReq
         ]#
 
         case parts[0]:
@@ -163,7 +184,7 @@ proc readHTTP*(
             var toUse: string = supported(JSON_MIME_TYPES, line):
             if toUse == "":
               await socket.httpStatus(406)
-              continue
+              break thisReq
 
             #Handle wildcard values.
             if toUse == "text/*":
@@ -181,7 +202,7 @@ proc readHTTP*(
           of "Accept-Charset:":
             if not supported(CHARSETS, line):
               await socket.httpStatus(406)
-              continue
+              break thisReq
           ]#
 
           #This should also never come in a meaningful way, yet it can be easily checked without a comprehensive list.
@@ -189,22 +210,22 @@ proc readHTTP*(
             #If compression is required, error.
             if line.contains("*;q=0") or line.contains("identity;q=0"):
               await socket.httpStatus(406)
-              continue
+              break thisReq
 
           of "Expect:":
             await socket.httpStatus(417)
-            continue
+            break thisReq
           ]#
 
           of "Content-Length:":
             #Max of 9999 bytes, which would only come close during batch requests.
-            if parts[1].length > 4:
-              await socket.httpStatus(413)
+            if parts[1].len > 4:
+              HTTP_STATUS(413)
               break thisReq
             try:
-              contentLength = int(parseUInt(part[1]))
+              contentLength = int(parseUInt(parts[1]))
             except ValueError:
-              await socket.httpStatus(400)
+              HTTP_STATUS(400)
               break thisReq
 
         #[
@@ -218,11 +239,16 @@ proc readHTTP*(
         ]#
 
         #Grab the next header.
-        line = await socket.readLine()
+        try:
+          line = await socket.readLine()
+        except Exception as e:
+          panic("Couldn't read a header despite readLine not naturally throwing anything: " & e.msg)
+        if socket.closed:
+          return
 
       #Make sure the content length was provided.
       if contentLength == -1:
-        await socket.httpStatus(411)
+        HTTP_STATUS(411)
         continue
 
       #If the client was solely validating their headers, move on to the next message.
@@ -233,10 +259,7 @@ proc readHTTP*(
       ]#
 
       #Read the body.
-      result = await socket.recv(contentLength)
-      break
-
-  #"" is used to signify the client errored and was disconnected.
-  #This provides a response which will refuse to parse, just as "" technically should.
-  if result.len == "":
-    result = "Empty"
+      try:
+        return await socket.recv(contentLength)
+      except Exception as e:
+        panic("Couldn't read the body despite recv not naturally throwing anything: " & e.msg)

@@ -3,19 +3,24 @@ import macros
 import options
 import sequtils
 import strutils
+import tables
 import json
 
-import chronos
+import chronos except Socket
 
 import ../../../lib/Errors
+import ../../../Network/objects/SocketObj
+export recv
 
 type
+  RPCSocket* = ref object
+    #Use the Networking socket which already has the proper helpies/safeties.
+    socket: Socket
+    #Headers to use in the response to the last request.
+    headers*: Table[string, string]
+
   RPCReplyFunction* = proc (
     res: JSONNode
-  ): Future[void] {.gcsafe.}
-
-  OuterRPCReplyFunction* = proc (
-    res: bool or JSONNode
   ): Future[void] {.gcsafe.}
 
   RPCHandle* = proc (
@@ -35,6 +40,51 @@ type
 
   #Stub replaced with a string; used to signify to parse the string from hex.
   hex* = object
+
+proc newRPCSocket*(
+  socket: StreamTransport
+): RPCSocket {.forceCheck: [], inline.} =
+  RPCSocket(
+    socket: newSocket(socket),
+    headers: initTable[string, string]()
+  )
+
+proc closed*(
+  socket: RPCSocket
+): bool {.forceCheck: [], inline.} =
+  socket.socket.closed
+
+proc close*(
+  socket: RPCSocket
+) {.forceCheck: [], inline.} =
+  socket.socket.safeClose("Told to close RPC socket")
+
+proc send*(
+  socket: RPCSocket,
+  msg: string
+) {.forceCheck: [], async.} =
+  try:
+    await socket.socket.send(msg)
+  except SocketError:
+    socket.close()
+  except Exception as e:
+    panic("Sending to an RPC socket raised an Exception despite catching all Exceptions: " & e.msg)
+
+template recv*(
+  socket: RPCSocket,
+  len: int
+): Future[string] =
+  socket.socket.recv(len)
+
+proc readLine*(
+  socket: RPCSocket
+): Future[string] {.forceCheck: [], async.} =
+  try:
+    result = await socket.socket.readLine()
+  except SocketError:
+    socket.close()
+  except Exception as e:
+    panic("Reading a line from an RPC socket raised an Exception despite catching all Exceptions: " & e.msg)
 
 template retrieveFromJSON*[T](
   value: JSONNode,
