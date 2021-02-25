@@ -38,6 +38,9 @@ proc sendHTTP(
 
   socket.headers["Content-Length"] = $body.len
   socket.headers["Cache-Control"] = "no-store"
+  #Unless the client explicitly wants to keep alive, set a default policy of close.
+  if not socket.headers.hasKey("Connection"):
+    socket.headers["Connection"] = "close"
   for header in socket.headers.keys():
     try:
       res &= header & ": " & socket.headers[header] & "\r\n"
@@ -48,10 +51,10 @@ proc sendHTTP(
   try:
     await socket.send(res)
     #Supposed to close after this response.
-    if not (socket.headers.hasKey("Connection") and (socket.headers["Connection"] == "keep-alive")):
+    if socket.headers["Connection"] != "keep-alive":
       socket.close()
   except KeyError as e:
-    panic("Couldn't get the Connection header despite confirming its existence: " & e.msg)
+    panic("Couldn't get the Connection header despite defining it if it didn't exist: " & e.msg)
   except Exception as e:
     logWarn "Couldn't send a response to a RPC client; this may supposed to be fatal", err = e.msg
     try:
@@ -238,10 +241,8 @@ proc readHTTP*(
             result.token = parts[2]
 
           of "Connection:":
-            if parts.len != 2:
-              HTTP_STATUS(401)
-              break thisReq
-            socket.headers["Connection"] = parts[1]
+            if parts[1 ..< parts.len].join("").split(",").contains("keep-alive"):
+              socket.headers["Connection"] = "keep-alive"
 
         #[
         #If there's any conditional statement, assume it's invalid.

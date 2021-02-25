@@ -352,8 +352,8 @@ proc shutdown*(
   if not rpc.server.isNil:
     try:
       rpc.server.close()
-    except Exception:
-      discard
+    except Exception as e:
+      logWarn "Couldn't shutdown the RPC server", reason = e.msg
 
   #Set alive to false.
   rpc.alive = false

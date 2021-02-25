@@ -85,7 +85,7 @@ proc main() {.thread.} =
       database.close()
       wallet.close()
     except DBError as e:
-      echo "Couldn't shutdown the DB: " & e.msg
+      logWarn "Couldn't shutdown the DB", reson = e.msg
 
     #Quit.
     quit(0)
