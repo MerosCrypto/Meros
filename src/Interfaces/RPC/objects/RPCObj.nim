@@ -35,6 +35,7 @@ type
     toRPC*: ptr Channel[JSONNode]
     toGUI*: ptr Channel[JSONNode]
 
+    token*: string
     server*: StreamServer
     alive*: bool
 

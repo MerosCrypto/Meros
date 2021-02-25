@@ -22,14 +22,18 @@ class RPC:
     args: Dict[str, Any] = {}
   ) -> Any:
     try:
-      result: Dict[str, Any] = requests.post("http://127.0.0.1:" + str(self.meros.rpc), json={
+      request: requests.Response = requests.post("http://127.0.0.1:" + str(self.meros.rpc), json={
         "jsonrpc": "2.0",
         "id": 0,
         "method": module + "_" + method,
         "params": args
-      }).json()
+      })
     except Exception as e:
       raise NodeError(str(e))
+
+    if request.status_code != 200:
+      raise TestError("HTTP status isn't 200: " + str(request.status_code))
+    result: Dict[str, Any] = request.json()
 
     if "error" in result:
       raise TestError(str(result["error"]["code"]) + " " + result["error"]["message"] + ".")

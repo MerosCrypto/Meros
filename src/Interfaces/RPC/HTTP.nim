@@ -36,6 +36,8 @@ proc sendHTTP(
   except KeyError as e:
     panic("Couldn't get a status's message despite having a constant table and only using a select few: " & e.msg)
 
+  socket.headers["Content-Length"] = $body.len
+  socket.headers["Cache-Control"] = "no-store"
   for header in socket.headers.keys():
     try:
       res &= header & ": " & socket.headers[header] & "\r\n"
@@ -62,7 +64,9 @@ proc httpStatus(
   socket: RPCSocket,
   code: int
 ) {.forceCheck: [], async.} =
-  if code == 405:
+  if code == 401:
+    socket.headers["WWW-Authenticate"] = "Bearer realm=\"\", charset=\"UTF-8\""
+  elif code == 405:
     socket.headers["Allow"] = "HEAD, GET, POST"
 
   try:
@@ -76,8 +80,7 @@ proc writeHTTP*(
 ) {.forceCheck: [], async.} =
   if not socket.headers.hasKey("Content-Type"):
     socket.headers["Content-Type"] = "application/json"
-  socket.headers["Content-Length"] = $json.len
-  socket.headers["Cache-Control"] = "no-store"
+
   try:
     await socket.sendHTTP(200, json)
   except Exception as e:
@@ -89,13 +92,13 @@ proc httpUnauthorized*(
   try:
     await socket.httpStatus(401)
   except Exception as e:
-    panic("sendHTTP threw an Exception despite not naturally throwing anything: " & e.msg)
+    panic("httpStatus threw an Exception despite not naturally throwing anything: " & e.msg)
 
 #Reads a RPC call over HTTP and returns it.
 #Non-RPC calls, such as HEAD/GET, are handled without returning.
 proc readHTTP*(
   socket: RPCSocket
-): Future[string] {.forceCheck: [], async.} =
+): Future[tuple[body: string, token: string]] {.forceCheck: [], async.} =
   template HTTP_STATUS(
     code: int
   ) =
@@ -138,6 +141,7 @@ proc readHTTP*(
         continue
 
       #Now that we've confirmed it's the start line, handle it.
+      #This following check is pointless due to the above.
       if startLine.len != 3:
         HTTP_STATUS(400)
         continue
@@ -227,10 +231,19 @@ proc readHTTP*(
               HTTP_STATUS(400)
               break thisReq
 
-        #[
-          of "Connection:":
-            socket.headers["Connection"] = part[1]
+          of "Authorization:":
+            if (parts.len != 3) or (parts[1] != "Bearer"):
+              HTTP_STATUS(401)
+              break thisReq
+            result.token = parts[2]
 
+          of "Connection:":
+            if parts.len != 2:
+              HTTP_STATUS(401)
+              break thisReq
+            socket.headers["Connection"] = parts[1]
+
+        #[
         #If there's any conditional statement, assume it's invalid.
         if parts[0].contains("If-"):
           await socket.httpStatus(412)
@@ -259,6 +272,7 @@ proc readHTTP*(
 
       #Read the body.
       try:
-        return await socket.recv(contentLength)
+        result.body = await socket.recv(contentLength)
+        return
       except Exception as e:
         panic("Couldn't read the body despite recv not naturally throwing anything: " & e.msg)

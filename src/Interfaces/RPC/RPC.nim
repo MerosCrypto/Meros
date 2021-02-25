@@ -49,7 +49,8 @@ proc newError(
 proc newRPC*(
   functions: GlobalFunctionBox,
   toRPC: ptr Channel[JSONNode],
-  toGUI: ptr Channel[JSONNode]
+  toGUI: ptr Channel[JSONNode],
+  token: string
 ): RPC {.forceCheck: [].} =
   var modules: seq[tuple[prefix: string, handle: RPCHandle]] = @[
     (prefix: "system_",       handle: SystemModule.module(functions)),
@@ -199,6 +200,7 @@ proc newRPC*(
     toRPC: toRPC,
     toGUI: toGUI,
 
+    token: token,
     alive: true
   )
 
@@ -262,18 +264,14 @@ proc createSocketHandler(
   ) {.forceCheck: [], async.} =
     logTrace "RPC connection occurred"
 
-    var
-      socket: RPCSocket = newRPCSocket(socketArg)
-      #Authed or not.
-      #True while we have yet to set up an auth method.
-      authed: bool = true
+    var socket: RPCSocket = newRPCSocket(socketArg)
 
     #Handle the client.
     while not socket.closed():
       #Read in a message.
-      var body: string
+      var req: tuple[body: string, token: string]
       try:
-        body = await socket.readHTTP()
+        req = await socket.readHTTP()
         if socket.closed():
           break
       except Exception as e:
@@ -282,7 +280,7 @@ proc createSocketHandler(
       #Handle the message.
       var parsedData: JSONNode
       try:
-        parsedData = parseJSON(body)
+        parsedData = parseJSON(req.body)
       except Exception:
         try:
           await socket.writeHTTP($(newError(newJNull(), -32700, "Parse error")))
@@ -308,7 +306,8 @@ proc createSocketHandler(
               await socket.writeHTTP($replyArg)
             except Exception as e:
               panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
-          , authed
+          ,
+          req.token == rpc.token
         )
         await rpcFuture
       except Exception as e:

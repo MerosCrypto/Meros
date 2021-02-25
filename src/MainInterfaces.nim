@@ -15,9 +15,32 @@ proc mainRPC(
   functions: GlobalFunctionBox,
   rpc: var RPC
 ) {.forceCheck: [].} =
-  rpc = newRPC(functions, addr toRPC, addr toGUI)
+  #Don't bother if we'll never get any requests.
+  if not (config.rpc or config.gui):
+    return
+
+  var token: string
+  if config.rpc:
+    #Grab the token if one was passed.
+    if config.token.isSome():
+      token = config.token.unsafeGet()
+    #Generate one.
+    else:
+      token = newString(32)
+      randomFill(token)
+      token = token.toHex()
+
+      try:
+        let tokenFile: File = open(config.dataDir / ".token", fmWrite)
+        tokenFile.write(token)
+        tokenFile.close()
+      except IOError as e:
+        panic("Couldn't write the RPC token to .token, under the data directory: " & e.msg)
+
+  rpc = newRPC(functions, addr toRPC, addr toGUI, token)
 
   try:
+    #Start even if the RPC is disabled so we can still serve the RPC.
     asyncCheck rpc.start()
     if config.rpc:
       asyncCheck rpc.listen(config)

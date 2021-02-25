@@ -3,6 +3,7 @@ import locks
 when not defined(nogui):
   import threadpool
 
+import options
 import sequtils
 import sets, tables
 import json
