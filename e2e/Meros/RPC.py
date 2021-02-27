@@ -19,7 +19,8 @@ class RPC:
     self,
     module: str,
     method: str,
-    args: Dict[str, Any] = {}
+    args: Dict[str, Any] = {},
+    auth: bool = True
   ) -> Any:
     try:
       request: requests.Response = requests.post(
@@ -32,7 +33,7 @@ class RPC:
         },
         headers={
           "Authorization": "Bearer TEST_TOKEN"
-        }
+        } if auth else {}
       )
     except Exception as e:
       raise NodeError(str(e))

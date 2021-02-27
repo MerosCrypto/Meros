@@ -29,7 +29,7 @@ def test(
     address = encodeAddress(address)
 
   try:
-    rpc.call("transactions", "getBalance", {"address": address})
+    rpc.call("transactions", "getBalance", {"address": address}, False)
     #If the call passed, and the address is invalid, raise.
     if invalid:
       raise MessageException(msg)

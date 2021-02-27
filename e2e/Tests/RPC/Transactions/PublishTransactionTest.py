@@ -54,7 +54,8 @@ def PublishTransactionTest(
       {
         "type": "Claim",
         "transaction": claim.serialize().hex()
-      }
+      },
+      False
     ):
       raise TestError("Publishing a valid Transaction didn't return true.")
     if rpc.meros.live.recv()[1:] != claim.serialize():
@@ -66,7 +67,8 @@ def PublishTransactionTest(
       {
         "type": "Send",
         "transaction": send.serialize().hex()
-      }
+      },
+      False
     ):
       raise TestError("Publishing a valid Transaction didn't return true.")
     if rpc.meros.live.recv()[1:] != send.serialize():
@@ -78,7 +80,8 @@ def PublishTransactionTest(
       {
         "type": "Data",
         "transaction": data.serialize().hex()
-      }
+      },
+      False
     ):
       raise TestError("Publishing a valid Transaction didn't return true.")
     if rpc.meros.live.recv()[1:] != data.serialize():
@@ -104,7 +107,8 @@ def PublishTransactionTest(
       {
         "type": "Send",
         "transaction": sendSentWithoutWork.serialize()[:-4].hex()
-      }
+      },
+      True
     ):
       raise TestError("Publishing a valid Transaction without work didn't return true.")
     if rpc.meros.live.recv()[1:] != sendSentWithoutWork.serialize():
@@ -116,7 +120,8 @@ def PublishTransactionTest(
       {
         "type": "Data",
         "transaction": dataSentWithoutWork.serialize()[:-4].hex()
-      }
+      },
+      True
     ):
       raise TestError("Publishing a valid Transaction without work didn't return true.")
     if rpc.meros.live.recv()[1:] != dataSentWithoutWork.serialize():
@@ -134,7 +139,8 @@ def PublishTransactionTest(
       {
         "type": "Data",
         "transaction": data.serialize().hex()
-      }
+      },
+      False
     ):
       raise TestError("Publishing an existing Transaction didn't return true.")
     if MessageType(rpc.meros.live.recv()[0]) == MessageType.Data:
@@ -155,7 +161,8 @@ def PublishTransactionTest(
         {
           "type": "",
           "transaction": data.serialize().hex()
-        }
+        },
+        False
       )
       raise TestError("")
     except TestError as e:
@@ -170,7 +177,8 @@ def PublishTransactionTest(
         {
           "type": "Send",
           "transaction": data.serialize().hex()
-        }
+        },
+        False
       )
       raise TestError("")
     except TestError as e:
@@ -191,7 +199,8 @@ def PublishTransactionTest(
         {
           "type": "Data",
           "transaction": invalidData.serialize().hex()
-        }
+        },
+        False
       )
       raise TestError("")
     except TestError as e:
@@ -213,15 +222,28 @@ def PublishTransactionTest(
         {
           "type": "Data",
           "transaction": spamData.serialize().hex()
-        }
+        },
+        False
       )
       raise TestError("")
     except TestError as e:
       if str(e) != "1 Transaction didn't beat the spam filter.":
         raise TestError("publishTransaction didn't error when passed a Transaction which didn't beat its difficulty.")
 
-    """
-    TODO: Test auth requirement
-    """
+    #Test publishTransactionWithoutWork requires authorization.
+    try:
+      rpc.call(
+        "transactions",
+        "publishTransactionWithoutWork",
+        {
+          "type": "Data",
+          "transaction": dataSentWithoutWork.serialize()[:-4].hex()
+        },
+        False
+      )
+      raise TestError("")
+    except Exception as e:
+      if str(e) != "HTTP status isn't 200: 401":
+        raise TestError("Called publishTransactionWithoutWork despite not being authed.")
 
   Liver(rpc, vectors["blockchain"][:-1], transactions, {7: publishAndVerify}).live()

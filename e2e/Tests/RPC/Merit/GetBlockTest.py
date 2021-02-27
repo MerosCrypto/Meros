@@ -25,8 +25,8 @@ def GetBlockTest(
 
   def verify() -> None:
     for b in range(len(blockchain.blocks)):
-      block: Dict[str, Any] = rpc.call("merit", "getBlock", {"block": blockchain.blocks[b].header.hash.hex().upper()})
-      if rpc.call("merit", "getBlock", {"block": b}) != block:
+      block: Dict[str, Any] = rpc.call("merit", "getBlock", {"block": blockchain.blocks[b].header.hash.hex().upper()}, False)
+      if rpc.call("merit", "getBlock", {"block": b}, False) != block:
         raise TestError("Meros reported different Blocks depending on if nonce/hash indexing.")
 
       #Python doesn't keep track of the removals.
@@ -41,11 +41,11 @@ def GetBlockTest(
 
     #Test the key serialization of the first Block.
     #The final Block uses a nick, hence the value in this.
-    if rpc.call("merit", "getBlock", {"block": 1})["header"]["miner"] != PrivateKey(0).toPublicKey().serialize().hex().upper():
+    if rpc.call("merit", "getBlock", {"block": 1}, False)["header"]["miner"] != PrivateKey(0).toPublicKey().serialize().hex().upper():
       raise TestError("Meros didn't serialize a miner's key properly.")
 
     #Manually test the final, and most complex, block.
-    final: Dict[str, Any] = rpc.call("merit", "getBlock", {"block": len(blockchain.blocks) - 1})
+    final: Dict[str, Any] = rpc.call("merit", "getBlock", {"block": len(blockchain.blocks) - 1}, False)
     final["transactions"].sort(key=txKey)
     final["removals"].sort()
     if final != {
@@ -147,28 +147,28 @@ def GetBlockTest(
 
     #Test invalid calls.
     try:
-      rpc.call("merit", "getBlock", {"block": 100})
+      rpc.call("merit", "getBlock", {"block": 100}, False)
       raise Exception("")
     except Exception as e:
       if str(e) != "-2 Block not found.":
         raise TestError("getBlock didn't error when we used a non-existent nonce.")
 
     try:
-      rpc.call("merit", "getBlock", {"block": -5})
+      rpc.call("merit", "getBlock", {"block": -5}, False)
       raise Exception("")
     except Exception as e:
       if str(e) != "-32602 Invalid params.":
         raise TestError("getBlock didn't error when we used a negative (signed) integer for a nonce.")
 
     try:
-      rpc.call("merit", "getBlock", {"block": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"})
+      rpc.call("merit", "getBlock", {"block": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}, False)
       raise Exception("")
     except Exception as e:
       if str(e) != "-2 Block not found.":
         raise TestError("getBlock didn't error when we used a non-existent hash.")
 
     try:
-      rpc.call("merit", "getBlock", {"block": ""})
+      rpc.call("merit", "getBlock", {"block": ""}, False)
       raise Exception("")
     except Exception as e:
       if str(e) != "-32602 Invalid params.":

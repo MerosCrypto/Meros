@@ -30,6 +30,11 @@ def nextSecond() -> float:
   time.sleep(1 - (startTime - int(startTime)))
   return time.time()
 
+def getMiner(
+  k: int
+) -> str:
+  return PrivateKey(k).toPublicKey().serialize().hex()
+
 def getBlockTemplateTest(
   rpc: RPC
 ) -> None:
@@ -41,7 +46,7 @@ def getBlockTemplateTest(
   templates: List[Dict[str, Any]] = []
   startTime: float = nextSecond()
   for k in range(5):
-    templates.append(rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(k).toPublicKey().serialize().hex()}))
+    templates.append(rpc.call("merit", "getBlockTemplate", {"miner": getMiner(k)}, False))
   if int(startTime) != int(time.time()):
     #Testing https://github.com/MerosCrypto/Meros/issues/278 has a much more forgiving timer of < 1 second each.
     #That said, this test was written on the fair assumption of all the above taking place in a single second.
@@ -74,7 +79,7 @@ def getBlockTemplateTest(
       raise TestError("Template's difficulty is wrong.")
 
   currTime: int = int(nextSecond())
-  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(0).toPublicKey().serialize().hex()})
+  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": getMiner(0)}, False)
   if template["id"] != currTime:
     raise TestError("Template ID wasn't advanced with the time.")
 
@@ -106,14 +111,14 @@ def getBlockTemplateTest(
     rpc.meros.rawBlockBody(block, 0)
     time.sleep(1)
   #Sanity check.
-  if rpc.call("merit", "getHeight") != 2:
+  if rpc.call("merit", "getHeight", auth=False) != 2:
     raise Exception("Didn't successfully send Meros the Block.")
 
   #Get a new template so Meros realizes the template situation has changed.
-  rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(0).toPublicKey().serialize().hex()})
+  rpc.call("merit", "getBlockTemplate", {"miner": getMiner(0)}, False)
 
   try:
-    rpc.call("merit", "publishBlock", {"id": int(startTime), "header": ""})
+    rpc.call("merit", "publishBlock", {"id": int(startTime), "header": ""}, False)
     raise Exception("")
   except Exception as e:
     if str(e) != "-2 Invalid ID.":
@@ -134,7 +139,8 @@ def getBlockTemplateTest(
     rpc.call(
       "merit",
       "getBlockTemplate",
-      {"miner": PrivateKey(0).toPublicKey().serialize().hex()}
+      {"miner": getMiner(0)},
+      False
     )["header"]
   )[36:68] != BlockHeader.createContents([packet]):
     raise TestError("Meros didn't include the Verification in its new template.")
@@ -148,7 +154,8 @@ def getBlockTemplateTest(
     rpc.call(
       "merit",
       "getBlockTemplate",
-      {"miner": PrivateKey(0).toPublicKey().serialize().hex()}
+      {"miner": getMiner(0)},
+      False
     )["header"]
   )[36:68] != BlockHeader.createContents([packet], [sendDiff]):
     raise TestError("Meros didn't include the Element in its new template.")
@@ -163,7 +170,8 @@ def getBlockTemplateTest(
     rpc.call(
       "merit",
       "getBlockTemplate",
-      {"miner": PrivateKey(0).toPublicKey().serialize().hex()}
+      {"miner": getMiner(0)},
+      False
     )["header"]
   )[36:68] != BlockHeader.createContents([packet], [sendDiff]):
     raise TestError("Meros did include an Element with an unmentioned parent in its new template.")
@@ -222,7 +230,8 @@ def getBlockTemplateTest(
   template = rpc.call(
     "merit",
     "getBlockTemplate",
-    {"miner": PrivateKey(0).toPublicKey().serialize().hex()}
+    {"miner": getMiner(0)},
+    False
   )
   if template["id"] != currTime:
     raise TestError("Template ID isn't the time when the previous Block is in the future.")
@@ -233,7 +242,7 @@ def getBlockTemplateTest(
   #Only the two which cause a MeritRemoval should be included.
   #Mine a Block to a new miner and clear the current template with it (might as well).
   #Also allows us to test template clearing.
-  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(1).toPublicKey().serialize().hex()})
+  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": getMiner(1)}, False)
   #Mine the Block.
   proof: int = -1
   tempHash: bytes = bytes()
@@ -251,7 +260,7 @@ def getBlockTemplateTest(
 
   #Verify the template was cleared.
   currTime = int(nextSecond())
-  bytesHeader: bytes = bytes.fromhex(rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(0).toPublicKey().serialize().hex()})["header"])
+  bytesHeader: bytes = bytes.fromhex(rpc.call("merit", "getBlockTemplate", {"miner": getMiner(0)}, False)["header"])
   serializedHeader: bytes = BlockHeader(
     0,
     tempHash,
@@ -288,7 +297,8 @@ def getBlockTemplateTest(
     rpc.call(
       "merit",
       "getBlockTemplate",
-      {"miner": PrivateKey(0).toPublicKey().serialize().hex()}
+      {"miner": getMiner(0)},
+      False
     )["header"]
   #`elem for elem` is used due to Pyright not handling inheritance properly when nested.
   #pylint: disable=unnecessary-comprehension

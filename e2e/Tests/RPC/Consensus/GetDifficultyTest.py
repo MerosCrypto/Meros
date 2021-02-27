@@ -15,21 +15,21 @@ def GetDifficultyTest(
   rpc: RPC
 ) -> None:
   #Check the global difficulty.
-  if rpc.call("consensus", "getSendDifficulty") != 3:
+  if rpc.call("consensus", "getSendDifficulty", auth=False) != 3:
     raise TestError("getSendDifficulty didn't reply properly.")
-  if rpc.call("consensus", "getDataDifficulty") != 5:
+  if rpc.call("consensus", "getDataDifficulty", auth=False) != 5:
     raise TestError("getDataDifficulty didn't reply properly.")
 
   #Check the difficulties for a holder who doesn't exist.
   try:
-    rpc.call("consensus", "getSendDifficulty", {"holder": 0})
+    rpc.call("consensus", "getSendDifficulty", {"holder": 0}, False)
     raise TestError("")
   except TestError as e:
     if str(e) != "-2 Holder doesn't have a SendDifficulty.":
       raise TestError("getSendDifficulty didn't raise when asked about a non-existent holder.")
 
   try:
-    rpc.call("consensus", "getDataDifficulty", {"holder": 0})
+    rpc.call("consensus", "getDataDifficulty", {"holder": 0}, False)
     raise TestError("")
   except TestError as e:
     if str(e) != "-2 Holder doesn't have a DataDifficulty.":
@@ -38,13 +38,13 @@ def GetDifficultyTest(
   def voteAndVerify() ->  None:
     #Check the difficulties for a holder who has yet to vote.
     try:
-      rpc.call("consensus", "getSendDifficulty", {"holder": 0})
+      rpc.call("consensus", "getSendDifficulty", {"holder": 0}, False)
       raise TestError("")
     except TestError as e:
       if str(e) != "-2 Holder doesn't have a SendDifficulty.":
         raise TestError("getSendDifficulty didn't raise when asked about a holder who has yet to vote.")
     try:
-      rpc.call("consensus", "getDataDifficulty", {"holder": 0})
+      rpc.call("consensus", "getDataDifficulty", {"holder": 0}, False)
       raise TestError("")
     except TestError as e:
       if str(e) != "-2 Holder doesn't have a DataDifficulty.":
@@ -64,9 +64,9 @@ def GetDifficultyTest(
     rpc.meros.live.recv()
 
     #Check them.
-    if rpc.call("consensus", "getSendDifficulty", {"holder": 0}) != 6:
+    if rpc.call("consensus", "getSendDifficulty", {"holder": 0}, False) != 6:
       raise TestError("getSendDifficulty didn't reply with the holder's current difficulty.")
-    if rpc.call("consensus", "getDataDifficulty", {"holder": 0}) != 10:
+    if rpc.call("consensus", "getDataDifficulty", {"holder": 0}, False) != 10:
       raise TestError("getDataDifficulty didn't reply with the holder's current difficulty.")
 
   with open("e2e/Vectors/Merit/BlankBlocks.json", "r") as file:

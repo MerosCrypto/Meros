@@ -72,7 +72,7 @@ def GetTransactionTest(
     #Also sanity check against the in-house JSON.
     if mint.toJSON() != EXPECTED_MINT:
       raise TestError("Python's Mint toJSON doesn't match the spec.")
-    if rpc.call("transactions", "getTransaction", {"hash": mint.hash.hex()}) != EXPECTED_MINT:
+    if rpc.call("transactions", "getTransaction", {"hash": mint.hash.hex()}, False) != EXPECTED_MINT:
       raise TestError("getTransaction didn't report the Mint properly.")
 
     #Check the Claim.
@@ -96,7 +96,7 @@ def GetTransactionTest(
       raise Exception("Python didn't instantiate the Claim with an amount, leading to invalid testing methodology.")
     if claim.toJSON() != EXPECTED_CLAIM:
       raise TestError("Python's Claim toJSON doesn't match the spec.")
-    if rpc.call("transactions", "getTransaction", {"hash": claim.hash.hex()}) != EXPECTED_CLAIM:
+    if rpc.call("transactions", "getTransaction", {"hash": claim.hash.hex()}, False) != EXPECTED_CLAIM:
       raise TestError("getTransaction didn't report the Claim properly.")
 
     #Check the Send.
@@ -121,7 +121,7 @@ def GetTransactionTest(
     }
     if send.toJSON() != EXPECTED_SEND:
       raise TestError("Python's Send toJSON doesn't match the spec.")
-    if rpc.call("transactions", "getTransaction", {"hash": send.hash.hex()}) != EXPECTED_SEND:
+    if rpc.call("transactions", "getTransaction", {"hash": send.hash.hex()}, False) != EXPECTED_SEND:
       raise TestError("getTransaction didn't report the Send properly.")
 
     #Check the Data.
@@ -139,7 +139,7 @@ def GetTransactionTest(
     }
     if data.toJSON() != EXPECTED_DATA:
       raise TestError("Python's Data toJSON doesn't match the spec.")
-    if rpc.call("transactions", "getTransaction", {"hash": data.hash.hex()}) != EXPECTED_DATA:
+    if rpc.call("transactions", "getTransaction", {"hash": data.hash.hex()}, False) != EXPECTED_DATA:
       raise TestError("getTransaction didn't report the Data properly.")
 
     #Non-existent hash; should cause an IndexError
@@ -149,7 +149,7 @@ def GetTransactionTest(
     else:
       nonExistentHash = "0" + nonExistentHash[1:]
     try:
-      rpc.call("transactions", "getTransaction", {"hash": nonExistentHash})
+      rpc.call("transactions", "getTransaction", {"hash": nonExistentHash}, False)
     except TestError as e:
       if str(e) != "-2 Transaction not found.":
         raise TestError("getTransaction didn't raise IndexError on a non-existent hash.")
@@ -157,7 +157,7 @@ def GetTransactionTest(
     #Invalid argument; should cause a ParamError
     #This is still a hex value
     try:
-      rpc.call("transactions", "getTransaction", {"hash": "00" + data.hash.hex()})
+      rpc.call("transactions", "getTransaction", {"hash": "00" + data.hash.hex()}, False)
       raise TestError("Meros didn't error when we asked for a 33-byte hex value.")
     except TestError as e:
       if str(e) != "-32602 Invalid params.":
