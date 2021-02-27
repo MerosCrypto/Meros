@@ -65,7 +65,7 @@ def TwoHundredThirtyTwoTest(
 
   #Reset the RPC's tracking variables.
   rpc.meros.calledQuit = False
-  rpc.meros.process = Popen(["./build/Meros", "--data-dir", rpc.meros.dataDir, "--log-file", rpc.meros.log, "--db", rpc.meros.db, "--network", "devnet", "--tcp-port", str(rpc.meros.tcp), "--rpc-port", str(rpc.meros.rpc), "--no-gui"])
+  rpc.meros.process = Popen(["./build/Meros", "--data-dir", rpc.meros.dataDir, "--log-file", rpc.meros.log, "--db", rpc.meros.db, "--network", "devnet", "--token", "TEST_TOKEN", "--tcp-port", str(rpc.meros.tcp), "--rpc-port", str(rpc.meros.rpc), "--no-gui"])
   while True:
     try:
       connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
