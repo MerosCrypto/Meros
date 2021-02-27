@@ -17,13 +17,23 @@ const STATUSES: Table[int, string] = {
   401: "Unauthorized",
   404: "Not Found",
   405: "Method Not Allowed",
-  406: "Not Acceptable",
+  #406: "Not Acceptable",
   411: "Length Required",
-  412: "Precondition Failed",
+  #412: "Precondition Failed",
   413: "Payload Too Large",
+  415: "Unsupported Media Type",
   417: "Expectation Failed",
+  431: "Request Header Fields Too Large",
   505: "HTTP Version Not Supported"
 }.toTable()
+
+proc supported(
+  supportedTypes: seq[string],
+  parts: seq[string]
+): string {.forceCheck: [].} =
+  for part in parts[1 ..< parts.len].join("").split(","):
+    if supportedTypes.contains(part):
+      return part
 
 proc sendHTTP(
   socket: RPCSocket,
@@ -39,8 +49,9 @@ proc sendHTTP(
   socket.headers["Content-Length"] = $body.len
   socket.headers["Cache-Control"] = "no-store"
   #Unless the client explicitly wants to keep alive, set a default policy of close.
-  if not socket.headers.hasKey("Connection"):
-    socket.headers["Connection"] = "close"
+  #if not socket.headers.hasKey("Connection"):
+  #  socket.headers["Connection"] = "close"
+  socket.headers["Connection"] = "close"
   for header in socket.headers.keys():
     try:
       res &= header & ": " & socket.headers[header] & "\r\n"
@@ -112,6 +123,9 @@ proc readHTTP*(
 
   while not socket.closed():
     block thisReq:
+      #Clear the result.
+      result = (body: "", token: "")
+
       #Needed to prevent an async lockup; I'm actually not sure where such lockup occurs.
       #-- Kayaba
       try:
@@ -161,36 +175,50 @@ proc readHTTP*(
         HTTP_STATUS(505)
         continue
 
-      #First header/blank line for header section termination.
-      try:
-        line = await socket.readLine()
-      except Exception as e:
-        panic("Couldn't read a header despite readLine not naturally throwing anything: " & e.msg)
-      if socket.closed:
-        return
       var
-        parts: seq[string]
-        #expectContinue: bool = false
+        headerCount: int = 0
+        expectContinue: bool = false
         contentLength: int = -1
-      while line != "":
-        parts = line.split(" ")
-        #[
+      while true:
+        #Read the header.
+        try:
+          line = await socket.readLine()
+        except Exception as e:
+          panic("Couldn't read a header despite readLine not naturally throwing anything: " & e.msg)
+        if socket.closed:
+          return
+
+        if line == "":
+          break
+
+        if line.len > 100:
+          HTTP_STATUS(431)
+          break thisReq
+        inc(headerCount)
+        if headerCount > 20:
+          HTTP_STATUS(431)
+          break thisReq
+
+        var parts: seq[string] = line.split(" ")
+        if parts.len < 2:
+          HTTP_STATUS(400)
+          break thisReq
+
         #Process this header.
         if line == "Expect: 100-continue":
           expectContinue = true
-          line = await socket.readLine()
-          break thisReq
-        ]#
+          continue
 
         case parts[0]:
-          #[
           #Used to figure out the best content type to use.
-          #Errors if none are, for some reason.
+          #If no content types work, the traditional solution is to move on anyways (despite not following the spec).
+          #Question is do generic, and specific, HTTP libs prefer text/plain or application/json...
           of "Accept:":
-            var toUse: string = supported(JSON_MIME_TYPES, line):
+            var toUse: string = supported(JSON_MIME_TYPES, parts)
             if toUse == "":
-              await socket.httpStatus(406)
-              break thisReq
+              #HTTP_STATUS(406)
+              #break thisReq
+              toUse = "application/json"
 
             #Handle wildcard values.
             if toUse == "text/*":
@@ -206,22 +234,44 @@ proc readHTTP*(
           #Easier to have wide support, yet this comment block serves as an ack to their existence.
           #[
           of "Accept-Charset:":
-            if not supported(CHARSETS, line):
-              await socket.httpStatus(406)
+            var toUse: string = supported(CHARSETS, parts):
+            if toUse == "":
+              HTTP_STATUS(406)
               break thisReq
+            socket.headers["Charset"] = toUse
           ]#
 
-          #This should also never come in a meaningful way, yet it can be easily checked without a comprehensive list.
+          #[
+          #Even though a list of accepted encodings are defined, we ultimately decide which to use, which can be any.
+          #The identity should be universally accepted, especially given context of what this is.
+          #Hence why we don't needlessly error (or bother with this).
           of "Accept-Encoding:":
             #If compression is required, error.
-            if line.contains("*;q=0") or line.contains("identity;q=0"):
-              await socket.httpStatus(406)
+            if (
+              #Identity was disabled.
+              line.contains("identity;q=0,") or line.contains("identity;q=0 ") or
+              #All that weren't explicitly mentioned were disabled, and identity wasn't explicitly mentioned.
+              #Identity being explicitly mentioned yet also set to 0 is handled in the above check.
+              (line.contains("*;q=0") and (not line.contains("identity")))
+            ):
+              HTTP_STATUS(406)
               break thisReq
-
-          of "Expect:":
-            await socket.httpStatus(417)
-            break thisReq
           ]#
+
+          #Don't accept compressed requests.
+          of "Content-Encoding:":
+            HTTP_STATUS(415)
+            break thisReq
+
+          #We only handle 100-continue, as defined above.
+          of "Expect:":
+            HTTP_STATUS(417)
+            break thisReq
+
+          of "Content-Type:":
+            if not ["application/json", "text/plain"].contains(parts[1]):
+              HTTP_STATUS(415)
+              break thisReq
 
           of "Content-Length:":
             #Max of 9999 bytes, which would only come close during batch requests.
@@ -245,31 +295,22 @@ proc readHTTP*(
               socket.headers["Connection"] = "keep-alive"
 
         #[
-        #If there's any conditional statement, assume it's invalid.
+        #If there's any conditional statement, we can assume it's invalid or ignore it.
+        #This comment block shows we're ignoring it.
         if parts[0].contains("If-"):
-          await socket.httpStatus(412)
+          HTTP_STATUS(412)
           continue
         ]#
-
-        #Grab the next header.
-        try:
-          line = await socket.readLine()
-        except Exception as e:
-          panic("Couldn't read a header despite readLine not naturally throwing anything: " & e.msg)
-        if socket.closed:
-          return
 
       #Make sure the content length was provided.
       if contentLength == -1:
         HTTP_STATUS(411)
-        continue
+        break thisReq
 
       #If the client was solely validating their headers, move on to the next message.
-      #[
       if expectContinue:
-        await socket.httpStatus(100)
-        continue
-      ]#
+        HTTP_STATUS(100)
+        break thisReq
 
       #Read the body.
       try:
