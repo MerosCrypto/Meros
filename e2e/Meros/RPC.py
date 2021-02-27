@@ -22,12 +22,18 @@ class RPC:
     args: Dict[str, Any] = {}
   ) -> Any:
     try:
-      request: requests.Response = requests.post("http://127.0.0.1:" + str(self.meros.rpc), json={
-        "jsonrpc": "2.0",
-        "id": 0,
-        "method": module + "_" + method,
-        "params": args
-      })
+      request: requests.Response = requests.post(
+        "http://127.0.0.1:" + str(self.meros.rpc),
+        json={
+          "jsonrpc": "2.0",
+          "id": 0,
+          "method": module + "_" + method,
+          "params": args
+        },
+        headers={
+          "Authorization": "Bearer TEST_TOKEN"
+        }
+      )
     except Exception as e:
       raise NodeError(str(e))
 
