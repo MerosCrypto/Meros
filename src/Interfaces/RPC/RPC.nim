@@ -269,9 +269,9 @@ proc createSocketHandler(
     #Handle the client.
     while not socket.closed():
       #Read in a message.
-      var req: tuple[body: string, token: string]
+      var httpReq: tuple[body: string, token: string]
       try:
-        req = await socket.readHTTP()
+        httpReq = await socket.readHTTP()
         if socket.closed():
           break
       except Exception as e:
@@ -280,38 +280,80 @@ proc createSocketHandler(
       #Handle the message.
       var parsedData: JSONNode
       try:
-        parsedData = parseJSON(req.body)
+        parsedData = parseJSON(httpReq.body)
       except Exception:
         try:
           await socket.writeHTTP($(newError(newJNull(), -32700, "Parse error")))
-          return
+          continue
         except Exception as e:
           panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
 
-      try:
-        #See above instance for clarification.
-        let rpcFuture: Future[void] = rpc.handle(
-          parsedData,
-          proc (
-            replyArg: JSONNode
-          ) {.forceCheck: [], async.} =
-            if replyArg.hasKey("unauthorized"):
-              try:
-                await socket.httpUnauthorized()
-              except Exception as e:
-                panic("httpUnauthorized threw an error despite not naturally throwing anything: " & e.msg)
-              return
+      let batch: bool = parsedData.kind == JArray
+      if not batch:
+        parsedData = % [parsedData]
 
-            try:
-              await socket.writeHTTP($replyArg)
-            except Exception as e:
-              panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
-          ,
-          req.token == rpc.token
-        )
-        await rpcFuture
+      var
+        authorized: bool = httpReq.token == rpc.token
+        unauthorized: bool = false
+        res: JSONNode = newJArray()
+      try:
+        for req in parsedData:
+          if unauthorized:
+            break
+
+          #See above instance for clarification.
+          let rpcFuture: Future[void] = rpc.handle(
+            req,
+            proc (
+              replyArg: JSONNode
+            ) {.forceCheck: [], async.} =
+              if replyArg.hasKey("unauthorized"):
+                unauthorized = true
+                return
+              res.add(replyArg)
+
+              #If we're quitting, send what we have.
+              #We only check for "quit" as a mutation occurs, dropping the module, during its processing.
+              #Technically non-compliant for batch requests, as all further requests in the batch won't be fulfilled.
+              try:
+                if (req["method"] == (% "quit")) and (replyArg["result"] == (% true)):
+                  if not batch:
+                    res = res[0]
+                  try:
+                    await socket.writeHTTP($res)
+                  except Exception as e:
+                    panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
+              #Invalid request (syntactically or semantically).
+              except KeyError:
+                discard
+            ,
+            authorized
+          )
+          await rpcFuture
       except Exception as e:
         panic("RPC's handle threw an Exception despite not naturally throwing anything: " & e.msg)
+
+      if unauthorized:
+        try:
+          await socket.httpUnauthorized()
+        except Exception as e:
+          panic("httpUnauthorized threw an error despite not naturally throwing anything: " & e.msg)
+        continue
+
+      var resStr: string
+      #If this is an empty array, respond with nothing.
+      if res.len == 0:
+        #Redundant.
+        resStr = ""
+      else:
+        if not batch:
+          res = res[0]
+        resStr = $res
+
+      try:
+        await socket.writeHTTP($res)
+      except Exception as e:
+        panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
 
 #Start up the RPC's server socket.
 proc listen*(
