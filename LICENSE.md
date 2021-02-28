@@ -1,10 +1,10 @@
-To the extent possible under law, Luke Parker has waived all copyright and related or neighboring rights to the files under `logos/`, via the [CC0 license](https://creativecommons.org/publicdomain/zero/1.0/).
+To the extent possible under law, all copyright and related rights to the files under `logos/` have been waived via the [CC0 license](https://creativecommons.org/publicdomain/zero/1.0/).
 
 Meros is released under the following license:
 
 MIT License
 
-Copyright (c) 2018-2021 Luke Parker
+Copyright (c) 2018-2021 Meros Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
