@@ -46,15 +46,23 @@ proc sendHTTP(
   except KeyError as e:
     panic("Couldn't get a status's message despite having a constant table and only using a select few: " & e.msg)
 
-  socket.headers["Transfer-Encoding"] = "identity"
   socket.headers["Content-Length"] = $body.len
-  socket.headers["Cache-Control"] = "no-store"
+  #Only send these headers when there's a body to refer to.
+  #Especially important for Content-Type as that can be disagreeable.
+  if code == 200:
+    if not socket.headers.hasKey("Content-Type"):
+      socket.headers["Content-Type"] = "application/json"
+    socket.headers["Transfer-Encoding"] = "identity"
+    socket.headers["Cache-Control"] = "no-store"
   #Unless the client explicitly wants to keep alive, set a default policy of close.
   #if not socket.headers.hasKey("Connection"):
   #  socket.headers["Connection"] = "close"
   socket.headers["Connection"] = "close"
   for header in socket.headers.keys():
     try:
+      #Don't send the Connection header for the default policy.
+      if (header == "Connection") and (socket.headers[header] == "keep-alive"):
+        continue
       res &= header & ": " & socket.headers[header] & "\r\n"
     except KeyError as e:
       panic("Couldn't get a header despite confirming its existence: " & e.msg)
@@ -89,17 +97,12 @@ proc httpStatus(
   except Exception as e:
     panic("sendHTTP threw an Exception despite not naturally throwing anything: " & e.msg)
 
-proc writeHTTP*(
+template writeHTTP*(
   socket: RPCSocket,
   json: string
-) {.forceCheck: [], async.} =
-  if not socket.headers.hasKey("Content-Type"):
-    socket.headers["Content-Type"] = "application/json"
-
-  try:
-    await socket.sendHTTP(200, json)
-  except Exception as e:
-    panic("sendHTTP threw an Exception despite not naturally throwing anything: " & e.msg)
+): Future[void] =
+  mixin sendHTTP
+  socket.sendHTTP(200, json)
 
 proc httpUnauthorized*(
   socket: RPCSocket
@@ -272,10 +275,14 @@ proc readHTTP*(
             HTTP_STATUS(417)
             break thisReq
 
+          #curl defaults to x-www-form-urlencoded.
+          #We should really just try to handle the body no matter what.
+          #[
           of "Content-Type:":
             if not ["application/json", "text/plain"].contains(parts[1]):
               HTTP_STATUS(415)
               break thisReq
+          ]#
 
           of "Content-Length:":
             #Max of 9999 bytes, which would only come close during batch requests.
@@ -322,7 +329,6 @@ proc readHTTP*(
       #If the client was solely validating their headers, move on to the next message.
       if expectContinue:
         HTTP_STATUS(100)
-        break thisReq
 
       #Read the body.
       if chunked:
@@ -369,6 +375,7 @@ proc readHTTP*(
 
       else:
         try:
+          #Doesn't check socket.closed as the calling function does.
           result.body = await socket.recv(contentLength)
           return
         except Exception as e:
