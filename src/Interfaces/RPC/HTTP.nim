@@ -31,9 +31,9 @@ proc supported(
   supportedTypes: seq[string],
   parts: seq[string]
 ): string {.forceCheck: [].} =
-  for part in parts[1 ..< parts.len].join("").split(","):
-    if supportedTypes.contains(part):
-      return part
+  for i in 1 ..< parts.len:
+    if supportedTypes.contains(parts[i]):
+      return parts[i]
 
 proc sendHTTP(
   socket: RPCSocket,
@@ -140,7 +140,6 @@ proc readHTTP*(
       #Clear the socket's last headers.
       socket.headers = initTable[string, string]()
 
-
       var
         chunked: bool = false
         line: string
@@ -206,13 +205,13 @@ proc readHTTP*(
           HTTP_STATUS(431)
           break thisReq
 
-        var parts: seq[string] = line.split(" ")
-        if parts.len < 2:
+        var parts: seq[string] = line.split(" ").join("").split(":")
+        if parts.len != 2:
           HTTP_STATUS(400)
           break thisReq
 
         #Process this header.
-        if line == "Expect: 100-continue":
+        if parts == @["Expect", "100-continue"]:
           expectContinue = true
           continue
 
@@ -220,7 +219,7 @@ proc readHTTP*(
           #Used to figure out the best content type to use.
           #If no content types work, the traditional solution is to move on anyways (despite not following the spec).
           #Question is do generic, and specific, HTTP libs prefer text/plain or application/json...
-          of "Accept:":
+          of "Accept":
             var toUse: string = supported(JSON_MIME_TYPES, parts)
             if toUse == "":
               #HTTP_STATUS(406)
@@ -240,7 +239,7 @@ proc readHTTP*(
           #This means numerous charsets will incorrectly decode, yet them being chosen is such an edge case...
           #Easier to have wide support, yet this comment block serves as an ack to their existence.
           #[
-          of "Accept-Charset:":
+          of "Accept-Charset":
             var toUse: string = supported(CHARSETS, parts):
             if toUse == "":
               HTTP_STATUS(406)
@@ -252,7 +251,7 @@ proc readHTTP*(
           #Even though a list of accepted encodings are defined, we ultimately decide which to use, which can be any.
           #The identity should be universally accepted, especially given context of what this is.
           #Hence why we don't needlessly error (or bother with this).
-          of "Accept-Encoding:":
+          of "Accept-Encoding":
             #If compression is required, error.
             if (
               #Identity was disabled.
@@ -266,25 +265,25 @@ proc readHTTP*(
           ]#
 
           #Don't accept compressed requests.
-          of "Content-Encoding:":
+          of "Content-Encoding":
             HTTP_STATUS(415)
             break thisReq
 
           #We only handle 100-continue, as defined above.
-          of "Expect:":
+          of "Expect":
             HTTP_STATUS(417)
             break thisReq
 
           #curl defaults to x-www-form-urlencoded.
           #We should really just try to handle the body no matter what.
           #[
-          of "Content-Type:":
+          of "Content-Type":
             if not ["application/json", "text/plain"].contains(parts[1]):
               HTTP_STATUS(415)
               break thisReq
           ]#
 
-          of "Content-Length:":
+          of "Content-Length":
             #Max of 9999 bytes, which would only come close during batch requests.
             if parts[1].len > 4:
               HTTP_STATUS(413)
@@ -295,17 +294,18 @@ proc readHTTP*(
               HTTP_STATUS(400)
               break thisReq
 
-          of "Authorization:":
-            if (parts.len != 3) or (parts[1] != "Bearer"):
+          of "Authorization":
+            let authParts: seq[string] = parts[1].split(" ")
+            if (authParts.len != 2) or (authParts[0] != "Bearer"):
               HTTP_STATUS(401)
               break thisReq
-            result.token = parts[2]
+            result.token = authParts[1]
 
-          of "Connection:":
-            if parts[1 ..< parts.len].join("").split(",").contains("keep-alive"):
+          of "Connection":
+            if parts[1].split(",").contains("keep-alive"):
               socket.headers["Connection"] = "keep-alive"
 
-          of "Transfer-Encoding:":
+          of "Transfer-Encoding":
             if parts[1] == "identity":
               discard
             elif parts[1] == "chunked":
