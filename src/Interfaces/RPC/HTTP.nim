@@ -46,6 +46,7 @@ proc sendHTTP(
   except KeyError as e:
     panic("Couldn't get a status's message despite having a constant table and only using a select few: " & e.msg)
 
+  socket.headers["Transfer-Encoding"] = "identity"
   socket.headers["Content-Length"] = $body.len
   socket.headers["Cache-Control"] = "no-store"
   #Unless the client explicitly wants to keep alive, set a default policy of close.
@@ -136,8 +137,11 @@ proc readHTTP*(
       #Clear the socket's last headers.
       socket.headers = initTable[string, string]()
 
+
+      var
+        chunked: bool = false
+        line: string
       #Read the start line.
-      var line: string
       try:
         line = await socket.readLine()
       except Exception as e:
@@ -294,6 +298,14 @@ proc readHTTP*(
             if parts[1 ..< parts.len].join("").split(",").contains("keep-alive"):
               socket.headers["Connection"] = "keep-alive"
 
+          of "Transfer-Encoding:":
+            if parts[1] == "identity":
+              discard
+            elif parts[1] == "chunked":
+              chunked = true
+            else:
+              HTTP_STATUS(415)
+
         #[
         #If there's any conditional statement, we can assume it's invalid or ignore it.
         #This comment block shows we're ignoring it.
@@ -303,7 +315,7 @@ proc readHTTP*(
         ]#
 
       #Make sure the content length was provided.
-      if contentLength == -1:
+      if (not chunked) and (contentLength == -1):
         HTTP_STATUS(411)
         break thisReq
 
@@ -313,8 +325,51 @@ proc readHTTP*(
         break thisReq
 
       #Read the body.
-      try:
-        result.body = await socket.recv(contentLength)
-        return
-      except Exception as e:
-        panic("Couldn't read the body despite recv not naturally throwing anything: " & e.msg)
+      if chunked:
+        while true:
+          var length: string
+          try:
+            length = await socket.readLine()
+          except Exception as e:
+            panic("Couldn't read the chunk length despite readLine not naturally throwing anything: " & e.msg)
+          if socket.closed:
+            return
+
+          if length.len > 4:
+            HTTP_STATUS(413)
+            break thisReq
+          var parsedLen: int
+          try:
+            parsedLen = parseHexInt(length)
+            if parsedLen < 0:
+              raise newException(ValueError, "https://github.com/nim-lang/Nim/issues/17208")
+            elif parsedLen == 0:
+              return
+          except ValueError:
+            HTTP_STATUS(400)
+            break thisReq
+
+          if (result.body.len + parsedLen) > 9999:
+            HTTP_STATUS(413)
+            break thisReq
+
+          try:
+            result.body &= await socket.recv(parsedLen)
+          except Exception as e:
+            panic("Couldn't read the chunk despite recv not naturally throwing anything: " & e.msg)
+          if socket.closed:
+            return
+
+          try:
+            discard await socket.readLine()
+          except Exception as e:
+            panic("Couldn't read the new line characters despite readLine not naturally throwing anything: " & e.msg)
+          if socket.closed:
+            return
+
+      else:
+        try:
+          result.body = await socket.recv(contentLength)
+          return
+        except Exception as e:
+          panic("Couldn't read the body despite recv not naturally throwing anything: " & e.msg)
