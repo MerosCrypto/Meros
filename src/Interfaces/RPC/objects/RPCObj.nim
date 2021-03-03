@@ -71,11 +71,16 @@ proc send*(
   except Exception as e:
     panic("Sending to an RPC socket raised an Exception despite catching all Exceptions: " & e.msg)
 
-template recv*(
+proc recv*(
   socket: RPCSocket,
   len: int
-): Future[string] =
-  socket.socket.recv(len)
+): Future[string] {.forceCheck: [], async.} =
+  try:
+    result = await socket.socket.recv(len)
+  except SocketError:
+    socket.close()
+  except Exception as e:
+    panic("recv raised an Exception despite catching all Exceptions: " & e.msg)
 
 proc readLine*(
   socket: RPCSocket

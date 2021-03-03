@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any
+from typing import Iterator, Dict, List, Optional, Union, Any
 
 class Response:
   status_code: int
@@ -10,7 +10,8 @@ class Response:
 
 def post(
   url: str,
-  json: Optional[Dict[str, Any]] = ...,
+  data: Optional[Iterator[bytes]] = ...,
+  json: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = ...,
   headers: Optional[Dict[str, str]] = ...
 ) -> Response:
   ...

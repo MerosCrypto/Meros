@@ -1,7 +1,6 @@
-from typing import Dict, Any
+from typing import Iterator
 import json
 
-import ed25519
 import requests
 
 from e2e.Classes.Merit.Blockchain import Blockchain
@@ -10,18 +9,22 @@ from e2e.Meros.RPC import RPC
 
 from e2e.Tests.Errors import TestError
 
-def reqIter() -> str:
+def reqIter() -> Iterator[bytes]:
   yield b"["
-  yield json.dumps({
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "merit_getHeight"
-  }).encode() + b","
-  yield json.dumps({
-    "jsonrpc": "2.0",
-    "id": 0,
-    "method": "merit_getDifficulty"
-  }).encode()
+  yield json.dumps(
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "merit_getHeight"
+    }
+  ).encode() + b","
+  yield json.dumps(
+    {
+      "jsonrpc": "2.0",
+      "id": 0,
+      "method": "merit_getDifficulty"
+    }
+  ).encode()
   yield b"]"
 
 def ChunkedEncodingTest(

@@ -32,7 +32,7 @@ proc supported(
   parts: seq[string]
 ): string {.forceCheck: [].} =
   for i in 1 ..< parts.len:
-    if supportedTypes.contains(parts[i]):
+    if supportedTypes.contains(parts[i].split(";")[0].toLowerAscii()):
       return parts[i]
 
 proc sendHTTP(
@@ -57,7 +57,8 @@ proc sendHTTP(
   #Unless the client explicitly wants to keep alive, set a default policy of close.
   #if not socket.headers.hasKey("Connection"):
   #  socket.headers["Connection"] = "close"
-  socket.headers["Connection"] = "close"
+  if code != 100:
+    socket.headers["Connection"] = "close"
   for header in socket.headers.keys():
     try:
       #Don't send the Connection header for the default policy.
@@ -71,7 +72,7 @@ proc sendHTTP(
   try:
     await socket.send(res)
     #Supposed to close after this response.
-    if socket.headers["Connection"] != "keep-alive":
+    if socket.headers.hasKey("Connection") and (socket.headers["Connection"] == "close"):
       socket.close()
   except KeyError as e:
     panic("Couldn't get the Connection header despite defining it if it didn't exist: " & e.msg)
@@ -206,12 +207,12 @@ proc readHTTP*(
           break thisReq
 
         var parts: seq[string] = line.split(" ").join("").split(":")
-        if parts.len != 2:
+        if parts.len < 2:
           HTTP_STATUS(400)
           break thisReq
 
         #Process this header.
-        if parts == @["Expect", "100-continue"]:
+        if (parts[0] == "Expect") and (parts[1].toLowerAscii() == "100-continue"):
           expectContinue = true
           continue
 
@@ -295,11 +296,11 @@ proc readHTTP*(
               break thisReq
 
           of "Authorization":
-            let authParts: seq[string] = parts[1].split(" ")
-            if (authParts.len != 2) or (authParts[0] != "Bearer"):
+            var authParts: seq[string] = line.split(" ")
+            if (authParts[^2] != "Bearer"):
               HTTP_STATUS(401)
               break thisReq
-            result.token = authParts[1]
+            result.token = authParts[^1]
 
           of "Connection":
             if parts[1].split(",").contains("keep-alive"):
@@ -348,7 +349,9 @@ proc readHTTP*(
           try:
             parsedLen = parseHexInt(length)
             if parsedLen < 0:
-              raise newException(ValueError, "https://github.com/nim-lang/Nim/issues/17208")
+              #https://github.com/nim-lang/Nim/issues/17208
+              HTTP_STATUS(413)
+              break thisReq
             elif parsedLen == 0:
               return
           except ValueError:

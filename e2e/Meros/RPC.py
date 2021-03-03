@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, List, Union, Any
 from os import remove
 from time import sleep
 
@@ -19,7 +19,7 @@ class RPC:
     self,
     module: str,
     method: str,
-    args: Dict[str, Any] = {},
+    args: Union[List[Dict[str, Any]], Dict[str, Any]] = {},
     auth: bool = True
   ) -> Any:
     try:

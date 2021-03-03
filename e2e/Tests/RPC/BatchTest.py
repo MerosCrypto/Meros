@@ -1,7 +1,3 @@
-from typing import Dict, Any
-import json
-
-import ed25519
 import requests
 
 from e2e.Classes.Merit.Blockchain import Blockchain
