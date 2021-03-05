@@ -36,6 +36,20 @@ class Blockchain:
       )
     ]
 
+  def __eq__(
+    self,
+    other
+  ) -> bool:
+    return isinstance(other, self.__class__) and other.toJSON() == self.toJSON()
+  
+  def __ne__(
+    self,
+    other
+  ) -> bool:
+    if isinstance(other, self.__class__):
+      return self.toJSON() != other.toJSON()
+    return True
+
   def add(
     self,
     block: Block
