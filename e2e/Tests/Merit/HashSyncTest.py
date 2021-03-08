@@ -1,68 +1,58 @@
+# Tests proper inclusion of headers in BlockListRequest response with varying lengths.
 from typing import Dict, List, Any
 import json
 
-from e2e.Classes.Merit.Blockchain import Blockchain, Block
-from e2e.Classes.Merit.BlockHeader import BlockHeader
+from e2e.Classes.Merit.Blockchain import Blockchain
 from e2e.Meros.Meros import MessageType
-
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
-from e2e.Meros.Syncer import Syncer
-
-from e2e.Tests.Errors import TestError, SuccessError
+from e2e.Tests.Errors import TestError
 
 def HashSyncTest(
   rpc: RPC
 ) -> None:
-  # Load test blocks.
-  vectors: List[Dict[str, Any]]
+  chain: Blockchain
   with open("e2e/Vectors/Merit/BlankBlocks.json", "r") as file:
     vectors = json.loads(file.read())
-  
-  amount: int = 25
-  # Prep the expected response.
-  blockchain: Blockchain = Blockchain().fromJSON(vectors)
-  quantity: bytes = (amount-1).to_bytes(1, byteorder="little")
-  hashes: bytes = [block.header.hash for block in blockchain.blocks[:amount]]
-  desiredResponse: bytes = quantity + b''.join([hash for hash in reversed(hashes)])
-  
+  chain: Blockchain = Blockchain().fromJSON(vectors)
+  amount1: int = 25
+  amount2: int = 6
+  def constructResponse(
+    amount: int,
+    blockchain: Blockchain,
+    lastBlock: int = -1
+  ) -> bytes:
+    """Construct a BlockList Response."""
+    if lastBlock <= 0:
+      lastBlock = len(blockchain.blocks)
+    lastBlock = min(amount, lastBlock)
+    quantity: bytes = (lastBlock-1).to_bytes(1, byteorder="little")
+    hashes: bytes = [block.header.hash for block in blockchain.blocks[:lastBlock]]
+    return quantity + b"".join([hash for hash in reversed(hashes)])
+
   def recHash() -> None:
-    rpc.meros.syncConnect(blockchain.last())
-    rpc.meros.blockListRequest(amount+1, blockchain.blocks[amount].header.hash)
+    """Request amount1 blocks."""
+    rpc.meros.syncConnect(chain.blocks[0].header.hash)
+    rpc.meros.blockListRequest(amount1+1, chain.blocks[amount1].header.hash)
     blockList: bytes = rpc.meros.sync.recv()
-    if blockList[1:] != desiredResponse:
-      raise TestError('Meros returned a different block list than expected in response to a BlockListRequest.')
-  
+    if blockList[1:] != constructResponse(amount1, chain):
+      raise TestError("Meros returned a different block list than expected in response to a BlockListRequest.")
+
   def genesisMissing() -> None:
-    rpc.meros.syncConnect(blockchain.last())
-    rpc.meros.blockListRequest(1, blockchain.blocks[0].header.hash)
+    """Request the block before genesis."""
+    rpc.meros.syncConnect(chain.blocks[0].header.hash)
+    rpc.meros.blockListRequest(1, chain.blocks[0].header.hash)
     blockList: bytes = rpc.meros.sync.recv()
-    print(f'Expecting: {MessageType.DataMissing.toByte()}')
-    print(f'Received from Meros: {blockList} (hex: {blockList.hex()})')
-    if blockList[1:] != MessageType.DataMissing.toByte():
-      raise TestError('Meros did not return a DataMissing response to a BlockListRequest of the block before genesis.')
+    if blockList != MessageType.DataMissing.toByte():
+      raise TestError("Meros did not return a DataMissing response to a BlockListRequest of the block before genesis.")
 
-  liver : Liver = Liver(rpc, vectors, callbacks={3: genesisMissing, amount: recHash}).live()
+  def lessThanRequested() -> None:
+    """Request more blocks than exist at time of request."""
+    rpc.meros.syncConnect(chain.blocks[0].header.hash)
+    rpc.meros.blockListRequest(amount2, chain.blocks[amount2-1].header.hash)
+    blockList: bytes = rpc.meros.sync.recv()
+    if blockList[1:] != constructResponse(amount1, chain, lastBlock=amount2-1):
+      raise TestError("Meros didn't properly return fewer blocks when a BlockListRequest requests more blocks than exist.")
 
-def print_all_info(
-  item: Any,
-  pre_name: str = ''
-) -> None:
-
-  if type(item) is list:
-    i : int = 0
-    for subitem in item:
-      print_all_info(subitem, pre_name=f'{pre_name}[{i}]')
-      i += 1
-
-      if i > 2:
-        print(f'{pre_name} has {len(item)} more, not shown.')
-        break
-
-  if not hasattr(item, '__dict__'):
-    return
-  
-  print(f'{pre_name}.__dict__:')
-  print(item.__dict__)
-  for subitem_name, subitem in item.__dict__.items():
-    print_all_info(subitem, pre_name=f'{pre_name}.{subitem_name}')
+  callBacks: Dict[int, function] = {3: genesisMissing, amount2-1: lessThanRequested, amount1: recHash}
+  Liver(rpc, vectors, callbacks=callBacks).live()
