@@ -73,10 +73,16 @@ proc send*(
 
 proc recv*(
   socket: RPCSocket,
-  len: int
+  lenArg: int
 ): Future[string] {.forceCheck: [], async.} =
+  var len: int = lenArg
+  if socket.socket.readLineBuffer != char(0):
+    result = $socket.socket.readLineBuffer
+    socket.socket.readLineBuffer = char(0)
+    len -= 1
+
   try:
-    result = await socket.socket.recv(len)
+    result &= await socket.socket.recv(len)
   except SocketError:
     socket.close()
   except Exception as e:

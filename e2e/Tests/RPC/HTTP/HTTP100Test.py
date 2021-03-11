@@ -13,11 +13,11 @@ Content-Length: 59
 Content-Type: application/x-www-form-urlencoded
 Expect: 100-continue\r\n\r\n"""
 
+#Doesn't support \r line endings.
 def readLine(
   conn: socket.socket
 ) -> str:
   res: str = conn.recv(1).decode()
-  #Doesn't support \r line endings.
   while res[-1] != "\n":
     res += conn.recv(1).decode()
   res = res[:-1]

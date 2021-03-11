@@ -7,7 +7,7 @@ type Socket* = ref object
   stream: StreamTransport
   alreadyClosed: bool
 
-  readLineBuffer: char
+  readLineBuffer*: char
 
 proc newSocket*(
   addy: TransportAddress
