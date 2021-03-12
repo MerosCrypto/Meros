@@ -22,6 +22,7 @@ const STATUSES: Table[int, string] = {
   #412: "Precondition Failed",
   413: "Payload Too Large",
   415: "Unsupported Media Type",
+  #416: "Range Not Satisfiable"
   417: "Expectation Failed",
   431: "Request Header Fields Too Large",
   505: "HTTP Version Not Supported"
@@ -209,6 +210,12 @@ proc readHTTP*(
         if (parts[0] == "Expect") and (parts[1].toLowerAscii() == "100-continue"):
           expectContinue = true
           continue
+
+        #[
+        if parts[0].contains("Range"):
+          HTTP_STATUS(416)
+          continue
+        ]#
 
         case parts[0]:
           #Used to figure out the best content type to use.
