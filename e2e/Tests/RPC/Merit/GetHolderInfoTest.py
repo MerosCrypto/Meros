@@ -1,8 +1,0 @@
-"""
-"""
-
-"""
-getPublicKey
-getNickname
-getMerit
-"""

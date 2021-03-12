@@ -15,7 +15,6 @@ const STATUSES: Table[int, string] = {
   200: "OK",
   400: "Bad Request",
   401: "Unauthorized",
-  404: "Not Found",
   405: "Method Not Allowed",
   #406: "Not Acceptable",
   411: "Length Required",
