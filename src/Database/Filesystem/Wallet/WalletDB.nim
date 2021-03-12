@@ -265,6 +265,8 @@ proc setWallet*(
     db.put(DATA_TX(data.hash), data.serialize())
   if datas.len != 0:
     db.put(DATA_TIP(), datas[0].hash.serialize())
+  else:
+    db.del(DATA_TIP())
   db.wallet = wallet
 
 #Set our miner's nick.
