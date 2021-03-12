@@ -140,7 +140,7 @@ proc newRPC*(
       try:
         methodStr = req["method"].getStr()
       except KeyError as e:
-        panic("Couldn't get the ID of the request despite confirming its existence: " & e.msg)
+        panic("Couldn't get the method of the request despite confirming its existence: " & e.msg)
 
       #Find the matching RPC module and pass it off.
       var replied: bool = false

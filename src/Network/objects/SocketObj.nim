@@ -142,5 +142,5 @@ proc readLine*(
             socket.readLineBuffer = char(0)
         break
   except Exception:
-    socket.safeClose("COuldn't read a line from the socket.")
+    socket.safeClose("Couldn't read a line from the socket.")
     return ""

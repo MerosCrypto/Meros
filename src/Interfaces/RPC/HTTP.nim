@@ -297,7 +297,10 @@ proc readHTTP*(
 
           of "Authorization":
             var authParts: seq[string] = line.split(" ")
-            if (authParts[^2] != "Bearer"):
+            if authParts.len < 2:
+              HTTP_STATUS(400)
+              break thisReq
+            elif (authParts[^2] != "Bearer"):
               HTTP_STATUS(401)
               break thisReq
             result.token = authParts[^1]
