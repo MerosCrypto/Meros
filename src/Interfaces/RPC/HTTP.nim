@@ -167,15 +167,11 @@ proc readHTTP*(
       if startLine.len != 3:
         HTTP_STATUS(400)
         continue
-      case startLine[0]:
-        of "HEAD", "GET":
-          HTTP_STATUS(404)
-          continue
-        of "POST":
-          discard
-        else:
-          HTTP_STATUS(405)
-          continue
+      #Ensure this is a POST. The HTTP spec technically requires GET/HEAD to never return 405.
+      #That said, we don't use them at all, so we just move on with the simpler solution.
+      if startLine[0] != "POST":
+        HTTP_STATUS(405)
+        continue
       if startLine[2] != "HTTP/1.1":
         HTTP_STATUS(505)
         continue
