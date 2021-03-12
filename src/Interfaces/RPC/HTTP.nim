@@ -54,9 +54,7 @@ proc sendHTTP(
       socket.headers["Content-Type"] = "application/json"
     socket.headers["Transfer-Encoding"] = "identity"
     socket.headers["Cache-Control"] = "no-store"
-  #Unless the client explicitly wants to keep alive, set a default policy of close.
-  #if not socket.headers.hasKey("Connection"):
-  #  socket.headers["Connection"] = "close"
+  #Set a connection type of close. Avoids extensive socket tracking and a few headers.
   if code != 100:
     socket.headers["Connection"] = "close"
   for header in socket.headers.keys():
