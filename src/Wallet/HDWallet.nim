@@ -197,27 +197,31 @@ proc `[]`*(
   except ValueError as e:
     raise e
 
-#Grab the next valid key on this path.
-proc next*(
-  wallet: HDWallet,
-  path: seq[uint32] = @[],
-  last: uint32 = 0
-): HDWallet {.forceCheck: [
-  ValueError
-].} =
-  var
-    pathWallet: HDWallet
-    i: uint32 = last + 1
-  try:
-    pathWallet = wallet.derive(path)
-  except ValueError as e:
-    raise e
-
+#Grab the first valid key on this path.
+proc first*(
+  wallet: HDWallet
+): HDWallet {.forceCheck: [].} =
+  var i: uint32 = 0
   while true:
     try:
-      return pathWallet.derive(i)
+      return wallet.derive(i)
     except ValueError:
       inc(i)
       if i == (uint32(2) ^ 31):
-        raise newLoggedException(ValueError, "This path is out of non-hardened keys.")
-      continue
+        panic("Couldn't derive the first account before hitting 2 ^ 31.")
+
+#Grab the next key on this path.
+proc next*(
+  wallet: HDWallet,
+  start: uint32
+): HDWallet {.forceCheck: [
+  ValueError
+].} =
+  var i: uint32 = start
+  while true:
+    try:
+      return wallet.derive(i)
+    except ValueError:
+      inc(i)
+      if i == (uint32(2) ^ 31):
+        raise newLoggedException(ValueError, "Wallet is out of addresses.")

@@ -17,8 +17,46 @@ proc mainPersonal(
   ) {.forceCheck: [
     ValueError
   ].} =
+    var hdWallet: Wallet
+    if mnemonic.len == 0:
+      hdWallet = newWallet(password)
+    else:
+      try:
+        hdWallet = newWallet(mnemonic, password)
+      except ValueError as e:
+        raise e
+
+    var datas: seq[Data]
+    block handleDatas:
+      #Start with the initial data, discovering spenders until the tip.
+      var initial: Data
+      try:
+        initial = newData(Hash[256](), hdWallet.external.first().publicKey.serialize())
+      except ValueError as e:
+        panic("Couldn't create an initial Data to discover a Data tip: " & e.msg)
+      try:
+        discard transactions[][initial.hash]
+      #No Datas.
+      except IndexError:
+        break handleDatas
+
+      var
+        last: Hash[256] = initial.hash
+        spenders: seq[Hash[256]] = transactions[].loadSpenders(newInput(last))
+      while spenders.len != 0:
+        last = spenders[0]
+        spenders = transactions[].loadSpenders(newInput(last))
+
+      #Grab the chain.
+      try:
+        datas = @[cast[Data](transactions[][last])]
+        while datas[^1].inputs[0].hash != Hash[256]():
+          datas.add(cast[Data](transactions[][datas[^1].inputs[0].hash]))
+      except IndexError as e:
+        panic("Couldn't get a Data chain from a discovered tip: " & e.msg)
+
     try:
-      wallet.setWallet(mnemonic, password)
+      wallet.setWallet(hdWallet, datas)
     except ValueError as e:
       raise e
 
@@ -31,7 +69,7 @@ proc mainPersonal(
   ], async.} =
     var
       #Wallet we're using.
-      child: HDWallet
+      child: HDWallet = wallet.wallet.external.first()
       #Spendable UTXOs.
       utxos: seq[FundedInput]
       destination: Address
@@ -44,11 +82,7 @@ proc mainPersonal(
     except ValueError as e:
       raise e
 
-    #Grab a child.
-    try:
-      child = wallet.wallet.external.next()
-    except ValueError as e:
-      panic("Wallet has no usable keys: " & e.msg)
+    #Grab the UTXOs.
     utxos = transactions[].getUTXOs(child.publicKey)
     try:
       amountOut = parseUInt(amountStr)
@@ -111,18 +145,9 @@ proc mainPersonal(
   ): Future[Hash[256]] {.forceCheck: [
     ValueError
   ], async.} =
-    #Wallet we're using.
-    var child: HDWallet
-    try:
-      #Even though this call "next", this should always use the first Wallet.
-      #Just a note since our BIP 44 usage will change in the future.
-      child = wallet.wallet.external.next()
-    except ValueError as e:
-      panic("Wallet has no usable keys: " & e.msg)
-
     #Create the Data.
     try:
-      wallet.stepData(dataStr, child, functions.consensus.getDataDifficulty())
+      wallet.stepData(dataStr, functions.consensus.getDataDifficulty())
     except ValueError as e:
       raise e
 

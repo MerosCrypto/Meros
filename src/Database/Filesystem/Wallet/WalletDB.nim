@@ -257,20 +257,15 @@ proc close*(
 #Set the Wallet's mnemonic.
 proc setWallet*(
   db: WalletDB,
-  mnemonic: string,
-  password: string
-) {.forceCheck: [
-  ValueError
-].} =
-  if mnemonic.len == 0:
-    db.wallet = newWallet(password)
-  else:
-    try:
-      db.wallet = newWallet(mnemonic, password)
-    except ValueError as e:
-      raise e
-
+  wallet: Wallet,
+  datas: seq[Data]
+) {.forceCheck: [].} =
   db.put(MNEMONIC(), $db.wallet.mnemonic)
+  for data in datas:
+    db.put(DATA_TX(data.hash), data.serialize())
+  if datas.len != 0:
+    db.put(DATA_TIP(), datas[0].hash.serialize())
+  db.wallet = wallet
 
 #Set our miner's nick.
 proc setMinerNick*(
@@ -285,7 +280,6 @@ proc setMinerNick*(
 proc stepData*(
   db: WalletDB,
   dataStr: string,
-  wallet: HDWallet,
   difficulty: uint16
 ) {.forceCheck: [
   ValueError
@@ -293,6 +287,7 @@ proc stepData*(
   var
     tip: Hash[256]
     data: Data
+    wallet: HDWallet = db.wallet.external.first()
   try:
     tip = db.get(DATA_TIP()).toHash[:256]()
   except DBReadError:

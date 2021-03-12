@@ -4,7 +4,7 @@ import json
 
 import chronos
 
-import ../../../lib/[Errors, Util]
+import ../../../lib/[Errors, Hash, Util]
 import ../../../Wallet/[MinerWallet, Wallet]
 
 import ../../../objects/GlobalFunctionBoxObj
@@ -81,7 +81,7 @@ proc module*(
         #Get the child.
         if index.isNone():
           try:
-            result = wallet.next().address
+            result = wallet.next(0).address
           except ValueError:
             raise newJSONRPCError(ValueError, "Tree has no valid children remaining")
         else:
@@ -133,14 +133,19 @@ proc module*(
         raise newJSONRPCError(ValueError, "personal_send isn't implemented")
 
       proc data(
-        account: uint32,
-        hex: bool,
         data: string,
+        account: uint32 = 0,
+        hex: bool = false,
         password: string = ""
-      ) {.requireAuth, forceCheck: [
+      ): Future[string] {.requireAuth, forceCheck: [
         JSONRPCError
-      ].} =
-        raise newJSONRPCError(ValueError, "personal_data isn't implemented")
+      ], async.} =
+        try:
+          result = $(await functions.personal.data(data))
+        except ValueError as e:
+          raise newJSONRPCError(ValueError, e.msg)
+        except Exception as e:
+          panic("personal.data threw an Exception despite catching all Exceptions: " & e.msg)
 
       proc getUTXOs(
         account: uint32

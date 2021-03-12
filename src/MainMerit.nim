@@ -330,7 +330,7 @@ proc mainMerit(
         try:
           claim = newClaim(
             newFundedInput(newBlock.header.hash, receivedMint),
-            wallet.wallet.external.next().publicKey
+            wallet.wallet.external.first().publicKey
           )
         except ValueError as e:
           panic("Created a Claim with a Mint yet newClaim raised a ValueError: " & e.msg)
