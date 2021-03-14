@@ -8,8 +8,8 @@ proc mainPersonal(
   functions.personal.getMinerWallet = proc (): MinerWallet {.forceCheck: [].} =
     db.miner
 
-  functions.personal.getWallet = proc (): Wallet {.forceCheck: [].} =
-    db.wallet
+  functions.personal.getMnemonic = proc (): string {.forceCheck: [].} =
+    db.getMnemonic()
 
   functions.personal.setMnemonic = proc (
     mnemonic: string,
@@ -17,7 +17,7 @@ proc mainPersonal(
   ) {.forceCheck: [
     ValueError
   ].} =
-    var wallet: Wallet
+    var wallet: InsecureWallet
     if mnemonic.len == 0:
       wallet = newWallet(password)
     else:
@@ -31,7 +31,7 @@ proc mainPersonal(
       #Start with the initial data, discovering spenders until the tip.
       var initial: Data
       try:
-        initial = newData(Hash[256](), wallet.external.first().publicKey.serialize())
+        initial = newData(Hash[256](), wallet.hd.derive(1).first().publicKey.serialize())
       except ValueError as e:
         panic("Couldn't create an initial Data to discover a Data tip: " & e.msg)
       try:
@@ -59,6 +59,9 @@ proc mainPersonal(
       db.setWallet(wallet, datas)
     except ValueError as e:
       raise e
+
+  functions.personal.getAccountKey = proc (): EdPublicKey {.forceCheck: [].} =
+    db.accountZero
 
   functions.personal.send = proc (
     destinationArg: string,
@@ -141,13 +144,14 @@ proc mainPersonal(
     result = send.hash
 
   functions.personal.data = proc (
-    dataStr: string
+    dataStr: string,
+    password: string
   ): Future[Hash[256]] {.forceCheck: [
     ValueError
   ], async.} =
     #Create the Data.
     try:
-      db.stepData(account, password, dataStr, functions.consensus.getDataDifficulty())
+      db.stepData(password, dataStr, functions.consensus.getDataDifficulty())
     except ValueError as e:
       raise e
 

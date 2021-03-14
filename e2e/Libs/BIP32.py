@@ -1,5 +1,8 @@
-from typing import List, Any
-import hashlib, hmac
+#pylint: disable=invalid-name
+
+from typing import List
+import hashlib
+import hmac
 
 import e2e.Libs.ed25519 as ed
 
@@ -19,12 +22,12 @@ def derive(
   k: bytes = ed.H(secret)
   kL: bytes = k[:32]
   kR: bytes = k[32:]
-  if kR[31] & 0b00100000 != 0:
+  if kL[31] & 0b00100000 != 0:
     raise Exception("Invalid secret to derive from.")
   kLArr: bytearray = bytearray(kL)
   kLArr[0] = (kL[0] >> 3) << 3
-  kLArr[31] = (kL[31] << 1) >> 1
-  kLArr[31] = kL[31] | (1 << 6)
+  kLArr[31] = ((kL[31] << 1) & 255) >> 1
+  kLArr[31] = kLArr[31] | (1 << 6)
   kL = bytes(kLArr)
   k = kL + kR
 
@@ -40,8 +43,8 @@ def derive(
       Z = hmac512(c, bytes([2]) + A + iBytes)
       c = hmac512(c, bytes([3]) + A + iBytes)
     else:
-      Z = hmac512(c, bytes([0]) + A + iBytes)
-      c = hmac512(c, bytes([1]) + A + iBytes)
+      Z = hmac512(c, bytes([0]) + k + iBytes)
+      c = hmac512(c, bytes([1]) + k + iBytes)[32:]
 
     zL: bytearray = bytearray(Z[:28])
     for _ in range(4):
@@ -52,7 +55,7 @@ def derive(
     #While we could move to the proper form, it's unclear, and Meros is planning on moving to Ristretto anyways.
     #That will void all these concerns.
     kL = ed.encodeint((8 * ed.decodeint(bytes(zL))) + ed.decodeint(kL))
-    if kL == 0:
+    if (ed.decodeint(kL) % ed.l) == 0:
       raise Exception("Invalid child.")
     #This modulus should be redundant given encodeint only uses the latter 32 bytes.
     kR = ed.encodeint((ed.decodeint(zR) + ed.decodeint(kR)) % (1 << 256))

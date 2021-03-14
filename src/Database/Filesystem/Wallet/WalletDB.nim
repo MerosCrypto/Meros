@@ -17,6 +17,12 @@ import ../DB/Serialize/Transactions/[DBSerializeTransaction, ParseTransaction]
 template MNEMONIC(): string =
   "w"
 
+template MINER_KEY(): string =
+  "m"
+
+template ACCOUNT_ZERO(): string =
+  "az"
+
 template DATA_TIP(): string =
   "d"
 
@@ -25,9 +31,6 @@ template DATA_TX(
   hash: Hash[256]
 ): string =
   "d" & hash.serialize()
-
-template MINER_KEY(): string =
-  "m"
 
 template MINER_NICK(): string =
   "n"
@@ -58,8 +61,9 @@ type
 
     lmdb: LMDB
 
-    wallet*: Wallet
+    mnemonic: Mnemonic
     miner*: MinerWallet
+    accountZero*: EdPublicKey
 
     when defined(merosTests):
       finalizedNonces*: int
@@ -117,8 +121,9 @@ proc del(
     var tx: LMDBTransaction = db.lmdb.newTransaction()
     db.lmdb.delete(tx, "", key)
     tx.commit()
-  except Exception as e:
-    panic("Couldn't delete data from the Database: " & e.msg)
+  #Data doesn't exist.
+  except Exception:
+    discard
 
 proc commit*(
   db: WalletDB,
@@ -177,8 +182,7 @@ proc newWalletDB*(
 
       lmdb: newLMDB(path, size, 1),
 
-      wallet: newWallet(""),
-      miner: newMinerWallet(),
+      mnemonic: newWallet("").mnemonic,
 
       finalizedNonces: 0,
       unfinalizedNonces: 0,
@@ -186,25 +190,25 @@ proc newWalletDB*(
 
       elementNonce: 0
     )
+    result.miner = newMinerWallet(result.mnemonic.unlock("")[0 ..< 32])
+    result.accountZero = newWallet(result.mnemonic.sentence, "").hd[0].publicKey
     result.lmdb.open()
   except Exception as e:
     raise newLoggedException(DBError, "Couldn't open the WalletDB: " & e.msg)
 
-  #Load the Wallet.
+  #Load the Wallets.
   try:
-    result.wallet = newWallet(result.get(MNEMONIC()), "")
+    result.mnemonic = newMnemonic(result.get(MNEMONIC()))
+    result.miner = newMinerWallet(result.get(MINER_KEY()))
+    result.accountZero = newEdPublicKey(result.get(ACCOUNT_ZERO()))
   except ValueError as e:
     panic("Failed to load the Wallet from the Database: " & e.msg)
-  except DBReadError:
-    result.put(MNEMONIC(), $result.wallet.mnemonic)
-
-  #Load the MinerWallet.
-  try:
-    result.miner = newMinerWallet(result.get(MINER_KEY()))
   except BLSError as e:
     panic("Failed to load the MinerWallet from the Database: " & e.msg)
   except DBReadError:
+    result.put(MNEMONIC(), $result.mnemonic)
     result.put(MINER_KEY(), result.miner.privateKey.serialize())
+    result.put(ACCOUNT_ZERO(), result.accountZero.serialize())
 
   try:
     result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
@@ -254,20 +258,50 @@ proc close*(
   except Exception as e:
     raise newLoggedException(DBError, "Couldn't close the WalletDB: " & e.msg)
 
-#Set the Wallet's mnemonic.
+#Meant to encourage the non-usage of direct access by defining a getter returning its string form.
+proc getMnemonic*(
+  db: WalletDB
+): string {.inline, forceCheck: [].} =
+  $db.mnemonic
+
+#Set the Wallet.
 proc setWallet*(
   db: WalletDB,
-  wallet: Wallet,
+  wallet: InsecureWallet,
   datas: seq[Data]
 ) {.forceCheck: [].} =
-  db.put(MNEMONIC(), $db.wallet.mnemonic)
+  #Update the DB instance.
+  try:
+    db.miner = newMinerWallet(wallet.mnemonic.unlock(wallet.password)[0 ..< 32])
+  except BLSError as e:
+    panic("Couldn't create a MinerWallet out of a 32-byte secret: " & e.msg)
+  db.mnemonic = wallet.mnemonic
+  try:
+    db.accountZero = wallet.hd[0].publicKey
+  except ValueError as e:
+    panic("Unusable Wallet created and passed to setWallet: " & e.msg)
+
+  var items: seq[tuple[key: string, value: string]] = @[]
+
+  #Save the miner.
+  items.add((key: MINER_KEY(), value: db.miner.privateKey.serialize()))
+
+  #Save the Mnemonic and account key.
+  items.add((key: MNEMONIC(), value: $db.mnemonic))
+  items.add((key: ACCOUNT_ZERO(), value: db.accountZero.serialize()))
+
+  #Set the Datas.
   for data in datas:
-    db.put(DATA_TX(data.hash), data.serialize())
+    items.add((key: DATA_TX(data.hash), value: data.serialize()))
+
+  #Update the Data tip.
   if datas.len != 0:
-    db.put(DATA_TIP(), datas[0].hash.serialize())
+    items.add((key: DATA_TIP(), value: datas[0].hash.serialize()))
   else:
-    db.del(DATA_TIP())
-  db.wallet = wallet
+    items.add((key: DATA_TIP(), value: ""))
+
+  #Actually commit all of this.
+  db.put(items)
 
 #Set our miner's nick.
 proc setMinerNick*(
@@ -279,8 +313,22 @@ proc setMinerNick*(
   db.put(MINER_KEY(), db.miner.privateKey.serialize())
   db.put(MINER_NICK(), nick.toBinary())
 
+proc unlock*(
+  db: WalletDB,
+  password: string
+): HDWallet {.forceCheck: [
+  ValueError
+].} =
+  try:
+    result = newHDWallet(SHA2_256(db.mnemonic.unlock(password)).serialize())[0]
+    if result.publicKey != db.accountZero:
+      raise newException(ValueError, "")
+  except ValueError:
+    raise newLoggedException(ValueError, "Invalid password.")
+
 proc stepData*(
   db: WalletDB,
+  password: string,
   dataStr: string,
   difficulty: uint16
 ) {.forceCheck: [
@@ -289,9 +337,19 @@ proc stepData*(
   var
     tip: Hash[256]
     data: Data
-    wallet: HDWallet = db.wallet.external.first()
+    wallet: HDWallet
+
   try:
-    tip = db.get(DATA_TIP()).toHash[:256]()
+    wallet = db.unlock(password)
+  except ValueError as e:
+    raise e
+
+  try:
+    let storedTip: string = db.get(DATA_TIP())
+    #Length is 0 when a new Wallet without Datas is set.
+    if storedTip.len == 0:
+      raise newException(DBReadError, "")
+    tip = storedTip.toHash[:256]()
   except DBReadError:
     #If there isn't a data tip, create the initial Data.
     try:
@@ -321,7 +379,10 @@ iterator loadDatasFromTip*(
     tip: Hash[256]
     done: bool = false
   try:
-    tip = db.get(DATA_TIP()).toHash[:256]()
+    let storedTip: string = db.get(DATA_TIP())
+    if storedTip.len == 0:
+      raise newException(DBReadError, "")
+    tip = storedTip.toHash[:256]()
   except DBReadError:
     done = true
   except ValueError as e:

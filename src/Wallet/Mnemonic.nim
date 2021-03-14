@@ -160,7 +160,7 @@ proc newMnemonic*(
 #Generate a secret using the Mnemonic and the password.
 proc unlock*(
   mnemonic: Mnemonic,
-  password: string = ""
+  password: string
 ): string {.inline, forceCheck: [].} =
   PDKDF2_HMAC_SHA2_512(mnemonic.sentence.toNFKD(), ("mnemonic" & password.toNFKD())).serialize()
 

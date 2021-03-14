@@ -1,8 +1,8 @@
-#Tests setMnemonic, getMnemonic, getMeritHolderKey, getMeritHolderNick, getParentPublicKey, and getAddress.
+#Tests setMnemonic, getMnemonic, getMeritHolderKey, getMeritHolderNick, getAccountKey, and getAddress.
 #AKA every route in relation to seed management.
 
 import os
-from hashlib import blake2b
+from hashlib import sha256
 from bip_utils import Bip39WordsNum, Bip39MnemonicGenerator, Bip39MnemonicValidator, Bip39SeedGenerator
 
 from e2e.Libs.BLS import PrivateKey
@@ -12,7 +12,26 @@ import e2e.Libs.BIP32 as BIP32
 from e2e.Meros.RPC import RPC
 from e2e.Tests.Errors import TestError
 
-def verifyMnemonicAndParentPublicKey(
+def getMnemonic(
+  password: str = ""
+) -> str:
+  while True:
+    res: str = Bip39MnemonicGenerator.FromWordsNumber(Bip39WordsNum.WORDS_NUM_24)
+    seed: bytes = sha256(Bip39SeedGenerator(res).Generate(password)).digest()
+    try:
+      BIP32.derive(
+        seed,
+        [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 0]
+      )
+      BIP32.derive(
+        seed,
+        [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 1]
+      )
+    except Exception:
+      continue
+    return res
+
+def verifyMnemonicAndAccountKey(
   rpc: RPC,
   mnemonic: str = "",
   password: str = ""
@@ -32,57 +51,75 @@ def verifyMnemonicAndParentPublicKey(
   #Verify derivation from seed to wallet.
   seed: bytes = Bip39SeedGenerator(mnemonic).Generate(password)
   #Check the Merit Holder key.
-  if rpc.call("personal", "getMeritHolderKey") != PrivateKey(seed):
+  if rpc.call("personal", "getMeritHolderKey") != PrivateKey(seed[:32]).serialize().hex().upper():
     raise TestError("Meros generated a different Merit Holder Key.")
   #Verify getting the Merit Holder nick errors.
   try:
     rpc.call("personal", "getMeritHolderNick")
   except TestError as e:
-    print(e)
+    if e.message != "-2 Wallet doesn't have a Merit Holder nickname assigned.":
+      raise TestError("getMeritHolderNick didn't error.")
 
   #Hash the seed again for the wallet seed (first is the Merit Holder seed).
-  seed = blake2b(seed, digest_size=32).digest()
+  seed = sha256(seed).digest()
 
   #Derive the first account.
-  extendedKey: bytes = BIP32.derive(seed, [0])
+  extendedKey: bytes
+  try:
+    extendedKey = BIP32.derive(
+      seed,
+      [
+        44 + (1 << 31),
+        5132 + (1 << 31),
+        0 + (1 << 31)
+      ]
+    )
+  except Exception:
+    raise TestError("Meros gave us an invalid Mnemonic to derive (or the test generated an unusable one).")
+
+  #For some reason, pylint decided to add in detection of stdlib members.
+  #It doesn't do it properly, and thinks encodepoint returns a string.
+  #It returns bytes, which does have hex as a method.
+  #pylint: disable=no-member
   if ed.encodepoint(
     ed.scalarmult(ed.B, ed.decodeint(extendedKey[:32]) % ed.l)
-  ).hex().upper() != rpc.call("personal", "getParentPublicKey"):
+  ).hex().upper() != rpc.call("personal", "getAccountKey"):
     #The Nim tests ensure accurate BIP 32 derivation thanks to vectors.
     #That leaves BIP39/44 in the air.
+    #This isn't technically true due to an ambiguity/the implementation we used the vectors of, yet it's true enough for this comment.
     raise TestError("Meros generated a different parent public key.")
 
 def SeedTest(
   rpc: RPC
 ) -> None:
   #Start by testing BIP 32, 39, and 44 functionality in general.
-  for _ in range(100):
+  for _ in range(10):
     rpc.call("personal", "setMnemonic")
-    verifyMnemonicAndParentPublicKey(rpc)
+    verifyMnemonicAndAccountKey(rpc)
 
   #Set specific Mnemonics and ensure they're handled properly.
-  for _ in range(100):
-    mnemonic: str = Bip39MnemonicGenerator.FromWordsNumber(Bip39WordsNum.WORDS_NUM_24)
+  for _ in range(10):
+    mnemonic: str = getMnemonic()
     rpc.call("personal", "setMnemonic", {"mnemonic": mnemonic})
-    verifyMnemonicAndParentPublicKey(rpc, mnemonic)
+    verifyMnemonicAndAccountKey(rpc, mnemonic)
 
   #Create Mnemonics with passwords and ensure they're handled properly.
-  for _ in range(100):
+  for _ in range(10):
     password: str = os.urandom(32).hex()
     rpc.call("personal", "setMnemonic", {"password": password})
-    verifyMnemonicAndParentPublicKey(rpc, password=password)
+    verifyMnemonicAndAccountKey(rpc, password=password)
 
   #Set specific Mnemonics with passwords and ensure they're handled properly.
-  for i in range(100):
-    mnemonic: str = Bip39MnemonicGenerator.FromWordsNumber(Bip39WordsNum.WORDS_NUM_24)
+  for i in range(10):
     password: str = os.urandom(32).hex()
     #Non-hex string.
     if i == 0:
       password = "xyz"
+    mnemonic: str = getMnemonic(password)
     rpc.call("personal", "setMnemonic", {"mnemonic": mnemonic, "password": password})
-    verifyMnemonicAndParentPublicKey(rpc, mnemonic, password)
+    verifyMnemonicAndAccountKey(rpc, mnemonic, password)
 
-  #setMnemonic, getMnemonic, getMeritHolderKey, and getParentPublicKey have now been tested.
+  #setMnemonic, getMnemonic, getMeritHolderKey, and getAccountKey have now been tested.
   #This leaves getAddress, checks that they all require authorization, and error cases.
 
   #Test getAddress.

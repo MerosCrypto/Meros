@@ -319,4 +319,4 @@ class PrivateKey:
   ) -> bytes:
     result: Array[c_char] = create_string_buffer(48)
     MilagroCurve.BIG_384_58_toBytes(result, self.value)
-    return bytes(result)
+    return bytes(result)[16:]

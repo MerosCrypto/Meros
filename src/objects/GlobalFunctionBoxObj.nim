@@ -5,7 +5,6 @@ import chronos
 
 import ../lib/[Errors, Hash]
 import ../Wallet/[MinerWallet, Wallet]
-import ../Wallet/Wallet
 
 import ../Database/Merit/objects/[BlockHeaderObj, BlockObj]
 
@@ -278,7 +277,9 @@ type
   PersonalFunctionBox* = ref object
     getMinerWallet*: proc(): MinerWallet {.gcsafe, raises: [].}
 
-    getWallet*: proc (): Wallet {.gcsafe, raises: [].}
+    getMnemonic*: proc (): string {.gcsafe, raises: [].}
+
+    getAccountKey*: proc (): EdPublicKey {.gcsafe, raises: [].}
 
     setMnemonic*: proc (
       mnemonic: string,
@@ -293,7 +294,8 @@ type
     ): Future[Hash[256]] {.gcsafe.}
 
     data*: proc (
-      data: string
+      data: string,
+      password: string
     ): Future[Hash[256]] {.gcsafe.}
 
   NetworkFunctionBox* = ref object

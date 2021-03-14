@@ -10,12 +10,12 @@ Arguments:
 
 The result is a bool of true.
 
-### `setParentPublicKey`
+### `setAccountKey`
 
-`setParentPublicKey` deletes the existing Wallet on the node, in an irreversible manner, losing all access to the current Merit Holder and all funds. It sets the Wallet to track the specified Parent Public Key, presumably one returned from `getParentPublicKey`. This will disable any operations requiring access to the private key, as well as all Merit Holder related operations. That said, this will preserve the functionality of address generation, `getTransactionTemplate`, and more, enabling Watch Wallet functionality.
+`setAccountKey` deletes the existing Wallet on the node, in an irreversible manner, losing all access to the current Merit Holder and all funds. It sets the Wallet to track the specified account key, presumably one returned from `getAccountKey`. This will disable any operations requiring access to the private key, as well as all Merit Holder related operations. That said, this will preserve the functionality of address generation, `getTransactionTemplate`, and more, enabling Watch Wallet functionality.
 
 Arguments:
-- `key` (string): Parent Public Key.
+- `key` (string): Account public key to use in accordance with BIP 44.
 
 The result is a bool of true.
 
@@ -31,9 +31,9 @@ The result is a bool of true.
 
 `getMeritHolderKey` replies with the nickname of the node's Merit Holder. The result is an int of the nickname.
 
-### `getParentPublicKey`
+### `getAccountKey`
 
-`getParentPublicKey` replies with the Parent Public Key of the node's HD Wallet, once account derivation is applied as according to BIP 44. The result is a string of the Parent Public Key.
+`getAccountKey` replies with the public key for the account being used from the node's HD Wallet. The result is a string of the public key.
 
 ### `getAddress`
 

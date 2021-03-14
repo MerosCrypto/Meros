@@ -9,7 +9,7 @@ import ../Network/Serialize/SerializeCommon
 
 const
   #BIP 44 Coin Type.
-  COIN_TYPE {.intdefine.}: uint32 = 0
+  COIN_TYPE {.intdefine.}: uint32 = 5132
   #Ed25519's l value.
   l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
   #Hardened derivation threshold.
@@ -35,20 +35,11 @@ func verify*(
   wallet.publicKey.verify(msg, sig)
 
 proc newHDWallet*(
-  secretArg: string
+  secret: string
 ): HDWallet {.forceCheck: [
   ValueError
 ].} =
-  #Parse the secret.
-  var secret: string = secretArg
-  if secret.len == 64:
-    try:
-      secret = secretArg.parseHexStr()
-    except ValueError:
-      raise newLoggedException(ValueError, "Hex-length secret with invalid Hex data passed to newHDWallet.")
-  elif secret.len == 32:
-    discard
-  else:
+  if secret.len != 32:
     raise newLoggedException(ValueError, "Invalid length secret passed to newHDWallet.")
 
   #Keys.

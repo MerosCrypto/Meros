@@ -25,7 +25,7 @@ proc module*(
         try:
           functions.personal.setMnemonic(mnemonic.unsafeGet(), password)
         except ValueError:
-          raise newJSONRPCError(ValueError, "Invalid mnemonic")
+          raise newJSONRPCError(ValueError, "Invalid mnemonic or password")
 
       proc setParentPublicKey(
         account: uint32 = 0,
@@ -36,7 +36,7 @@ proc module*(
         raise newJSONRPCError(ValueError, "personal_setParentPublicKey isn't implemented")
 
       proc getMnemonic(): string {.requireAuth, forceCheck: [].} =
-        functions.personal.getWallet().mnemonic.sentence
+        functions.personal.getMnemonic()
 
       proc getMeritHolderKey(): string {.requireAuth, forceCheck: [].} =
         $functions.personal.getMinerWallet().privateKey
@@ -49,13 +49,8 @@ proc module*(
         except IndexError:
           raise newJSONRPCError(IndexError, "Wallet doesn't have a Merit Holder nickname assigned")
 
-      proc getParentPublicKey(
-        account: uint32 = 0,
-        password: string = ""
-      ): string {.requireAuth, forceCheck: [
-        JSONRPCError
-      ].} =
-        raise newJSONRPCError(ValueError, "personal_getParentPublicKey isn't implemented")
+      proc getAccountKey(): string {.requireAuth, forceCheck: [].} =
+        $functions.personal.getAccountKey()
 
       proc getAddress(
         account: Option[uint32] = some(uint32(0)),
@@ -134,14 +129,13 @@ proc module*(
 
       proc data(
         data: string,
-        account: uint32 = 0,
         hex: bool = false,
         password: string = ""
       ): Future[string] {.requireAuth, forceCheck: [
         JSONRPCError
       ], async.} =
         try:
-          result = $(await functions.personal.data(data))
+          result = $(await functions.personal.data(data, password))
         except ValueError as e:
           raise newJSONRPCError(ValueError, e.msg)
         except Exception as e:

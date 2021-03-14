@@ -19,7 +19,7 @@ type Transactions* = object
   #Copy of the Genesis.
   genesis*: Hash[256]
   #Wallet used to sign/verify Datas created by Blocks.
-  dataWallet*: Wallet
+  dataWallet*: HDWallet
   #Cache of transactions which have yet to leave Epochs.
   transactions*: Table[Hash[256], Transaction]
   #Family tracker:
@@ -38,7 +38,7 @@ proc getSender*(
     result = newEdPublicKey(data.data)
   else:
     if data.inputs[0].hash == transactions.genesis:
-      return transactions.dataWallet.hd.publicKey
+      return transactions.dataWallet.publicKey
     try:
       result = transactions.db.loadDataSender(data.inputs[0].hash)
     except DBReadError:
@@ -116,12 +116,13 @@ proc newTransactionsObj*(
   )
 
   try:
-    result.dataWallet = newWallet(result.db.loadDataWallet(), "")
+    result.dataWallet = newWallet(result.db.loadDataWallet(), "").hd
   except ValueError as e:
     panic("Couldn't reload this node's Data Wallet: " & e.msg)
   except DBReadError:
-    result.dataWallet = newWallet("")
-    result.db.saveDataWallet($result.dataWallet.mnemonic)
+    let wallet: InsecureWallet = newWallet("")
+    result.dataWallet = wallet.hd
+    result.db.saveDataWallet($wallet.mnemonic)
 
   #Load the Transactions from the DB.
   try:
