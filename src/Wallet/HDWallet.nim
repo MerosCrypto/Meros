@@ -126,7 +126,16 @@ proc derive*(
       zL[31 - i] = Z.data[i]
     zR[31 - i] = Z.data[i + 32]
 
-  #Calculate the Private Key.
+  #[
+  Calculate the Private Key.
+  WARNING: kL should probably be mod l here, as it's used as a scalar.
+  That said, the codebase Meros uses as a reference, due to being an existing implementation, just uses the 32-byte variable.
+  That said, this definitely isn't right; zR is explicitly % 2^256, and zL will overflow 32-bytes with enough of a depth.
+  THAT said, the codebase says kL mod l must != 0, suggesting it's not naturally mod l.
+  TL;DR the paper has an ambiguity; same ambiguity is dangerous; this should probably be mod l; it isn't.
+  Why isn't Meros, a cryptocurrency, which needs to be secure and proper concerned?
+  https://github.com/MerosCrypto/Meros/issues/266
+  ]#
   kL = (readUIntBE[256](zL) * 8) + readUIntBE[256](pPrivateKeyL)
   try:
     if kL mod l == 0:

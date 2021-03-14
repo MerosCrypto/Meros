@@ -47,6 +47,10 @@ def derive(
     for _ in range(4):
       zL.append(0)
     zR: bytes = Z[32:]
+    #This should probably be mod l. That said, the paper isn't clear, and Meros defers to the existing impl.
+    #Said existing impl is probably wrong.
+    #While we could move to the proper form, it's unclear, and Meros is planning on moving to Ristretto anyways.
+    #That will void all these concerns.
     kL = ed.encodeint((8 * ed.decodeint(bytes(zL))) + ed.decodeint(kL))
     if kL == 0:
       raise Exception("Invalid child.")
