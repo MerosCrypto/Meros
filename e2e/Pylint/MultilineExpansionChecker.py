@@ -356,7 +356,7 @@ class MultilineExpansionChecker(
       return
 
     #Check if the line starts with a function def.
-    if (len(line) > 3) and (line[0 : 3] == "def"):
+    if (len(line) > 4) and (line[0 : 4] == "def "):
       self.checkFunction(lines, num)
       return
 
