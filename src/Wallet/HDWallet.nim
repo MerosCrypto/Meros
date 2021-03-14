@@ -1,5 +1,3 @@
-import math
-
 import stint
 
 import ../lib/[Errors, Util, Hash]
@@ -14,6 +12,8 @@ const
   COIN_TYPE {.intdefine.}: uint32 = 0
   #Ed25519's l value.
   l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
+  #Hardened derivation threshold.
+  HARDENED_THRESHOLD: uint32 = 1 shl 31
 
 type HDWallet* = object
   chainCode*: Hash[256]
@@ -95,7 +95,7 @@ proc derive*(
     #Child index, in little endian.
     child: string = childArg.toBinary(INT_LEN)
     #Is this a Hardened derivation?
-    hardened: bool = childArg >= (uint32(2) ^ 31)
+    hardened: bool = childArg >= HARDENED_THRESHOLD
   for i in 0 ..< 32:
     pPrivateKeyL[31 - i] = byte(pPrivateKey[i])
     pPrivateKeyR[31 - i] = byte(pPrivateKey[32 + i])
@@ -167,7 +167,7 @@ proc derive*(
 ].} =
   if path.len == 0:
     return wallet
-  if path.len >= 2^20:
+  if path.len >= (1 shl 20):
     raise newLoggedException(ValueError, "Derivation path depth is too big.")
 
   try:
@@ -186,9 +186,9 @@ proc `[]`*(
 ].} =
   try:
     result = wallet.derive(@[
-      uint32(44) + (uint32(2) ^ 31),
-      COIN_TYPE + (uint32(2) ^ 31),
-      account + (uint32(2) ^ 31)
+      uint32(44) + HARDENED_THRESHOLD,
+      COIN_TYPE + HARDENED_THRESHOLD,
+      account + HARDENED_THRESHOLD
     ])
 
     #Guarantee the external and internal chains are usable.
@@ -207,8 +207,8 @@ proc first*(
       return wallet.derive(i)
     except ValueError:
       inc(i)
-      if i == (uint32(2) ^ 31):
-        panic("Couldn't derive the first account before hitting 2 ^ 31.")
+      if i == HARDENED_THRESHOLD:
+        panic("Couldn't derive the first account before hitting 2 ** 31.")
 
 #Grab the next key on this path.
 proc next*(
@@ -223,5 +223,5 @@ proc next*(
       return wallet.derive(i)
     except ValueError:
       inc(i)
-      if i == (uint32(2) ^ 31):
+      if i == HARDENED_THRESHOLD:
         raise newLoggedException(ValueError, "Wallet is out of addresses.")

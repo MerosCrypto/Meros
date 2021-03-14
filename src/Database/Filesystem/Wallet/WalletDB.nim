@@ -293,6 +293,7 @@ proc stepData*(
   try:
     tip = db.get(DATA_TIP()).toHash[:256]()
   except DBReadError:
+    #If there isn't a data tip, create the initial Data.
     try:
       data = newData(Hash[256](), wallet.publicKey.serialize())
     except ValueError as e:
@@ -302,9 +303,8 @@ proc stepData*(
     db.put(DATA_TX(data.hash), data.serialize())
     db.put(DATA_TIP(), data.hash.serialize())
     tip = data.hash
-  except ValueError as e:
-    panic("WalletDB didn't save a 32-byte hash as the Data tip: " & e.msg)
 
+  #Create this Data.
   try:
     data = newData(tip, dataStr)
   except ValueError as e:

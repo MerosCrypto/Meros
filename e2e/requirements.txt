@@ -1,6 +1,7 @@
 argon2-cffi==19.1.0
 ed25519==1.5
 bech32==1.2.0
+bip-utils==1.7.0
 requests==2.25.1
 pytest==5.3.5
 pytest-xdist==1.32.0

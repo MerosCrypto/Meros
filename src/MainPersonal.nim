@@ -1,15 +1,15 @@
 include MainTransactions
 
 proc mainPersonal(
-  wallet: WalletDB,
+  db: WalletDB,
   functions: GlobalFunctionBox,
   transactions: ref Transactions
 ) {.forceCheck: [].} =
   functions.personal.getMinerWallet = proc (): MinerWallet {.forceCheck: [].} =
-    wallet.miner
+    db.miner
 
   functions.personal.getWallet = proc (): Wallet {.forceCheck: [].} =
-    wallet.wallet
+    db.wallet
 
   functions.personal.setMnemonic = proc (
     mnemonic: string,
@@ -17,12 +17,12 @@ proc mainPersonal(
   ) {.forceCheck: [
     ValueError
   ].} =
-    var hdWallet: Wallet
+    var wallet: Wallet
     if mnemonic.len == 0:
-      hdWallet = newWallet(password)
+      wallet = newWallet(password)
     else:
       try:
-        hdWallet = newWallet(mnemonic, password)
+        wallet = newWallet(mnemonic, password)
       except ValueError as e:
         raise e
 
@@ -31,7 +31,7 @@ proc mainPersonal(
       #Start with the initial data, discovering spenders until the tip.
       var initial: Data
       try:
-        initial = newData(Hash[256](), hdWallet.external.first().publicKey.serialize())
+        initial = newData(Hash[256](), wallet.external.first().publicKey.serialize())
       except ValueError as e:
         panic("Couldn't create an initial Data to discover a Data tip: " & e.msg)
       try:
@@ -56,7 +56,7 @@ proc mainPersonal(
         panic("Couldn't get a Data chain from a discovered tip: " & e.msg)
 
     try:
-      wallet.setWallet(hdWallet, datas)
+      db.setWallet(wallet, datas)
     except ValueError as e:
       raise e
 
@@ -69,7 +69,7 @@ proc mainPersonal(
   ], async.} =
     var
       #Wallet we're using.
-      child: HDWallet = wallet.wallet.external.first()
+      child: HDWallet = db.wallet.external.first()
       #Spendable UTXOs.
       utxos: seq[FundedInput]
       destination: Address
@@ -147,7 +147,7 @@ proc mainPersonal(
   ], async.} =
     #Create the Data.
     try:
-      wallet.stepData(dataStr, functions.consensus.getDataDifficulty())
+      db.stepData(account, password, dataStr, functions.consensus.getDataDifficulty())
     except ValueError as e:
       raise e
 
@@ -159,7 +159,7 @@ proc mainPersonal(
     Because of that, the following iterative approach is used to add all 'new' Datas.
     ]#
     var toAdd: seq[Data] = @[]
-    for data in wallet.loadDatasFromTip():
+    for data in db.loadDatasFromTip():
       toAdd.add(data)
 
       #Reached the initial Data.
