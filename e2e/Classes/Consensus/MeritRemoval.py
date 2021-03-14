@@ -7,7 +7,7 @@ from e2e.Classes.Consensus.Verification import Verification, SignedVerification
 from e2e.Classes.Consensus.SendDifficulty import SendDifficulty, SignedSendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty, SignedDataDifficulty
 
-MeritRemovalElement: Any = Union[
+MeritRemovalElement = Union[
   SignedVerification,
   SignedSendDifficulty,
   SignedDataDifficulty

@@ -18,8 +18,8 @@ else:
   MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_pairing_BLS381.so")
 
 #Define the structures.
-Big384: Any = c_int64 * 7
-DBig384: Any = c_int64 * 14
+Big384 = c_int64 * 7
+DBig384 = c_int64 * 14
 
 #pylint: disable=too-few-public-methods,
 class FP1Obj(
