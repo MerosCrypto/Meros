@@ -3,7 +3,9 @@
 
 import os
 from hashlib import sha256
+
 from bip_utils import Bip39WordsNum, Bip39MnemonicGenerator, Bip39MnemonicValidator, Bip39SeedGenerator
+from bech32 import convertbits, bech32_encode
 
 from e2e.Libs.BLS import PrivateKey
 import e2e.Libs.ed25519 as ed
@@ -126,6 +128,41 @@ def SeedTest(
   #Not only does it need to correctly derive addresses along the external chain, it needs to return new addresses.
   #That said, new is defined by use; use on the network. If it has a TX sent to it, it's used.
   #This is different than checking for UTXOs because that means any address no longer having UTXOs would be considered new.
+
+  #Start by testing specific derivation.
+  for _ in range(10):
+    password: str = "password since it shouldn't be relevant"
+    mnemonic: str = getMnemonic(password)
+    index: int = 100
+    key: bytes
+    while True:
+      try:
+        key = BIP32.derive(
+          sha256(Bip39SeedGenerator(mnemonic).Generate(password)).digest(),
+          [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 1, index]
+        )
+        break
+      except Exception as e:
+        index += 1
+
+    rpc.call("personal", "setMnemonic", {"mnemonic": mnemonic, "password": password})
+    addr: str = bech32_encode(
+      "mr",
+      convertbits(
+        (
+          bytes([0]) +
+          ed.encodepoint(
+            ed.scalarmult(ed.B, ed.decodeint(key[:32]) % ed.l)
+          )
+        ),
+        8,
+        5
+      )
+    )
+    if rpc.call("personal", "getAddress", {"index": index}) != addr:
+      raise TestError("Didn't get the correct address for this index.")
+
+  #Test new address generation.
 
   #getAddress.
   #getAddress returns the same.

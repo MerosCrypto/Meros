@@ -41,7 +41,7 @@ def derive(
     Z: bytes
     if i < HARDENED_THRESHOLD:
       Z = hmac512(c, bytes([2]) + A + iBytes)
-      c = hmac512(c, bytes([3]) + A + iBytes)
+      c = hmac512(c, bytes([3]) + A + iBytes)[32:]
     else:
       Z = hmac512(c, bytes([0]) + k + iBytes)
       c = hmac512(c, bytes([1]) + k + iBytes)[32:]
@@ -60,5 +60,7 @@ def derive(
     #This modulus should be redundant given encodeint only uses the latter 32 bytes.
     kR = ed.encodeint((ed.decodeint(zR) + ed.decodeint(kR)) % (1 << 256))
     k = kL + kR
+
+    A = ed.encodepoint(ed.scalarmult(ed.B, ed.decodeint(kL)))
 
   return k

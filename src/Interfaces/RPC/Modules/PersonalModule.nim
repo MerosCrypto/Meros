@@ -1,5 +1,4 @@
 import options
-import parseutils
 import json
 
 import chronos
@@ -45,6 +44,7 @@ proc module*(
         JSONRPCError
       ].} =
         try:
+          #Not the most optimal path given how the WalletDB tracks the nick.
           result = functions.merit.getNickname(functions.personal.getMinerWallet().publicKey)
         except IndexError:
           raise newJSONRPCError(IndexError, "Wallet doesn't have a Merit Holder nickname assigned")
@@ -53,37 +53,16 @@ proc module*(
         $functions.personal.getAccountKey()
 
       proc getAddress(
-        account: Option[uint32] = some(uint32(0)),
-        change: Option[bool] = some(false),
-        index: Option[uint32] = none(uint32),
-        password: Option[string] = some("")
+        index: Option[uint32] = none(uint32)
       ): string {.requireAuth, forceCheck: [
         JSONRPCError
       ].} =
-        #Get the account in question.
-        var wallet: HDWallet = functions.personal.getWallet()
+        if index.isSome() and (index.unsafeGet() >= (2 shl 31)):
+          raise newJSONRPCError(ValueError, "Hardened index specified")
         try:
-          wallet = wallet[account.unsafeGet()]
+          result = functions.personal.getAddress(index)
         except ValueError:
-          raise newJSONRPCError(ValueError, "Unusable account")
-
-        #Get the tree in question.
-        try:
-          wallet = wallet.derive(if change.unsafeGet(): 1 else: 0)
-        except ValueError as e:
-          panic("Unusable external/internal trees despite checking for their validity: " & e.msg)
-
-        #Get the child.
-        if index.isNone():
-          try:
-            result = wallet.next(0).address
-          except ValueError:
-            raise newJSONRPCError(ValueError, "Tree has no valid children remaining")
-        else:
-          try:
-            result = wallet[index.unsafeGet()].address
-          except ValueError:
-            raise newJSONRPCError(ValueError, "Index isn't viable")
+          raise newJSONRPCError(ValueError, "Invalid index")
 
       proc send(
         account: uint32,
@@ -128,12 +107,19 @@ proc module*(
         raise newJSONRPCError(ValueError, "personal_send isn't implemented")
 
       proc data(
-        data: string,
+        dataArg: string,
         hex: bool = false,
         password: string = ""
       ): Future[string] {.requireAuth, forceCheck: [
         JSONRPCError
       ], async.} =
+        var data: string = dataArg
+        if hex:
+          try:
+            data = parseHexStr(data)
+          except ValueError as e:
+            raise newJSONRPCError(ValueError, e.msg)
+
         try:
           result = $(await functions.personal.data(data, password))
         except ValueError as e:
@@ -149,9 +135,7 @@ proc module*(
         raise newJSONRPCError(ValueError, "personal_getUTXOs isn't implemented")
 
       proc getTransactionTemplate(
-        amount: string,
-        destination: string,
-        account: Option[uint32] = none(uint32),
+        outputs: seq[JSONNode],
         from_JSON: Option[seq[string]] = none(seq[string]),
         change: Option[string] = none(string)
       ): JSONNode {.requireAuth, forceCheck: [

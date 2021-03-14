@@ -1,9 +1,10 @@
+import options
 import tables
 
 import mc_lmdb
 
 import ../../../lib/[Errors, Util, Hash]
-import ../../../Wallet/[MinerWallet, Wallet, HDWallet]
+import ../../../Wallet/[MinerWallet, Wallet, Address]
 
 import ../../Transactions/objects/TransactionObj
 import ../../Transactions/Data as DataFile
@@ -22,6 +23,9 @@ template MINER_KEY(): string =
 
 template ACCOUNT_ZERO(): string =
   "az"
+
+template CHAIN_CODE(): string =
+  "cc"
 
 template DATA_TIP(): string =
   "d"
@@ -64,6 +68,7 @@ type
     mnemonic: Mnemonic
     miner*: MinerWallet
     accountZero*: EdPublicKey
+    chainCode*: Hash[256]
 
     when defined(merosTests):
       finalizedNonces*: int
@@ -191,7 +196,9 @@ proc newWalletDB*(
       elementNonce: 0
     )
     result.miner = newMinerWallet(result.mnemonic.unlock("")[0 ..< 32])
-    result.accountZero = newWallet(result.mnemonic.sentence, "").hd[0].publicKey
+    let wallet: HDWallet = newWallet(result.mnemonic.sentence, "").hd[0]
+    result.accountZero = wallet.publicKey
+    result.chainCode = wallet.chainCode
     result.lmdb.open()
   except Exception as e:
     raise newLoggedException(DBError, "Couldn't open the WalletDB: " & e.msg)
@@ -201,6 +208,7 @@ proc newWalletDB*(
     result.mnemonic = newMnemonic(result.get(MNEMONIC()))
     result.miner = newMinerWallet(result.get(MINER_KEY()))
     result.accountZero = newEdPublicKey(result.get(ACCOUNT_ZERO()))
+    result.chainCode = result.get(CHAIN_CODE()).toHash[:256]()
   except ValueError as e:
     panic("Failed to load the Wallet from the Database: " & e.msg)
   except BLSError as e:
@@ -209,6 +217,7 @@ proc newWalletDB*(
     result.put(MNEMONIC(), $result.mnemonic)
     result.put(MINER_KEY(), result.miner.privateKey.serialize())
     result.put(ACCOUNT_ZERO(), result.accountZero.serialize())
+    result.put(CHAIN_CODE(), result.chainCode.serialize())
 
   try:
     result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
@@ -277,18 +286,23 @@ proc setWallet*(
     panic("Couldn't create a MinerWallet out of a 32-byte secret: " & e.msg)
   db.mnemonic = wallet.mnemonic
   try:
-    db.accountZero = wallet.hd[0].publicKey
+    let account: HDWallet = wallet.hd[0]
+    db.accountZero = account.publicKey
+    db.chainCode = account.chainCode
   except ValueError as e:
     panic("Unusable Wallet created and passed to setWallet: " & e.msg)
 
   var items: seq[tuple[key: string, value: string]] = @[]
 
+  #Save the Mnemonic.
+  items.add((key: MNEMONIC(), value: $db.mnemonic))
+
   #Save the miner.
   items.add((key: MINER_KEY(), value: db.miner.privateKey.serialize()))
 
-  #Save the Mnemonic and account key.
-  items.add((key: MNEMONIC(), value: $db.mnemonic))
+  #Save the account key and chain code.
   items.add((key: ACCOUNT_ZERO(), value: db.accountZero.serialize()))
+  items.add((key: CHAIN_CODE(), value: db.chainCode.serialize()))
 
   #Set the Datas.
   for data in datas:
@@ -312,6 +326,29 @@ proc setMinerNick*(
   db.miner.initiated = true
   db.put(MINER_KEY(), db.miner.privateKey.serialize())
   db.put(MINER_NICK(), nick.toBinary())
+
+proc getAddress*(
+  db: WalletDB,
+  index: Option[uint32]
+): string {.forceCheck: [
+  ValueError
+].} =
+  var child: tuple[key: EdPublicKey, chainCode: Hash[256]]
+  #Get the external chain.
+  try:
+    child = db.accountZero.derivePublic(db.chainCode, 1)
+  except ValueError as e:
+    panic("WalletDB has an unusable Wallet: " & e.msg)
+
+  #Get the child.
+  if index.isSome():
+    try:
+      child = child.key.derivePublic(child.chainCode, index.unsafeGet())
+    except ValueError as e:
+      raise e
+    result = newAddress(AddressType.PublicKey, child.key.serialize())
+  else:
+    panic("Getting an address with an unspecified index.")
 
 proc unlock*(
   db: WalletDB,

@@ -1,5 +1,6 @@
 import locks
 import sets
+import options
 
 import chronos
 
@@ -283,8 +284,14 @@ type
 
     setMnemonic*: proc (
       mnemonic: string,
-      paassword: string
+      password: string
     ) {.gcsafe, raises: [
+      ValueError
+    ].}
+
+    getAddress*: proc (
+      index: Option[uint32]
+    ): string {.gcsafe, raises: [
       ValueError
     ].}
 
