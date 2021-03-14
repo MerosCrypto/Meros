@@ -1,11 +1,10 @@
 import os
-import math
 import strutils
 import json
 
 import ../../src/lib/[Util, Hash]
 
-import ../../src/Wallet/HDWallet
+import ../../src/Wallet/Wallet
 
 import ../Fuzzed
 
@@ -30,7 +29,7 @@ suite "HDWallet":
           child = childArg
           i = 0
           if child[^1] == '\'':
-            i = uint32(2^31)
+            i = uint32(1 shl 31)
             child = child.substr(0, child.len - 2)
           i += uint32(parseUInt(child))
           path.add(i)
@@ -38,14 +37,21 @@ suite "HDWallet":
       #Make sure invalid secrets/paths are invalid.
       if vector["node"].kind == JNull:
         expect ValueError:
-          wallet = newHDWallet(vector["secret"].getStr()).derive(path)
+          wallet = newHDWallet(parseHexStr(vector["secret"].getStr())).derive(path)
         continue
 
       #If this wallet is valid, load and derive it.
-      wallet = newHDWallet(vector["secret"].getStr()).derive(path)
+      wallet = newHDWallet(parseHexStr(vector["secret"].getStr())).derive(path)
 
       #Compare the Wallet with the vector.
       check:
         $wallet.privateKey == (vector["node"]["kLP"].getStr() & vector["node"]["kRP"].getStr()).toUpper()
         $wallet.publicKey == vector["node"]["AP"].getStr().toUpper()
         $wallet.chainCode == vector["node"]["cP"].getStr().toUpper()
+
+  highFuzzTest "Public key derivation":
+    wallet = newWallet("").hd[0]
+    check (
+      key: wallet.derive(0).publicKey,
+      chainCode: wallet.derive(0).chainCode
+    ) == wallet.publicKey.derivePublic(wallet.chainCode, 0)

@@ -1,5 +1,8 @@
 import stint
 
+#Directly import mc_ed25519 for more control over Elliptic curve operations.
+import mc_ed25519
+
 import ../lib/[Errors, Util, Hash]
 
 import Ed25519, Address
@@ -157,6 +160,69 @@ proc derive*(
     #Set the chain code.
     chainCode: chainCode
   )
+
+proc derivePublic*(
+  key: EdPublicKey,
+  chainCode: Hash[256],
+  child: uint32
+): tuple[key: EdPublicKey, chainCode: Hash[256]] {.forceCheck: [
+  ValueError
+].} =
+  var
+    Z: Hash[512]
+    chainCodeExtended: Hash[512]
+  if child >= HARDENED_THRESHOLD:
+    panic("Asked to derive a public key with a hardened threshold.")
+  else:
+    Z = HMAC_SHA2_512(chainCode.serialize(), '\2' & key.serialize() & child.toBinary(INT_LEN))
+    chainCodeExtended = HMAC_SHA2_512(chainCode.serialize(), '\3' & key.serialize() & child.toBinary(INT_LEN))
+    copyMem(addr result.chainCode.data[0], addr chainCodeExtended.data[32], 32)
+
+  var zL: array[32, byte]
+  for i in 0 ..< 28:
+    zL[31 - i] = Z.data[i]
+
+  var
+    temp: EdPrivateKey
+    scalar: array[32, byte] = (readUIntBE[256](zL) * 8).toByteArrayBE()
+  for i in 0 ..< 32:
+    temp.data[31 - i] = cuchar(scalar[i])
+  result.key = temp.toPublicKey()
+
+  let
+    existingKey: ptr Point3 = cast[ptr Point3](alloc0(sizeof(Point3)))
+    offset: ptr Point3 = cast[ptr Point3](alloc0(sizeof(Point3)))
+    cached: ptr PointCached = cast[ptr PointCached](alloc0(sizeof(PointCached)))
+    resultKey: ptr PointP1P1 = cast[ptr PointP1P1](alloc0(sizeof(PointP1P1)))
+
+  keyToNegativePoint(existingKey, unsafeAddr key.data[0])
+  serialize(unsafeAddr key.data[0], existingKey)
+  keyToNegativePoint(existingKey, unsafeAddr key.data[0])
+  #Serialize it again as to not disturb the key arguments's value.
+  serialize(unsafeAddr key.data[0], existingKey)
+
+  keyToNegativePoint(offset, addr result.key.data[0])
+  serialize(addr result.key.data[0], offset)
+  keyToNegativePoint(offset, addr result.key.data[0])
+  p3ToCached(cached, offset)
+
+  add(resultKey, existingKey, cached)
+  p1p1ToP3(offset, resultKey)
+  serialize(addr result.key.data[0], offset)
+
+  dealloc(existingKey)
+  dealloc(offset)
+  dealloc(cached)
+  dealloc(resultKey)
+
+  if result.key.data[0] == cuchar(1):
+    var identity: bool = true
+    for i in 1 ..< result.key.data.len:
+      if result.key.data[i] != cuchar(0):
+        identity = false
+        break
+    if identity:
+      raise newLoggedException(ValueError, "Deriving this child key produced an unusable PublicKey.")
 
 #Derive a full path.
 proc derive*(
