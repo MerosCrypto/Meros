@@ -10,7 +10,9 @@ class Epochs:
   def __init__(
     self
   ) -> None:
-    self.epochs: Deque[Dict[bytes, List[int]]] = deque([{}] * 5)
+    #Inling causes a type complaint according to pyright; hence the explicit definition.
+    blank: Dict[bytes, List[int]] = {}
+    self.epochs: Deque[Dict[bytes, List[int]]] = deque([blank] * 5)
     self.mint: int = 0
 
   @staticmethod
