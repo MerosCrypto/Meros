@@ -18,11 +18,19 @@ const
   #Hardened derivation threshold.
   HARDENED_THRESHOLD: uint32 = 1 shl 31
 
-type HDWallet* = object
-  chainCode*: Hash[256]
-  privateKey*: EdPrivateKey
-  publicKey*: EdPublicKey
-  address*: string
+type
+  HDWallet* = object
+    chainCode*: Hash[256]
+    privateKey*: EdPrivateKey
+    publicKey*: EdPublicKey
+    address*: string
+
+  HDPublic* = object
+    #Key and matching chain code.
+    key*: EdPublicKey
+    chainCode*: Hash[256]
+    #Index this key was of its parent.
+    index*: uint32
 
 func sign*(
   wallet: HDWallet,
@@ -162,20 +170,21 @@ proc derive*(
   )
 
 proc derivePublic*(
-  key: EdPublicKey,
-  chainCode: Hash[256],
+  parent: HDPublic,
   child: uint32
-): tuple[key: EdPublicKey, chainCode: Hash[256]] {.forceCheck: [
+): HDPublic {.forceCheck: [
   ValueError
 ].} =
+  result.index = child
+
   var
     Z: Hash[512]
     chainCodeExtended: Hash[512]
   if child >= HARDENED_THRESHOLD:
     panic("Asked to derive a public key with a hardened threshold.")
   else:
-    Z = HMAC_SHA2_512(chainCode.serialize(), '\2' & key.serialize() & child.toBinary(INT_LEN))
-    chainCodeExtended = HMAC_SHA2_512(chainCode.serialize(), '\3' & key.serialize() & child.toBinary(INT_LEN))
+    Z = HMAC_SHA2_512(parent.chainCode.serialize(), '\2' & parent.key.serialize() & child.toBinary(INT_LEN))
+    chainCodeExtended = HMAC_SHA2_512(parent.chainCode.serialize(), '\3' & parent.key.serialize() & child.toBinary(INT_LEN))
     copyMem(addr result.chainCode.data[0], addr chainCodeExtended.data[32], 32)
 
   var zL: array[32, byte]
@@ -194,12 +203,11 @@ proc derivePublic*(
     offset: ptr Point3 = cast[ptr Point3](alloc0(sizeof(Point3)))
     cached: ptr PointCached = cast[ptr PointCached](alloc0(sizeof(PointCached)))
     resultKey: ptr PointP1P1 = cast[ptr PointP1P1](alloc0(sizeof(PointP1P1)))
+  var tempPub: EdPublicKey = parent.key
 
-  keyToNegativePoint(existingKey, unsafeAddr key.data[0])
-  serialize(unsafeAddr key.data[0], existingKey)
-  keyToNegativePoint(existingKey, unsafeAddr key.data[0])
-  #Serialize it again as to not disturb the key arguments's value.
-  serialize(unsafeAddr key.data[0], existingKey)
+  keyToNegativePoint(existingKey, addr tempPub.data[0])
+  serialize(addr tempPub.data[0], existingKey)
+  keyToNegativePoint(existingKey, addr tempPub.data[0])
 
   keyToNegativePoint(offset, addr result.key.data[0])
   serialize(addr result.key.data[0], offset)
@@ -278,16 +286,19 @@ proc first*(
 
 #Grab the next key on this path.
 proc next*(
-  wallet: HDWallet,
+  parent: HDPublic,
   start: uint32
-): HDWallet {.forceCheck: [
+): HDPublic {.forceCheck: [
   ValueError
 ].} =
   var i: uint32 = start
   while true:
     try:
-      return wallet.derive(i)
+      result = parent.derivePublic(i)
+      break
+    #Keep going until we hit a valid address.
     except ValueError:
-      inc(i)
-      if i == HARDENED_THRESHOLD:
-        raise newLoggedException(ValueError, "Wallet is out of addresses.")
+      i += 1
+      if i >= (1 shl 31):
+        raise newLoggedException(ValueError, "Couldn't derive the next key as this account is out of non-hardened keys.")
+      continue

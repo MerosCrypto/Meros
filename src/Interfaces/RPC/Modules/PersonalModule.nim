@@ -57,7 +57,7 @@ proc module*(
       ): string {.requireAuth, forceCheck: [
         JSONRPCError
       ].} =
-        if index.isSome() and (index.unsafeGet() >= (2 shl 31)):
+        if index.isSome() and (index.unsafeGet() >= (1 shl 31)):
           raise newJSONRPCError(ValueError, "Hardened index specified")
         try:
           result = functions.personal.getAddress(index)

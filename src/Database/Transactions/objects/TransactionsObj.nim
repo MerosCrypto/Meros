@@ -260,3 +260,9 @@ proc loadSpenders*(
   input: Input
 ): seq[Hash[256]] {.inline, forceCheck: [].} =
   transactions.db.loadSpenders(input)
+
+proc loadIfKeyWasUsed*(
+  transactions: Transactions,
+  key: EdPublicKey
+): bool {.inline, forceCheck: [].} =
+  transactions.db.loadIfKeyWasUsed(key)

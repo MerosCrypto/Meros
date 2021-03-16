@@ -68,4 +68,3 @@ class RPC:
       pass
 
     self.meros = Meros(self.meros.db, self.meros.tcp, self.meros.rpc)
-    sleep(5)

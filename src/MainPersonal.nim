@@ -65,11 +65,17 @@ proc mainPersonal(
 
   functions.personal.getAddress = proc (
     index: Option[uint32]
-  ): string {.forceCheck: [
+  ): string {.gcsafe, forceCheck: [
     ValueError
   ].} =
     try:
-      result = db.getAddress(index)
+      result = db.getAddress(
+        index,
+        proc (
+          key: EdPublicKey
+        ): bool {.gcsafe, forceCheck: [].} =
+          transactions[].loadIfKeyWasUsed(key)
+      )
     except ValueError as e:
       raise e
 

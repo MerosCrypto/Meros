@@ -27,6 +27,9 @@ template ACCOUNT_ZERO(): string =
 template CHAIN_CODE(): string =
   "cc"
 
+template ADDRESS_COUNT(): string =
+  "ac"
+
 template DATA_TIP(): string =
   "d"
 
@@ -69,6 +72,7 @@ type
     miner*: MinerWallet
     accountZero*: EdPublicKey
     chainCode*: Hash[256]
+    addresses*: uint32
 
     when defined(merosTests):
       finalizedNonces*: int
@@ -188,6 +192,7 @@ proc newWalletDB*(
       lmdb: newLMDB(path, size, 1),
 
       mnemonic: newWallet("").mnemonic,
+      addresses: 0,
 
       finalizedNonces: 0,
       unfinalizedNonces: 0,
@@ -209,6 +214,7 @@ proc newWalletDB*(
     result.miner = newMinerWallet(result.get(MINER_KEY()))
     result.accountZero = newEdPublicKey(result.get(ACCOUNT_ZERO()))
     result.chainCode = result.get(CHAIN_CODE()).toHash[:256]()
+    result.addresses = cast[uint32](result.get(ADDRESS_COUNT()).fromBinary())
   except ValueError as e:
     panic("Failed to load the Wallet from the Database: " & e.msg)
   except BLSError as e:
@@ -218,6 +224,7 @@ proc newWalletDB*(
     result.put(MINER_KEY(), result.miner.privateKey.serialize())
     result.put(ACCOUNT_ZERO(), result.accountZero.serialize())
     result.put(CHAIN_CODE(), result.chainCode.serialize())
+    result.put(ADDRESS_COUNT(), 0.toBinary())
 
   try:
     result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
@@ -329,26 +336,50 @@ proc setMinerNick*(
 
 proc getAddress*(
   db: WalletDB,
-  index: Option[uint32]
+  index: Option[uint32],
+  used: proc (
+    key: EdPublicKey
+  ): bool {.gcsafe, raises: [].}
 ): string {.forceCheck: [
   ValueError
 ].} =
-  var child: tuple[key: EdPublicKey, chainCode: Hash[256]]
+  var
+    external: HDPublic
+    child: HDPublic
   #Get the external chain.
   try:
-    child = db.accountZero.derivePublic(db.chainCode, 1)
+    external = HDPublic(
+      key: db.accountZero,
+      chainCode: db.chainCode
+    ).derivePublic(1)
   except ValueError as e:
     panic("WalletDB has an unusable Wallet: " & e.msg)
 
   #Get the child.
   if index.isSome():
     try:
-      child = child.key.derivePublic(child.chainCode, index.unsafeGet())
+      child = external.derivePublic(index.unsafeGet())
     except ValueError as e:
       raise e
-    result = newAddress(AddressType.PublicKey, child.key.serialize())
   else:
-    panic("Getting an address with an unspecified index.")
+    try:
+      child = external.next(db.addresses)
+    except ValueError as e:
+      raise e
+
+    #This will return the same address we returned last time.
+    #We want to do that UNLESS this address was used in the mean time.
+    if child.key.used:
+      try:
+        child = external.next(child.index + 1)
+      except ValueError as e:
+        raise e
+
+    #Update the address count.
+    db.addresses = child.index
+    db.put(ADDRESS_COUNT(), db.addresses.toBinary())
+
+  result = newAddress(AddressType.PublicKey, child.key.serialize())
 
 proc unlock*(
   db: WalletDB,

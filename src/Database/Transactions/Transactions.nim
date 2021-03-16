@@ -13,7 +13,7 @@ export Transaction
 
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export getUTXOs, loadSpenders, getAndPruneFamilyUnsafe, `==`, verify, unverify, beat, prune
+export getUTXOs, loadSpenders, loadIfKeyWasUsed, getAndPruneFamilyUnsafe, `==`, verify, unverify, beat, prune
 when defined(merosTests):
   export getSender
 

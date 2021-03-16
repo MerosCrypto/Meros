@@ -49,6 +49,11 @@ template OUTPUT(
 ): string =
   input.serialize()
 
+template USED_KEY(
+  key: EdPublicKey
+): string =
+  key.serialize() & "uk"
+
 template DATA_SENDER(
   hash: Hash[256]
 ): string =
@@ -158,6 +163,10 @@ proc save*(
   for o in 0 ..< tx.outputs.len:
     db.put(OUTPUT(tx.hash, o), tx.outputs[o].serialize())
 
+    #Save Ed keys as used if they're sent to.
+    if (tx of Claim) or (tx of Send):
+      db.put(USED_KEY(cast[SendOutput](tx.outputs[o]).key), "")
+
 proc mention*(
   db: DB,
   hash: Hash[256]
@@ -224,6 +233,16 @@ proc load*(
         panic("Claim's spent Mints' outputs couldn't be loaded from the DB: " & e.msg)
 
     claim.outputs[0].amount = amount
+
+proc loadIfKeyWasUsed*(
+  db: DB,
+  key: EdPublicKey
+): bool {.forceCheck: [].} =
+  try:
+    discard db.get(USED_KEY(key))
+    result = true
+  except DBReadError:
+    result = false
 
 proc isBeaten*(
   db: DB,
