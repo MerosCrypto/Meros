@@ -381,7 +381,7 @@ proc getAddress*(
 
   result = newAddress(AddressType.PublicKey, child.key.serialize())
 
-proc unlock*(
+proc unlock(
   db: WalletDB,
   password: string
 ): HDWallet {.forceCheck: [
@@ -408,7 +408,7 @@ proc stepData*(
     wallet: HDWallet
 
   try:
-    wallet = db.unlock(password)
+    wallet = db.unlock(password).derive(1).first()
   except ValueError as e:
     raise e
 

@@ -107,13 +107,13 @@ proc module*(
         raise newJSONRPCError(ValueError, "personal_send isn't implemented")
 
       proc data(
-        dataArg: string,
+        data_JSON: string,
         hex: bool = false,
         password: string = ""
       ): Future[string] {.requireAuth, forceCheck: [
         JSONRPCError
       ], async.} =
-        var data: string = dataArg
+        var data: string = data_JSON
         if hex:
           try:
             data = parseHexStr(data)

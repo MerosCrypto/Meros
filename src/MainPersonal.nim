@@ -31,7 +31,7 @@ proc mainPersonal(
       #Start with the initial data, discovering spenders until the tip.
       var initial: Data
       try:
-        initial = newData(Hash[256](), wallet.hd.derive(1).first().publicKey.serialize())
+        initial = newData(Hash[256](), wallet.hd[0].derive(1).first().publicKey.serialize())
       except ValueError as e:
         panic("Couldn't create an initial Data to discover a Data tip: " & e.msg)
       try:

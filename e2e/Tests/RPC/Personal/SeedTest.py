@@ -224,6 +224,10 @@ def SeedTest(
     if rpc.call("personal", "getAddress", {"index": index}) != addr:
       raise TestError("Didn't get the correct address for this index.")
 
+    #Also test that the correct public key is used when creating Datas.
+    #It should be the first public key of the external chain for account 0.
+    #TODO
+
   #Test new address generation.
   expected: str = getAddress(rpc.call("personal", "getMnemonic"), password, 0)
   if rpc.call("personal", "getAddress") != expected:
