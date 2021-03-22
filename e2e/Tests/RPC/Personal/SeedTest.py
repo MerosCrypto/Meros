@@ -1,4 +1,4 @@
-#Tests setMnemonic, getMnemonic, getMeritHolderKey, getMeritHolderNick, getAccountKey, and getAddress.
+#Tests setWallet, getMnemonic, getMeritHolderKey, getMeritHolderNick, getAccountKey, and getAddress.
 #AKA every route in relation to seed management.
 
 from typing import Dict, List, Tuple, Union, Any
@@ -151,19 +151,19 @@ def SeedTest(
 ) -> None:
   #Start by testing BIP 32, 39, and 44 functionality in general.
   for _ in range(10):
-    rpc.call("personal", "setMnemonic")
+    rpc.call("personal", "setWallet")
     verifyMnemonicAndAccountKey(rpc)
 
   #Set specific Mnemonics and ensure they're handled properly.
   for _ in range(10):
     mnemonic: str = getMnemonic()
-    rpc.call("personal", "setMnemonic", {"mnemonic": mnemonic})
+    rpc.call("personal", "setWallet", {"mnemonic": mnemonic})
     verifyMnemonicAndAccountKey(rpc, mnemonic)
 
   #Create Mnemonics with passwords and ensure they're handled properly.
   for _ in range(10):
     password: str = os.urandom(32).hex()
-    rpc.call("personal", "setMnemonic", {"password": password})
+    rpc.call("personal", "setWallet", {"password": password})
     verifyMnemonicAndAccountKey(rpc, password=password)
 
   #Set specific Mnemonics with passwords and ensure they're handled properly.
@@ -173,14 +173,14 @@ def SeedTest(
     if i == 0:
       password = "xyz"
     mnemonic: str = getMnemonic(password)
-    rpc.call("personal", "setMnemonic", {"mnemonic": mnemonic, "password": password})
+    rpc.call("personal", "setWallet", {"mnemonic": mnemonic, "password": password})
     verifyMnemonicAndAccountKey(rpc, mnemonic, password)
 
-  #setMnemonic, getMnemonic, getMeritHolderKey, and getAccountKey have now been tested.
+  #setWallet, getMnemonic, getMeritHolderKey, and getAccountKey have now been tested.
   #This leaves getAddress, checks that they all require authorization, and error cases.
 
   #Clear the Wallet.
-  rpc.call("personal", "setMnemonic")
+  rpc.call("personal", "setWallet")
 
   #Test getAddress.
   #Not only does it need to correctly derive addresses along the external chain, it needs to return new addresses.
@@ -203,7 +203,7 @@ def SeedTest(
       except Exception:
         index += 1
 
-    rpc.call("personal", "setMnemonic", {"mnemonic": mnemonic, "password": password})
+    rpc.call("personal", "setWallet", {"mnemonic": mnemonic, "password": password})
     addr: str = bech32_encode(
       "mr",
       convertbits(
@@ -337,7 +337,7 @@ def SeedTest(
 
     #Set a new seed and verify the Merit Holder nick is cleared.
     mnemonic = rpc.call("personal", "getMnemonic")
-    rpc.call("personal", "setMnemonic")
+    rpc.call("personal", "setWallet")
     try:
       rpc.call("personal", "getMeritHolderNick")
       raise TestError("")
@@ -346,7 +346,7 @@ def SeedTest(
         raise TestError("getMeritHolderNick returned something or an unexpected error when a new Mnemonic was set.")
 
     #Set back the old seed and verify the Merit Holder nick is set.
-    rpc.call("personal", "setMnemonic", {"mnemonic": mnemonic})
+    rpc.call("personal", "setWallet", {"mnemonic": mnemonic})
     if rpc.call("personal", "getMeritHolderNick") != 1:
       raise TestError("Merit Holder nick wasn't set when loading a mnemonic despite having one.")
 

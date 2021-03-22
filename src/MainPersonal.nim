@@ -11,7 +11,7 @@ proc mainPersonal(
   functions.personal.getMnemonic = proc (): string {.forceCheck: [].} =
     db.getMnemonic()
 
-  functions.personal.setMnemonic = proc (
+  functions.personal.setWallet = proc (
     mnemonic: string,
     password: string
   ) {.forceCheck: [

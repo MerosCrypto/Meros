@@ -11,7 +11,7 @@ def HundredSixtyTwoTest(
   abcData: str = rpc.call("personal", "data", {"data": "abc"})
 
   #Create a Data on a different account.
-  rpc.call("personal", "setMnemonic")
+  rpc.call("personal", "setWallet")
   defData: str = rpc.call("personal", "data", {"data": "def"})
 
   #Verify the def Data was created.
@@ -19,7 +19,7 @@ def HundredSixtyTwoTest(
     raise TestError("Meros didn't create a Data for an imported account when the existing account had Datas.")
 
   #Switch back to the old Mnemonic.
-  rpc.call("personal", "setMnemonic", {"mnemonic": mnemonic})
+  rpc.call("personal", "setWallet", {"mnemonic": mnemonic})
 
   #Ensure we can create new Datas on it as well, meaning switching to a Mnemonic ports the chain.
   ghiDataHash: str = rpc.call("personal", "data", {"data": "ghi"})

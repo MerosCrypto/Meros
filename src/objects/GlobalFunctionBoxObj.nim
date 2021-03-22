@@ -282,7 +282,7 @@ type
 
     getAccountKey*: proc (): EdPublicKey {.gcsafe, raises: [].}
 
-    setMnemonic*: proc (
+    setWallet*: proc (
       mnemonic: string,
       password: string
     ) {.gcsafe, raises: [

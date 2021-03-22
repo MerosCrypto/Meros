@@ -15,14 +15,14 @@ proc module*(
 ): RPCHandle {.forceCheck: [].} =
   try:
     result = newRPCHandle:
-      proc setMnemonic(
+      proc setWallet(
         mnemonic: Option[string] = some(""),
         password: string = ""
       ) {.requireAuth, forceCheck: [
         JSONRPCError
       ].} =
         try:
-          functions.personal.setMnemonic(mnemonic.unsafeGet(), password)
+          functions.personal.setWallet(mnemonic.unsafeGet(), password)
         except ValueError:
           raise newJSONRPCError(ValueError, "Invalid mnemonic or password")
 

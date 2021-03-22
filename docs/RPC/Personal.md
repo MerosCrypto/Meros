@@ -1,8 +1,8 @@
 # Personal Module
 
-### `setMnemonic`
+### `setWallet`
 
-`setMnemonic` creates a new wallet using the passed in Mnemonic and password. This is irreversible and will delete the existing Wallet, having the node lose all access to the current Merit Holder and all funds.
+`setWallet` creates a new Wallet using the passed in Mnemonic and password. This is irreversible and will delete the existing Wallet, having the node lose all access to the current Merit Holder and all funds.
 
 Arguments:
 - `mnemonic` (string; optional): Creates a new Mnemonic if omitted.
