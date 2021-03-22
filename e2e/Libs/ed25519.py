@@ -94,20 +94,23 @@ def bit(
 def Hint(
   m: bytes
 ) -> int:
-  h: bytes = H(m)
-  return sum(((2 ** i) * bit(h, i)) for i in range(2 * b))
+  return int.from_bytes(H(m), "little") % l
 
-def signature(
-  m: bytes,
-  sk: bytes,
-  pk: bytes
+def sign(
+  msg: bytes,
+  secret: bytes
 ) -> bytes:
-  h: bytes = H(sk)
-  a: int = (2 ** (b - 2)) + sum(((2 ** i) * bit(h, i)) for i in range(3, b - 2))
-  r: int = Hint(''.join([chr(h[i]) for i in range(b // 8, b // 4)]).encode() + m)
-  R: List[int] = scalarmult(B, r)
-  S: int = (r + Hint(encodepoint(R) + pk + m) * a) % l
-  return encodepoint(R) + encodeint(S)
+  s: int = int.from_bytes(secret[:32], "little")
+  s &= (1 << 254) - 8
+  s |= (1 << 254)
+  prefix: bytes = secret[32:]
+
+  A: bytes = encodepoint(scalarmult(B, s))
+  r: int = Hint(prefix + msg)
+  R: bytes = encodepoint(scalarmult(B, r))
+  k: int = Hint(R + A + msg)
+  s: int = (r + (k * s)) % l
+  return R + int.to_bytes(s, 32, "little")
 
 def isoncurve(
   P: List[int]
