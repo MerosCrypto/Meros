@@ -211,7 +211,7 @@ class MerosSocket:
       b'\0\0\0' +
       tail
     )
-
+ 
     response: bytes = recv(self.connection, live_lengths if live else sync_lengths)
     if MessageType(response[0]) == MessageType.Busy:
       #Wrapped in a try/except as this will error out if Meros beats it to the punch.
@@ -284,6 +284,7 @@ class Meros:
     self.calledQuit: bool = False
     self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", dataDir, "--log-file", self.log, "--db", self.db, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
     while True:
+      sleep(1)
       try:
         connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         connection.connect(("127.0.0.1", self.rpc))
@@ -334,6 +335,20 @@ class Meros:
         int(ipParts[3]).to_bytes(1, byteorder="little") +
         peer[1].to_bytes(2, byteorder="little")
       )
+    self.sync.send(res)
+    self.sync.ress.pop()
+    return res
+
+  def blockListRequest(
+    self,
+    quantity: int,
+    hash: bytes
+  ) -> bytes:
+    res: bytes = (
+      MessageType.BlockListRequest.toByte() +
+      quantity.to_bytes(1, byteorder="little") +
+      hash
+    )
     self.sync.send(res)
     self.sync.ress.pop()
     return res

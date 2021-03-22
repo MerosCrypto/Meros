@@ -61,7 +61,7 @@ def VUnknownInBlockTest(
         if reqHash != block.header.hash:
           raise TestError("Meros asked for Sketch Hashes that didn't belong to the Block we just sent it.")
 
-        #Create the haashes.
+        #Create the hashes.
         hashes: List[int] = []
         for packet in block.body.packets:
           hashes.append(Sketch.hash(block.header.sketchSalt, packet))
