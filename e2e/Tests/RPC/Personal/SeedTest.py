@@ -57,6 +57,7 @@ def getPrivateKey(
   seed: bytes = sha256(Bip39SeedGenerator(mnemonic).Generate(password)).digest()
 
   c: int = -1
+  failures: int = 0
   extendedKey: bytes = bytes()
   while skip != -1:
     c += 1
@@ -68,7 +69,12 @@ def getPrivateKey(
 
       #Since we derived a valid address, decrement skip.
       skip -= 1
+      failures = 0
     except Exception:
+      #Safety check to prevent infinite execution.
+      failures += 1
+      if failures == 100:
+        raise Exception("Invalid mnemonic passed to getPrivateKey.")
       continue
 
   return extendedKey
@@ -219,7 +225,6 @@ def SeedTest(
       raise TestError("Didn't get the correct address for this index.")
 
   #Test new address generation.
-  password: str = ""
   expected: str = getAddress(rpc.call("personal", "getMnemonic"), password, 0)
   if rpc.call("personal", "getAddress") != expected:
     raise TestError("getAddress didn't return the next unused address (the first one).")
@@ -253,12 +258,8 @@ def SeedTest(
       raise TestError("Meros didn't broadcast back the first Send.")
     hashes: List[bytes] = [send.hash]
 
-    nextAddr: str = expected
-    i: int = 0
-    while nextAddr == expected:
-      i += 1
-      nextAddr = getAddress(rpc.call("personal", "getMnemonic"), password, i)
-    if rpc.call("personal", "getAddress") != nextAddr:
+    expected = getAddress(rpc.call("personal", "getMnemonic"), password, 1)
+    if rpc.call("personal", "getAddress") != expected:
       raise TestError("Meros didn't move to the next address once the existing one was used.")
 
     #Send to the new unused address, spending the funds before calling getAddress again.
@@ -268,7 +269,7 @@ def SeedTest(
     send = Send(
       [(send.hash, 1)],
       [
-        (bech32Decode(nextAddr), 1),
+        (bech32Decode(expected), 1),
         (funded.get_verifying_key().to_bytes(), (claim.amount - 1) - 1)
       ]
     )
@@ -282,7 +283,7 @@ def SeedTest(
     send = Send([(send.hash, 0)], [(funded.get_verifying_key().to_bytes(), 1)])
     send.signature = ed.sign(
       b"MEROS" + send.hash,
-      getPrivateKey(rpc.call("personal", "getMnemonic"), password, i)
+      getPrivateKey(rpc.call("personal", "getMnemonic"), password, 1)
     )
     send.beat(SpamFilter(3))
     if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
@@ -316,11 +317,8 @@ def SeedTest(
       blockchain.add(Block.fromJSON(rpc.call("merit", "getBlock", {"block": len(blockchain.blocks)})))
 
     #Verify a new address is returned.
-    expected = nextAddr
-    while nextAddr == expected:
-      i += 1
-      nextAddr = getAddress(rpc.call("personal", "getMnemonic"), password, i)
-    if rpc.call("personal", "getAddress") != nextAddr:
+    expected = getAddress(rpc.call("personal", "getMnemonic"), password, 2)
+    if rpc.call("personal", "getAddress") != expected:
       raise TestError("Meros didn't move to the next address once the existing one was used.")
 
     #Get a new address after sending to the address after it.
@@ -333,7 +331,7 @@ def SeedTest(
     if rpc.call("personal", "getMeritHolderNick") != 1:
       raise TestError("Merit Holder nick wasn't made available despite having one.")
 
-    nextAddr = rpc.call("personal", "getAddress")
+    expected = rpc.call("personal", "getAddress")
 
     #Set a new seed and verify the Merit Holder nick is cleared.
     mnemonic = rpc.call("personal", "getMnemonic")
@@ -346,12 +344,12 @@ def SeedTest(
         raise TestError("getMeritHolderNick returned something or an unexpected error when a new Mnemonic was set.")
 
     #Set back the old seed and verify the Merit Holder nick is set.
-    rpc.call("personal", "setWallet", {"mnemonic": mnemonic})
+    rpc.call("personal", "setWallet", {"mnemonic": mnemonic, "password": password})
     if rpc.call("personal", "getMeritHolderNick") != 1:
       raise TestError("Merit Holder nick wasn't set when loading a mnemonic despite having one.")
 
     #Verify calling getAddress returns the expected address.
-    if rpc.call("personal", "getAddress") != nextAddr:
+    if rpc.call("personal", "getAddress") != expected:
       raise TestError("Meros returned an address that wasn't next after reloading the seed.")
 
     #Reboot the node and ensure getMnemonic/getMeritHolderKey/getMeritHolderNick/getAccountKey/getAddress consistency.
