@@ -26,13 +26,13 @@ proc module*(
         except ValueError:
           raise newJSONRPCError(ValueError, "Invalid mnemonic or password")
 
-      proc setParentPublicKey(
+      proc setAccountKey(
         account: uint32 = 0,
         key: EdPublicKey
       ) {.requireAuth, forceCheck: [
         JSONRPCError
       ].} =
-        raise newJSONRPCError(ValueError, "personal_setParentPublicKey isn't implemented")
+        raise newJSONRPCError(ValueError, "personal_setAccountKey isn't implemented")
 
       proc getMnemonic(): string {.requireAuth, forceCheck: [].} =
         functions.personal.getMnemonic()
