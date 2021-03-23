@@ -211,7 +211,7 @@ class MerosSocket:
       b'\0\0\0' +
       tail
     )
- 
+
     response: bytes = recv(self.connection, live_lengths if live else sync_lengths)
     if MessageType(response[0]) == MessageType.Busy:
       #Wrapped in a try/except as this will error out if Meros beats it to the punch.
@@ -346,7 +346,7 @@ class Meros:
   ) -> bytes:
     res: bytes = (
       MessageType.BlockListRequest.toByte() +
-      quantity.to_bytes(1, byteorder="little") +
+      (quantity - 1).to_bytes(1, byteorder="little") +
       hash
     )
     self.sync.send(res)

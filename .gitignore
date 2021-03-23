@@ -26,4 +26,3 @@ incubator-milagro-crypto-c
 
 #Virtual Python environments
 venv/
-e2e/Classes/HelperFuncs.py
