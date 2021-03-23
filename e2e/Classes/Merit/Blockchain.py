@@ -54,7 +54,7 @@ class Blockchain:
     self,
     other: Any
   ) -> bool:
-    return not (self == other)
+    return not self == other
 
   def add(
     self,

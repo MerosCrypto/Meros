@@ -12,7 +12,7 @@ def BlockListTest(
   rpc: RPC
 ) -> None:
   with open("e2e/Vectors/Merit/BlankBlocks.json", "r") as file:
-    vectors = json.loads(file.read())
+    vectors: List[Dict[str, Any]] = json.loads(file.read())
   chain: Blockchain = Blockchain.fromJSON(vectors)
 
   amount1: int = 25
@@ -25,8 +25,8 @@ def BlockListTest(
       lastBlock = len(chain.blocks)
     lastBlock = min(amount, lastBlock)
     quantity: bytes = (lastBlock - 1).to_bytes(1, byteorder="little")
-    hashes: bytes = [block.header.hash for block in chain.blocks[:lastBlock]]
-    return quantity + b"".join([hash for hash in reversed(hashes)])
+    hashes: List[bytes] = [block.header.hash for block in chain.blocks[:lastBlock]]
+    return quantity + b"".join(reversed(hashes))
 
   def beforeGenesis() -> None:
     rpc.meros.blockListRequest(1, chain.blocks[0].header.hash)
@@ -48,5 +48,12 @@ def BlockListTest(
     if blockList[1:] != constructResponse(amount1):
       raise TestError("Meros returned a different BlockList than expected in response to a BlockListRequest.")
 
-  callBacks: Dict[int, function] = {1: beforeGenesis, (amount2 - 1): lessThanRequested, amount1: recHash}
-  Liver(rpc, vectors, callbacks=callBacks).live()
+  Liver(
+    rpc,
+    vectors,
+    callbacks={
+      1: beforeGenesis,
+      (amount2 - 1): lessThanRequested,
+      amount1: recHash
+    }
+  ).live()

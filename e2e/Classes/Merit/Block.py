@@ -39,7 +39,7 @@ class Block:
     self,
     other: Any
   ) -> bool:
-    return not (self == other)
+    return not self == other
 
   def mine(
     self,
