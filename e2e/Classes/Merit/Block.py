@@ -14,6 +14,33 @@ class Block:
     self.header: BlockHeader = header
     self.body: BlockBody = body
 
+  def __eq__(
+    self,
+    other: Any
+  ) -> bool:
+    if not isinstance(other, Block):
+      raise Exception("Comparison between Block and non-Block.")
+
+    selfBlock: Dict[str, Any] = self.toJSON()
+    otherBlock: Dict[str, Any] = other.toJSON()
+
+    for block in [selfBlock, otherBlock]:
+      try:
+        del block["header"]["packets"]
+      except KeyError:
+        pass
+      try:
+        del block["removals"]
+      except KeyError:
+        pass
+    return otherBlock == selfBlock
+
+  def __ne__(
+    self,
+    other: Any
+  ) -> bool:
+    return not self == other
+
   def mine(
     self,
     privKey: PrivateKey,

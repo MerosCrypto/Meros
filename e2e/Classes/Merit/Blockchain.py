@@ -36,6 +36,26 @@ class Blockchain:
       )
     ]
 
+  def __eq__(
+    self,
+    other: Any
+  ) -> bool:
+    if not isinstance(other, Blockchain):
+      raise Exception("Comparison between Blockchain and non-Blockchain.")
+
+    if len(self.blocks) != len(other.blocks):
+      return False
+    for i in range(len(self.blocks)):
+      if self.blocks[i] != other.blocks[i]:
+        return False
+    return True
+
+  def __ne__(
+    self,
+    other: Any
+  ) -> bool:
+    return not self == other
+
   def add(
     self,
     block: Block
