@@ -18,12 +18,12 @@ import e2e.Libs.ed25519 as ed
 import e2e.Libs.BIP32 as BIP32
 from e2e.Libs.RandomX import RandomX
 
-from e2e.Classes.Transactions.Transactions import Claim, Send, Transactions
+from e2e.Classes.Transactions.Transactions import Claim, Send, Data, Transactions
 from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 from e2e.Classes.Merit.Blockchain import Block, Blockchain
 
-from e2e.Meros.Meros import Meros
+from e2e.Meros.Meros import MessageType, Meros
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 from e2e.Tests.Errors import TestError, SuccessError
@@ -152,6 +152,19 @@ def verifyMnemonicAndAccountKey(
     #This isn't technically true due to an ambiguity/the implementation we used the vectors of, yet it's true enough for this comment.
     raise TestError("Meros generated a different parent public key.")
 
+  #Also test that the correct public key is used when creating Datas.
+  #It should be the first public key of the external chain for account 0.
+  data: str = rpc.call("personal", "data", {"data": "a", "password": password})
+  initial: Data = Data(
+    bytes(32),
+    ed.encodepoint(
+      ed.scalarmult(ed.B, ed.decodeint(getPrivateKey(mnemonic, password, 0)[:32]) % ed.l)
+    )
+  )
+  #Checks via the initial Data.
+  if bytes.fromhex(rpc.call("transactions", "getTransaction", {"hash": data})["inputs"][0]["hash"]) != initial.hash:
+    raise TestError("Meros used the wrong key to create the Data Transactions.")
+
 def SeedTest(
   rpc: RPC
 ) -> None:
@@ -224,10 +237,6 @@ def SeedTest(
     if rpc.call("personal", "getAddress", {"index": index}) != addr:
       raise TestError("Didn't get the correct address for this index.")
 
-    #Also test that the correct public key is used when creating Datas.
-    #It should be the first public key of the external chain for account 0.
-    #TODO
-
   #Test new address generation.
   expected: str = getAddress(rpc.call("personal", "getMnemonic"), password, 0)
   if rpc.call("personal", "getAddress") != expected:
@@ -274,7 +283,7 @@ def SeedTest(
       [(send.hash, 1)],
       [
         (bech32Decode(expected), 1),
-        (funded.get_verifying_key().to_bytes(), (claim.amount - 1) - 1)
+        (funded.get_verifying_key().to_bytes(), claim.amount - 2)
       ]
     )
     send.sign(funded)
@@ -282,6 +291,7 @@ def SeedTest(
     if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
       raise TestError("Meros didn't broadcast back the second Send.")
     hashes.append(send.hash)
+    usableSend: Send = send
 
     #Spending TX.
     send = Send([(send.hash, 0)], [(funded.get_verifying_key().to_bytes(), 1)])
@@ -301,6 +311,10 @@ def SeedTest(
       if rpc.meros.signedElement(sv) != rpc.meros.live.recv():
         raise TestError("Meros didn't broadcast back a Verification.")
 
+    #Close the sockets while we mine.
+    rpc.meros.live.connection.close()
+    rpc.meros.sync.connection.close()
+
     #Mine these to the Wallet on the node so we can test getMeritHolderNick.
     privKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMeritHolderKey")))
     blockchain: Blockchain = Blockchain.fromJSON(vectors["blockchain"])
@@ -317,6 +331,7 @@ def SeedTest(
         tempHash = RandomX(bytes.fromhex(template["header"]) + proof.to_bytes(4, "little"))
         tempSignature = privKey.sign(tempHash).serialize()
         tempHash = RandomX(tempHash + tempSignature)
+
       rpc.call("merit", "publishBlock", {"id": template["id"], "header": template["header"] + proof.to_bytes(4, "little").hex() + tempSignature.hex()})
       blockchain.add(Block.fromJSON(rpc.call("merit", "getBlock", {"block": len(blockchain.blocks)})))
 
@@ -325,13 +340,52 @@ def SeedTest(
     if rpc.call("personal", "getAddress") != expected:
       raise TestError("Meros didn't move to the next address once the existing one was used.")
 
+    #Reopen the sockets.
+    sleep(65)
+    rpc.meros.liveConnect(Blockchain().blocks[0].header.hash)
+    rpc.meros.syncConnect(Blockchain().blocks[0].header.hash)
+
     #Get a new address after sending to the address after it.
     #Use both, and then call getAddress.
     #getAddress should detect X is used, move to Y, detect Y is used, and move to Z.
     #It shouldn't assume the next address after an used address is unused.
-    #TODO
+    #Actually has two Ys as one iteration of the code only ran for the next address; not all future addresses.
 
-    #Now that we have mined a Block, ensure the Merit Holder nick is set.
+    #Send to the next next addresses.
+    send = usableSend
+    for i in range(2):
+      send = Send(
+        [(send.hash, 1)],
+        [
+          (bech32Decode(getAddress(rpc.call("personal", "getMnemonic"), password, (3 + i))), 1),
+          (funded.get_verifying_key().to_bytes(), claim.amount - (3 + i))
+        ]
+      )
+      send.sign(funded)
+      send.beat(SpamFilter(3))
+      if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
+        raise TestError("Meros didn't broadcast back the Send to the next next address.")
+      if MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:
+        raise TestError("Meros didn't create and broadcast a SignedVerification for this Send.")
+
+    #Verify getAddress returns the existing next address.
+    if rpc.call("personal", "getAddress") != expected:
+      raise TestError("Sending to the address after this address caused Meros to consider this address used.")
+
+    #Send to the next address.
+    send = Send([(send.hash, 1)], [(funded.get_verifying_key().to_bytes(), claim.amount - 5), (bech32Decode(expected), 1)])
+    send.sign(funded)
+    send.beat(SpamFilter(3))
+    if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
+      raise TestError("Meros didn't broadcast back the Send to the next address.")
+    if MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:
+      raise TestError("Meros didn't create and broadcast a SignedVerification for this Send.")
+
+    #Verify getAddress returns the address after the next next address.
+    if rpc.call("personal", "getAddress") != getAddress(rpc.call("personal", "getMnemonic"), password, 5):
+      raise TestError("Meros didn't return the correct next address after using multiple addresses in a row.")
+
+    #Now that we have mined a Block as part of this test, ensure the Merit Holder nick is set.
     if rpc.call("personal", "getMeritHolderNick") != 1:
       raise TestError("Merit Holder nick wasn't made available despite having one.")
 
