@@ -50,11 +50,13 @@ proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
 
     #Increase the bit by 11.
     bit += 11
-  result.sentence = result.sentence[ 0 ..< result.sentence.len - 1]
+
+  #Remove the extra space at the end.
+  result.sentence = result.sentence[0 ..< result.sentence.len - 1]
 
 proc newMnemonic*(
   sentence: string
-): Mnemonic  {.forceCheck: [
+): Mnemonic {.forceCheck: [
   ValueError
 ].} =
   #Split the sentence.
@@ -67,6 +69,9 @@ proc newMnemonic*(
 
   #Set the sentence in the mnemonic.
   result.sentence = words.join(" ")
+
+  if words.len != 24:
+    raise newException(ValueError, "Mnemonic has too little entropy.")
 
   #Decode the sentence.
   var

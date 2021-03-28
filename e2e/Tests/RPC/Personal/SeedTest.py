@@ -426,15 +426,56 @@ def SeedTest(
         raise TestError("Rebooting the node caused the WalletDB to improperly reload.")
 
     #Test all these methods require authorization.
-    #TODO
+    #Doesn't test personal_data as that's not officially part of this test; just in it as a side note on key usage.
+    #The actual personal_data test should handle that check.
+    for method in [
+      "setWallet",
+      "getMnemonic",
+      "getMeritHolderKey",
+      "getMeritHolderNick",
+      "getAccountKey",
+      "getAddress"
+    ]:
+      try:
+        rpc.call("personal", method, auth=False)
+        raise Exception()
+      except Exception as e:
+        if str(e) != "HTTP status isn't 200: 401":
+          raise TestError("Could call personal method without authorization.")
 
     #Test a Mnemonic with an improper amount of entropy.
-    #TODO
+    #Runs multiple times in case the below error pops up for the sole reason the Mnemonic didn't have viable keys.
+    for _ in range(16):
+      try:
+        rpc.call(
+          "personal",
+          "setWallet",
+          {
+            "mnemonic": Bip39MnemonicGenerator.FromWordsNumber(Bip39WordsNum.WORDS_NUM_12)
+          }
+        )
+        raise Exception()
+      except Exception as e:
+        if str(e) != "-3 Invalid mnemonic or password.":
+          raise TestError("Could set a Mnemonic with too little entropy.")
+
+    #Test a Mnemonic with additional spaces.
+    rpc.call("personal", "setWallet")
+    mnemonic: str = rpc.call("personal", "getMnemonic")
+    rpc.call("personal", "setWallet", {"mnemonic": (" " * 2).join(mnemonic.split(" ")) + " "})
+    if rpc.call("personal", "getMnemonic") != mnemonic:
+      raise TestError("Meros didn't handle a mnemonic with extra whitespace.")
 
     #Negative index to getAddress.
-    #TODO
+    try:
+      rpc.call("personal", "getAddress", {"index": -1})
+      raise Exception()
+    except Exception as e:
+      if str(e) != "-32602 Invalid params.":
+        raise TestError("Could call getAddress with a negative index.")
 
     #Used so Liver doesn't run its own post-test checks.
+    #Since we added our own Blocks, those will fail.
     raise SuccessError()
 
   #Used so we don't have to write a sync loop.

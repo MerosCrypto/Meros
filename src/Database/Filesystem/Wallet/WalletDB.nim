@@ -369,7 +369,7 @@ proc getAddress*(
 
     #This will return the same address we returned last time.
     #We want to do that UNLESS this address was used in the mean time.
-    if child.key.used:
+    while child.key.used:
       try:
         child = external.next(child.index + 1)
       except ValueError as e:
