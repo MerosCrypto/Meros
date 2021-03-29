@@ -51,11 +51,9 @@ def BatchTest(
     raise TestError("Batch with invalid individual entries wasn't handled correctly.")
 
   if request(
-    rpc, [
-      1,
-      {"jsonrpc": "2.0", "id": 1, "method": "merit_getHeight"},
-      2
-    ]) != [
+    rpc,
+    [1, {"jsonrpc": "2.0", "id": 1, "method": "merit_getHeight"}, 2]
+  ) != [
     {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": None},
     {"jsonrpc": "2.0", "id": 1, "result": 1},
     {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": None}

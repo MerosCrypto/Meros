@@ -16,7 +16,7 @@ def PersonalAuthorizationTest(
     "getAccountKey",
     "getAddress",
     #TODO "send",
-    #TODO "data",
+    "data",
     #TODO "getUTXOs",
     #TODO "getTransactionTemplate"
   ]:

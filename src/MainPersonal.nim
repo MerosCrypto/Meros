@@ -182,9 +182,6 @@ proc mainPersonal(
     for data in db.loadDatasFromTip():
       toAdd.add(data)
 
-      #Reached the initial Data.
-      if data.inputs[0].hash == Hash[256]():
-        break
       #We have the Data it relies on.
       try:
         discard transactions[][data.inputs[0].hash]
