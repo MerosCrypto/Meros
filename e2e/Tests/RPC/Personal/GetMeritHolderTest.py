@@ -1,7 +1,0 @@
-"""
-"""
-
-"""
-getMeritHolderKey
-getMeritHolderNick
-"""

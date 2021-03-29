@@ -3,6 +3,7 @@ from typing import Any
 from enum import Enum
 
 class Bip39WordsNum(Enum):
+  WORDS_NUM_12: int = ...
   WORDS_NUM_24: int = ...
 
 class Bip39MnemonicGenerator:
