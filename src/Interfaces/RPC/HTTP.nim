@@ -132,7 +132,7 @@ proc readHTTP*(
       #Needed to prevent an async lockup; I'm actually not sure where such lockup occurs.
       #-- Kayaba
       try:
-        await sleepAsync(1)
+        await sleepAsync(1.milliseconds)
       except Exception as e:
         panic("Couldn't sleep before receving the next HTTP request: " & e.msg)
 

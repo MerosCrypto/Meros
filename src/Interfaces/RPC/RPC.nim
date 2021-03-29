@@ -67,15 +67,12 @@ proc newRPC*(
       reply: RPCReplyFunction,
       authed: bool
     ): Future[void] {.forceCheck: [], async.} =
-      #If this doesn't have an ID field, error. It's either an invalid request or notification.
-      if not req.hasKey("id"):
+      if req.kind != JObject:
         try:
-          await reply(newError(newJNull(), -32603, "Internal error", %* {
-            "reason": "Batch requests aren't supported"
-          }))
+          await reply(newError(newJNull(), -32600, "Invalid Request"))
           return
         except Exception as e:
-          panic("Couldn't call reply about an Internal Error due to an Exception despite reply not naturally throwing anything: " & e.msg)
+          panic("Couldn't call reply about a Invalid Request due to an Exception despite reply not naturally throwing anything: " & e.msg)
 
       #Provide a params value if one wasn't supplied, as it can be omitted.
       if not req.hasKey("params"):
@@ -84,6 +81,9 @@ proc newRPC*(
       #Check the request as a whole.
       try:
         if not (
+          #Only valid if this is a notification call, which we don't use.
+          #It may be better to use a different error, yet this is close enough.
+          req.hasKey("id") and
           #Invalid version string.
           req.hasKey("jsonrpc") and (req["jsonrpc"].kind == JString) and (req["jsonrpc"].getStr() == "2.0") and
           #Invalid ID type.
@@ -211,7 +211,7 @@ proc start*(
   while rpc.alive:
     #Allow other async code to execute.
     try:
-      await sleepAsync(milliseconds(1))
+      await sleepAsync(1.milliseconds)
     except Exception as e:
       panic("Couldn't sleep for 1ms before checking the GUI->RPC channel for data: " & e.msg)
 
@@ -289,8 +289,17 @@ proc createSocketHandler(
           panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
 
       let batch: bool = parsedData.kind == JArray
+      #Convert this to a list of 'requests' to simplify the below handling code.
       if not batch:
         parsedData = % [parsedData]
+
+      #If this is a batch request with length 0, this is an invalid request.
+      if parsedData.len == 0:
+        try:
+          await socket.writeHTTP($(newError(newJNull(), -32600, "Invalid Request")))
+          continue
+        except Exception as e:
+          panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
 
       var
         authorized: bool = httpReq.token == rpc.token
@@ -316,7 +325,7 @@ proc createSocketHandler(
               #We only check for "quit" as a mutation occurs, dropping the module, during its processing.
               #Technically non-compliant for batch requests, as all further requests in the batch won't be fulfilled.
               try:
-                if (req["method"] == (% "quit")) and (replyArg["result"] == (% true)):
+                if (req.kind == JObject) and (req["method"] == (% "quit")) and (replyArg["result"] == (% true)):
                   if not batch:
                     res = res[0]
                   try:
@@ -342,6 +351,8 @@ proc createSocketHandler(
 
       var resStr: string
       #If this is an empty array, respond with nothing.
+      #Happens when all requests are for notifications, not for responses.
+      #Doesn't apply to Meros which doesn't use those (at least, not yet).
       if res.len == 0:
         #Redundant.
         resStr = ""
