@@ -10,7 +10,7 @@ class Response:
 
 def post(
   url: str,
-  data: Optional[Iterator[bytes]] = ...,
+  data: Optional[Union[Iterator[bytes], str]] = ...,
   json: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = ...,
   headers: Optional[Dict[str, str]] = ...
 ) -> Response:
