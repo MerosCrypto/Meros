@@ -313,12 +313,18 @@ proc loadSpendable*(
     raise newLoggedException(DBReadError, e.msg)
 
   for i in countup(0, spendable.len - 1, 33):
-    result.add(
-      newFundedInput(
-        spendable[i ..< i + 32].toHash[:256](),
-        int(spendable[i + 32])
-      )
+    let input: FundedInput = newFundedInput(
+      spendable[i ..< i + 32].toHash[:256](),
+      int(spendable[i + 32])
     )
+
+    #Spendable isn't guaranteed consistency for a few reasons. This manifests as spent Transactions reappearing.
+    #Without a lot more tracking code, which would be decently intensive, it can't be made consistent.
+    #That said, by following up with this check, it can be.
+    #Theoretically, we could also move this check to addToSpendable, yet addToSpendable is caused for all UTXOs.
+    #loadSpendable is solely triggered via the RPC and therefore should run much more infrequently.
+    if db.loadSpenders(input).len == 0:
+      result.add(input)
 
 proc addToSpendable(
   db: DB,

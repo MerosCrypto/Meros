@@ -144,6 +144,11 @@ proc mainTransactions(
     except IndexError as e:
       raise e
 
+  functions.transactions.getUTXOs = proc (
+    key: EdPublicKey
+  ): seq[FundedInput] {.forceCheck: [].} =
+    transactions[].getUTXOs(key)
+
   functions.transactions.getSpenders = proc (
     input: Input
   ): seq[Hash[256]] {.forceCheck: [].} =
@@ -301,8 +306,3 @@ proc mainTransactions(
     hash: Hash[256]
   ) {.forceCheck: [].} =
     transactions[].prune(hash)
-
-  functions.transactions.getUTXOs = proc (
-    key: EdPublicKey
-  ): seq[FundedInput] {.forceCheck: [].} =
-    transactions[].getUTXOs(key)
