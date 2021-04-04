@@ -26,7 +26,7 @@ from e2e.Meros.Liver import Liver
 from e2e.Tests.Errors import TestError, SuccessError
 from e2e.Tests.RPC.Personal.Lib import getPrivateKey, getAddress, decodeAddress
 
-def createSequentialSend(
+def createSend(
   rpc: RPC,
   last: Union[Claim, Send],
   toAddress: str
@@ -85,7 +85,7 @@ def GetAddressTest(
     expected: str = getAddress(mnemonic, password, 0)
 
     #Send to the new address, then call getAddress again. Verify a new address appears.
-    last: Send = createSequentialSend(
+    last: Send = createSend(
       rpc,
       Claim.fromTransaction(iter(transactions.txs.values()).__next__()),
       expected
@@ -100,7 +100,7 @@ def GetAddressTest(
     #Checks address usage isn't defined as having an UTXO, yet rather any TXO.
     #Also confirm the spending TX with full finalization before checking.
     #Ensures the TXO isn't unspent by any definition.
-    last = createSequentialSend(rpc, last, expected)
+    last = createSend(rpc, last, expected)
     hashes.append(last.hash)
 
     #Spending TX.
@@ -163,7 +163,7 @@ def GetAddressTest(
 
     #Send to the next next addresses.
     for i in range(2):
-      last = createSequentialSend(rpc, last, getAddress(mnemonic, password, 3 + i))
+      last = createSend(rpc, last, getAddress(mnemonic, password, 3 + i))
       if MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:
         raise TestError("Meros didn't create and broadcast a SignedVerification for this Send.")
 
@@ -172,7 +172,7 @@ def GetAddressTest(
       raise TestError("Sending to the address after this address caused Meros to consider this address used.")
 
     #Send to the next address.
-    last = createSequentialSend(rpc, last, expected)
+    last = createSend(rpc, last, expected)
     if MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:
       raise TestError("Meros didn't create and broadcast a SignedVerification for this Send.")
 

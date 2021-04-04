@@ -3,8 +3,8 @@
 
 """
 Test:
-getParentPublicKey
-setParentPublicKey
+getAccountKey
+setAccountKey
 getTransactionTemplate
 
 Make sure the following still work:

@@ -35,6 +35,7 @@ def getMiner(
 ) -> str:
   return PrivateKey(k).toPublicKey().serialize().hex()
 
+#pylint: disable=too-many-statements,too-many-locals
 def getBlockTemplateTest(
   rpc: RPC
 ) -> None:
@@ -293,6 +294,8 @@ def getBlockTemplateTest(
     rpc.meros.signedElement(sd)
   time.sleep(1)
 
+  #`elem for elem` is used below due to Pyright not handling inheritance properly when nested.
+  #pylint: disable=unnecessary-comprehension
   if bytes.fromhex(
     rpc.call(
       "merit",
@@ -300,7 +303,5 @@ def getBlockTemplateTest(
       {"miner": getMiner(0)},
       False
     )["header"]
-  #`elem for elem` is used due to Pyright not handling inheritance properly when nested.
-  #pylint: disable=unnecessary-comprehension
   )[36:68] != BlockHeader.createContents([], [elem for elem in sendDiffs[::-1]]):
     raise TestError("Meros didn't include just the malicious Elements in its new template.")
