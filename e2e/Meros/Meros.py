@@ -134,9 +134,8 @@ def recv(
   header: MessageType = MessageType(result[0])
 
   #Get the rest of the message.
-  length: int
   for l in range(len(lengths[header])):
-    length = lengths[header][l]
+    length: int = lengths[header][l]
     if length < 0:
       length = int.from_bytes(
         result[-lengths[header][l - 1]:],
