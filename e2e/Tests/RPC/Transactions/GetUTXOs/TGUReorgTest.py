@@ -8,7 +8,7 @@ from bech32 import convertbits, bech32_encode
 from pytest import raises
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Transactions
-from e2e.Classes.Merit.Merit import Merit
+from e2e.Classes.Merit.Merit import Block, Merit
 
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
@@ -44,7 +44,8 @@ def reorgPast(
 
   #Sync up the new Blockchain.
   header: bytes = rpc.meros.liveBlockHeader(merit.blockchain.blocks[-1].header)
-  lastBlock: BlockBody
+  #Use the genesis as the default value for this outer defined variable.
+  lastBlock: Block = merit.blockchain.blocks[0]
   while True:
     req: bytes = rpc.meros.sync.recv()
     if MessageType(req[0]) == MessageType.BlockListRequest:
