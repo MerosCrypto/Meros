@@ -8,6 +8,7 @@ import ../../../lib/Errors
 import ../../../lib/Hash
 
 import ../../../Database/Transactions/Transaction
+import ../../../Database/Merit/BlockHeader
 
 import ../../../Network/objects/MessageObj
 import ../../../Network/Serialize/Transactions/[SerializeClaim, SerializeSend, SerializeData]
@@ -52,7 +53,7 @@ proc module*(
 
       proc broadcast(
         transaction: Option[Hash[256]] = none(Hash[256]),
-        blockHash: Option[Hash[256]] = none(Hash[256])
+        block_JSON: Option[Hash[256]] = none(Hash[256])
       ) {.forceCheck: [
         JSONRPCError
       ].} =
@@ -64,7 +65,7 @@ proc module*(
             raise newJSONRPCError(IndexError, "Transaction not found")
           case tx:
             of Mint as _:
-              discard
+              raise newJSONRPCError(ValueError, "Transaction is a Mint")
             of Claim as _:
               functions.network.broadcast(MessageType.Claim, tx.serialize())
             of Send as _:
@@ -72,12 +73,12 @@ proc module*(
             of Data as _:
               functions.network.broadcast(MessageType.Data, tx.serialize())
 
-        if blockHash.isSome():
+        if block_JSON.isSome():
           try:
-            functions.network.broadcast(
-              MessageType.BlockHeader,
-              functions.merit.getBlockByHash(blockHash.unsafeGet()).header.serialize()
-            )
+            let header: BlockHeader = functions.merit.getBlockByHash(block_JSON.unsafeGet()).header
+            if header.hash == functions.merit.getBlockByNonce(0).header.hash:
+              raise newJSONRPCError(ValueError, "Block is the genesis Block")
+            functions.network.broadcast(MessageType.BlockHeader, header.serialize())
           except IndexError:
             raise newJSONRPCError(IndexError, "Block not found")
 
