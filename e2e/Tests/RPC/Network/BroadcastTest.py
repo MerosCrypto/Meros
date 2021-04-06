@@ -1,8 +1,6 @@
 from typing import Dict, Any
 import json
 
-from pytest import raises
-
 from e2e.Classes.Transactions.Transactions import Claim, Data, Transactions
 from e2e.Classes.Merit.Blockchain import BlockHeader, Block, Blockchain
 
@@ -12,6 +10,7 @@ from e2e.Meros.Liver import Liver
 
 from e2e.Tests.Errors import TestError
 
+#pylint: disable=too-many-statements
 def BroadcastTest(
   rpc: RPC
 ) -> None:

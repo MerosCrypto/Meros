@@ -7,12 +7,12 @@ import ed25519
 from bech32 import convertbits, bech32_encode
 from pytest import raises
 
-from e2e.Classes.Transactions.Transactions import Claim, Send, Transactions
+from e2e.Classes.Transactions.Transactions import Send, Transactions
 
 from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
-from e2e.Tests.RPC.Transactions.GetUTXOs.Lib import createSend, verify, mineBlock
+from e2e.Tests.RPC.Transactions.GetUTXOs.Lib import verify, mineBlock
 from e2e.Tests.Errors import TestError, SuccessError
 
 def TGUFinalizesTest(
@@ -23,7 +23,7 @@ def TGUFinalizesTest(
     vectors = json.loads(file.read())
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
-  def actualTest() -> None:
+  def test() -> None:
     recipient: ed25519.SigningKey = ed25519.SigningKey(b'\1' * 32)
     recipientPub: bytes = recipient.get_verifying_key().to_bytes()
     address: str = bech32_encode("mr", convertbits(bytes([0]) + recipientPub, 8, 5))
@@ -32,13 +32,17 @@ def TGUFinalizesTest(
     otherAddress: str = bech32_encode("mr", convertbits(bytes([0]) + otherRecipient, 8, 5))
 
     #Create a Send.
-    send: Send = createSend(rpc, [Claim.fromJSON(vectors["olderMint"])], recipientPub)
+    send: Send = Send.fromJSON(vectors["send"])
+    if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
+      raise TestError("Meros didn't broadcast back a Send.")
     if rpc.call("transactions", "getUTXOs", {"address": address}) != []:
       raise TestError("Meros considered an unconfirmed Transaction's outputs as UTXOs.")
     verify(rpc, send.hash)
 
     #Spend it.
-    spendingSend: Send = createSend(rpc, [send], otherRecipient, recipient)
+    spendingSend: Send = Send.fromJSON(vectors["spendingSend"])
+    if rpc.meros.liveTransaction(spendingSend) != rpc.meros.live.recv():
+      raise TestError("Meros didn't broadcast back a Send.")
     if rpc.call("transactions", "getUTXOs", {"address": address}) != []:
       raise TestError("Meros didn't consider a Transaction's inputs as spent.")
 
@@ -61,4 +65,4 @@ def TGUFinalizesTest(
 
   #Send Blocks so we have a Merit Holder who can instantly verify Transactions, not to mention Mints.
   with raises(SuccessError):
-    Liver(rpc, vectors["blockchain"], transactions, {50: actualTest}).live()
+    Liver(rpc, vectors["blockchain"], transactions, {50: test}).live()

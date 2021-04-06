@@ -1,49 +1,14 @@
-#TODO: Vectorize all these tests better. send + spendingSend?
-
-from typing import Dict, List, Tuple, Union, Any
-
-import ed25519
+from typing import Dict, Any
 
 from e2e.Libs.BLS import PrivateKey
 from e2e.Libs.RandomX import RandomX
 
-from e2e.Classes.Transactions.Transactions import Claim, Send
 from e2e.Classes.Consensus.Verification import SignedVerification
-from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
 from e2e.Meros.Meros import MessageType
 from e2e.Meros.RPC import RPC
 
 from e2e.Tests.Errors import TestError
-
-def createSend(
-  rpc: RPC,
-  inputs: List[Union[Claim, Send]],
-  to: bytes,
-  key: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-) -> Send:
-  pub: bytes = key.get_verifying_key().to_bytes()
-  actualInputs: List[Tuple[bytes, int]] = []
-  outputs: List[Tuple[bytes, int]] = [(to, 1)]
-  toSpend: int = 0
-  for txInput in inputs:
-    if isinstance(txInput, Claim):
-      actualInputs.append((txInput.hash, 0))
-      toSpend += txInput.amount
-    else:
-      for n in range(len(txInput.outputs)):
-        if txInput.outputs[n][0] == key.get_verifying_key().to_bytes():
-          actualInputs.append((txInput.hash, n))
-          toSpend += txInput.outputs[n][1]
-  if toSpend > 1:
-    outputs.append((pub, toSpend - 1))
-
-  send: Send = Send(actualInputs, outputs)
-  send.sign(key)
-  send.beat(SpamFilter(3))
-  if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
-    raise TestError("Meros didn't broadcast back a Send.")
-  return send
 
 def verify(
   rpc: RPC,
@@ -60,6 +25,7 @@ def verify(
   elif temp != rpc.meros.live.recv():
     raise TestError("Meros didn't broadcast back a Verification.")
 
+#This really should've been vectored out.
 def mineBlock(
   rpc: RPC,
   nick: int = 0
