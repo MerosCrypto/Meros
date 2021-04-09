@@ -1,4 +1,5 @@
 import options
+import sets
 import tables
 
 import mc_lmdb
@@ -27,8 +28,11 @@ template ACCOUNT_ZERO(): string =
 template CHAIN_CODE(): string =
   "cc"
 
-template ADDRESS_COUNT(): string =
-  "ac"
+template NEXT_ADDRESS_INDEX(): string =
+  "na"
+
+template ADDRESSES(): string =
+  "a"
 
 template DATA_TIP(): string =
   "d"
@@ -71,8 +75,9 @@ type
     mnemonic: Mnemonic
     miner*: MinerWallet
     accountZero*: EdPublicKey
-    chainCode*: Hash[256]
-    addresses*: uint32
+    chainCode: Hash[256]
+    nextIndex: uint32
+    addresses*: HashSet[uint32]
 
     when defined(merosTests):
       finalizedNonces*: int
@@ -86,6 +91,8 @@ type
       verified: Table[string, int]
 
       elementNonce: int
+
+const ADDRESS_DISCOVERY_THRESHOLD: int = 10
 
 proc put(
   db: WalletDB,
@@ -192,7 +199,8 @@ proc newWalletDB*(
       lmdb: newLMDB(path, size, 1),
 
       mnemonic: newWallet("").mnemonic,
-      addresses: 0,
+      nextIndex: 0,
+      addresses: initHashSet[uint32](),
 
       finalizedNonces: 0,
       unfinalizedNonces: 0,
@@ -214,7 +222,12 @@ proc newWalletDB*(
     result.miner = newMinerWallet(result.get(MINER_KEY()))
     result.accountZero = newEdPublicKey(result.get(ACCOUNT_ZERO()))
     result.chainCode = result.get(CHAIN_CODE()).toHash[:256]()
-    result.addresses = cast[uint32](result.get(ADDRESS_COUNT()).fromBinary())
+    result.nextIndex = cast[uint32](result.get(NEXT_ADDRESS_INDEX()).fromBinary())
+
+    let addresses: string = result.get(ADDRESSES())
+    result.addresses = initHashSet[uint32]()
+    for i in countup(0, addresses.len - 1, 4):
+      result.addresses.incl(cast[uint32](addresses[i ..< i + 4].fromBinary()))
   except ValueError as e:
     panic("Failed to load the Wallet from the Database: " & e.msg)
   except BLSError as e:
@@ -224,7 +237,8 @@ proc newWalletDB*(
     result.put(MINER_KEY(), result.miner.privateKey.serialize())
     result.put(ACCOUNT_ZERO(), result.accountZero.serialize())
     result.put(CHAIN_CODE(), result.chainCode.serialize())
-    result.put(ADDRESS_COUNT(), 0.toBinary())
+    result.put(NEXT_ADDRESS_INDEX(), 0.toBinary())
+    result.put(ADDRESSES(), "")
 
   try:
     result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
@@ -280,60 +294,6 @@ proc getMnemonic*(
 ): string {.inline, forceCheck: [].} =
   $db.mnemonic
 
-#Set the Wallet.
-proc setWallet*(
-  db: WalletDB,
-  wallet: InsecureWallet,
-  datas: seq[Data]
-) {.forceCheck: [].} =
-  #Update the DB instance.
-  try:
-    db.miner = newMinerWallet(wallet.mnemonic.unlock(wallet.password)[0 ..< 32])
-  except BLSError as e:
-    panic("Couldn't create a MinerWallet out of a 32-byte secret: " & e.msg)
-  db.mnemonic = wallet.mnemonic
-  try:
-    let account: HDWallet = wallet.hd[0]
-    db.accountZero = account.publicKey
-    db.chainCode = account.chainCode
-  except ValueError as e:
-    panic("Unusable Wallet created and passed to setWallet: " & e.msg)
-
-  var items: seq[tuple[key: string, value: string]] = @[]
-
-  #Save the Mnemonic.
-  items.add((key: MNEMONIC(), value: $db.mnemonic))
-
-  #Save the miner.
-  items.add((key: MINER_KEY(), value: db.miner.privateKey.serialize()))
-
-  #Save the account key and chain code.
-  items.add((key: ACCOUNT_ZERO(), value: db.accountZero.serialize()))
-  items.add((key: CHAIN_CODE(), value: db.chainCode.serialize()))
-
-  #Set the Datas.
-  for data in datas:
-    items.add((key: DATA_TX(data.hash), value: data.serialize()))
-
-  #Update the Data tip.
-  if datas.len != 0:
-    items.add((key: DATA_TIP(), value: datas[0].hash.serialize()))
-  else:
-    items.add((key: DATA_TIP(), value: ""))
-
-  #Actually commit all of this.
-  db.put(items)
-
-#Set our miner's nick.
-proc setMinerNick*(
-  db: WalletDB,
-  nick: uint16
-) {.forceCheck: [].} =
-  db.miner.nick = nick
-  db.miner.initiated = true
-  db.put(MINER_KEY(), db.miner.privateKey.serialize())
-  db.put(MINER_NICK(), nick.toBinary())
-
 proc getAddress*(
   db: WalletDB,
   index: Option[uint32],
@@ -361,25 +321,167 @@ proc getAddress*(
       child = external.derivePublic(index.unsafeGet())
     except ValueError as e:
       raise e
+
+    #Explicitly track this address.
+    db.addresses.incl(index.unsafeGet())
+    try:
+      db.put(ADDRESSES(), db.get(ADDRESSES()) & index.unsafeGet().toBinary(INT_LEN))
+    except DBReadError:
+      db.put(ADDRESSES(), index.unsafeGet().toBinary(INT_LEN))
   else:
     try:
-      child = external.next(db.addresses)
+      child = external.next(db.nextIndex)
     except ValueError as e:
       raise e
 
     #This will return the same address we returned last time.
     #We want to do that UNLESS this address was used in the mean time.
-    while child.key.used:
+    #We also don't want to return this address if it was explicitly requested.
+    while child.key.used or db.addresses.contains(child.index):
+      #Track the used address.
+      if not db.addresses.contains(child.index):
+        db.addresses.incl(child.index)
+        try:
+          db.put(ADDRESSES(), db.get(ADDRESSES()) & child.index.toBinary(INT_LEN))
+        except DBReadError:
+          db.put(ADDRESSES(), child.index.toBinary(INT_LEN))
+
       try:
         child = external.next(child.index + 1)
       except ValueError as e:
         raise e
 
-    #Update the address count.
-    db.addresses = child.index
-    db.put(ADDRESS_COUNT(), db.addresses.toBinary())
+      #Update the index in use.
+      db.nextIndex = child.index
+      db.put(NEXT_ADDRESS_INDEX(), db.nextIndex.toBinary())
 
   result = newAddress(AddressType.PublicKey, child.key.serialize())
+
+#Set the Wallet.
+proc setWallet*(
+  db: WalletDB,
+  wallet: InsecureWallet,
+  datas: seq[Data],
+  used: proc (
+    key: EdPublicKey
+  ): bool {.gcsafe, raises: [].}
+) {.forceCheck: [].} =
+  #Update the DB instance.
+  try:
+    db.miner = newMinerWallet(wallet.mnemonic.unlock(wallet.password)[0 ..< 32])
+  except BLSError as e:
+    panic("Couldn't create a MinerWallet out of a 32-byte secret: " & e.msg)
+  db.mnemonic = wallet.mnemonic
+  try:
+    let account: HDWallet = wallet.hd[0]
+    db.accountZero = account.publicKey
+    db.chainCode = account.chainCode
+  except ValueError as e:
+    panic("Unusable Wallet created and passed to setWallet: " & e.msg)
+
+  var items: seq[tuple[key: string, value: string]] = @[]
+
+  #Save the Mnemonic.
+  items.add((key: MNEMONIC(), value: $db.mnemonic))
+
+  #Save the miner.
+  items.add((key: MINER_KEY(), value: db.miner.privateKey.serialize()))
+
+  #Save the account key and chain code.
+  items.add((key: ACCOUNT_ZERO(), value: db.accountZero.serialize()))
+  items.add((key: CHAIN_CODE(), value: db.chainCode.serialize()))
+
+  #Recover the addresses.
+  db.nextIndex = 0
+  db.addresses = initHashSet[uint32]()
+
+  var
+    lastUsedIndex: uint32 = 0
+    usedAny: bool = false
+    buffer: seq[string] = @[]
+    addressIndexes: seq[uint32] = @[]
+    flag: bool
+
+  proc discoveryUsed(
+    key: EdPublicKey
+  ): bool {.gcsafe, forceCheck: [].} =
+    if key.used:
+      usedAny = true
+      lastUsedIndex = db.nextIndex
+
+    #Return true the first time to get the next address.
+    result = flag
+    flag = false
+
+  block outer:
+    while true:
+      flag = true
+      try:
+        buffer.add(db.getAddress(none(uint32), discoveryUsed))
+      except ValueError as e:
+        panic("Tried to set a wallet which has billions of addresses used: " & e.msg)
+      addressIndexes.add(db.nextIndex)
+      if buffer.len > ADDRESS_DISCOVERY_THRESHOLD:
+        buffer.delete(0)
+        addressIndexes.delete(0)
+
+      #If the buffer is filled, and every address is used, break.
+      if buffer.len == ADDRESS_DISCOVERY_THRESHOLD:
+        for address in buffer:
+          try:
+            if newEdPublicKey(cast[string](address.getEncodedData().data)).used:
+              break
+            elif address == buffer[^1]:
+              break outer
+          except ValueError as e:
+            panic("getAddress returned an invalid address: " & e.msg)
+
+  if usedAny:
+    #Set the index to the index after the last used index.
+    try:
+      db.nextIndex = HDPublic(
+        key: db.accountZero,
+        chainCode: db.chainCode
+      ).derivePublic(1).next(lastUsedIndex).index
+
+      #Prune the last addresses as they're all unused.
+      for index in addressIndexes:
+        db.addresses.excl(index)
+    except ValueError as e:
+      panic("Could discover addresses yet couldn't get the next address: " & e.msg)
+  else:
+    db.nextIndex = 0
+    db.addresses = initHashSet[uint32]()
+
+  #Save the address data.
+  var addresses: string = ""
+  for address in db.addresses:
+    addresses &= address.toBinary(INT_LEN)
+  items.add((key: NEXT_ADDRESS_INDEX(), value: db.nextIndex.toBinary()))
+  items.add((key: ADDRESSES(), value: addresses))
+
+  #Set the Datas.
+  for data in datas:
+    items.add((key: DATA_TX(data.hash), value: data.serialize()))
+
+  #Update the Data tip.
+  if datas.len != 0:
+    items.add((key: DATA_TIP(), value: datas[0].hash.serialize()))
+  else:
+    items.add((key: DATA_TIP(), value: ""))
+
+  #Actually commit all of this.
+  db.put(items)
+
+#Set our miner's nick.
+proc setMinerNick*(
+  db: WalletDB,
+  nick: uint16
+) {.forceCheck: [].} =
+  db.miner.nick = nick
+  db.miner.initiated = true
+  db.put(MINER_KEY(), db.miner.privateKey.serialize())
+  db.put(MINER_NICK(), nick.toBinary())
 
 proc unlock(
   db: WalletDB,

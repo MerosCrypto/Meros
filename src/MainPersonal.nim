@@ -56,7 +56,14 @@ proc mainPersonal(
         panic("Couldn't get a Data chain from a discovered tip: " & e.msg)
 
     try:
-      db.setWallet(wallet, datas)
+      db.setWallet(
+        wallet,
+        datas,
+        proc (
+          key: EdPublicKey
+        ): bool {.gcsafe, forceCheck: [].} =
+          transactions[].loadIfKeyWasUsed(key)
+      )
     except ValueError as e:
       raise e
 

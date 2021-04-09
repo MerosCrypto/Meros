@@ -152,6 +152,25 @@ def DerivationTest(
     if rpc.call("personal", "getAddress", {"index": index}) != addr:
       raise TestError("Didn't get the correct address for this index.")
 
+  #Test if a specific address is requested, it won't come up naturally.
+  #This isn't explicitly required by the RPC spec, which has been worded carefully to leave this open ended.
+  #The only requirement is the address was never funded and the index is sequential (no moving backwards).
+  #The node offers this feature to try to make mixing implicit/explicit addresses safer, along with some internal benefits.
+  #That said, said internal benefits are minimal or questionable, hence why the RPC docs are open ended.
+  #This way we can decide differently in the future.
+  rpc.call("personal", "setWallet")
+  firstAddr: str = rpc.call("personal", "getAddress")
+  #Explicitly get the first address.
+  for i in range(256):
+    try:
+      rpc.call("personal", "getAddress", {"index": i})
+      break
+    except TestError:
+      if i == 255:
+        raise Exception("The first 256 address were invalid; this should be practically impossible.")
+  if firstAddr == rpc.call("personal", "getAddress"):
+    raise TestError("Explicitly grabbed address was naturally returned.")
+
   #Test error cases.
 
   #Mnemonic with an improper amount of entropy.

@@ -37,10 +37,10 @@ The result is a bool of true.
 
 ### `getAddress`
 
-`getAddress` replies with a newly generated address.
+`getAddress` replies with an address derived from the seed.
 
 Arguments:
-- `index` (int; optional): Defaults to the first unused index.
+- `index` (int; optional): Defaults to a sequential index for an address which has not received any funds.
 
 The result is a string of the generated address.
 
