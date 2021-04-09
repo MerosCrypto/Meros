@@ -17,7 +17,7 @@ def PersonalAuthorizationTest(
     "getAddress",
     #TODO "send",
     "data",
-    #TODO "getUTXOs",
+    "getUTXOs",
     #TODO "getTransactionTemplate"
   ]:
     try:

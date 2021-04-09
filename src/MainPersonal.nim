@@ -210,3 +210,6 @@ proc mainPersonal(
         panic("addData threw an Exception despite catching every Exception: " & e.msg)
 
     result = toAdd[0].hash
+
+  functions.personal.getUTXOs = proc (): seq[UsableInput] {.forceCheck: [].} =
+    db.getUTXOs(transactions)

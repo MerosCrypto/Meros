@@ -127,12 +127,14 @@ proc module*(
         except Exception as e:
           panic("personal.data threw an Exception despite catching all Exceptions: " & e.msg)
 
-      proc getUTXOs(
-        account: uint32
-      ): JSONNode {.requireAuth, forceCheck: [
-        JSONRPCError
-      ].} =
-        raise newJSONRPCError(ValueError, "personal_getUTXOs isn't implemented")
+      proc getUTXOs(): JSONNode {.requireAuth, forceCheck: [].} =
+        result = % []
+        for utxo in functions.personal.getUTXOs():
+          result.add(%* {
+            "address": utxo.address,
+            "hash": $utxo.hash,
+            "nonce": utxo.nonce
+          })
 
       proc getTransactionTemplate(
         outputs: seq[JSONNode],

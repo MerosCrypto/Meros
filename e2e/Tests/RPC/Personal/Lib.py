@@ -25,20 +25,19 @@ def getMnemonic(
       continue
     return res
 
-def getPrivateKey(
+def getIndex(
   mnemonic: str,
   password: str,
   skip: int
-) -> bytes:
+) -> int:
   seed: bytes = sha256(Bip39SeedGenerator(mnemonic).Generate(password)).digest()
 
   c: int = -1
   failures: int = 0
-  extendedKey: bytes = bytes()
   while skip != -1:
     c += 1
     try:
-      extendedKey = BIP32.derive(
+      BIP32.derive(
         seed,
         [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 1, c]
       )
@@ -53,7 +52,18 @@ def getPrivateKey(
         raise Exception("Invalid mnemonic passed to getPrivateKey.")
       continue
 
-  return extendedKey
+  return c
+
+def getPrivateKey(
+  mnemonic: str,
+  password: str,
+  skip: int
+) -> bytes:
+  seed: bytes = sha256(Bip39SeedGenerator(mnemonic).Generate(password)).digest()
+  return BIP32.derive(
+    seed,
+    [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 1, getIndex(mnemonic, password, skip)]
+  )
 
 def getAddress(
   mnemonic: str,

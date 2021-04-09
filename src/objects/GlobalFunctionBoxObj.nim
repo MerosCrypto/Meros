@@ -7,6 +7,8 @@ import chronos
 import ../lib/[Errors, Hash]
 import ../Wallet/[MinerWallet, Wallet]
 
+import ../Database/Filesystem/Wallet/WalletDB
+
 import ../Database/Merit/objects/[BlockHeaderObj, BlockObj]
 
 import ../Database/Consensus/objects/TransactionStatusObj
@@ -304,6 +306,8 @@ type
       data: string,
       password: string
     ): Future[Hash[256]] {.gcsafe.}
+
+    getUTXOs*: proc (): seq[UsableInput] {.gcsafe, raises: [].}
 
   NetworkFunctionBox* = ref object
     connect*: proc (

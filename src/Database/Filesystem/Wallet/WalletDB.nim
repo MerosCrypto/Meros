@@ -9,6 +9,7 @@ import ../../../Wallet/[MinerWallet, Wallet, Address]
 
 import ../../Transactions/objects/TransactionObj
 import ../../Transactions/Data as DataFile
+import ../../Transactions/objects/TransactionsObj
 
 import ../../Merit/objects/EpochsObj
 
@@ -91,6 +92,11 @@ type
       verified: Table[string, int]
 
       elementNonce: int
+
+  UsableInput* = object
+    address*: string
+    hash*: Hash[256]
+    nonce*: int
 
 const ADDRESS_DISCOVERY_THRESHOLD: int = 10
 
@@ -442,7 +448,7 @@ proc setWallet*(
       db.nextIndex = HDPublic(
         key: db.accountZero,
         chainCode: db.chainCode
-      ).derivePublic(1).next(lastUsedIndex).index
+      ).derivePublic(1).next(lastUsedIndex + 1).index
 
       #Prune the last addresses as they're all unused.
       for index in addressIndexes:
@@ -571,6 +577,51 @@ iterator loadDatasFromTip*(
     if data.inputs[0].hash == Hash[256]():
       done = true
     tip = data.inputs[0].hash
+
+proc getUTXOs*(
+  db: WalletDB,
+  transactions: ref Transactions
+): seq[UsableInput] {.forceCheck: [].} =
+  #Get the external chain.
+  var external: HDPublic
+  try:
+    external = HDPublic(
+      key: db.accountZero,
+      chainCode: db.chainCode
+    ).derivePublic(1)
+  except ValueError as e:
+    panic("WalletDB has an unusable Wallet: " & e.msg)
+
+  for address in db.addresses:
+    var child: HDPublic
+    try:
+      child = external.derivePublic(address)
+    except ValueError as e:
+      panic("WalletDB has an unusable address: " & e.msg)
+
+    for utxo in transactions[].getUTXOs(child.key):
+      result.add(UsableInput(
+        address: newAddress(AddressType.PublicKey, child.key.serialize()),
+        hash: utxo.hash,
+        nonce: utxo.nonce
+      ))
+
+  #Get the UTXOs for the current address which generally isn't part of db.addresses.
+  #There is one known edge case to this, where an implicitly returned address is then explicitly returned.
+  #This wider check is useful for guaranteeing a lack of duplication.
+  #Also, the above edge case is handled properly by the implicit indexing code.
+  if db.nextIndex notin db.addresses:
+    var child: HDPublic
+    try:
+      child = external.derivePublic(db.nextIndex)
+    except ValueError as e:
+      panic("WalletDB has an unusable address: " & e.msg)
+    for utxo in transactions[].getUTXOs(child.key):
+      result.add(UsableInput(
+        address: newAddress(AddressType.PublicKey, child.key.serialize()),
+        hash: utxo.hash,
+        nonce: utxo.nonce
+      ))
 
 #Mark that we're verifying a Transaction.
 #Assumes if the function completes, the input was used.

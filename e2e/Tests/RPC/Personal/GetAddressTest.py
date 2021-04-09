@@ -74,6 +74,14 @@ def GetAddressTest(
   if rpc.call("personal", "getAddress") != expected:
     raise TestError("getAddress didn't return the same address when there was a lack of usage.")
 
+  #Reboot the node and verify consistency around the initial address.
+  #Added due to an edge case that appeared.
+  rpc.quit()
+  sleep(3)
+  rpc.meros = Meros(rpc.meros.db, rpc.meros.tcp, rpc.meros.rpc)
+  if rpc.call("personal", "getAddress") != expected:
+    raise TestError("getAddress didn't return the initial address after a reboot.")
+
   #Send enough Blocks to have funds available to continue testing.
   vectors: Dict[str, Any]
   with open("e2e/Vectors/Transactions/ClaimedMint.json", "r") as file:

@@ -96,7 +96,8 @@ def reorgPast(
   heightToBeat = len(newMerit.blockchain.blocks)
   return newMerit
 
-#newerMintClaim and below are solely used by the reorg test.
+#blocksWithout... are solely used by the reorg test.
+#newerMintClaim is used by the reorg test and Personal's AddressRecovery test.
 #It may be best to split this out with a common parent generator.
 with open("e2e/Vectors/RPC/Transactions/GetUTXOs.json", "w") as vectors:
   vectors.write(json.dumps({
