@@ -44,11 +44,16 @@ class RPC:
 
     if result["jsonrpc"] != "2.0":
       raise TestError("Meros didn't respond with the \"jsonrpc\" field.")
-    if result["id"] != 0:
+
+    checkID: bool = True
+    if "error" in result:
+      #Don't check the ID if we had a parse error, as Meros uses an ID of null, as it should.
+      checkID = result["error"]["code"] != -32700
+      raise TestError(str(result["error"]["code"]) + " " + result["error"]["message"] + ".")
+
+    if checkID and (result["id"] != 0):
       raise TestError("Meros didn't respond with the correct ID.")
 
-    if "error" in result:
-      raise TestError(str(result["error"]["code"]) + " " + result["error"]["message"] + ".")
     return result["result"]
 
   def quit(
