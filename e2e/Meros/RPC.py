@@ -42,6 +42,11 @@ class RPC:
       raise TestError("HTTP status isn't 200: " + str(request.status_code))
     result: Dict[str, Any] = request.json()
 
+    if result["jsonrpc"] != "2.0":
+      raise TestError("Meros didn't respond with the \"jsonrpc\" field.")
+    if result["id"] != 0:
+      raise TestError("Meros didn't respond with the correct ID.")
+
     if "error" in result:
       raise TestError(str(result["error"]["code"]) + " " + result["error"]["message"] + ".")
     return result["result"]
