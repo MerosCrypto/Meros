@@ -39,7 +39,7 @@ def getIndex(
     try:
       BIP32.derive(
         seed,
-        [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 1, c]
+        [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 0, c]
       )
 
       #Since we derived a valid address, decrement skip.
@@ -62,28 +62,55 @@ def getPrivateKey(
   seed: bytes = sha256(Bip39SeedGenerator(mnemonic).Generate(password)).digest()
   return BIP32.derive(
     seed,
-    [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 1, getIndex(mnemonic, password, skip)]
+    [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 0, getIndex(mnemonic, password, skip)]
   )
+
+def getPublicKey(
+  mnemonic: str,
+  password: str,
+  skip: int
+) -> bytes:
+  return ed.encodepoint(
+    ed.scalarmult(ed.B, ed.decodeint(getPrivateKey(mnemonic, password, skip)[:32]) % ed.l)
+  )
+
+def getChangePublicKey(
+  mnemonic: str,
+  password: str,
+  skip: int
+) -> bytes:
+  seed: bytes = sha256(Bip39SeedGenerator(mnemonic).Generate(password)).digest()
+  extendedKey: bytes = bytes()
+
+  #Above's getIndex, yet utilizing the return value of derive
+  c: int = -1
+  failures: int = 0
+  while skip != -1:
+    c += 1
+    try:
+      extendedKey = BIP32.derive(
+        seed,
+        [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 1, c]
+      )
+
+      #Since we derived a valid address, decrement skip.
+      skip -= 1
+      failures = 0
+    except Exception:
+      #Safety check to prevent infinite execution.
+      failures += 1
+      if failures == 100:
+        raise Exception("Invalid mnemonic passed to getPrivateKey.")
+      continue
+
+  return ed.encodepoint(ed.scalarmult(ed.B, ed.decodeint(extendedKey[:32]) % ed.l))
 
 def getAddress(
   mnemonic: str,
   password: str,
   skip: int
 ) -> str:
-  return bech32_encode(
-    "mr",
-    convertbits(
-      (
-        bytes([0]) +
-        ed.encodepoint(
-          ed.scalarmult(ed.B, ed.decodeint(getPrivateKey(mnemonic, password, skip)[:32]) % ed.l)
-        )
-      ),
-      8,
-      5
-    )
-  )
-
+  return bech32_encode("mr", convertbits(bytes([0]) + getPublicKey(mnemonic, password, skip), 8, 5))
 
 def decodeAddress(
   address: str

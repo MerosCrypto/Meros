@@ -317,7 +317,7 @@ proc getAddress*(
     external = HDPublic(
       key: db.accountZero,
       chainCode: db.chainCode
-    ).derivePublic(1)
+    ).derivePublic(0)
   except ValueError as e:
     panic("WalletDB has an unusable Wallet: " & e.msg)
 
@@ -448,7 +448,7 @@ proc setWallet*(
       db.nextIndex = HDPublic(
         key: db.accountZero,
         chainCode: db.chainCode
-      ).derivePublic(1).next(lastUsedIndex + 1).index
+      ).derivePublic(0).next(lastUsedIndex + 1).index
 
       #Prune the last addresses as they're all unused.
       for index in addressIndexes:
@@ -516,7 +516,7 @@ proc stepData*(
     wallet: HDWallet
 
   try:
-    wallet = db.unlock(password).derive(1).first()
+    wallet = db.unlock(password).derive(0).first()
   except ValueError as e:
     raise e
 
@@ -588,7 +588,7 @@ proc getUTXOs*(
     external = HDPublic(
       key: db.accountZero,
       chainCode: db.chainCode
-    ).derivePublic(1)
+    ).derivePublic(0)
   except ValueError as e:
     panic("WalletDB has an unusable Wallet: " & e.msg)
 

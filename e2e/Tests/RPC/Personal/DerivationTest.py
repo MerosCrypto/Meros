@@ -136,7 +136,7 @@ def DerivationTest(
       try:
         key = BIP32.derive(
           sha256(Bip39SeedGenerator(mnemonic).Generate(password)).digest(),
-          [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 1, index]
+          [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 0, index]
         )
         break
       except Exception:
