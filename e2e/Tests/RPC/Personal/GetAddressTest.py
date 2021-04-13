@@ -197,13 +197,13 @@ def GetAddressTest(
     if rpc.call("personal", "getMnemonic") != mnemonic:
       raise TestError("getMnemonic didn't return the correct Mnemonic.")
 
-    #Existing values used to test getMnemonic/getMeritHolderKey/getMeritHolderNick/getAccountKey/getAddress consistency.
+    #Existing values used to test getMnemonic/getMeritHolderKey/getMeritHolderNick/getAccount/getAddress consistency.
     existing: Dict[str, Any] = {
       #Should be equal to the mnemonic variable, which is verified in a check above.
       "getMnemonic": rpc.call("personal", "getMnemonic"),
       "getMeritHolderKey": rpc.call("personal", "getMeritHolderKey"),
       "getMeritHolderNick": rpc.call("personal", "getMeritHolderNick"),
-      "getAccountKey": rpc.call("personal", "getAccountKey"),
+      "getAccount": rpc.call("personal", "getAccount"),
       #Should be equal to expected, which is also verified in a check above.
       "getAddress": rpc.call("personal", "getAddress")
     }

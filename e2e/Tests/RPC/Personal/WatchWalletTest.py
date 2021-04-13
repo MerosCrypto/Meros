@@ -3,8 +3,8 @@
 
 """
 Test:
-getAccountKey
-setAccountKey
+getAccount
+setAccount
 getTransactionTemplate
 
 Make sure the following still work:

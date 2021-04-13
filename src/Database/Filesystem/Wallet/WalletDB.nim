@@ -76,9 +76,9 @@ type
     mnemonic: Mnemonic
     miner*: MinerWallet
     accountZero*: EdPublicKey
-    chainCode: Hash[256]
+    chainCode*: Hash[256]
     nextIndex: uint32
-    addresses*: HashSet[uint32]
+    addresses: HashSet[uint32]
 
     when defined(merosTests):
       finalizedNonces*: int

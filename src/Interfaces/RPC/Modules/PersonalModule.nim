@@ -26,13 +26,13 @@ proc module*(
         except ValueError:
           raise newJSONRPCError(ValueError, "Invalid mnemonic or password")
 
-      proc setAccountKey(
-        account: uint32 = 0,
-        key: EdPublicKey
+      proc setAccount(
+        key: EdPublicKey,
+        chainCode: Hash[256]
       ) {.requireAuth, forceCheck: [
         JSONRPCError
       ].} =
-        raise newJSONRPCError(ValueError, "personal_setAccountKey isn't implemented")
+        raise newJSONRPCError(ValueError, "personal_setAccount isn't implemented")
 
       proc getMnemonic(): string {.requireAuth, forceCheck: [].} =
         functions.personal.getMnemonic()
@@ -49,8 +49,12 @@ proc module*(
         except IndexError:
           raise newJSONRPCError(IndexError, "Wallet doesn't have a Merit Holder nickname assigned")
 
-      proc getAccountKey(): string {.requireAuth, forceCheck: [].} =
-        $functions.personal.getAccountKey()
+      proc getAccount(): JSONNode {.requireAuth, forceCheck: [].} =
+        let data: tuple[key: EdPublicKey, chainCode: Hash[256]] = functions.personal.getAccount()
+        result = %* {
+          "key": $data.key,
+          "chainCode": $data.chainCode
+        }
 
       proc getAddress(
         index: Option[uint32] = none(uint32)

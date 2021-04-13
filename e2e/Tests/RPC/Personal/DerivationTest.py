@@ -1,4 +1,4 @@
-#Tests setWallet, getMnemonic, getMeritHolderKey, getMeritHolderNick's non-existent case, getAccountKey, and getAddress calls with specified indexes.
+#Tests setWallet, getMnemonic, getMeritHolderKey, getMeritHolderNick's non-existent case, getAccount, and getAddress calls with specified indexes.
 #Used to be part of one larger test with GetAddressTest.
 
 import os
@@ -18,7 +18,7 @@ from e2e.Meros.RPC import RPC
 from e2e.Tests.Errors import TestError
 from e2e.Tests.RPC.Personal.Lib import getMnemonic, getPrivateKey
 
-def verifyMnemonicAndAccountKey(
+def verifyMnemonicAndAccount(
   rpc: RPC,
   mnemonic: str = "",
   password: str = ""
@@ -52,8 +52,9 @@ def verifyMnemonicAndAccountKey(
 
   #Derive the first account.
   extendedKey: bytes
+  chainCode: bytes
   try:
-    extendedKey = BIP32.derive(
+    extendedKey, chainCode = BIP32.deriveKeyAndChainCode(
       seed,
       [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31)]
     )
@@ -64,13 +65,16 @@ def verifyMnemonicAndAccountKey(
   #It doesn't do it properly, and thinks encodepoint returns a string.
   #It returns bytes, which does have hex as a method.
   #pylint: disable=no-member
-  if ed.encodepoint(
-    ed.scalarmult(ed.B, ed.decodeint(extendedKey[:32]) % ed.l)
-  ).hex().upper() != rpc.call("personal", "getAccountKey"):
+  if rpc.call("personal", "getAccount") != {
+    "key": ed.encodepoint(
+      ed.scalarmult(ed.B, ed.decodeint(extendedKey[:32]) % ed.l)
+    ).hex().upper(),
+    "chainCode": chainCode.hex().upper()
+  }:
     #The Nim tests ensure accurate BIP 32 derivation thanks to vectors.
-    #That leaves BIP39/44 in the air.
+    #That leaves BIP 39/44 in the air.
     #This isn't technically true due to an ambiguity/the implementation we used the vectors of, yet it's true enough for this comment.
-    raise TestError("Meros generated a different parent public key.")
+    raise TestError("Meros generated a different account public key.")
 
   #Also test that the correct public key is used when creating Datas.
   #It should be the first public key of the external chain for account 0.
@@ -85,25 +89,26 @@ def verifyMnemonicAndAccountKey(
   if bytes.fromhex(rpc.call("transactions", "getTransaction", {"hash": data})["inputs"][0]["hash"]) != initial.hash:
     raise TestError("Meros used the wrong key to create the Data Transactions.")
 
+#pylint: disable=too-many-statements
 def DerivationTest(
   rpc: RPC
 ) -> None:
   #Start by testing BIP 32, 39, and 44 functionality in general.
   for _ in range(10):
     rpc.call("personal", "setWallet")
-    verifyMnemonicAndAccountKey(rpc)
+    verifyMnemonicAndAccount(rpc)
 
   #Set specific Mnemonics and ensure they're handled properly.
   for _ in range(10):
     mnemonic: str = getMnemonic()
     rpc.call("personal", "setWallet", {"mnemonic": mnemonic})
-    verifyMnemonicAndAccountKey(rpc, mnemonic)
+    verifyMnemonicAndAccount(rpc, mnemonic)
 
   #Create Mnemonics with passwords and ensure they're handled properly.
   for _ in range(10):
     password: str = os.urandom(32).hex()
     rpc.call("personal", "setWallet", {"password": password})
-    verifyMnemonicAndAccountKey(rpc, password=password)
+    verifyMnemonicAndAccount(rpc, password=password)
 
   #Set specific Mnemonics with passwords and ensure they're handled properly.
   for i in range(10):
@@ -113,9 +118,9 @@ def DerivationTest(
       password = "xyz"
     mnemonic: str = getMnemonic(password)
     rpc.call("personal", "setWallet", {"mnemonic": mnemonic, "password": password})
-    verifyMnemonicAndAccountKey(rpc, mnemonic, password)
+    verifyMnemonicAndAccount(rpc, mnemonic, password)
 
-  #setWallet, getMnemonic, getMeritHolderKey, getMeritHolderNick's non-existent case, and getAccountKey have now been tested.
+  #setWallet, getMnemonic, getMeritHolderKey, getMeritHolderNick's non-existent case, and getAccount have now been tested.
   #This leaves getAddress with specific indexes.
 
   #Clear the Wallet.

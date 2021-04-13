@@ -1,6 +1,6 @@
 #pylint: disable=invalid-name
 
-from typing import List
+from typing import List, Tuple
 import hashlib
 import hmac
 
@@ -14,10 +14,10 @@ def hmac512(
 ) -> bytes:
   return hmac.new(key, msg, hashlib.sha512).digest()
 
-def derive(
+def deriveKeyAndChainCode(
   secret: bytes,
   path: List[int]
-) -> bytes:
+) -> Tuple[bytes, bytes]:
   #Clamp the secret.
   k: bytes = ed.H(secret)
   kL: bytes = k[:32]
@@ -63,4 +63,12 @@ def derive(
 
     A = ed.encodepoint(ed.scalarmult(ed.B, ed.decodeint(kL)))
 
-  return k
+  return (k, c)
+
+def derive(
+  secret: bytes,
+  path: List[int]
+) -> bytes:
+  key: bytes
+  key, _ = deriveKeyAndChainCode(secret, path)
+  return key

@@ -282,7 +282,7 @@ type
 
     getMnemonic*: proc (): string {.gcsafe, raises: [].}
 
-    getAccountKey*: proc (): EdPublicKey {.gcsafe, raises: [].}
+    getAccount*: proc (): tuple[key: EdPublicKey, chainCode: Hash[256]] {.gcsafe, raises: [].}
 
     setWallet*: proc (
       mnemonic: string,

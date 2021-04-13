@@ -9,11 +9,11 @@ def PersonalAuthorizationTest(
   #The actual personal_data test should handle that check.
   for method in [
     "setWallet",
-    #TODO "setAccountKey",
+    #TODO "setAccount",
     "getMnemonic",
     "getMeritHolderKey",
     "getMeritHolderNick",
-    "getAccountKey",
+    "getAccount",
     "getAddress",
     #TODO "send",
     "data",

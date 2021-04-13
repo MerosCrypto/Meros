@@ -67,8 +67,8 @@ proc mainPersonal(
     except ValueError as e:
       raise e
 
-  functions.personal.getAccountKey = proc (): EdPublicKey {.forceCheck: [].} =
-    db.accountZero
+  functions.personal.getAccount = proc (): tuple[key: EdPublicKey, chainCode: Hash[256]] {.forceCheck: [].} =
+    (key: db.accountZero, chainCode: db.chainCode)
 
   functions.personal.getAddress = proc (
     index: Option[uint32]

@@ -10,12 +10,13 @@ Arguments:
 
 The result is a bool of true.
 
-### `setAccountKey`
+### `setAccount`
 
-`setAccountKey` deletes the existing Wallet on the node, in an irreversible manner, losing all access to the current Merit Holder and all funds. It sets the Wallet to track the specified account key, presumably one returned from `getAccountKey`. This will disable any operations requiring access to the private key, as well as all Merit Holder related operations. That said, this will preserve the functionality of address generation, `getTransactionTemplate`, and more, enabling Watch Wallet functionality.
+`setAccount` deletes the existing Wallet on the node, in an irreversible manner, losing all access to the current Merit Holder and all funds. It sets the Wallet to track the specified account, presumably one returned from `getAccount`. This will disable any operations requiring access to the private key, as well as all Merit Holder related operations. That said, this will preserve the functionality of address generation, `getTransactionTemplate`, and more, enabling Watch Wallet functionality.
 
 Arguments:
-- `key` (string): Account public key to use in accordance with BIP 44.
+- `key`       (string): Account public key to use in accordance with BIP 44.
+- `chainCode` (string): Chain code to use in accordance with BIP 32.
 
 The result is a bool of true.
 
@@ -31,9 +32,13 @@ The result is a bool of true.
 
 `getMeritHolderKey` replies with the nickname of the node's Merit Holder. The result is an int of the nickname.
 
-### `getAccountKey`
+### `getAccount`
 
-`getAccountKey` replies with the public key for the account being used from the node's HD Wallet. The result is a string of the public key.
+`getAccount` replies with the public key and chain code for the account being used from the node's HD Wallet.
+
+The result is an object, as follows:
+- `key`       (string)
+- `chainCode` (string)
 
 ### `getAddress`
 
