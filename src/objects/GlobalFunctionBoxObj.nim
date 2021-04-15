@@ -278,11 +278,21 @@ type
     ].}
 
   PersonalFunctionBox* = ref object
-    getMinerWallet*: proc(): MinerWallet {.gcsafe, raises: [].}
+    getMinerWallet*: proc(): MinerWallet {.gcsafe, raises: [
+      ValueError
+    ].}
 
-    getMnemonic*: proc (): string {.gcsafe, raises: [].}
+    getMnemonic*: proc (): string {.gcsafe, raises: [
+      ValueError
+    ].}
 
     getAccount*: proc (): tuple[key: EdPublicKey, chainCode: Hash[256]] {.gcsafe, raises: [].}
+
+    setAccount*: proc (
+      key: EdPublicKey,
+      chainCode: Hash[256],
+      clear: bool = false
+    ) {.gcsafe, raises: [].}
 
     setWallet*: proc (
       mnemonic: string,

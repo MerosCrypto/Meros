@@ -10,12 +10,14 @@ const
   LISTFILE: string = staticRead("WordLists/English.txt")
   LIST: seq[string] = LISTFILE.splitLines()
 
-type Mnemonic* = object
+type Mnemonic* = ref object
    entropy*: string
    checksum*: string
    sentence*: string
 
 proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
+  result = Mnemonic()
+
   #Create the entropy.
   result.entropy = newString(32)
   randomFill(result.entropy)
@@ -59,6 +61,8 @@ proc newMnemonic*(
 ): Mnemonic {.forceCheck: [
   ValueError
 ].} =
+  result = Mnemonic()
+
   #Split the sentence.
   var words: seq[string] = sentence.split(" ").filter(
     proc (

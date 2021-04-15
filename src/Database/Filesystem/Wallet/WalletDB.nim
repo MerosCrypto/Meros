@@ -224,8 +224,18 @@ proc newWalletDB*(
 
   #Load the Wallets.
   try:
-    result.mnemonic = newMnemonic(result.get(MNEMONIC()))
-    result.miner = newMinerWallet(result.get(MINER_KEY()))
+    let mnemonic: string = result.get(MNEMONIC())
+    if mnemonic == "":
+      result.mnemonic = nil
+    else:
+      result.mnemonic = newMnemonic(mnemonic)
+
+    let minerKey: string = result.get(MINER_KEY())
+    if minerKey == "":
+      result.miner = nil
+    else:
+      result.miner = newMinerWallet(minerKey)
+
     result.accountZero = newEdPublicKey(result.get(ACCOUNT_ZERO()))
     result.chainCode = result.get(CHAIN_CODE()).toHash[:256]()
     result.nextIndex = cast[uint32](result.get(NEXT_ADDRESS_INDEX()).fromBinary())
@@ -246,11 +256,12 @@ proc newWalletDB*(
     result.put(NEXT_ADDRESS_INDEX(), 0.toBinary())
     result.put(ADDRESSES(), "")
 
-  try:
-    result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
-    result.miner.initiated = true
-  except DBReadError:
-    discard
+  if not result.miner.isNil:
+    try:
+      result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
+      result.miner.initiated = true
+    except DBReadError:
+      discard
 
   #Load the input nonces.
   try:
@@ -297,16 +308,20 @@ proc close*(
 #Meant to encourage the non-usage of direct access by defining a getter returning its string form.
 proc getMnemonic*(
   db: WalletDB
-): string {.inline, forceCheck: [].} =
-  $db.mnemonic
+): string {.forceCheck: [
+  ValueError
+].} =
+  if db.mnemonic.isNil:
+    raise newException(ValueError, "This is a WatchWallet node; no Mnemonic is set.")
+  result = $db.mnemonic
 
-proc getAddress*(
+proc getPublicKey*(
   db: WalletDB,
   index: Option[uint32],
   used: proc (
     key: EdPublicKey
   ): bool {.gcsafe, raises: [].}
-): string {.forceCheck: [
+): EdPublicKey {.forceCheck: [
   ValueError
 ].} =
   var
@@ -361,37 +376,68 @@ proc getAddress*(
       db.nextIndex = child.index
       db.put(NEXT_ADDRESS_INDEX(), db.nextIndex.toBinary())
 
-  result = newAddress(AddressType.PublicKey, child.key.serialize())
+  result = child.key
 
-#Set the Wallet.
-proc setWallet*(
+proc getAddress*(
   db: WalletDB,
-  wallet: InsecureWallet,
-  datas: seq[Data],
+  index: Option[uint32],
   used: proc (
     key: EdPublicKey
   ): bool {.gcsafe, raises: [].}
+): string {.forceCheck: [
+  ValueError
+].} =
+  try:
+    result = newAddress(AddressType.PublicKey, db.getPublicKey(index, used).serialize())
+  except ValueError as e:
+    raise e
+
+#Clear the Miner and Mnemonic.
+proc clearPrivateKeys*(
+  db: WalletDB
 ) {.forceCheck: [].} =
-  #Update the DB instance.
+  db.miner = nil
+  db.mnemonic = nil
+
+#Set the Miner and Mnemonic.
+#Must have setAccount called after to commit it, not mention finishing update the RAM of the WalletDB.
+#Only currently valid as Meros is single threaded.
+proc setMinerAndMnemonic*(
+  db: WalletDB,
+  wallet: InsecureWallet
+) {.forceCheck: [].} =
   try:
     db.miner = newMinerWallet(wallet.mnemonic.unlock(wallet.password)[0 ..< 32])
   except BLSError as e:
     panic("Couldn't create a MinerWallet out of a 32-byte secret: " & e.msg)
   db.mnemonic = wallet.mnemonic
-  try:
-    let account: HDWallet = wallet.hd[0]
-    db.accountZero = account.publicKey
-    db.chainCode = account.chainCode
-  except ValueError as e:
-    panic("Unusable Wallet created and passed to setWallet: " & e.msg)
+
+#Set the account.
+proc setAccount*(
+  db: WalletDB,
+  key: EdPublicKey,
+  chainCode: Hash[256],
+  datas: seq[Data],
+  used: proc (
+    key: EdPublicKey
+  ): bool {.gcsafe, raises: [].}
+) {.forceCheck: [].} =
+  db.accountZero = key
+  db.chainCode = chainCode
 
   var items: seq[tuple[key: string, value: string]] = @[]
 
   #Save the Mnemonic.
-  items.add((key: MNEMONIC(), value: $db.mnemonic))
+  if db.mnemonic.isNil:
+    items.add((key: MNEMONIC(), value: ""))
+  else:
+    items.add((key: MNEMONIC(), value: $db.mnemonic))
 
   #Save the miner.
-  items.add((key: MINER_KEY(), value: db.miner.privateKey.serialize()))
+  if db.miner.isNil:
+    items.add((key: MINER_KEY(), value: ""))
+  else:
+    items.add((key: MINER_KEY(), value: db.miner.privateKey.serialize()))
 
   #Save the account key and chain code.
   items.add((key: ACCOUNT_ZERO(), value: db.accountZero.serialize()))
@@ -495,6 +541,8 @@ proc unlock(
 ): HDWallet {.forceCheck: [
   ValueError
 ].} =
+  if db.mnemonic.isNil:
+    raise newException(ValueError, "This is a WatchWallet node; no Mnemonic is set.")
   try:
     result = newHDWallet(SHA2_256(db.mnemonic.unlock(password)).serialize())[0]
     if result.publicKey != db.accountZero:

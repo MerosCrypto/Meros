@@ -29,16 +29,24 @@ proc module*(
       proc setAccount(
         key: EdPublicKey,
         chainCode: Hash[256]
-      ) {.requireAuth, forceCheck: [
+      ) {.requireAuth, forceCheck: [].} =
+        functions.personal.setAccount(key, chainCode, true)
+
+      proc getMnemonic(): string {.requireAuth, forceCheck: [
         JSONRPCError
       ].} =
-        raise newJSONRPCError(ValueError, "personal_setAccount isn't implemented")
+        try:
+          result = functions.personal.getMnemonic()
+        except ValueError:
+          raise newJSONRPCError(ValueError, "Node is running as a WatchWallet and has no Mnemonic")
 
-      proc getMnemonic(): string {.requireAuth, forceCheck: [].} =
-        functions.personal.getMnemonic()
-
-      proc getMeritHolderKey(): string {.requireAuth, forceCheck: [].} =
-        $functions.personal.getMinerWallet().privateKey
+      proc getMeritHolderKey(): string {.requireAuth, forceCheck: [
+        JSONRPCError
+      ].} =
+        try:
+          result = $functions.personal.getMinerWallet().privateKey
+        except ValueError:
+          raise newJSONRPCError(ValueError, "Node is running as a WatchWallet and has no Merit Holder")
 
       proc getMeritHolderNick(): uint16 {.requireAuth, forceCheck: [
         JSONRPCError
@@ -46,6 +54,8 @@ proc module*(
         try:
           #Not the most optimal path given how the WalletDB tracks the nick.
           result = functions.merit.getNickname(functions.personal.getMinerWallet().publicKey)
+        except ValueError:
+          raise newJSONRPCError(ValueError, "Node is running as a WatchWallet and has no Merit Holder")
         except IndexError:
           raise newJSONRPCError(IndexError, "Wallet doesn't have a Merit Holder nickname assigned")
 

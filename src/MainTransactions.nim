@@ -8,6 +8,10 @@ proc verify(
   consensus: ref Consensus,
   transaction: Transaction
 ) {.forceCheck: [], async.} =
+  #Make sure we're a Miner with Merit.
+  if wallet.miner.isNil or (not wallet.miner.initiated) or (merit.state.merit[wallet.miner.nick] == 0):
+    return
+
   #Grab the Transaction's status.
   var status: TransactionStatus
   try:
@@ -19,28 +23,26 @@ proc verify(
   if status.beaten:
     return
 
-  #Make sure we're a Miner with Merit.
-  if wallet.miner.initiated and (merit.state.merit[wallet.miner.nick] > 0):
-    #Inform the WalletDB were verifying a Transaction.
-    try:
-      wallet.verifyTransaction(transaction)
-    #We already verified a competitor.
-    except ValueError:
-      return
+  #Inform the WalletDB we're verifying a Transaction.
+  try:
+    wallet.verifyTransaction(transaction)
+  #We already verified a competitor.
+  except ValueError:
+    return
 
-    #Verify the Transaction.
-    var verif: SignedVerification = newSignedVerificationObj(transaction.hash)
-    wallet.miner.sign(verif)
+  #Verify the Transaction.
+  var verif: SignedVerification = newSignedVerificationObj(transaction.hash)
+  wallet.miner.sign(verif)
 
-    #Add the Verification, which calls broadcast.
-    try:
-      await functions.consensus.addSignedVerification(verif)
-    except ValueError as e:
-      panic("Created a Verification with an invalid signature: " & e.msg)
-    except DataExists as e:
-      panic("Created a Verification which already exists: " & e.msg)
-    except Exception as e:
-      panic("addSignedVerification threw an exception despite catching all errors: " & e.msg)
+  #Add the Verification, which calls broadcast.
+  try:
+    await functions.consensus.addSignedVerification(verif)
+  except ValueError as e:
+    panic("Created a Verification with an invalid signature: " & e.msg)
+  except DataExists as e:
+    panic("Created a Verification which already exists: " & e.msg)
+  except Exception as e:
+    panic("addSignedVerification threw an exception despite catching all errors: " & e.msg)
 
 proc syncPrevious(
   functions: GlobalFunctionBox,

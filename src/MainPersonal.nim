@@ -5,33 +5,35 @@ proc mainPersonal(
   functions: GlobalFunctionBox,
   transactions: ref Transactions
 ) {.forceCheck: [].} =
-  functions.personal.getMinerWallet = proc (): MinerWallet {.forceCheck: [].} =
-    db.miner
-
-  functions.personal.getMnemonic = proc (): string {.forceCheck: [].} =
-    db.getMnemonic()
-
-  functions.personal.setWallet = proc (
-    mnemonic: string,
-    password: string
-  ) {.forceCheck: [
+  functions.personal.getMinerWallet = proc (): MinerWallet {.forceCheck: [
     ValueError
   ].} =
-    var wallet: InsecureWallet
-    if mnemonic.len == 0:
-      wallet = newWallet(password)
-    else:
-      try:
-        wallet = newWallet(mnemonic, password)
-      except ValueError as e:
-        raise e
+    if db.miner.isNil:
+      raise newException(ValueError, "Meros is running as a WatchWallet and has no Merit Holder.")
+    result = db.miner
+
+  functions.personal.getMnemonic = proc (): string {.forceCheck: [
+    ValueError
+  ].} =
+    try:
+      result = db.getMnemonic()
+    except ValueError as e:
+      raise e
+
+  functions.personal.setAccount = proc (
+    key: EdPublicKey,
+    chainCode: Hash[256],
+    clear: bool = false
+  ) {.forceCheck: [].} =
+    if clear:
+      db.clearPrivateKeys()
 
     var datas: seq[Data]
     block handleDatas:
       #Start with the initial data, discovering spenders until the tip.
       var initial: Data
       try:
-        initial = newData(Hash[256](), wallet.hd[0].derive(1).first().publicKey.serialize())
+        initial = newData(Hash[256](), key.serialize())
       except ValueError as e:
         panic("Couldn't create an initial Data to discover a Data tip: " & e.msg)
       try:
@@ -55,17 +57,38 @@ proc mainPersonal(
       except IndexError as e:
         panic("Couldn't get a Data chain from a discovered tip: " & e.msg)
 
+    db.setAccount(
+      key,
+      chainCode,
+      datas,
+      proc (
+        key: EdPublicKey
+      ): bool {.gcsafe, forceCheck: [].} =
+        transactions[].loadIfKeyWasUsed(key)
+    )
+
+  functions.personal.setWallet = proc (
+    mnemonic: string,
+    password: string
+  ) {.forceCheck: [
+    ValueError
+  ].} =
+    var wallet: InsecureWallet
+    if mnemonic.len == 0:
+      wallet = newWallet(password)
+    else:
+      try:
+        wallet = newWallet(mnemonic, password)
+      except ValueError as e:
+        raise e
+
+    db.setMinerAndMnemonic(wallet)
+
     try:
-      db.setWallet(
-        wallet,
-        datas,
-        proc (
-          key: EdPublicKey
-        ): bool {.gcsafe, forceCheck: [].} =
-          transactions[].loadIfKeyWasUsed(key)
-      )
+      let account: HDWallet = wallet.hd[0]
+      functions.personal.setAccount(account.publicKey, account.chainCode)
     except ValueError as e:
-      raise e
+      panic("Account zero wasn't usable despite the above newWallet call making sure it was usable: " & e.msg)
 
   functions.personal.getAccount = proc (): tuple[key: EdPublicKey, chainCode: Hash[256]] {.forceCheck: [].} =
     (key: db.accountZero, chainCode: db.chainCode)

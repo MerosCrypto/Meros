@@ -5,7 +5,7 @@ from ../lib/Util import randomFill
 import BLS
 export BLS
 
-type MinerWallet* = object
+type MinerWallet* = ref object
   initiated*: bool
   privateKey*: BLSPrivateKey
   publicKey*: BLSPublicKey
