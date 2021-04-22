@@ -307,6 +307,18 @@ type
       ValueError
     ].}
 
+    getChangeKey*: proc (): EdPublicKey {.gcsafe, raises: [].}
+
+    getAddressChange*: proc (
+      key: EdPublicKey
+    ): bool {.gcsafe, raises: [].}
+
+    getAddressIndex*: proc (
+      key: EdPublicKey
+    ): uint32 {.gcsafe, raises: [
+      IndexError
+    ].}
+
     send*: proc (
       destination: string,
       amount: string

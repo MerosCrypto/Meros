@@ -109,6 +109,29 @@ proc mainPersonal(
     except ValueError as e:
       raise e
 
+  functions.personal.getChangeKey = proc (): EdPublicKey {.gcsafe, forceCheck: [].} =
+    db.getChangeKey(
+      proc (
+        key: EdPublicKey
+      ): bool {.gcsafe, forceCheck: [].} =
+        transactions[].loadIfKeyWasUsed(key)
+    )
+
+  functions.personal.getAddressChange = proc (
+    key: EdPublicKey
+  ): bool {.gcsafe, forceCheck: [].} =
+    db.getAddressChange(key)
+
+  functions.personal.getAddressIndex = proc (
+    key: EdPublicKey
+  ): uint32 {.gcsafe, forceCheck: [
+    IndexError
+  ].} =
+    try:
+      result = db.getAddressIndex(key)
+    except IndexError as e:
+      raise e
+
   functions.personal.send = proc (
     destinationArg: string,
     amountStr: string
@@ -118,7 +141,7 @@ proc mainPersonal(
   ], async.} =
     var
       #Wallet we're using.
-      child: HDWallet = db.wallet.external.first()
+      child: HDWallet #= db.wallet.external.first()
       #Spendable UTXOs.
       utxos: seq[FundedInput]
       destination: Address
@@ -134,7 +157,7 @@ proc mainPersonal(
     #Grab the UTXOs.
     utxos = transactions[].getUTXOs(child.publicKey)
     try:
-      amountOut = parseUInt(amountStr)
+      amountOut = parseBiggestUInt(amountStr)
     except ValueError as e:
       raise e
 

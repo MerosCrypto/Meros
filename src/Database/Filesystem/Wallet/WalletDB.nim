@@ -32,6 +32,19 @@ template CHAIN_CODE(): string =
 template NEXT_ADDRESS_INDEX(): string =
   "na"
 
+template CHANGE_INDEX(): string =
+  "c"
+
+template ADDRESS_CHANGE(
+  key: EdPublicKey
+): string =
+  "ac" & key.serialize()
+
+template ADDRESS_INDEX(
+  key: EdPublicKey
+): string =
+  "i" & key.serialize()
+
 template ADDRESSES(): string =
   "a"
 
@@ -78,6 +91,7 @@ type
     accountZero*: EdPublicKey
     chainCode*: Hash[256]
     nextIndex: uint32
+    changeIndex: uint32
     addresses: HashSet[uint32]
 
     when defined(merosTests):
@@ -94,9 +108,11 @@ type
       elementNonce: int
 
   UsableInput* = object
+    change*: bool
+    index*: uint32
+    key*: EdPublicKey
     address*: string
-    hash*: Hash[256]
-    nonce*: int
+    utxo*: FundedInput
 
 const ADDRESS_DISCOVERY_THRESHOLD: int = 10
 
@@ -206,6 +222,7 @@ proc newWalletDB*(
 
       mnemonic: newWallet("").mnemonic,
       nextIndex: 0,
+      changeIndex: 0,
       addresses: initHashSet[uint32](),
 
       finalizedNonces: 0,
@@ -239,6 +256,7 @@ proc newWalletDB*(
     result.accountZero = newEdPublicKey(result.get(ACCOUNT_ZERO()))
     result.chainCode = result.get(CHAIN_CODE()).toHash[:256]()
     result.nextIndex = cast[uint32](result.get(NEXT_ADDRESS_INDEX()).fromBinary())
+    result.changeIndex = cast[uint32](result.get(CHANGE_INDEX()).fromBinary())
 
     let addresses: string = result.get(ADDRESSES())
     result.addresses = initHashSet[uint32]()
@@ -254,6 +272,7 @@ proc newWalletDB*(
     result.put(ACCOUNT_ZERO(), result.accountZero.serialize())
     result.put(CHAIN_CODE(), result.chainCode.serialize())
     result.put(NEXT_ADDRESS_INDEX(), 0.toBinary())
+    result.put(CHANGE_INDEX(), 0.toBinary())
     result.put(ADDRESSES(), "")
 
   if not result.miner.isNil:
@@ -376,6 +395,7 @@ proc getPublicKey*(
       db.nextIndex = child.index
       db.put(NEXT_ADDRESS_INDEX(), db.nextIndex.toBinary())
 
+  db.put(ADDRESS_INDEX(child.key), child.index.toBinary())
   result = child.key
 
 proc getAddress*(
@@ -391,6 +411,63 @@ proc getAddress*(
     result = newAddress(AddressType.PublicKey, db.getPublicKey(index, used).serialize())
   except ValueError as e:
     raise e
+
+proc getChangeKey*(
+  db: WalletDB,
+  used: proc (
+    key: EdPublicKey
+  ): bool {.gcsafe, raises: [].}
+): EdPublicKey {.forceCheck: [].} =
+  var
+    internal: HDPublic
+    child: HDPublic
+  #Get the internal chain.
+  try:
+    internal = HDPublic(
+      key: db.accountZero,
+      chainCode: db.chainCode
+    ).derivePublic(1)
+  except ValueError as e:
+    panic("WalletDB has an unusable Wallet: " & e.msg)
+
+  #Get the child.
+  try:
+    child = internal.derivePublic(db.changeIndex)
+  except ValueError as e:
+    panic("Either first or last change index was invalid: " & e.msg)
+
+  while child.key.used:
+    inc(db.changeIndex)
+    try:
+      child = internal.derivePublic(db.changeIndex)
+    except ValueError:
+      continue
+
+  db.put(ADDRESS_CHANGE(child.key), "")
+  db.put(ADDRESS_INDEX(child.key), db.changeIndex.toBinary())
+  db.put(CHANGE_INDEX(), db.changeIndex.toBinary())
+  result = child.key
+
+proc getAddressChange*(
+  db: WalletDB,
+  key: EdPublicKey
+): bool {.forceCheck: [].} =
+  try:
+    discard db.get(ADDRESS_CHANGE(key))
+    return true
+  except DBReadError:
+    return false
+
+proc getAddressIndex*(
+  db: WalletDB,
+  key: EdPublicKey
+): uint32 {.forceCheck: [
+  IndexError
+].} =
+  try:
+    return cast[uint32](db.get(ADDRESS_INDEX(key)).fromBinary())
+  except DBReadError:
+    raise newLoggedException(IndexError, "Asked for the address index of an address which doesn't belong to this Wallet.")
 
 #Clear the Miner and Mnemonic.
 proc clearPrivateKeys*(
@@ -472,7 +549,14 @@ proc setAccount*(
         buffer.add(db.getAddress(none(uint32), discoveryUsed))
       except ValueError as e:
         panic("Tried to set a wallet which has billions of addresses used: " & e.msg)
+      try:
+        items.add((ADDRESS_INDEX(newEdPublicKey(cast[string](buffer[^1].getEncodedData().data))), db.nextIndex.toBinary()))
+      except ValueError as e:
+        panic("Generated an invalid address: " & e.msg)
+
       addressIndexes.add(db.nextIndex)
+      #If the buffer has overflown, remove the oldest entry.
+      #Moving to a queue would be optimal.
       if buffer.len > ADDRESS_DISCOVERY_THRESHOLD:
         buffer.delete(0)
         addressIndexes.delete(0)
@@ -511,6 +595,24 @@ proc setAccount*(
     addresses &= address.toBinary(INT_LEN)
   items.add((key: NEXT_ADDRESS_INDEX(), value: db.nextIndex.toBinary()))
   items.add((key: ADDRESSES(), value: addresses))
+
+  #Also recover the change index. Thankfully, this is a much simpler algorithm.
+  db.changeIndex = 0
+  while true:
+    try:
+      let key: EdPublicKey = HDPublic(
+        key: db.accountZero,
+        chainCode: db.chainCode
+      ).derivePublic(0).next(db.changeIndex).key
+      if not key.used:
+        break
+      items.add((ADDRESS_CHANGE(key), ""))
+      items.add((ADDRESS_INDEX(key), db.changeIndex.toBinary()))
+    #An unusable key and a used key are the same here.
+    except ValueError:
+      discard
+    inc(db.changeIndex)
+  items.add((CHANGE_INDEX(), db.changeIndex.toBinary()))
 
   #Set the Datas.
   for data in datas:
@@ -630,9 +732,16 @@ proc getUTXOs*(
   db: WalletDB,
   transactions: ref Transactions
 ): seq[UsableInput] {.forceCheck: [].} =
-  #Get the external chain.
-  var external: HDPublic
+  #Get both chains.
+  var
+    internal: HDPublic
+    external: HDPublic
   try:
+    internal = HDPublic(
+      key: db.accountZero,
+      chainCode: db.chainCode
+    ).derivePublic(1)
+
     external = HDPublic(
       key: db.accountZero,
       chainCode: db.chainCode
@@ -649,9 +758,11 @@ proc getUTXOs*(
 
     for utxo in transactions[].getUTXOs(child.key):
       result.add(UsableInput(
+        change: false,
+        index: address,
+        key: child.key,
         address: newAddress(AddressType.PublicKey, child.key.serialize()),
-        hash: utxo.hash,
-        nonce: utxo.nonce
+        utxo: utxo
       ))
 
   #Get the UTXOs for the current address which generally isn't part of db.addresses.
@@ -666,9 +777,29 @@ proc getUTXOs*(
       panic("WalletDB has an unusable address: " & e.msg)
     for utxo in transactions[].getUTXOs(child.key):
       result.add(UsableInput(
+        change: false,
+        index: db.nextIndex,
+        key: child.key,
         address: newAddress(AddressType.PublicKey, child.key.serialize()),
-        hash: utxo.hash,
-        nonce: utxo.nonce
+        utxo: utxo,
+      ))
+
+  #Get change UTXOs.
+  #Inclusive in order to support change addresses which have been used, yet we haven't since called getChangeKey.
+  for address in 0 .. db.changeIndex:
+    var child: HDPublic
+    try:
+      child = internal.derivePublic(address)
+    except ValueError:
+      continue
+
+    for utxo in transactions[].getUTXOs(child.key):
+      result.add(UsableInput(
+        change: true,
+        index: address,
+        key: child.key,
+        address: newAddress(AddressType.PublicKey, child.key.serialize()),
+        utxo: utxo
       ))
 
 #Mark that we're verifying a Transaction.
