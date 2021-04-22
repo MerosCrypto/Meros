@@ -7,21 +7,18 @@ import ../Fuzzed
 suite "Ed25519":
   setup:
     var keys: seq[EdPublicKey] = @[
-      #Private Key 5234E072EAE6E27E31A2C615278992383E4DEACB262A0D61ECF31030BE63B004.
-      newEdPublicKey(parseHexStr("84C55D653C6AFC1FAC7FCF98501ADE2702A905E9D374780408576268CEB44C06")),
-      #Private Key 388C3C3E2E253FD1CE38ED9566989CEFEA4A7928414A9FC148409F709505170D.
-      newEdPublicKey(parseHexStr("CCE542F0E500C85088E9A253946D7EF5DD0867B7655B79EA3919B46CE6346128"))
+      newEdPublicKey(parseHexStr("0210EEDF740C1EFD7727BE80458ECA7D171EDD1CDCA77A97A9DBE8B7BDCDF28B")),
+      newEdPublicKey(parseHexStr("91841823E21F80D0514027DA146888DE26A37FD5FC41E8632CC91414602E2F9F"))
     ]
 
   noFuzzTest "Aggregate.":
-    check keys.aggregate() == newEdPublicKey(parseHexStr("58E6AF7B9C4FC89380CC84B4D478725A39A05EC9B3F2BE2E149EDD5C857B7371"))
+    check keys.aggregate() == newEdPublicKey(parseHexStr("F19E50A37AB431A12E2DB0E1214A40D7845A1551FFAB50A0D7D25BC5D1E72AFC"))
 
-  noFuzzTest "Verify.":
-    check keys.aggregate().verify(
-      "test",
-      newEdSignature(
-        parseHexStr(
-          "F529B567F152BD037A8EFD0BE58F0D1864E642E2FDA9FD1074A8F2D22B2387404E144C02DE18CCF984D354339928AF63DFDED2518FEF32FC2C0F376A607A250D"
-        )
-      )
-    )
+  noFuzzTest "Doesn't aggregate a single key.":
+    check @[keys[0]].aggregate() == keys[0]
+
+  noFuzzTest "Doesn't aggregate the same key.":
+    check @[keys[0], keys[0]].aggregate() == keys[0]
+
+  noFuzzTest "Does aggregate the same key with other keys.":
+    check @[keys[0], keys[1], keys[0]].aggregate() == newEdPublicKey(parseHexStr("63408405F1D65043158A56B48C849A865AAAF6D8E7D0CE3A67C623D32E634019"))

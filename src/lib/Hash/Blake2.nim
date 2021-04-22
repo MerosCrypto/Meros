@@ -27,42 +27,36 @@ proc finalize(
 ): cint {.importc: "blake2b_final".}
 {.pop.}
 
-proc Blake2_64*(
+proc Blake[bits: static int](
   bytes: string
-): uint64 {.forceCheck: [].} =
+): Hash[bits] {.forceCheck: [].} =
   var
     dataPtr: ptr char
     state: ptr Blake2bState = cast[ptr Blake2bState](alloc0(sizeof(Blake2bState)))
   if bytes.len != 0:
     dataPtr = unsafeAddr bytes[0]
 
-  if state.init(8) != 0:
-    panic("Failed to init an 8-byte Blake2b State.")
+  if state.init(bits div 8) != 0:
+    panic("Failed to init a " & $(bits div 8) & "-byte Blake2b State.")
   if state.update(dataPtr, bytes.len) != 0:
     panic("Failed to update a Blake2b State.")
 
-  var hash: string = newString(8)
-  if state.finalize(unsafeAddr hash[0], 8) != 0:
+  if state.finalize(addr result.data[0], bits div 8) != 0:
     panic("Failed to finalize a Blake2b State.")
-  result = uint64(hash.fromBinary())
 
   dealloc(state)
+
+proc Blake2_64*(
+  bytes: string
+): uint64 {.inline, forceCheck: [].} =
+  uint64(Blake[64](bytes).serialize().fromBinary())
 
 proc Blake2_256*(
   bytes: string
-): Hash[256] {.forceCheck: [].} =
-  var
-    dataPtr: ptr char
-    state: ptr Blake2bState = cast[ptr Blake2bState](alloc0(sizeof(Blake2bState)))
-  if bytes.len != 0:
-    dataPtr = unsafeAddr bytes[0]
+): Hash[256] {.inline, forceCheck: [].} =
+  Blake[256](bytes)
 
-  if state.init(32) != 0:
-    panic("Failed to init a 32-byte Blake2b State.")
-  if state.update(dataPtr, bytes.len) != 0:
-    panic("Failed to update a Blake2b State.")
-
-  if state.finalize(addr result.data[0], 32) != 0:
-    panic("Failed to finalize a Blake2b State.")
-
-  dealloc(state)
+proc Blake2_512*(
+  bytes: string
+): Hash[512] {.inline, forceCheck: [].} =
+  Blake[512](bytes)

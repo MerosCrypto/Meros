@@ -7,11 +7,18 @@ export HashCommon, Blake2, SHA2, Argon, RandomX
 
 template Blake64*(
   input: string
-): uint64 = Blake2_64(input)
+): uint64 =
+  Blake2_64(input)
 
 template Blake256*(
   input: string
-): HashCommon.Hash[256] = Blake2_256(input)
+): HashCommon.Hash[256] =
+  Blake2_256(input)
+
+template Blake512*(
+  input: string
+): HashCommon.Hash[512] =
+  Blake2_512(input)
 
 proc hash*[L](
   hash: HashCommon.Hash[L]

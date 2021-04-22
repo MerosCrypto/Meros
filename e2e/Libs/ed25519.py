@@ -96,6 +96,11 @@ def Hint(
 ) -> int:
   return int.from_bytes(H(m), "little") % l
 
+def Bint(
+  m: bytes
+) -> int:
+  return int.from_bytes(hashlib.blake2b(m).digest(), "little") % l
+
 def sign(
   msg: bytes,
   secret: bytes
@@ -150,3 +155,24 @@ def verify(
   S: int = decodeint(s[(b // 8) : (b // 4)])
   h: int = Hint(encodepoint(R) + pk + m)
   return scalarmult(B, S) == edwards(R, scalarmult(A, h))
+
+#Aggregate Ed25519 public keys for usage with MuSig.
+def aggregate(
+  keys: List[bytes]
+) -> bytes:
+  #Single key/no different keys.
+  if len(set(keys)) == 1:
+    return keys[0]
+
+  L: bytes = b""
+  for key in keys:
+    L = L + key
+  L = hashlib.blake2b(L).digest()
+
+  res: List[int] = []
+  for key in keys:
+    if len(res) == 0:
+      res = scalarmult(decodepoint(key), Bint(b"agg" + L + key))
+    else:
+      res = edwards(res, scalarmult(decodepoint(key), Bint(b"agg" + L + key)))
+  return encodepoint(res)

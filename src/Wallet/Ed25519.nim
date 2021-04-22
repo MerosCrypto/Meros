@@ -111,15 +111,20 @@ func `$`*(
 
 #Aggregate Public Keys for MuSig.
 proc aggregate*(
-  keys: var seq[EdPublicKey]
+  keys: seq[EdPublicKey]
 ): EdPublicKey {.forceCheck: [].} =
-  if keys.len == 1:
+  #Check if this is a single key. If so, return it alone.
+  var uniqueKeys: seq[EdPublicKey] = @[]
+  for key in keys:
+    if key notin uniqueKeys:
+      uniqueKeys.add(key)
+  if uniqueKeys.len == 1:
     return keys[0]
 
   var
     bytes: string
-    l: Hash.Hash[256]
-    keyHash: Hash.Hash[256]
+    l: Hash.Hash[512]
+    keyHash: Hash.Hash[512]
     keyPoint: Point3
     a: Point2
     tempRes: PointP1P1
@@ -128,16 +133,15 @@ proc aggregate*(
 
   for key in keys:
     bytes &= key.serialize()
-  l = SHA2_256(bytes)
+  l = Blake512(bytes)
   bytes = newString(64)
 
   for k in 0 ..< keys.len:
-    keyHash = SHA2_256(l.serialize() & keys[k].serialize())
-    copyMem(addr bytes[0], addr keyHash.data[0], 32)
-    reduceScalar(cast[ptr cuchar](addr bytes[0]))
-    copyMem(addr keyHash.data[0], addr bytes[0], 32)
+    keyHash = Blake512("agg" & l.serialize() & keys[k].serialize())
+    reduceScalar(cast[ptr cuchar](addr keyHash.data[0]))
 
-    keyToNegativePoint(addr keyPoint, addr keys[k].data[0])
+    var key: EdPublicKey = keys[k]
+    keyToNegativePoint(addr keyPoint, addr key.data[0])
     serialize(addr bytes[0], addr keyPoint)
     keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
 

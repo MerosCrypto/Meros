@@ -47,7 +47,7 @@ Send Transactions have the following additional field:
 - signature: Ed25519 Signature.
 - proof: Work that proves this isn't spam.
 
-Every Send must have at least 1 input. Every Send input must be either a Claim or a Send, where the specified output is to the sender. If the specified outputs are to different keys, the sender is the MuSig Public Key created out of the unique keys.
+Every Send must have at least 1 input. Every Send input must be either a Claim or a Send, where the specified output is to the sender. If the outputs used as inputs are to different keys, the sender is the MuSig Public Key created from them, where `H` is Blake2b-512, `L` is `H(keys)` instead of `keys`, and `Hagg` is `H` with a prefixed domain separation tag of "agg".
 
 Every output's key must be an Ed25519 Public Key. The specified key does not need to be a valid Ed25519 Public Key. The output's amount must be non-zero.
 
