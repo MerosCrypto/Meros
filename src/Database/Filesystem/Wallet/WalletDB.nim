@@ -107,9 +107,12 @@ type
 
       elementNonce: int
 
-  UsableInput* = object
+  KeyIndex* = object
     change*: bool
     index*: uint32
+
+  UsableInput* = object
+    index*: KeyIndex
     key*: EdPublicKey
     address*: string
     utxo*: FundedInput
@@ -448,24 +451,24 @@ proc getChangeKey*(
   db.put(CHANGE_INDEX(), db.changeIndex.toBinary())
   result = child.key
 
-proc getAddressChange*(
+proc getKeyIndex*(
   db: WalletDB,
   key: EdPublicKey
-): bool {.forceCheck: [].} =
-  try:
-    discard db.get(ADDRESS_CHANGE(key))
-    return true
-  except DBReadError:
-    return false
-
-proc getAddressIndex*(
-  db: WalletDB,
-  key: EdPublicKey
-): uint32 {.forceCheck: [
+): KeyIndex {.forceCheck: [
   IndexError
 ].} =
+  var change: bool
   try:
-    return cast[uint32](db.get(ADDRESS_INDEX(key)).fromBinary())
+    discard db.get(ADDRESS_CHANGE(key))
+    change = true
+  except DBReadError:
+    change = false
+
+  try:
+    return KeyIndex(
+      change: change,
+      index: cast[uint32](db.get(ADDRESS_INDEX(key)).fromBinary())
+    )
   except DBReadError:
     raise newLoggedException(IndexError, "Asked for the address index of an address which doesn't belong to this Wallet.")
 
@@ -758,8 +761,10 @@ proc getUTXOs*(
 
     for utxo in transactions[].getUTXOs(child.key):
       result.add(UsableInput(
-        change: false,
-        index: address,
+        index: KeyIndex(
+          change: false,
+          index: address
+        ),
         key: child.key,
         address: newAddress(AddressType.PublicKey, child.key.serialize()),
         utxo: utxo
@@ -777,8 +782,10 @@ proc getUTXOs*(
       panic("WalletDB has an unusable address: " & e.msg)
     for utxo in transactions[].getUTXOs(child.key):
       result.add(UsableInput(
-        change: false,
-        index: db.nextIndex,
+        index: KeyIndex(
+          change: false,
+          index: db.nextIndex
+        ),
         key: child.key,
         address: newAddress(AddressType.PublicKey, child.key.serialize()),
         utxo: utxo,
@@ -795,8 +802,10 @@ proc getUTXOs*(
 
     for utxo in transactions[].getUTXOs(child.key):
       result.add(UsableInput(
-        change: true,
-        index: address,
+        index: KeyIndex(
+          change: true,
+          index: address
+        ),
         key: child.key,
         address: newAddress(AddressType.PublicKey, child.key.serialize()),
         utxo: utxo

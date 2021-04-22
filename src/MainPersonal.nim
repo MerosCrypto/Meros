@@ -117,18 +117,13 @@ proc mainPersonal(
         transactions[].loadIfKeyWasUsed(key)
     )
 
-  functions.personal.getAddressChange = proc (
+  functions.personal.getKeyIndex = proc (
     key: EdPublicKey
-  ): bool {.gcsafe, forceCheck: [].} =
-    db.getAddressChange(key)
-
-  functions.personal.getAddressIndex = proc (
-    key: EdPublicKey
-  ): uint32 {.gcsafe, forceCheck: [
+  ): KeyIndex {.gcsafe, forceCheck: [
     IndexError
   ].} =
     try:
-      result = db.getAddressIndex(key)
+      result = db.getKeyIndex(key)
     except IndexError as e:
       raise e
 

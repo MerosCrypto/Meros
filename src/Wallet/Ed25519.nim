@@ -197,6 +197,10 @@ proc aggregate*(
     var key: EdPrivateKey = keys[k]
     mulAdd(cast[ptr cuchar](addr res[0]), addr key.data[0], cast[ptr cuchar](addr As[k].data[0]), cast[ptr cuchar](addr res[0]))
 
+  #Traditional secret key expansion would be H512(secret), with the left half mod l.
+  #We have a scalar, not a secret. In response, H512(scalar). Then, the scalar is the left half already.
+  #This leaves us with just the right half left, which is still the right half of the H512 result.
+  #We could also call urandom, which wouldn't be deterministic, or call H256 and just use that.
   var expanded: Hash.Hash[512] = Blake512(res)
   copyMem(addr result.data[0], addr res[0], 32)
   copyMem(addr result.data[32], addr expanded.data[32], 32)
