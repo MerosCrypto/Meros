@@ -109,37 +109,50 @@ func `$`*(
 ): string {.inline, forceCheck: [].} =
   data.serialize().toHex()
 
-#Aggregate Public Keys for MuSig.
-proc aggregate*(
-  keys: seq[EdPublicKey]
-): EdPublicKey {.forceCheck: [].} =
-  #Check if this is a single key. If so, return it alone.
+proc hasMultipleKeys*(
+  keys: seq[EdPrivateKey or EdPublicKey]
+): bool {.forceCheck: [].} =
+  #Check if this is a single key. If so, return false.
   var uniqueKeys: seq[EdPublicKey] = @[]
   for key in keys:
     if key notin uniqueKeys:
       uniqueKeys.add(key)
-  if uniqueKeys.len == 1:
+  return uniqueKeys.len != 1
+
+#Generates the `a` value to use for each key.
+#Returns a Hash[512] as we don't have a good scalar type and the datas already in a Hash[512].
+#The EdPrivateKey type, which is effectively a scalar, mirrors Hash[256]'s instantiated type definition.
+#While this would save 32-bytes, it'll be pushed off the stack soon enough.
+#Internally, pointers to raw bytes are used anyways.
+proc generateAs(
+  keys: seq[EdPublicKey]
+): seq[Hash.Hash[512]] {.forceCheck: [].} =
+  var L: string = ""
+  for key in keys:
+    L &= key.serialize()
+  L = Blake512(L).serialize()
+
+  for key in keys:
+    result.add(Blake512("agg" & L & key.serialize()))
+    reduceScalar(cast[ptr cuchar](addr result[^1].data[0]))
+
+#Aggregate Public Keys for MuSig.
+proc aggregate*(
+  keys: seq[EdPublicKey]
+): EdPublicKey {.forceCheck: [].} =
+  if not keys.hasMultipleKeys:
     return keys[0]
 
   var
-    bytes: string
-    l: Hash.Hash[512]
-    keyHash: Hash.Hash[512]
+    As: seq[Hash.Hash[512]] = keys.generateAs()
     keyPoint: Point3
-    a: Point2
+    bytes: string = newString(64)
+    p2: Point2
     tempRes: PointP1P1
     tempCached: PointCached
     res: Point3
 
-  for key in keys:
-    bytes &= key.serialize()
-  l = Blake512(bytes)
-  bytes = newString(64)
-
   for k in 0 ..< keys.len:
-    keyHash = Blake512("agg" & l.serialize() & keys[k].serialize())
-    reduceScalar(cast[ptr cuchar](addr keyHash.data[0]))
-
     var key: EdPublicKey = keys[k]
     keyToNegativePoint(addr keyPoint, addr key.data[0])
     serialize(addr bytes[0], addr keyPoint)
@@ -147,13 +160,13 @@ proc aggregate*(
 
     var blankScalar: array[32, cuchar]
     multiplyScalar(
-      addr a,
-      cast[ptr cuchar](addr keyHash.data[0]),
+      addr p2,
+      cast[ptr cuchar](addr As[k].data[0]),
       addr keyPoint,
       addr blankScalar[0]
     )
 
-    serialize(addr bytes[0], addr a)
+    serialize(addr bytes[0], addr p2)
     keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
     serialize(addr bytes[0], addr keyPoint)
     keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
@@ -167,9 +180,30 @@ proc aggregate*(
 
   serialize(addr result.data[0], addr res)
 
+#Private key aggregation to create a private key matching the MuSig public key aggregation.
+#Insecure in the scope of MuSig as it is solely meant to be used by internally known private keys.
+#Not even close to what MuSig does.
+proc aggregate*(
+  keys: seq[EdPrivateKey]
+): EdPrivateKey {.forceCheck: [].} =
+  var pubKeys: seq[EdPublicKey] = @[]
+  for key in keys:
+    pubKeys.add(key.toPublicKey())
+
+  var
+    As: seq[Hash.Hash[512]] = generateAs(pubKeys)
+    res: string = newString(32)
+  for k in 0 ..< keys.len:
+    var key: EdPrivateKey = keys[k]
+    mulAdd(cast[ptr cuchar](addr res[0]), addr key.data[0], cast[ptr cuchar](addr As[k].data[0]), cast[ptr cuchar](addr res[0]))
+
+  var expanded: Hash.Hash[512] = Blake512(res)
+  copyMem(addr result.data[0], addr res[0], 32)
+  copyMem(addr result.data[32], addr expanded.data[32], 32)
+
 proc hash*(
   key: EdPublicKey
-): hashes.Hash {.inline, forceCheck: [].} =
+): hashes.Hash {.forceCheck: [].} =
   for b in key.data:
     result = result !& int(b)
   result = !$ result

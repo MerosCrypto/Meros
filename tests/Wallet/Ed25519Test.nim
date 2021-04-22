@@ -1,6 +1,7 @@
 import strutils
 
 import ../../src/Wallet/Ed25519
+import ../../src/Wallet/Wallet
 
 import ../Fuzzed
 
@@ -22,3 +23,9 @@ suite "Ed25519":
 
   noFuzzTest "Does aggregate the same key with other keys.":
     check @[keys[0], keys[1], keys[0]].aggregate() == newEdPublicKey(parseHexStr("63408405F1D65043158A56B48C849A865AAAF6D8E7D0CE3A67C623D32E634019"))
+
+  noFuzzTest "Can create the private key for an aggregated public key.":
+    let
+      a: EdPrivateKey = newWallet("").hd.privateKey
+      b: EdPrivateKey = newWallet("").hd.privateKey
+    check @[a, b].aggregate().toPublicKey() == @[a.toPublicKey(), b.toPublicKey()].aggregate()
