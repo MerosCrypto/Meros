@@ -291,6 +291,8 @@ proc readHTTP*(
               break thisReq
             try:
               contentLength = int(parseUInt(parts[1]))
+              if $contentLength != parts[1]:
+                raise newException(ValueError, "")
             except ValueError:
               HTTP_STATUS(400)
               break thisReq

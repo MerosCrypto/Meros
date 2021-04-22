@@ -353,11 +353,14 @@ proc removeFromSpendable(
   except DBReadError:
     return
 
-  #Remove the specified output.
-  for o in countup(0, spendable.len - 1, 33):
+  #Remove all occurrences of the specified output.
+  var o: int = 0
+  while o < spendable.len:
     if spendable[o ..< o + 33] == output:
-      db.put(SPENDABLE(key), spendable[0 ..< o] & spendable[o + 33 ..< spendable.len])
-      break
+      spendable = spendable[0 ..< o] & spendable[o + 33 ..< spendable.len]
+      continue
+    o += 33
+  db.put(SPENDABLE(key), spendable)
 
 #Add the Transaction's outputs to spendable while removing spent inputs.
 proc verify*(
