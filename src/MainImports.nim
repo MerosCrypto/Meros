@@ -4,7 +4,7 @@ when not defined(nogui):
   import threadpool
 
 import options
-import sequtils
+import sequtils, strutils
 import sets, tables
 import json
 

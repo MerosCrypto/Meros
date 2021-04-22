@@ -275,7 +275,7 @@ proc mainMerit(
 
     #If this header had a new miner, check if it was us.
     if newBlock.header.newMiner:
-      if newBlock.header.minerKey == wallet.miner.publicKey:
+      if (not wallet.miner.isNil) and (newBlock.header.minerKey == wallet.miner.publicKey):
         wallet.setMinerNick(uint16(merit.state.holders.len - 1))
 
     logDebug "Minting Meros", hash = newBlock.header.hash
