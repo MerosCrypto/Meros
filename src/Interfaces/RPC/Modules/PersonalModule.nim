@@ -1,10 +1,13 @@
 import options
+import strutils
 import json
 
 import chronos
 
 import ../../../lib/[Errors, Hash, Util]
 import ../../../Wallet/[MinerWallet, Wallet]
+
+from ../../../Database/Filesystem/Wallet/WalletDB import KeyIndex, UsableInput
 
 import ../../../objects/GlobalFunctionBoxObj
 
@@ -146,20 +149,129 @@ proc module*(
         for utxo in functions.personal.getUTXOs():
           result.add(%* {
             "address": utxo.address,
-            "hash": $utxo.hash,
-            "nonce": utxo.nonce
+            "hash": $utxo.utxo.hash,
+            "nonce": utxo.utxo.nonce
           })
 
       proc getTransactionTemplate(
-        outputs: seq[JSONNode],
+        #outputs_JSON is used to distinguish the name from the below outputs variable, not out of necessity due to using a keyword.
+        outputs_JSON: seq[JSONNode],
         from_JSON: Option[seq[string]] = none(seq[string]),
         change: Option[string] = none(string)
       ): JSONNode {.requireAuth, forceCheck: [
         ParamError,
         JSONRPCError
       ].} =
-        if account.isSome() and from_JSON.isSome():
-          raise newLoggedException(ParamError, "personal_getUTXOs had both account and from set")
-        raise newJSONRPCError(ValueError, "personal_getUTXOs isn't implemented")
+        var
+          utxos: seq[UsableInput]
+          outputs: seq[SendOutput]
+          sum: uint64
+          change: uint64
+
+        for output in outputs_JSON:
+          try:
+            if not (
+              (output.kind == JObject) and
+              output.hasKey("address") and (output["address"].kind == JString) and
+              output.hasKey("amount") and output["amount"].kind == JString
+            ):
+              raise newLoggedException(ParamError, "Output didn't have address/amount as strings.")
+
+            try:
+              var amount: uint64 = 0
+              #This should work without issue on x86 systems unless JS is the set target.
+              #Removing this dependency means using a BigInt parser here before converting to an uint64.
+              #That is feasble with StInt, yet shouldn't be neccessary.
+              when not (BiggestUInt is uint64):
+                {.error: "Lack of uint64 availability breaks JSON-RPC parsing.".}
+              amount = parseBiggestUInt(output["amount"].getStr())
+              sum += amount
+
+              let addy: Address = output["address"].getStr().getEncodedData()
+              case addy.addyType:
+                of AddressType.PublicKey:
+                  outputs.add(newSendOutput(newEdPublicKey(cast[string](addy.data)), amount))
+            except ValueError:
+              raise newJSONRPCError(ValueError, "Invalid address/amount")
+          except KeyError as e:
+            panic("Couldn't get the key from an output despite screening its fields: " & e.msg)
+
+        #If we're explicitly told which addresses to use, directly call getUTXOs.
+        if from_JSON.isSome():
+          for addyJSON in from_JSON.unsafeGet():
+            var addy: Address
+            try:
+              addy = addyJSON.getEncodedData()
+            except ValueError:
+              raise newJSONRPCError(ValueError, "Invalid address to send from")
+            case addy.addyType:
+              of AddressType.PublicKey:
+                let key: EdPublicKey = newEdPublicKey(cast[string](addy.data))
+                for utxo in functions.transactions.getUTXOs(key):
+                  try:
+                    utxos.add(UsableInput(
+                      index: functions.personal.getKeyIndex(key),
+                      key: key,
+                      address: addyJSON,
+                      utxo: utxo
+                    ))
+                  except IndexError:
+                    raise newJSONRPCError(IndexError, "Asked to send from unknown address")
+        else:
+          utxos = functions.personal.getUTXOs()
+
+        #Filter to a minimal UTXO set.
+        #Considering it doesn't sort highest amount to lowest, this isn't truly minimal.
+        var
+          keys: seq[EdPublicKey] = @[]
+          u: int = 0
+        while u < utxos.len:
+          keys.add(utxos[u].key)
+
+          var tx: Transaction
+          try:
+            tx = functions.transactions.getTransaction(utxos[u].utxo.hash)
+          except IndexError as e:
+            panic("Couldn't get a Transaction listed as a UTXO: " & e.msg)
+
+          let amount: uint64 = cast[SendOutput](tx.outputs[utxos[u].utxo.nonce]).amount
+          if amount >= sum:
+            change = amount - sum
+            sum = 0
+            break
+          sum -= amount
+          inc(u)
+        if sum != 0:
+          raise newJSONRPCError(NotEnoughMeros, "Wallet doesn't have enough Meros")
+        while (u + 1) != utxos.len:
+          utxos.del(u + 1)
+
+        result = %* {
+          "type": "Send",
+          "inputs": [],
+          "outputs": []
+        }
+        try:
+          for input in utxos:
+            result["inputs"].add(%* {
+              "hash": $input.utxo.hash,
+              "nonce": input.utxo.nonce,
+              "change": input.index.change,
+              "index": input.index.index
+            })
+          for output in outputs:
+            result["outputs"].add(%* {
+              "key": $output.key,
+              "amount": $output.amount
+            })
+          if change != 0:
+            result["outputs"].add(%* {
+              "key": $functions.personal.getChangeKey(),
+              "amount": $change
+            })
+        except KeyError as e:
+          panic("Couldn't add an input/output despite ensuring inputs/outputs exist: " & e.msg)
+        result["publicKey"] = % $keys.aggregate()
+
   except Exception as e:
     panic("Couldn't create the Consensus Module: " & e.msg)

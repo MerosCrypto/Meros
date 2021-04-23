@@ -87,9 +87,9 @@ The result is an array of objects, each as follows:
 
 Arguments:
 - `outputs` (array of objects, each as follows)
-  - `destination` (string): Address to send to.
-  - `amount`      (string): Amount to send.
-- `from`   (array of strings; optional): Addresses to use the UTXOs of.
+  - `address` (string): Address to send to.
+  - `amount`  (string): Amount to send.
+- `from`   (array of strings; optional): Addresses to use the UTXOs of; must be part of the current Wallet.
 - `change` (string; optional):           Address to use as change.
 
 The result is an object, as follows:
@@ -97,8 +97,8 @@ The result is an object, as follows:
 - `inputs` (array of objects, each as follows)
   - `hash`   (string)
   - `nonce`  (int)
-  - `change` (bool)
-  - `index`  (int): Address index.
+  - `change` (bool): If this is a change address.
+  - `index`  (int):  Address index.
 - `outputs` (array of objects, each as follows)
   - `key`    (string)
   - `amount` (string)

@@ -309,13 +309,9 @@ type
 
     getChangeKey*: proc (): EdPublicKey {.gcsafe, raises: [].}
 
-    getAddressChange*: proc (
+    getKeyIndex*: proc (
       key: EdPublicKey
-    ): bool {.gcsafe, raises: [].}
-
-    getAddressIndex*: proc (
-      key: EdPublicKey
-    ): uint32 {.gcsafe, raises: [
+    ): KeyIndex {.gcsafe, raises: [
       IndexError
     ].}
 
