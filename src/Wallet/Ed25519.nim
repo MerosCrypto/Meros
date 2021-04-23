@@ -186,9 +186,16 @@ proc aggregate*(
 proc aggregate*(
   keys: seq[EdPrivateKey]
 ): EdPrivateKey {.forceCheck: [].} =
-  var pubKeys: seq[EdPublicKey] = @[]
+  if keys.len == 1:
+    return keys[0]
+  var
+    pubKeys: seq[EdPublicKey] = @[]
+    multiple: bool = false
   for key in keys:
+    multiple = multiple or (key != keys[0])
     pubKeys.add(key.toPublicKey())
+  if not multiple:
+    return keys[0]
 
   var
     As: seq[Hash.Hash[512]] = generateAs(pubKeys)
