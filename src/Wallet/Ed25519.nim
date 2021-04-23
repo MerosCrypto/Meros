@@ -112,12 +112,9 @@ func `$`*(
 proc hasMultipleKeys*(
   keys: seq[EdPrivateKey or EdPublicKey]
 ): bool {.forceCheck: [].} =
-  #Check if this is a single key. If so, return false.
-  var uniqueKeys: seq[EdPublicKey] = @[]
   for key in keys:
-    if key notin uniqueKeys:
-      uniqueKeys.add(key)
-  return uniqueKeys.len != 1
+    if key != keys[0]:
+      return true
 
 #Generates the `a` value to use for each key.
 #Returns a Hash[512] as we don't have a good scalar type and the datas already in a Hash[512].
@@ -186,16 +183,12 @@ proc aggregate*(
 proc aggregate*(
   keys: seq[EdPrivateKey]
 ): EdPrivateKey {.forceCheck: [].} =
-  if keys.len == 1:
+  if not keys.hasMultipleKeys:
     return keys[0]
-  var
-    pubKeys: seq[EdPublicKey] = @[]
-    multiple: bool = false
+
+  var pubKeys: seq[EdPublicKey] = @[]
   for key in keys:
-    multiple = multiple or (key != keys[0])
     pubKeys.add(key.toPublicKey())
-  if not multiple:
-    return keys[0]
 
   var
     As: seq[Hash.Hash[512]] = generateAs(pubKeys)

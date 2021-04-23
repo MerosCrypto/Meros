@@ -154,7 +154,8 @@ proc add*(
     except DBReadError:
       raise newLoggedException(ValueError, "Send spends a non-existant output.")
 
-    senders.add(spent.key)
+    if amount != 0:
+      senders.add(spent.key)
     amount += spent.amount
 
   #Subtract the amount the outpts spend.
