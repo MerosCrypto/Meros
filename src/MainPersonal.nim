@@ -127,85 +127,20 @@ proc mainPersonal(
     except IndexError as e:
       raise e
 
-  functions.personal.send = proc (
-    destinationArg: string,
-    amountStr: string
-  ): Future[Hash[256]] {.forceCheck: [
-    ValueError,
-    NotEnoughMeros
-  ], async.} =
-    var
-      #Wallet we're using.
-      child: HDWallet #= db.wallet.external.first()
-      #Spendable UTXOs.
-      utxos: seq[FundedInput]
-      destination: Address
-      amountIn: uint64
-      amountOut: uint64
-      send: Send
-
+  functions.personal.sign = proc (
+    send: Send,
+    keys: seq[KeyIndex],
+    password: string
+  ) {.gcsafe, forceCheck: [
+    IndexError,
+    ValueError
+  ].} =
     try:
-      destination = destinationArg.getEncodedData()
-    except ValueError as e:
-      raise e
-
-    #Grab the UTXOs.
-    utxos = transactions[].getUTXOs(child.publicKey)
-    try:
-      amountOut = parseBiggestUInt(amountStr)
-    except ValueError as e:
-      raise e
-
-    #Grab the needed UTXOs.
-    try:
-      var i: int = 0
-      while i < utxos.len:
-        if transactions[].loadSpenders(utxos[i]).len != 0:
-          utxos.delete(i)
-          continue
-
-        #Add this UTXO's amount to the amount in.
-        amountIn += transactions[][utxos[i].hash].outputs[utxos[i].nonce].amount
-
-        #Remove uneeded UTXOs.
-        if amountIn >= amountOut:
-          if i + 1 < utxos.len:
-            utxos.delete(i + 1, utxos.len - 1)
-          break
-
-        #Increment i.
-        inc(i)
+      db.getAggregateKey(keys, password).sign(send)
     except IndexError as e:
-      panic("Couldn't load a transaction we have an UTXO for: " & e.msg)
-
-    #Make sure we have enough Meros.
-    if amountIn < amountOut:
-      raise newLoggedException(NotEnoughMeros, "Wallet didn't have enough money to create a Send.")
-
-    #Create the outputs.
-    var outputs: seq[SendOutput] = @[
-      newSendOutput(destination, amountOut)
-    ]
-
-    #Add a change output.
-    if amountIn != amountOut:
-      outputs.add(newSendOutput(child.publicKey, amountIn - amountOut))
-
-    send = newSend(utxos, outputs)
-    child.sign(send)
-    send.mine(functions.consensus.getSendDifficulty())
-
-    #Add the Send.
-    try:
-      await functions.transactions.addSend(send)
+      raise e
     except ValueError as e:
-      panic("Created a Send which was invalid: " & e.msg)
-    except DataExists as e:
-      panic("Created a Send which already existed: " & e.msg)
-    except Exception as e:
-      panic("addSend threw an Exception despite catching every Exception: " & e.msg)
-
-    result = send.hash
+      raise e
 
   functions.personal.data = proc (
     dataStr: string,

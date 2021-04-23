@@ -315,10 +315,14 @@ type
       IndexError
     ].}
 
-    send*: proc (
-      destination: string,
-      amount: string
-    ): Future[Hash[256]] {.gcsafe.}
+    sign*: proc (
+      send: Send,
+      keys: seq[KeyIndex],
+      password: string
+    ) {.gcsafe, raises: [
+      IndexError,
+      ValueError
+    ].}
 
     data*: proc (
       data: string,

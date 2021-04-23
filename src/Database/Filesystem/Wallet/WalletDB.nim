@@ -655,6 +655,47 @@ proc unlock(
   except ValueError:
     raise newLoggedException(ValueError, "Invalid password.")
 
+#Doesn't return a usable HDWallet; that's just the generic private key + public key struct at this point.
+proc getAggregateKey*(
+  db: WalletDB,
+  indexes: seq[KeyIndex],
+  password: string
+): HDWallet {.forceCheck: [
+  ValueError,
+  IndexError
+].} =
+  var
+    wallet: HDWallet
+    internal: HDWallet
+    external: HDWallet
+  try:
+    wallet = db.unlock(password)
+  except ValueError as e:
+    raise e
+
+  try:
+    internal = wallet.derive(1)
+    external = wallet.derive(0)
+  except ValueError as e:
+    panic("Unlocked the Wallet, yet it's unusable: " & e.msg)
+
+  var keys: seq[EdPrivateKey] = @[]
+  for index in indexes:
+    try:
+      keys.add(
+        if index.change:
+          internal.derive(index.index).privateKey
+        else:
+          external.derive(index.index).privateKey
+      )
+    except ValueError:
+      raise newLoggedException(IndexError, "Key index isn't valid.")
+
+  result = HDWallet(
+    privateKey: keys.aggregate()
+  )
+  result.publicKey = result.privateKey.toPublicKey()
+
 proc stepData*(
   db: WalletDB,
   password: string,

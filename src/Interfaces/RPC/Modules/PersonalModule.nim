@@ -6,6 +6,7 @@ import chronos
 
 import ../../../lib/[Errors, Hash, Util]
 import ../../../Wallet/[MinerWallet, Wallet]
+import ../../../Database/Transactions/Send
 
 from ../../../Database/Filesystem/Wallet/WalletDB import KeyIndex, UsableInput
 
@@ -80,48 +81,6 @@ proc module*(
           result = functions.personal.getAddress(index)
         except ValueError:
           raise newJSONRPCError(ValueError, "Invalid index")
-
-      proc send(
-        account: uint32,
-        outputs: JSONNode,
-        password: string
-      ): string {.requireAuth, forceCheck: [
-        ParamError,
-        JSONRPCError
-      ].} =
-        if outputs.kind != JArray:
-          raise newException(ParamError, "Outputs weren't in an array")
-
-        var outputSeq: seq[tuple[address: Address, amount: uint64]] = @[]
-        for output in outputs:
-          try:
-            if not (
-              (output.kind == JObject) and
-              (output.len == 2) and
-              output.hasKey("address") and (output["address"].kind == JString) and
-              output.hasKey("amount") and (output["amount"].kind == JString)
-            ):
-              raise newException(ParamError, "An output wasn't a properly structured object")
-          except KeyError as e:
-            panic("Couldn't check the type of a field despite guaranteeing its existence: " & e.msg)
-
-          try:
-            outputSeq.add((address: output["address"].getStr().getEncodedData(), amount: uint64(0)))
-            #No idea how this behaves on x86 platforms.
-            #A runtime parse/serialize check would work, yet it'd only support fractional Meros values in an int32.
-            #That makes this the only feasible option, for now.
-            #-- Kayaba
-            when not (BiggestUInt is uint64):
-              {.error: "Lack of uint64 availability breaks JSON-RPC parsing.".}
-            #Returned value is amount of parsed characters; not relevant to us nor worth the length check.
-            #This will error on overflow.
-            discard parseBiggestUInt(output["amount"].getStr(), outputSeq[^1].amount)
-          except KeyError as e:
-            panic("Couldn't get a field despite guaranteeing its existence: " & e.msg)
-          except ValueError as e:
-            raise newJSONRPCError(ValueError, "Invalid address or amount: " & e.msg)
-
-        raise newJSONRPCError(ValueError, "personal_send isn't implemented")
 
       proc data(
         data_JSON: string,
@@ -272,6 +231,72 @@ proc module*(
         except KeyError as e:
           panic("Couldn't add an input/output despite ensuring inputs/outputs exist: " & e.msg)
         result["publicKey"] = % $keys.aggregate()
+
+      proc send(
+        outputs_JSON: seq[JSONNode],
+        password: Option[string] = none(string)
+      ): Future[string] {.requireAuth, forceCheck: [
+        ParamError,
+        JSONRPCError
+      ], async.} =
+        #Outsource to getTransactionTemplate which already implements all this logic.
+        var txTemplate: JSONNode
+        try:
+          txTemplate = getTransactionTemplate(outputs_JSON, none(seq[string]), none(string))
+        except ParamError as e:
+          raise e
+        except JSONRPCError as e:
+          raise e
+
+        var
+          inputs: seq[FundedInput] = @[]
+          keys: seq[KeyIndex] = @[]
+          outputs: seq[SendOutput] = @[]
+          send: Send
+        try:
+          for input in txTemplate["inputs"]:
+            inputs.add(newFundedInput(input["hash"].getStr().parseHexStr().toHash[:256](), input["nonce"].getInt()))
+            keys.add(KeyIndex(
+              change: input["change"].getBool(),
+              index: uint32(input["index"].getInt())
+            ))
+          for output in txTemplate["outputs"]:
+            #There's a note above about the use of parseBiggestUInt which applies here as well.
+            outputs.add(newSendOutput(newEdPublicKey(parseHexStr(output["key"].getStr())), parseBiggestUInt(output["amount"].getStr())))
+        except KeyError, ValueError:
+          panic("personal_send failed due to personal_getTransactionTemplate not returning a valid template.")
+        send = newSend(inputs, outputs)
+
+        #Create the proper object and call sign.
+        try:
+          functions.personal.sign(send, keys, password.get(""))
+        except IndexError as e:
+          panic("Tried to sign a template with an unusable key: " & e.msg)
+        except ValueError as e:
+          raise newJSONRPCError(ValueError, e.msg)
+
+        #Mine it.
+        send.mine(functions.consensus.getSendDifficulty())
+
+        #Add it.
+        try:
+          await functions.transactions.addSend(send)
+        except ValueError as e:
+          panic("Created an invalid Send in personal_send: " & e.msg)
+        #This should be impossible since we use chronos.
+        #It wouldn't be impossible if we used the stdlib's async (or at least, old versions of it).
+        #Because we use chronos, Futures should be handled FIFO, meaning although the above loses flow control...
+        #Another personal_getUTXOs requestt couldn't snipe UTXOs from it.
+        #That leaves two nodes issuing this command at the same time, which sould also be impossible.
+        #This is because it's a single call to await at the end of the function.
+        #We don't have a good way to continue if this error did ever pop up anyways...
+        #Except possibly just trying the TX again with new UTXOs? Anyways. Just panic.
+        except DataExists as e:
+          panic("Created a Send that exists: " & e.msg)
+        except Exception as e:
+          panic("addSend threw an Exception despite catching all errors: " & e.msg)
+
+        result = $send.hash
 
   except Exception as e:
     panic("Couldn't create the Consensus Module: " & e.msg)
