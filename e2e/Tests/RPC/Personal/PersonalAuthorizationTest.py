@@ -9,20 +9,20 @@ def PersonalAuthorizationTest(
   #The actual personal_data test should handle that check.
   for method in [
     "setWallet",
-    #TODO "setAccount",
+    "setAccount",
     "getMnemonic",
     "getMeritHolderKey",
     "getMeritHolderNick",
     "getAccount",
     "getAddress",
-    #TODO "send",
+    "send",
     "data",
     "getUTXOs",
-    #TODO "getTransactionTemplate"
+    "getTransactionTemplate"
   ]:
     try:
       rpc.call("personal", method, auth=False)
       raise Exception()
     except Exception as e:
       if str(e) != "HTTP status isn't 200: 401":
-        raise TestError("Could call personal method without authorization.")
+        raise TestError("Could call personal_" + method + " without authorization.")
