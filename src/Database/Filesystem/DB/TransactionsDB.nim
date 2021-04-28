@@ -362,12 +362,11 @@ proc removeFromSpendable(
     o += 33
   db.put(SPENDABLE(key), spendable)
 
-#Add the Transaction's outputs to spendable while removing spent inputs.
+#Add the Transaction's outputs to spendable.
 proc verify*(
   db: DB,
   tx: Transaction
 ) {.forceCheck: [].} =
-  #Add spendable outputs.
   if (tx of Claim) or (tx of Send):
     for o in 0 ..< tx.outputs.len:
       db.addToSpendable(
@@ -376,49 +375,18 @@ proc verify*(
         o
       )
 
-    if tx of Send:
-      #Remove spent inputs.
-      for input in tx.inputs:
-        var key: EdPublicKey
-        try:
-          key = db.loadSendOutput(cast[FundedInput](input)).key
-        except DBReadError:
-          panic("Removing a non-existent output.")
-
-        db.removeFromSpendable(
-          key,
-          input.hash,
-          cast[FundedInput](input).nonce
-        )
-
-#Add a inputs back to spendable while removing unverified outputs.
+#Removes outputs from spendable.
 proc unverify*(
   db: DB,
   tx: Transaction
 ) {.forceCheck: [].} =
   if (tx of Claim) or (tx of Send):
-    #Remove outputs.
     for o in 0 ..< tx.outputs.len:
       db.removeFromSpendable(
         cast[SendOutput](tx.outputs[o]).key,
         tx.hash,
         o
       )
-
-    #Restore inputs.
-    if tx of Send:
-      for input in tx.inputs:
-        var key: EdPublicKey
-        try:
-          key = db.loadSendOutput(cast[FundedInput](input)).key
-        except DBReadError:
-          panic("Restoring a non-existent output.")
-
-        db.addToSpendable(
-          key,
-          input.hash,
-          cast[FundedInput](input).nonce
-        )
 
 #Mark a Transaction as beaten.
 proc beat*(
@@ -487,6 +455,9 @@ proc prune*(
       discard
     db.del(OUTPUT_SPENDERS(newFundedInput(hash, o)))
 
-    #If it has no spenders and is tracked by spendable, remove it.
-    if (spenders == "") and (tx.outputs[o] of SendOutput):
+    #If it is tracked by spendable, remove it.
+    #Should be handled by unverify, so I'm not really sure why this is here.
+    #That said, it doesn't hurt to have, and it's safe to run even if the outputs aren't present in spendable.
+    #-- Kayaba
+    if tx.outputs[o] of SendOutput:
       db.removeFromSpendable(cast[SendOutput](tx.outputs[o]).key, hash, o)
