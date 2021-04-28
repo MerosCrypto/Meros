@@ -147,7 +147,11 @@ template retrieveFromJSON*[T](
     elif expectedType is hex:
       var res: string
       try:
-        res = retrieveFromJSON(value, string).parseHexStr()
+        res = retrieveFromJSON(value, string)
+        if res.substr(0, 1) == "0x":
+          res = res.substr(2, res.len).parseHexStr()
+        else:
+          res = res.parseHexStr()
       except ValueError:
         raise newLoggedException(ParamError, "retrieveFromJSON expected a hex string.")
       res
