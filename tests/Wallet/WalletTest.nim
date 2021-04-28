@@ -7,8 +7,10 @@ import ../../src/Wallet/[Address, Wallet]
 import ../Fuzzed
 
 proc verify(
-  wallet: Wallet
+  insecure: InsecureWallet
 ) =
+  let wallet: HDWallet = insecure.hd
+
   #Test recreating the Public Key.
   check:
     newEdPublicKey(wallet.publicKey.serialize()).serialize() == wallet.publicKey.serialize()

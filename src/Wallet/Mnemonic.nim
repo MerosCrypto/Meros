@@ -74,8 +74,9 @@ proc newMnemonic*(
   #Set the sentence in the mnemonic.
   result.sentence = words.join(" ")
 
-  if words.len != 24:
-    raise newException(ValueError, "Mnemonic has too little entropy.")
+  when not defined(merosTests):
+    if words.len != 24:
+      raise newException(ValueError, "Mnemonic has too little entropy.")
 
   #Decode the sentence.
   var

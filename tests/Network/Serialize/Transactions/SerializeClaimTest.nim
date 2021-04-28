@@ -20,14 +20,14 @@ suite "SerializeClaim":
       inputs: seq[FundedInput]
       claim: Claim
       reloaded: Claim
-      wallet: Wallet = newWallet("")
+      wallet: HDWallet = newWallet("").hd
 
   midFuzzTest "Serialize and parse.":
     inputs = newSeq[FundedInput](rand(254) + 1)
     for i in 0 ..< inputs.len:
       inputs[i] = newFundedInput(newRandomHash(), rand(255))
 
-    claim = newClaim(inputs, wallet.next(last = uint32(rand(200) * 1000)).publicKey)
+    claim = newClaim(inputs, wallet.publicKey)
 
     #The Meros protocol requires this signature be produced by the aggregate of every unique MinerWallet paid via the Mints.
     #Serialization/Parsing doesn't care at all.

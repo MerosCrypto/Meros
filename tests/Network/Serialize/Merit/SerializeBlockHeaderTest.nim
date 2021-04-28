@@ -23,15 +23,12 @@ suite "SerializeBlockHeader":
       last: Hash[256] = newRandomHash()
       contents: Hash[256] = newRandomHash()
       sketchCheck: Hash[256] = newRandomHash()
-      miner: MinerWallet
+      miner: MinerWallet = newMinerWallet()
       header: BlockHeader
       reloaded: BlockHeader
 
     #Create the BlockHeaader.
     if newMiner:
-      #Get a new miner.
-      miner = newMinerWallet()
-
       header = newBlockHeader(
         uint32(rand(high(int32))),
         last,

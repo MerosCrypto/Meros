@@ -60,7 +60,7 @@ suite "ConsensusRevert":
         -1
       ]
 
-      wallets: seq[Wallet] = @[]
+      wallets: seq[HDWallet] = @[]
 
       #Planned Sends.
       plans: Table[int, seq[seq[SendOutput]]] = initTable[int, seq[seq[SendOutput]]]()
@@ -670,7 +670,7 @@ suite "ConsensusRevert":
     for b in 1 .. 155:
       #Create a random amount of Wallets.
       for _ in 0 ..< rand(2) + 2:
-        wallets.add(newWallet(""))
+        wallets.add(newWallet("").hd)
         utxos[wallets[^1].publicKey] = @[]
 
       #For each selected Wallet, create a random amount of Transactions.

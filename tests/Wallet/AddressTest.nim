@@ -22,7 +22,7 @@ suite "Address":
 
   noFuzzTest "Wallet address.":
     for _ in 0 ..< 100:
-      var wallet: Wallet = newWallet("")
+      var wallet: HDWallet = newWallet("").hd
       check:
         wallet.address.isValidAddress()
         wallet.address.getEncodedData().addyType == AddressType.PublicKey

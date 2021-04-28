@@ -38,8 +38,7 @@ suite "WalletDB":
       w2: WalletDB
     ) =
       check:
-        w1.wallet.privateKey == w2.wallet.privateKey
-        w1.miner.privateKey == w2.miner.privateKey
+        w1.accountZero == w2.accountZero
         w1.finalizedNonces == w2.finalizedNonces
         w1.unfinalizedNonces == w2.unfinalizedNonces
         w1.verified.len == w2.verified.len

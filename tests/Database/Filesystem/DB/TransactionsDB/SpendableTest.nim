@@ -17,7 +17,7 @@ suite "Spendable":
   midFuzzTest "Saving UTXOs, checking which UTXOs an account can spend, and deleting UTXOs.":
     var
       db = newTestDatabase()
-      wallets: seq[Wallet] = @[]
+      wallets: seq[HDWallet] = @[]
 
       outputs: seq[SendOutput] = @[]
       send: Send
@@ -63,7 +63,7 @@ suite "Spendable":
 
     #Generate 10 wallets.
     for _ in 0 ..< 10:
-      wallets.add(newWallet(""))
+      wallets.add(newWallet("").hd)
 
     #Test 100 Transactions.
     for _ in 0 .. 100:

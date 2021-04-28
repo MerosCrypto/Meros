@@ -1,4 +1,5 @@
 import random
+import strutils
 
 import ../../src/lib/Util
 

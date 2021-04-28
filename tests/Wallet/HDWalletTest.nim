@@ -51,7 +51,11 @@ suite "HDWallet":
 
   highFuzzTest "Public key derivation":
     wallet = newWallet("").hd[0]
-    check (
+    check HDPublic(
       key: wallet.derive(0).publicKey,
-      chainCode: wallet.derive(0).chainCode
-    ) == wallet.publicKey.derivePublic(wallet.chainCode, 0)
+      chainCode: wallet.derive(0).chainCode,
+      index: 0
+    ) == HDPublic(
+      key: wallet.publicKey,
+      chainCode: wallet.chainCode
+    ).derivePublic(0)

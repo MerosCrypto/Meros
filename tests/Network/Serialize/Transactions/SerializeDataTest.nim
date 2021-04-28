@@ -19,7 +19,7 @@ suite "SerializeData":
       dataStr: string
       data: Data
       reloaded: Data
-      wallet: Wallet = newWallet("")
+      wallet: HDWallet = newWallet("").hd
 
   midFuzzTest "Serialize and parse.":
     #Create the data string.
@@ -29,7 +29,7 @@ suite "SerializeData":
 
     #Create the Data.
     data = newData(newRandomHash(), dataStr)
-    wallet.next(last = uint32(rand(200) * 1000)).sign(data)
+    wallet.sign(data)
     data.mine(uint32(5))
 
     reloaded = data.serialize().parseData(uint32(0))
