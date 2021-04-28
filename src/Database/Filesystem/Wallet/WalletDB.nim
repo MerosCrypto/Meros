@@ -606,7 +606,7 @@ proc setAccount*(
       let key: EdPublicKey = HDPublic(
         key: db.accountZero,
         chainCode: db.chainCode
-      ).derivePublic(0).next(db.changeIndex).key
+      ).derivePublic(1).next(db.changeIndex).key
       if not key.used:
         break
       items.add((ADDRESS_CHANGE(key), ""))
