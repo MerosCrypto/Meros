@@ -1,3 +1,5 @@
+#Also tests transactions_getBalance.
+
 from typing import Dict, Any
 import json
 
@@ -38,6 +40,8 @@ def TGUBasicTest(
     verify(rpc, send.hash)
     if rpc.call("transactions", "getUTXOs", {"address": address}) != [{"hash": send.hash.hex().upper(), "nonce": 0}]:
       raise TestError("Meros didn't consider a confirmed Transaction's outputs as UTXOs.")
+    if rpc.call("transactions", "getBalance", {"address": address}) != str(send.outputs[0][1]):
+      raise TestError("transactions_getBalance didn't count an active UTXO.")
 
   def verified() -> None:
     #Spend it.
@@ -45,6 +49,8 @@ def TGUBasicTest(
       raise TestError("Meros didn't broadcast back a Send.")
     if rpc.call("transactions", "getUTXOs", {"address": address}) != []:
       raise TestError("Meros didn't consider a Transaction's inputs as spent.")
+    if rpc.call("transactions", "getBalance", {"address": address}) != "0":
+      raise TestError("transactions_getBalance counted a spent TXO.")
 
     #Verify the spender and verify the state is unchanged.
     verify(rpc, spendingSend.hash)
