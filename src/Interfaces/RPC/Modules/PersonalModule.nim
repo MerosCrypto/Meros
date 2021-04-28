@@ -41,8 +41,8 @@ proc module*(
       ].} =
         try:
           result = functions.personal.getMnemonic()
-        except ValueError:
-          raise newJSONRPCError(ValueError, "Node is running as a WatchWallet and has no Mnemonic")
+        except ValueError as e:
+          raise newJSONRPCError(ValueError, e.msg)
 
       proc getMeritHolderKey(): string {.requireAuth, forceCheck: [
         JSONRPCError
@@ -113,14 +113,17 @@ proc module*(
           })
 
       proc getTransactionTemplate(
-        #outputs_JSON is used to distinguish the name from the below outputs variable, not out of necessity due to using a keyword.
+        #_JSON is used to distinguish the name from the below variables, not out of necessity due to using a keyword.
         outputs_JSON: seq[JSONNode],
         from_JSON: Option[seq[string]] = none(seq[string]),
-        change: Option[string] = none(string)
+        change_JSON: Option[string] = none(string)
       ): JSONNode {.requireAuth, forceCheck: [
         ParamError,
         JSONRPCError
       ].} =
+        if outputs_JSON.len == 0:
+          raise newJSONRPCError(ValueError, "No outputs were provided")
+
         var
           utxos: seq[UsableInput]
           outputs: seq[SendOutput]
@@ -134,7 +137,7 @@ proc module*(
               output.hasKey("address") and (output["address"].kind == JString) and
               output.hasKey("amount") and output["amount"].kind == JString
             ):
-              raise newLoggedException(ParamError, "Output didn't have address/amount as strings.")
+              raise newLoggedException(ParamError, "Output didn't have address/amount as strings")
 
             try:
               var amount: uint64 = 0
@@ -144,6 +147,10 @@ proc module*(
               when not (BiggestUInt is uint64):
                 {.error: "Lack of uint64 availability breaks JSON-RPC parsing.".}
               amount = parseBiggestUInt(output["amount"].getStr())
+              if amount == 0:
+                raise newJSONRPCError(ValueError, "0 value output was provided")
+              if $amount != output["amount"].getStr():
+                raise newJSONRPCError(ValueError, "Amount exceeded the uint64 range and is not a valid Meros amount")
               sum += amount
 
               let addy: Address = output["address"].getStr().getEncodedData()
@@ -224,10 +231,22 @@ proc module*(
               "amount": $output.amount
             })
           if change != 0:
-            result["outputs"].add(%* {
-              "key": $functions.personal.getChangeKey(),
-              "amount": $change
-            })
+            if change_JSON.isSome():
+              try:
+                let addy: Address = change_JSON.unsafeGet().getEncodedData()
+                case addy.addyType:
+                  of AddressType.PublicKey:
+                    result["outputs"].add(%* {
+                      "key": $newEdPublicKey(cast[string](addy.data)),
+                      "amount": $change
+                    })
+              except ValueError:
+                raise newJSONRPCError(ValueError, "Invalid change address specified")
+            else:
+              result["outputs"].add(%* {
+                "key": $functions.personal.getChangeKey(),
+                "amount": $change
+              })
         except KeyError as e:
           panic("Couldn't add an input/output despite ensuring inputs/outputs exist: " & e.msg)
         result["publicKey"] = % $keys.aggregate()
