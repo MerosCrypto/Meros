@@ -227,7 +227,7 @@ def PublishTransactionTest(
       )
       raise TestError("")
     except TestError as e:
-      if str(e) != "1 Transaction didn't beat the spam filter.":
+      if str(e) != "2 Transaction didn't beat the spam filter.":
         raise TestError("publishTransaction didn't error when passed a Transaction which didn't beat its difficulty.")
 
     #Test publishTransactionWithoutWork requires authorization.

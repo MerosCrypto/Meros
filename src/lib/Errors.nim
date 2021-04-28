@@ -120,9 +120,9 @@ proc newJSONRPCError*[T: Exception or int](
   when error is int:
     result.code = error
   elif error is Spam:
-    result.code = 1
+    result.code = 2
   elif error is NotEnoughMeros:
-    result.code = 0
+    result.code = 1
   elif error is DataMissing:
     result.code = -1
   elif error is IndexError:
