@@ -74,7 +74,7 @@ def checkSend(
   if rpc.meros.live.recv() != (MessageType.Send.toByte() + serialized):
     raise TestError("Meros didn't broadcast a Send it created.")
 
-#pylint: disable=too-many-statements
+#pylint: disable=too-many-statements,too-many-locals
 def PersonalSendTest(
   rpc: RPC
 ) -> None:
