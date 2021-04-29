@@ -119,20 +119,23 @@ suite "Spendable":
           var
             output: SendOutput = cast[SendOutput](sends[s].outputs[o1])
             o2: int = 0
-          while o2 < spendable[output.key].len:
-            if (
-              (spendable[output.key][o2].hash == sends[s].hash) and
-              (spendable[output.key][o2].nonce == o1)
-            ):
-              spendable[output.key].delete(o2)
-            else:
-              inc(o2)
+          if spendable.hasKey(output.key):
+            while o2 < spendable[output.key].len:
+              if (
+                (spendable[output.key][o2].hash == sends[s].hash) and
+                (spendable[output.key][o2].nonce == o1)
+              ):
+                spendable[output.key].delete(o2)
+              else:
+                inc(o2)
 
         compare()
 
     #Prune a Send.
     db.prune(sends[sends.high].hash)
     for input in sends[sends.high].inputs:
+      if not spendable.hasKey(spenders[input.hash.serialize() & char(cast[FundedInput](input).nonce)]):
+        spendable[spenders[input.hash.serialize() & char(cast[FundedInput](input).nonce)]] = @[]
       spendable[
         spenders[input.hash.serialize() & char(cast[FundedInput](input).nonce)]
       ].add(cast[FundedInput](input))
