@@ -83,8 +83,8 @@ proc module*(
           raise newJSONRPCError(ValueError, "Invalid index")
 
       proc data(
-        data_JSON: string,
         hex: bool = false,
+        data_JSON: string,
         password: string = ""
       ): Future[string] {.requireAuth, forceCheck: [
         JSONRPCError

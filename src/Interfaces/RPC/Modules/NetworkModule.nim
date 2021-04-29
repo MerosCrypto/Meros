@@ -27,11 +27,11 @@ proc module*(
   try:
     result = newRPCHandle:
       proc connect(
-        ip: string,
+        address: string,
         port: Option[int] = some(DEFAULT_PORT)
       ) {.requireAuth, forceCheck: [], async.} =
         try:
-          await functions.network.connect(ip, port.unsafeGet())
+          await functions.network.connect(address, port.unsafeGet())
         except Exception as e:
           panic("MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 

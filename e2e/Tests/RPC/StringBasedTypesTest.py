@@ -10,6 +10,7 @@ from e2e.Classes.Transactions.Data import Data
 from e2e.Meros.RPC import RPC
 from e2e.Tests.Errors import TestError
 
+#pylint: disable=too-many-statements
 def StringBasedTypesTest(
   rpc: RPC
 ) -> None:

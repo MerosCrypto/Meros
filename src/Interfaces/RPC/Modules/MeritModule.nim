@@ -167,12 +167,12 @@ proc module*(
             raise newJSONRPCError(IndexError, "Block not found")
 
       proc getPublicKey(
-        holder: uint16
+        nick: uint16
       ): string {.forceCheck: [
         JSONRPCError
       ].} =
         try:
-          result = $ functions.merit.getPublicKey(holder)
+          result = $ functions.merit.getPublicKey(nick)
         except IndexError:
           raise newJSONRPCError(IndexError, "Nickname doesn't exist")
 

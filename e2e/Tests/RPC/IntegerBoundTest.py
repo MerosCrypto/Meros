@@ -6,14 +6,14 @@ def IntegerBoundTest(
 ) -> None:
   #uint16.
   try:
-    rpc.call("merit", "getPublicKey", {"holder": -1})
+    rpc.call("merit", "getPublicKey", {"nick": -1})
     raise TestError()
   except Exception as e:
     if str(e) != "-32602 Invalid params.":
       raise TestError("Meros accepted a negative integer for an unsigned integer.")
 
   try:
-    rpc.call("merit", "getPublicKey", {"holder": 65536})
+    rpc.call("merit", "getPublicKey", {"nick": 65536})
     raise TestError()
   except Exception as e:
     if str(e) != "-32602 Invalid params.":

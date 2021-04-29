@@ -73,4 +73,4 @@ The result is a bool of if the transaction was successfully added. This will ret
 
 `publishTransactionWithoutWork` accepts a serialized Transaction, without work, generates work for it against the current difficulty, and then attempts to add it to the local Transactions DAG. Upon success, it's broadcasted to the network. This method requires authentication.
 
-The inputs and outputs of this function match `publishTransaction` exactly.
+The inputs and outputs of this function match `publishTransaction` exactly, except the serialized Transaction must not have a proof included.

@@ -1,5 +1,7 @@
 # Personal Module
 
+Every route in this module requires authentication.
+
 ### `setWallet`
 
 `setWallet` creates a new Wallet using the passed in Mnemonic and password. This is irreversible and will delete the existing Wallet, having the node lose all access to the current Merit Holder and all funds.
