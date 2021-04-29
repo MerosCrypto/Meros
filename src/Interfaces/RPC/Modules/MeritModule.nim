@@ -326,7 +326,7 @@ proc module*(
       proc publishBlock(
         id: uint32,
         header: hex
-      ): Future[bool] {.forceCheck: [
+      ) {.forceCheck: [
         JSONRPCError
       ], async.} =
         var
