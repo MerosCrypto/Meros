@@ -33,7 +33,10 @@ proc mainPersonal(
       #Start with the initial data, discovering spenders until the tip.
       var initial: Data
       try:
-        initial = newData(Hash[256](), key.serialize())
+        initial = newData(Hash[256](), HDPublic(
+          key: key,
+          chainCode: chainCode
+        ).derivePublic(0).next(0).key.serialize())
       except ValueError as e:
         panic("Couldn't create an initial Data to discover a Data tip: " & e.msg)
       try:

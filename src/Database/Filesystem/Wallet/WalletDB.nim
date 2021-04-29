@@ -480,7 +480,7 @@ proc clearPrivateKeys*(
   db.mnemonic = nil
 
 #Set the Miner and Mnemonic.
-#Must have setAccount called after to commit it, not mention finishing update the RAM of the WalletDB.
+#Must have setAccount called after to commit it, not to mention finishing updating the RAM of the WalletDB.
 #Only currently valid as Meros is single threaded.
 proc setMinerAndMnemonic*(
   db: WalletDB,
