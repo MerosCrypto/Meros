@@ -1,3 +1,7 @@
+#Specifically tests the Merit Holder side of things.
+#Address management, including reloading, is extensively tested via Python.
+#That said, this test should still be expanded at some point in the future.
+
 import os
 import random
 import sets, tables
@@ -38,10 +42,22 @@ suite "WalletDB":
       w2: WalletDB
     ) =
       check:
+        w1.miner.initiated == w2.miner.initiated
+        w1.miner.privateKey == w2.miner.privateKey
+        w1.miner.publicKey == w2.miner.publicKey
+        w1.miner.nick == w2.miner.nick
+
         w1.accountZero == w2.accountZero
+        w2.chainCode == w2.chainCode
+
+        w1.nextIndex == w2.nextIndex
+        w1.changeIndex == w2.changeIndex
+        w2.addresses == w2.addresses
+
         w1.finalizedNonces == w2.finalizedNonces
         w1.unfinalizedNonces == w2.unfinalizedNonces
         w1.verified.len == w2.verified.len
+
         w1.elementNonce == w2.elementNonce
 
       for v in w1.verified.keys():

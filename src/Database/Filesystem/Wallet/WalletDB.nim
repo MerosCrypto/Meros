@@ -90,17 +90,22 @@ type
     miner*: MinerWallet
     accountZero*: EdPublicKey
     chainCode*: Hash[256]
-    nextIndex: uint32
-    changeIndex: uint32
-    addresses: HashSet[uint32]
 
     when defined(merosTests):
+      nextIndex*: uint32
+      changeIndex*: uint32
+      addresses*: HashSet[uint32]
+
       finalizedNonces*: int
       unfinalizedNonces*: int
       verified*: Table[string, int]
 
       elementNonce*: int
     else:
+      nextIndex: uint32
+      changeIndex: uint32
+      addresses: HashSet[uint32]
+
       finalizedNonces: int
       unfinalizedNonces: int
       verified: Table[string, int]
