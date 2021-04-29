@@ -432,19 +432,6 @@ proc prune*(
 
     db.put(OUTPUT_SPENDERS(tx.inputs[i]), spenders)
 
-    #If we were the only spender of this output, restore the output as spendable.
-    if (spenders.len == 0) and (tx of Send):
-      try:
-        db.addToSpendable(
-          cast[SendOutput](
-            db.load(tx.inputs[i].hash).outputs[cast[FundedInput](tx.inputs[i]).nonce]
-          ).key,
-          tx.inputs[i].hash,
-          cast[FundedInput](tx.inputs[i]).nonce
-        )
-      except DBReadError:
-        panic("Couldn't load the Transaction the Transaction we're pruning spent.")
-
   for o in 0 ..< tx.outputs.len:
     #Delete its outputs and their spenders.
     db.del(OUTPUT(hash, o))

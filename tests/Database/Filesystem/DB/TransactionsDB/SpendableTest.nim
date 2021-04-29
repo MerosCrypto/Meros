@@ -128,4 +128,13 @@ suite "Spendable":
             else:
               inc(o2)
 
-      compare()
+        compare()
+
+    #Prune a Send.
+    db.prune(sends[sends.high].hash)
+    for input in sends[sends.high].inputs:
+      spendable[
+        spenders[input.hash.serialize() & char(cast[FundedInput](input).nonce)]
+      ].add(cast[FundedInput](input))
+
+    compare()

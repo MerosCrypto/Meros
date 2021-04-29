@@ -11,7 +11,7 @@ from e2e.Classes.Merit.Merit import Merit
 
 from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock, PrototypeChain
 
-merit: Merit = Merit.fromJSON(PrototypeChain(49).toJSON())
+merit: Merit = Merit.fromJSON(PrototypeChain(47).toJSON())
 transactions: Transactions = Transactions()
 
 privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
@@ -20,9 +20,17 @@ pubKey: bytes = privKey.get_verifying_key().to_bytes()
 recipientPriv: ed25519.SigningKey = ed25519.SigningKey(b'\1' * 32)
 recipientPub: bytes = recipientPriv.get_verifying_key().to_bytes()
 
-olderClaim: Claim = Claim([(merit.mints[-2], 0)], pubKey)
+olderClaim: Claim = Claim([(merit.mints[-1], 0)], pubKey)
 olderClaim.sign(PrivateKey(0))
 transactions.add(olderClaim)
+
+merit.add(
+  PrototypeBlock(
+    merit.blockchain.blocks[-1].header.time + 1200,
+    packets=[VerificationPacket(olderClaim.hash, [0])]
+  ).finish(0, merit)
+)
+merit.add(PrototypeBlock(merit.blockchain.blocks[-1].header.time + 1200).finish(0, merit))
 
 newerClaim: Claim = Claim([(merit.mints[-1], 0)], pubKey)
 newerClaim.sign(PrivateKey(0))
@@ -31,7 +39,7 @@ transactions.add(newerClaim)
 merit.add(
   PrototypeBlock(
     merit.blockchain.blocks[-1].header.time + 1200,
-    packets=[VerificationPacket(olderClaim.hash, [0]), VerificationPacket(newerClaim.hash, [0])]
+    packets=[VerificationPacket(newerClaim.hash, [0])]
   ).finish(0, merit)
 )
 
@@ -73,7 +81,7 @@ for _ in range(5):
     PrototypeBlock(merit.blockchain.blocks[-1].header.time + 1200).finish(0, merit)
   )
 
-heightToBeat: int = len(coreMerit)
+heightToBeat: int = len(merit.blockchain.blocks)
 def reorgPast(
   mint: bytes
 ) -> Merit:
