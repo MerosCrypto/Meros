@@ -206,12 +206,13 @@ proc readHTTP*(
           break thisReq
 
         #Process this header.
-        if (parts[0] == "Expect") and (parts[1].toLowerAscii() == "100-continue"):
+        parts[0] = parts[0].toLowerAscii()
+        if (parts[0] == "expect") and (parts[1].toLowerAscii() == "100-continue"):
           expectContinue = true
           continue
 
         #[
-        if parts[0].contains("Range"):
+        if parts[0].contains("range"):
           HTTP_STATUS(416)
           continue
         ]#
@@ -220,7 +221,7 @@ proc readHTTP*(
           #Used to figure out the best content type to use.
           #If no content types work, the traditional solution is to move on anyways (despite not following the spec).
           #Question is do generic, and specific, HTTP libs prefer text/plain or application/json...
-          of "Accept":
+          of "accept":
             var toUse: string = supported(JSON_MIME_TYPES, parts)
             if toUse == "":
               #HTTP_STATUS(406)
@@ -240,7 +241,7 @@ proc readHTTP*(
           #This means numerous charsets will incorrectly decode, yet them being chosen is such an edge case...
           #Easier to have wide support, yet this comment block serves as an ack to their existence.
           #[
-          of "Accept-Charset":
+          of "accept-charset":
             var toUse: string = supported(CHARSETS, parts):
             if toUse == "":
               HTTP_STATUS(406)
@@ -252,7 +253,7 @@ proc readHTTP*(
           #Even though a list of accepted encodings are defined, we ultimately decide which to use, which can be any.
           #The identity should be universally accepted, especially given context of what this is.
           #Hence why we don't needlessly error (or bother with this).
-          of "Accept-Encoding":
+          of "accept-encoding":
             #If compression is required, error.
             if (
               #Identity was disabled.
@@ -266,25 +267,25 @@ proc readHTTP*(
           ]#
 
           #Don't accept compressed requests.
-          of "Content-Encoding":
+          of "content-encoding":
             HTTP_STATUS(415)
             break thisReq
 
           #We only handle 100-continue, as defined above.
-          of "Expect":
+          of "expect":
             HTTP_STATUS(417)
             break thisReq
 
           #curl defaults to x-www-form-urlencoded.
           #We should really just try to handle the body no matter what.
           #[
-          of "Content-Type":
+          of "content-type":
             if not ["application/json", "text/plain"].contains(parts[1]):
               HTTP_STATUS(415)
               break thisReq
           ]#
 
-          of "Content-Length":
+          of "content-length":
             #Max of 9999 bytes, which would only come close during batch requests.
             if parts[1].len > 4:
               HTTP_STATUS(413)
@@ -297,7 +298,7 @@ proc readHTTP*(
               HTTP_STATUS(400)
               break thisReq
 
-          of "Authorization":
+          of "authorization":
             var authParts: seq[string] = line.split(" ")
             if authParts.len < 2:
               HTTP_STATUS(400)
@@ -307,11 +308,11 @@ proc readHTTP*(
               break thisReq
             result.token = authParts[^1]
 
-          of "Connection":
+          of "connection":
             if parts[1].split(",").contains("keep-alive"):
               socket.headers["Connection"] = "keep-alive"
 
-          of "Transfer-Encoding":
+          of "transfer-encoding":
             if parts[1] == "identity":
               discard
             elif parts[1] == "chunked":
@@ -322,7 +323,7 @@ proc readHTTP*(
         #[
         #If there's any conditional statement, we can assume it's invalid or ignore it.
         #This comment block shows we're ignoring it.
-        if parts[0].contains("If-"):
+        if parts[0].contains("if-"):
           HTTP_STATUS(412)
           continue
         ]#
