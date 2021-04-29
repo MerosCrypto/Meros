@@ -25,9 +25,9 @@ def DescendantHighestUnverifiedParentTest(
 
   def verifyDescendantLost() -> None:
     for send in sends[1:]:
-      if rpc.call("consensus", "getStatus", [send.hash.hex()])["verified"]:
+      if rpc.call("consensus", "getStatus", {"hash": send.hash.hex()})["verified"]:
         raise TestError("Meros verified a beaten transaction or one of its children (one of which is impossible).")
-    if not rpc.call("consensus", "getStatus", [sends[0].hash.hex()])["verified"]:
+    if not rpc.call("consensus", "getStatus", {"hash": sends[0].hash.hex()})["verified"]:
       raise TestError("Meros either didn't verify the descendant or its parent.")
 
   Liver(

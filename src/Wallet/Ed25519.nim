@@ -109,47 +109,61 @@ func `$`*(
 ): string {.inline, forceCheck: [].} =
   data.serialize().toHex()
 
+proc hasMultipleKeys*(
+  keys: seq[EdPrivateKey or EdPublicKey]
+): bool {.forceCheck: [].} =
+  for key in keys:
+    if key != keys[0]:
+      return true
+
+#Generates the `a` value to use for each key.
+#Returns a Hash[512] as we don't have a good scalar type and the datas already in a Hash[512].
+#The EdPrivateKey type, which is effectively a scalar, mirrors Hash[256]'s instantiated type definition.
+#While this would save 32-bytes, it'll be pushed off the stack soon enough.
+#Internally, pointers to raw bytes are used anyways.
+proc generateAs(
+  keys: seq[EdPublicKey]
+): seq[Hash.Hash[512]] {.forceCheck: [].} =
+  var L: string = ""
+  for key in keys:
+    L &= key.serialize()
+  L = Blake512(L).serialize()
+
+  for key in keys:
+    result.add(Blake512("agg" & L & key.serialize()))
+    reduceScalar(cast[ptr cuchar](addr result[^1].data[0]))
+
 #Aggregate Public Keys for MuSig.
 proc aggregate*(
-  keys: var seq[EdPublicKey]
+  keys: seq[EdPublicKey]
 ): EdPublicKey {.forceCheck: [].} =
-  if keys.len == 1:
+  if not keys.hasMultipleKeys:
     return keys[0]
 
   var
-    bytes: string
-    l: Hash.Hash[256]
-    keyHash: Hash.Hash[256]
+    As: seq[Hash.Hash[512]] = keys.generateAs()
     keyPoint: Point3
-    a: Point2
+    bytes: string = newString(64)
+    p2: Point2
     tempRes: PointP1P1
     tempCached: PointCached
     res: Point3
 
-  for key in keys:
-    bytes &= key.serialize()
-  l = SHA2_256(bytes)
-  bytes = newString(64)
-
   for k in 0 ..< keys.len:
-    keyHash = SHA2_256(l.serialize() & keys[k].serialize())
-    copyMem(addr bytes[0], addr keyHash.data[0], 32)
-    reduceScalar(cast[ptr cuchar](addr bytes[0]))
-    copyMem(addr keyHash.data[0], addr bytes[0], 32)
-
-    keyToNegativePoint(addr keyPoint, addr keys[k].data[0])
+    var key: EdPublicKey = keys[k]
+    keyToNegativePoint(addr keyPoint, addr key.data[0])
     serialize(addr bytes[0], addr keyPoint)
     keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
 
     var blankScalar: array[32, cuchar]
     multiplyScalar(
-      addr a,
-      cast[ptr cuchar](addr keyHash.data[0]),
+      addr p2,
+      cast[ptr cuchar](addr As[k].data[0]),
       addr keyPoint,
       addr blankScalar[0]
     )
 
-    serialize(addr bytes[0], addr a)
+    serialize(addr bytes[0], addr p2)
     keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
     serialize(addr bytes[0], addr keyPoint)
     keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
@@ -163,9 +177,37 @@ proc aggregate*(
 
   serialize(addr result.data[0], addr res)
 
+#Private key aggregation to create a private key matching the MuSig public key aggregation.
+#Insecure in the scope of MuSig as it is solely meant to be used by internally known private keys.
+#Not even close to what MuSig does.
+proc aggregate*(
+  keys: seq[EdPrivateKey]
+): EdPrivateKey {.forceCheck: [].} =
+  if not keys.hasMultipleKeys:
+    return keys[0]
+
+  var pubKeys: seq[EdPublicKey] = @[]
+  for key in keys:
+    pubKeys.add(key.toPublicKey())
+
+  var
+    As: seq[Hash.Hash[512]] = generateAs(pubKeys)
+    res: string = newString(32)
+  for k in 0 ..< keys.len:
+    var key: EdPrivateKey = keys[k]
+    mulAdd(cast[ptr cuchar](addr res[0]), addr key.data[0], cast[ptr cuchar](addr As[k].data[0]), cast[ptr cuchar](addr res[0]))
+
+  #Traditional secret key expansion would be H512(secret), with the left half mod l.
+  #We have a scalar, not a secret. In response, H512(scalar). Then, the scalar is the left half already.
+  #This leaves us with just the right half left, which is still the right half of the H512 result.
+  #We could also call urandom, which wouldn't be deterministic, or call H256 and just use that.
+  var expanded: Hash.Hash[512] = Blake512(res)
+  copyMem(addr result.data[0], addr res[0], 32)
+  copyMem(addr result.data[32], addr expanded.data[32], 32)
+
 proc hash*(
   key: EdPublicKey
-): hashes.Hash {.inline, forceCheck: [].} =
+): hashes.Hash {.forceCheck: [].} =
   for b in key.data:
     result = result !& int(b)
   result = !$ result

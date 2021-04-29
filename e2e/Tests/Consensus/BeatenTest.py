@@ -51,7 +51,7 @@ def BeatenTest(
   #Sanity check to verify the Block Template contains the Verification.
   def verifyTemplate() -> None:
     if bytes.fromhex(
-      rpc.call("merit", "getBlockTemplate", [blsPubKey])["header"]
+      rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey})["header"]
     )[36:68] != BlockHeader.createContents([VerificationPacket(sends[2].hash, [1])]):
       raise TestError("Meros didn't add a SignedVerification to the Block Template.")
 
@@ -59,15 +59,15 @@ def BeatenTest(
     #Verify beaten was set. The fourth Transaction is also beaten, yet should be pruned.
     #That's why we don't check its status.
     for send in sends[1:3]:
-      if not rpc.call("consensus", "getStatus", [send.hash.hex()])["beaten"]:
+      if not rpc.call("consensus", "getStatus", {"hash": send.hash.hex()})["beaten"]:
         raise TestError("Meros didn't mark a child and its descendant as beaten.")
 
     #Check the pending Verification for the beaten descendant was deleted.
     if (
-      (rpc.call("consensus", "getStatus", [sends[2].hash.hex()])["verifiers"] != [0]) or
+      (rpc.call("consensus", "getStatus", {"hash": sends[2].hash.hex()})["verifiers"] != [0]) or
       (
         bytes.fromhex(
-          rpc.call("merit", "getBlockTemplate", [blsPubKey])["header"]
+          rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey})["header"]
         )[36:68] != bytes(32)
       )
     ):
@@ -75,7 +75,7 @@ def BeatenTest(
 
     #Verify the fourth Transaction was pruned.
     with raises(TestError):
-      rpc.call("transactions", "getTransaction", [sends[3].hash.hex()])
+      rpc.call("transactions", "getTransaction", {"hash": sends[3].hash.hex()})
 
     #Verify neither the second or third Transaction tree can be appended to.
     #Publishes a never seen-before Send for the descendant.
@@ -85,7 +85,7 @@ def BeatenTest(
       #This has identical effects, returns an actual error instead of a disconnect,
       #and doesn't force us to wait a minute for our old socket to be cleared.
       with raises(TestError):
-        rpc.call("transactions", "publishSend", [send.serialize().hex()])
+        rpc.call("transactions", "publishTransaction", {"type": "Send", "transaction": send.serialize().hex()})
 
     #Not loaded above as it can only be loqaded after the chain starts, which is done by the Liver.
     #RandomX cache keys and all that.

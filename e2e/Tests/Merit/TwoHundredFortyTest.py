@@ -21,7 +21,7 @@ def TwoHundredFourtyTest(
   rpc: RPC
 ) -> None:
   #Grab the keys.
-  blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMiner")))
+  blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMeritHolderKey")))
   blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
   #Blockchain used to calculate the difficulty.
@@ -29,7 +29,7 @@ def TwoHundredFourtyTest(
 
   #Mine enough blocks to lose Merit.
   for b in range(9):
-    template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", [blsPubKey.serialize().hex()])
+    template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey.serialize().hex()})
     template["header"] = bytes.fromhex(template["header"])
 
     header: BlockHeader = BlockHeader(
@@ -67,10 +67,10 @@ def TwoHundredFourtyTest(
     pass
 
   #Verify our Merit is locked.
-  if rpc.call("merit", "getMerit", [0])["status"] != "Locked":
+  if rpc.call("merit", "getMerit", {"nick": 0})["status"] != "Locked":
     raise Exception("Our Merit isn't locked so this test is invalid.")
 
-  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", [blsPubKey.serialize().hex()])
+  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey.serialize().hex()})
   template["header"] = bytes.fromhex(template["header"])
 
   header: BlockHeader = BlockHeader(
@@ -91,19 +91,18 @@ def TwoHundredFourtyTest(
   rpc.call(
     "merit",
     "publishBlock",
-    [
-      template["id"],
-      (
+    {
+      "id": template["id"],
+      "header": (
         template["header"] +
         header.proof.to_bytes(4, byteorder="little") +
         header.signature
       ).hex()
-    ]
+    }
   )
 
   #To verify the entire chain, we just need to verify this last header.
   #This is essential as our chain isn't equivalent.
   ourHeader: Dict[str, Any] = header.toJSON()
-  del ourHeader["packets"]
-  if rpc.call("merit", "getBlock", [header.hash.hex()])["header"] != ourHeader:
+  if rpc.call("merit", "getBlock", {"block": header.hash.hex()})["header"] != ourHeader:
     raise TestError("Header wasn't added to the blockchain.")

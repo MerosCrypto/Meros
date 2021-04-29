@@ -1,8 +1,8 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Union, Any
 from os import remove
 from time import sleep
-import json
-import socket
+
+import requests
 
 from e2e.Meros.Meros import Meros
 
@@ -14,57 +14,46 @@ class RPC:
     meros: Meros
   ) -> None:
     self.meros: Meros = meros
-    self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.socket.connect(("127.0.0.1", self.meros.rpc))
 
   def call(
     self,
     module: str,
     method: str,
-    args: List[Any] = []
+    args: Union[List[Dict[str, Any]], Dict[str, Any]] = {},
+    auth: bool = True
   ) -> Any:
     try:
-      self.socket.send(
-        bytes(
-          json.dumps(
-            {
-              "jsonrpc": "2.0",
-              "id": 0,
-              "method": module + "_" + method,
-              "params": args
-            }
-          ),
-          "utf-8"
-        )
+      request: requests.Response = requests.post(
+        "http://127.0.0.1:" + str(self.meros.rpc),
+        json={
+          "jsonrpc": "2.0",
+          "id": 0,
+          "method": module + "_" + method,
+          "params": args
+        },
+        headers={
+          "Authorization": "Bearer TEST_TOKEN"
+        } if auth else {}
       )
-    except BrokenPipeError:
-      raise NodeError()
+    except Exception as e:
+      raise NodeError(str(e))
 
-    response: bytes = bytes()
-    nextChar: bytes = bytes()
-    counter: int = 0
-    while True:
-      try:
-        nextChar = self.socket.recv(1)
-      except Exception:
-        raise NodeError()
-      if not nextChar:
-        raise NodeError()
-      response += nextChar
+    if request.status_code != 200:
+      raise TestError("HTTP status isn't 200: " + str(request.status_code))
+    result: Dict[str, Any] = request.json()
 
-      if response[-1] == response[0]:
-        counter += 1
-      elif (chr(response[-1]) == ']') and (chr(response[0]) == '['):
-        counter -= 1
-      elif (chr(response[-1]) == '}') and (chr(response[0]) == '{'):
-        counter -= 1
-      if counter == 0:
-        break
+    if result["jsonrpc"] != "2.0":
+      raise TestError("Meros didn't respond with the \"jsonrpc\" field.")
 
-    #Raise an exception on error.
-    result: Dict[str, Any] = json.loads(response)
+    checkID: bool = True
     if "error" in result:
+      #Don't check the ID if we had a parse error, as Meros uses an ID of null, as it should.
+      checkID = result["error"]["code"] != -32700
       raise TestError(str(result["error"]["code"]) + " " + result["error"]["message"] + ".")
+
+    if checkID and (result["id"] != 0):
+      raise TestError("Meros didn't respond with the correct ID.")
+
     return result["result"]
 
   def quit(
@@ -89,7 +78,3 @@ class RPC:
       pass
 
     self.meros = Meros(self.meros.db, self.meros.tcp, self.meros.rpc)
-    sleep(5)
-
-    self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.socket.connect(("127.0.0.1", self.meros.rpc))

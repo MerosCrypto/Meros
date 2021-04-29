@@ -69,8 +69,27 @@ proc mainConsensus(
 
   functions.consensus.getSendDifficulty = proc (): uint16 {.forceCheck: [].} =
     consensus.filters.send.difficulty
+  functions.consensus.getSendDifficultyOfHolder = proc (
+    holder: uint16
+  ): uint16 {.forceCheck: [
+    IndexError
+  ].} =
+    try:
+      result = database.loadSendDifficulty(holder)
+    except DBReadError:
+      raise newLoggedException(IndexError, "Holder doesn't have a SendDifficulty.")
+
   functions.consensus.getDataDifficulty = proc (): uint16 {.forceCheck: [].} =
     consensus.filters.data.difficulty
+  functions.consensus.getDataDifficultyOfHolder = proc (
+    holder: uint16
+  ): uint16 {.forceCheck: [
+    IndexError
+  ].} =
+    try:
+      result = database.loadDataDifficulty(holder)
+    except DBReadError:
+      raise newLoggedException(IndexError, "Holder doesn't have a DataDifficulty.")
 
   functions.consensus.isMalicious = proc (
     nick: uint16
@@ -147,7 +166,7 @@ proc mainConsensus(
           tx = await syncAwait network.syncManager.syncTransaction(verif.hash)
         except DataMissing:
           #At least the peer which gave us this Verification should have this Transaction.
-          raise newException(ValueError, "Verification is of a non-existent Transaction.")
+          raise newLoggedException(ValueError, "Verification is of a non-existent Transaction.")
         except Exception as e:
           panic("syncTransaction threw an error despite catching all errors: " & e.msg)
         try:
@@ -158,11 +177,11 @@ proc mainConsensus(
               functions.transactions.addClaim(claim)
             of Send as send:
               if send.argon.overflows(send.getDifficultyFactor() * functions.consensus.getSendDifficulty()):
-                raise newException(ValueError, "Send doesn't pass the spam check.")
+                raise newLoggedException(ValueError, "Send doesn't pass the spam check.")
               await functions.transactions.addSend(send)
             of Data as data:
               if data.argon.overflows(data.getDifficultyFactor() * functions.consensus.getDataDifficulty()):
-                raise newException(ValueError, "Data doesn't pass the spam check.")
+                raise newLoggedException(ValueError, "Data doesn't pass the spam check.")
               await functions.transactions.addData(data)
         except ValueError as e:
           raise e

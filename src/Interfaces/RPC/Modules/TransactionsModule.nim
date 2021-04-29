@@ -1,14 +1,22 @@
 import strutils
 import json
 
+import chronos
+
 import ../../../lib/[Errors, Util, Hash]
 
-import ../../../Wallet/[MinerWallet, Wallet, Address]
-import ../../../Wallet/Address
+import ../../../Wallet/[MinerWallet, Wallet]
+import ../../../Wallet/Address as AddressFile
 
 import ../../../Database/Transactions/Transactions
 
+import ../../../Network/Serialize/Transactions/ParseClaim
 import ../../../Network/Serialize/Transactions/ParseSend
+import ../../../Network/Serialize/Transactions/ParseData
+
+#Used solely when generating work for Transactions about to be published.
+import ../../../Network/Serialize/Transactions/SerializeSend
+import ../../../Network/Serialize/Transactions/SerializeData
 
 import ../../../objects/GlobalFunctionBoxObj
 
@@ -45,7 +53,7 @@ proc `%`(
 
       try:
         for o in 0 ..< result["outputs"].len:
-          result["outputs"][o]["key"] = % $cast[MintOutput](mint.outputs[o]).key
+          result["outputs"][o]["nick"] = % cast[MintOutput](mint.outputs[o]).key
       except KeyError as e:
         panic("Couldn't add a Mint's output's key to its output: " & e.msg)
 
@@ -75,7 +83,6 @@ proc `%`(
 
       result["signature"] = % $send.signature
       result["proof"] = % send.proof
-      result["argon"] = % $send.argon
 
     of Data as data:
       result["descendant"] = % "Data"
@@ -84,99 +91,47 @@ proc `%`(
 
       result["signature"] = % $data.signature
       result["proof"] = % data.proof
-      result["argon"] = % $data.argon
 
 proc module*(
   functions: GlobalFunctionBox
-): RPCFunctions {.forceCheck: [].} =
+): RPCHandle {.forceCheck: [].} =
   try:
-    newRPCFunctions:
-      "getTransaction" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError,
+    result = newRPCHandle:
+      proc getTransaction(
+        hash: Hash[256]
+      ): JSONNode {.forceCheck: [
         JSONRPCError
       ].} =
-        #Verify the parameters.
-        if (
-          (params.len != 1) or
-          (params[0].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
         #Get the Transaction.
         try:
-          var strHash: string = parseHexStr(params[0].getStr())
-          if strHash.len != 32:
-            raise newJSONRPCError(-3, "Invalid hash")
-          res["result"] = % functions.transactions.getTransaction(strHash.toHash[:256]())
+          result = % functions.transactions.getTransaction(hash)
         except IndexError:
-          raise newJSONRPCError(-2, "Transaction not found")
-        except ValueError:
-          raise newJSONRPCError(-3, "Invalid hash")
+          raise newJSONRPCError(IndexError, "Transaction not found")
 
-      "getUTXOs" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError
-      ].} =
-        #Verify the parameters.
-        if (
-          (params.len != 1) or
-          (params[0].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
+      proc getUTXOs(
+        address: Address
+      ): JSONNode {.forceCheck: [].} =
         #Get the UTXOs.
-        var
-          decodedAddy: Address
-          utxos: seq[FundedInput]
-        try:
-          decodedAddy = Address.getEncodedData(params[0].getStr())
-        except ValueError:
-          raise newException(ParamError, "")
-
-        case decodedAddy.addyType:
+        var utxos: seq[FundedInput]
+        case address.addyType:
           of AddressType.PublicKey:
-            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](decodedAddy.data)))
+            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](address.data)))
 
-        res["result"] = % []
+        result = % []
         for utxo in utxos:
-          try:
-            res["result"].add(%* {
-              "hash": $utxo.hash,
-              "nonce": utxo.nonce
-            })
-          except KeyError as e:
-            panic("Couldn't append to the list of UTXOs despite just creating it: " & e.msg)
+          result.add(%* {
+            "hash": $utxo.hash,
+            "nonce": utxo.nonce
+          })
 
-      "getBalance" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ) {.forceCheck: [
-        ParamError
-      ].} =
-        #Verify the parameters.
-        if (
-          (params.len != 1) or
-          (params[0].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
+      proc getBalance(
+        address: Address
+      ): string {.forceCheck: [].} =
         #Get the UTXOs.
-        var
-          decodedAddy: Address
-          utxos: seq[FundedInput]
-        try:
-          decodedAddy = Address.getEncodedData(params[0].getStr())
-        except ValueError:
-          raise newException(ParamError, "")
-
-        case decodedAddy.addyType:
+        var utxos: seq[FundedInput]
+        case address.addyType:
           of AddressType.PublicKey:
-            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](decodedAddy.data)))
+            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](address.data)))
 
         var balance: uint64 = 0
         for utxo in utxos:
@@ -184,34 +139,71 @@ proc module*(
             balance += cast[SendOutput](functions.transactions.getTransaction(utxo.hash).outputs[utxo.nonce]).amount
           except IndexError as e:
             panic("Failed to get a Transaction which was a spendable UTXO: " & e.msg)
-        res["result"] = % $balance
+        result = $balance
 
-      "publishSend" = proc (
-        res: JSONNode,
-        params: JSONNode
+      proc publishTransaction(
+        type_JSON: string,
+        transaction: hex
       ) {.forceCheck: [
-        ParamError,
         JSONRPCError
       ], async.} =
-        if (
-          (params.len != 1) or
-          (params[0].kind != JString)
-        ):
-          raise newException(ParamError, "")
-
         try:
-          await functions.transactions.addSend(
-            parseSend(
-              params[0].getStr().parseHexStr(),
-              functions.consensus.getSendDifficulty()
-            )
-          )
+          var difficulty: uint32
+          case type_JSON:
+            of "Claim":
+              functions.transactions.addClaim(parseClaim(transaction))
+            of "Send":
+              difficulty = functions.consensus.getSendDifficulty()
+              await functions.transactions.addSend(
+                parseSend(transaction, difficulty)
+              )
+            of "Data":
+              difficulty = functions.consensus.getDataDifficulty()
+              await functions.transactions.addData(
+                parseData(transaction, functions.consensus.getDataDifficulty())
+              )
+            else:
+              raise newJSONRPCError(ValueError, "Invalid Transaction type specified")
+        except JSONRPCError as e:
+          raise e
         except ValueError as e:
-          raise newJSONRPCError(-3, "Invalid send: " & e.msg)
+          raise newJSONRPCError(ValueError, "Transaction is invalid: " & e.msg)
         except DataExists:
-          discard
+          return
+        except Spam as spam:
+          raise newJSONRPCError(Spam, "Transaction didn't beat the spam filter", %* {
+            "difficulty": spam.difficulty
+          })
         except Exception as e:
-          panic("addSend raised an Exception despite catching all errors: " & e.msg)
-        res["result"] = % true
+          panic("Adding a Transaction raised an Exception despite catching all errors: " & e.msg)
+
+      proc publishTransactionWithoutWork(
+        type_JSON: string,
+        transaction: hex
+      ) {.requireAuth, forceCheck: [
+        JSONRPCError
+      ], async.} =
+        try:
+          case type_JSON:
+            of "Claim":
+              await publishTransaction(type_JSON, transaction)
+            of "Send":
+              let send: Send = parseSend(transaction & "".pad(4), uint32(0))
+              send.mine(uint32(functions.consensus.getSendDifficulty()))
+              await publishTransaction(type_JSON, send.serialize())
+            of "Data":
+              let data: Data = parseData(transaction & "".pad(4), uint32(0))
+              data.mine(uint32(functions.consensus.getDataDifficulty()))
+              await publishTransaction(type_JSON, data.serialize())
+            else:
+              raise newJSONRPCError(ValueError, "Invalid Transaction type specified")
+        except ValueError as e:
+          raise newJSONRPCError(ValueError, "Transaction is invalid: " & e.msg)
+        except Spam as e:
+          panic("Transaction we're generating work for was labelled Spam: " & e.msg)
+        except JSONRPCError as e:
+          raise e
+        except Exception as e:
+          panic("Calling publishTransactionWithoutWork raised an Exception despite catching all errors: " & e.msg)
   except Exception as e:
     panic("Couldn't create the Transactions Module: " & e.msg)

@@ -14,19 +14,19 @@ def LockedMeritDifficultyTest(
   rpc: RPC
 ) -> None:
   def verifyVotedAndUnlocked() -> None:
-    if rpc.call("merit", "getMerit", [0])["status"] != "Unlocked":
+    if rpc.call("merit", "getMerit", {"nick": 0})["status"] != "Unlocked":
       raise Exception(INVALID_TEST)
     verifySendDifficulty(rpc, 2)
     verifyDataDifficulty(rpc, 2)
 
   def verifyDiscountedAndLocked() -> None:
-    if rpc.call("merit", "getMerit", [0])["status"] != "Locked":
+    if rpc.call("merit", "getMerit", {"nick": 0})["status"] != "Locked":
       raise Exception(INVALID_TEST)
     verifySendDifficulty(rpc, 3)
     verifyDataDifficulty(rpc, 5)
 
   def verifyCountedAndPending() -> None:
-    if rpc.call("merit", "getMerit", [0])["status"] != "Pending":
+    if rpc.call("merit", "getMerit", {"nick": 0})["status"] != "Pending":
       raise Exception(INVALID_TEST)
     verifySendDifficulty(rpc, 2)
     verifyDataDifficulty(rpc, 2)

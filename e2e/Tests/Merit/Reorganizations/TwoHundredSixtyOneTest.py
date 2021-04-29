@@ -21,11 +21,11 @@ def TwoHundredSixtyOneTest(
 ) -> None:
   merit: Merit = Merit()
 
-  blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMiner")))
+  blsPrivKey: PrivateKey = PrivateKey(bytes.fromhex(rpc.call("personal", "getMeritHolderKey")))
   blsPubKey: str = blsPrivKey.toPublicKey().serialize().hex()
 
   #Get a template.
-  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", [blsPubKey])
+  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey})
   template["header"] = bytes.fromhex(template["header"])
 
   #Mine it.
@@ -40,7 +40,14 @@ def TwoHundredSixtyOneTest(
   rpc.meros.syncConnect(merit.blockchain.blocks[0].header.hash)
 
   #Publish it.
-  rpc.call("merit", "publishBlock", [template["id"], block.header.serialize().hex()])
+  rpc.call(
+    "merit",
+    "publishBlock",
+    {
+      "id": template["id"],
+      "header": block.header.serialize().hex()
+    }
+  )
   if MessageType(rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
     raise TestError("Meros didn't broadcast a published Block.")
 

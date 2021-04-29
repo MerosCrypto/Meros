@@ -275,7 +275,7 @@ proc mainMerit(
 
     #If this header had a new miner, check if it was us.
     if newBlock.header.newMiner:
-      if newBlock.header.minerKey == wallet.miner.publicKey:
+      if (not wallet.miner.isNil) and (newBlock.header.minerKey == wallet.miner.publicKey):
         wallet.setMinerNick(uint16(merit.state.holders.len - 1))
 
     logDebug "Minting Meros", hash = newBlock.header.hash
@@ -289,7 +289,7 @@ proc mainMerit(
       transactions[].mint(newBlock.header.hash, rewards)
 
       #If we have a miner wallet, check if a mint was to us.
-      if wallet.miner.initiated:
+      if (not wallet.miner.isNil) and wallet.miner.initiated:
         for r in 0 ..< rewards.len:
           if wallet.miner.nick == rewards[r].nick:
             receivedMint = r
@@ -326,16 +326,29 @@ proc mainMerit(
       #If we got a Mint...
       if receivedMint != -1:
         #Claim the Reward.
-        var claim: Claim
-        try:
-          claim = newClaim(
-            newFundedInput(newBlock.header.hash, receivedMint),
-            wallet.wallet.external.next().publicKey
-          )
-        except ValueError as e:
-          panic("Created a Claim with a Mint yet newClaim raised a ValueError: " & e.msg)
-        except IndexError as e:
-          panic("Couldn't grab a Mint we just added: " & e.msg)
+        var
+          #Used to always claim to the first address. Using another has no value given the singular Merit Holder key.
+          firstAddress: uint32 = 0
+          claim: Claim
+        while true:
+          try:
+            claim = newClaim(
+              newFundedInput(newBlock.header.hash, receivedMint),
+              wallet.getPublicKey(
+                some(firstAddress),
+                proc (
+                  key: EdPublicKey
+                ): bool {.gcsafe, forceCheck: [].} =
+                  transactions[].loadIfKeyWasUsed(key)
+              )
+            )
+            break
+          except ValueError:
+            inc(firstAddress)
+            if firstAddress == 256:
+              panic("Generated a Wallet with 256 invalid child keys in a row OR Meros is trying to create a malformed Claim.")
+          except IndexError as e:
+            panic("Couldn't grab a Mint we just added: " & e.msg)
 
         wallet.miner.sign(claim)
 

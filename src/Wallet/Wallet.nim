@@ -1,60 +1,47 @@
-import ../lib/Errors
+import ../lib/[Errors, Hash]
 
 import Mnemonic, HDWallet
-export Mnemonic.Mnemonic, `$`, HDWallet
+export Mnemonic, HDWallet
 
-type Wallet* = ref object
+type InsecureWallet* = ref object
   mnemonic*: Mnemonic
+  password*: string
   hd*: HDWallet
-  external*: HDWallet
-  internal*: HDWallet
 
+#Create a new Wallet.
 proc newWallet*(
   password: string
-): Wallet {.forceCheck: [].} =
-  result = Wallet()
-  try:
-    result.mnemonic = newMnemonic()
-    result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
+): InsecureWallet {.forceCheck: [].} =
+  while true:
+    try:
+      result = InsecureWallet(
+        mnemonic: newMnemonic(),
+        password: password
+      )
+      result.hd = newHDWallet(SHA2_256(result.mnemonic.unlock(password)).serialize())
 
-    #Guarantee account 0 is usable.
-    discard result.hd[0]
-    result.external = result.hd[0].derive(0)
-    result.internal = result.hd[0].derive(1)
-  except ValueError:
-    result = newWallet(password)
+      #Guarantee account 0 is usable.
+      #This getter automatically checks the internal/external chains as well.
+      discard result.hd[0]
 
+      break
+    except ValueError:
+      continue
+
+#Load an existing Wallet.
 proc newWallet*(
-  mnemonic: string,
+  mnemonicArg: string,
   password: string
-): Wallet {.forceCheck: [
+): InsecureWallet {.forceCheck: [
   ValueError
 ].} =
-  result = Wallet()
   try:
-    result.mnemonic = newMnemonic(mnemonic)
-    result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
-    result.external = result.hd[0].derive(0)
-    result.internal = result.hd[0].derive(1)
+    let mnemonic: Mnemonic = newMnemonic(mnemonicArg)
+    result = InsecureWallet(
+      mnemonic: mnemonic,
+      password: password,
+      hd: newHDWallet(SHA2_256(mnemonic.unlock(password)).serialize())
+    )
+    discard result.hd[0]
   except ValueError as e:
     raise e
-
-converter toHDWallet*(
-  wallet: Wallet
-): HDWallet {.forceCheck: [].} =
-  wallet.hd
-
-proc privateKey*(
-  wallet: Wallet
-): EdPrivateKey {.forceCheck: [].} =
-  wallet.hd.privateKey
-
-proc publicKey*(
-  wallet: Wallet
-): EdPublicKey {.forceCheck: [].} =
-  wallet.hd.publicKey
-
-proc address*(
-  wallet: Wallet
-): string {.forceCheck: [].} =
-  wallet.hd.address

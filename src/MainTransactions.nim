@@ -8,6 +8,10 @@ proc verify(
   consensus: ref Consensus,
   transaction: Transaction
 ) {.forceCheck: [], async.} =
+  #Make sure we're a Miner with Merit.
+  if wallet.miner.isNil or (not wallet.miner.initiated) or (merit.state.merit[wallet.miner.nick] == 0):
+    return
+
   #Grab the Transaction's status.
   var status: TransactionStatus
   try:
@@ -19,28 +23,26 @@ proc verify(
   if status.beaten:
     return
 
-  #Make sure we're a Miner with Merit.
-  if wallet.miner.initiated and (merit.state.merit[wallet.miner.nick] > 0):
-    #Inform the WalletDB were verifying a Transaction.
-    try:
-      wallet.verifyTransaction(transaction)
-    #We already verified a competitor.
-    except ValueError:
-      return
+  #Inform the WalletDB we're verifying a Transaction.
+  try:
+    wallet.verifyTransaction(transaction)
+  #We already verified a competitor.
+  except ValueError:
+    return
 
-    #Verify the Transaction.
-    var verif: SignedVerification = newSignedVerificationObj(transaction.hash)
-    wallet.miner.sign(verif)
+  #Verify the Transaction.
+  var verif: SignedVerification = newSignedVerificationObj(transaction.hash)
+  wallet.miner.sign(verif)
 
-    #Add the Verification, which calls broadcast.
-    try:
-      await functions.consensus.addSignedVerification(verif)
-    except ValueError as e:
-      panic("Created a Verification with an invalid signature: " & e.msg)
-    except DataExists as e:
-      panic("Created a Verification which already exists: " & e.msg)
-    except Exception as e:
-      panic("addSignedVerification threw an exception despite catching all errors: " & e.msg)
+  #Add the Verification, which calls broadcast.
+  try:
+    await functions.consensus.addSignedVerification(verif)
+  except ValueError as e:
+    panic("Created a Verification with an invalid signature: " & e.msg)
+  except DataExists as e:
+    panic("Created a Verification which already exists: " & e.msg)
+  except Exception as e:
+    panic("addSignedVerification threw an exception despite catching all errors: " & e.msg)
 
 proc syncPrevious(
   functions: GlobalFunctionBox,
@@ -82,7 +84,7 @@ proc syncPrevious(
       ((final of Send) and (not ((tx of Claim) or (tx of Send)))) or
       ((final of Data) and (not (tx of Data)))
     ):
-      raise newException(ValueError, "Transaction has an invalid input.")
+      raise newLoggedException(ValueError, "Transaction has an invalid input.")
 
     if (
       (
@@ -93,7 +95,7 @@ proc syncPrevious(
         cast[Data](tx).argon.overflows(cast[Data](tx).getDifficultyFactor() * functions.consensus.getDataDifficulty())
       )
     ):
-      raise newException(ValueError, "Transaction doesn't pass the spam check.")
+      raise newLoggedException(ValueError, "Transaction doesn't pass the spam check.")
 
     queue.add(tx)
 
@@ -143,6 +145,11 @@ proc mainTransactions(
       result = transactions[][hash]
     except IndexError as e:
       raise e
+
+  functions.transactions.getUTXOs = proc (
+    key: EdPublicKey
+  ): seq[FundedInput] {.forceCheck: [].} =
+    transactions[].getUTXOs(key)
 
   functions.transactions.getSpenders = proc (
     input: Input
@@ -201,7 +208,7 @@ proc mainTransactions(
     except DataExists as e:
       raise e
     except DataMissing:
-      raise newException(ValueError, "Transaction has a non-existent input.")
+      raise newLoggedException(ValueError, "Transaction has a non-existent input.")
     except Exception as e:
       panic("syncPrevious threw an Exception despite catching everything: " & e.msg)
 
@@ -244,7 +251,7 @@ proc mainTransactions(
     except DataExists as e:
       raise e
     except DataMissing:
-      raise newException(ValueError, "Transaction has a non-existent input.")
+      raise newLoggedException(ValueError, "Transaction has a non-existent input.")
     except Exception as e:
       panic("syncPrevious threw an Exception despite catching everything: " & e.msg)
 
@@ -301,8 +308,3 @@ proc mainTransactions(
     hash: Hash[256]
   ) {.forceCheck: [].} =
     transactions[].prune(hash)
-
-  functions.transactions.getUTXOs = proc (
-    key: EdPublicKey
-  ): seq[FundedInput] {.forceCheck: [].} =
-    transactions[].getUTXOs(key)

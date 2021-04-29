@@ -7,6 +7,8 @@ type Socket* = ref object
   stream: StreamTransport
   alreadyClosed: bool
 
+  readLineBuffer*: char
+
 proc newSocket*(
   addy: TransportAddress
 ): Future[Socket] {.forceCheck: [
@@ -105,3 +107,40 @@ proc safeClose*(
 
   if reason != "":
     logDebug "Closing raw socket", reason = reason
+
+#Used by the RPC, which shares this socket code.
+proc readLine*(
+  socket: Socket
+): Future[string] {.forceCheck: [], async.} =
+  try:
+    if socket.readLineBuffer != char(0):
+      let buffer: char = socket.readLineBuffer
+      socket.readLineBuffer = char(0)
+
+      if buffer == '\r':
+        if not socket.stream.atEof:
+          socket.readLineBuffer = char((await socket.stream.read(1))[0])
+          if socket.readLineBuffer == '\n':
+            socket.readLineBuffer = char(0)
+        return
+      result = $buffer
+
+    while not socket.closed:
+      var temp: seq[byte] = await socket.stream.read(1)
+      if temp.len == 0:
+        raise newException(SocketError, "")
+      result &= char(temp[0])
+
+      if result[^1] == '\n':
+        result = result.substr(0, high(result) - 1)
+        break
+      elif result[^1] == '\r':
+        result = result.substr(0, high(result) - 1)
+        if not socket.stream.atEof:
+          socket.readLineBuffer = char((await socket.stream.read(1))[0])
+          if socket.readLineBuffer == '\n':
+            socket.readLineBuffer = char(0)
+        break
+  except Exception:
+    socket.safeClose("Couldn't read a line from the socket.")
+    return ""

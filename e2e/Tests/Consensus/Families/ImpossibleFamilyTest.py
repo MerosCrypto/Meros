@@ -28,9 +28,9 @@ def ImpossibleFamilyTest(
         raise TestError("Meros didn't broadcast a Send.")
 
   def verifyPossibleWon() -> None:
-    if rpc.call("consensus", "getStatus", [sends[1].hash.hex()])["verified"]:
+    if rpc.call("consensus", "getStatus", {"hash": sends[1].hash.hex()})["verified"]:
       raise TestError("Meros verified an impossible Transaction.")
-    if not rpc.call("consensus", "getStatus", [sends[0].hash.hex()])["verified"]:
+    if not rpc.call("consensus", "getStatus", {"hash": sends[0].hash.hex()})["verified"]:
       raise TestError("Meros didn't verify the only possible Transaction.")
 
   Liver(

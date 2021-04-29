@@ -1,6 +1,18 @@
+import options
+import strutils
+import json
+
 import chronos
 
 import ../../../lib/Errors
+import ../../../lib/Hash
+
+import ../../../Database/Transactions/Transaction
+import ../../../Database/Merit/BlockHeader
+
+import ../../../Network/objects/MessageObj
+import ../../../Network/Serialize/Transactions/[SerializeClaim, SerializeSend, SerializeData]
+import ../../../Network/Serialize/Merit/SerializeBlockHeader
 
 import ../../../objects/GlobalFunctionBoxObj
 
@@ -11,58 +23,64 @@ const DEFAULT_PORT {.intdefine.}: int = 5132
 
 proc module*(
   functions: GlobalFunctionBox
-): RPCFunctions {.forceCheck: [].} =
+): RPCHandle {.forceCheck: [].} =
   try:
-    newRPCFunctions:
-      "connect" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ): Future[void] {.forceCheck: [
-        ParamError
-      ], async.} =
-        #Verify the parameters length.
-        if (params.len != 1) and (params.len != 2):
-          raise newException(ParamError, "")
-
-        #Verify the paramters types.
-        if params[0].kind != JString:
-          raise newException(ParamError, "")
-
-        #Supply the optional port argument if needed.
-        if params.len == 1:
-          params.add(% DEFAULT_PORT)
-        if params[1].kind != JInt:
-          raise newException(ParamError, "")
-
+    result = newRPCHandle:
+      proc connect(
+        address: string,
+        port: Option[int] = some(DEFAULT_PORT)
+      ) {.requireAuth, forceCheck: [], async.} =
         try:
-          await functions.network.connect(params[0].getStr(), params[1].getInt())
+          await functions.network.connect(address, port.unsafeGet())
         except Exception as e:
           panic("MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
-      "getPeers" = proc (
-        res: JSONNode,
-        params: JSONNode
-      ): Future[void] {.forceCheck: [], async.} =
-        res["result"] = % []
+      proc getPeers(): JSONNode {.forceCheck: [].} =
+        result = % []
 
         for client in functions.network.getPeers():
-          try:
-            res["result"].add(%* {
-              "ip": (
-                $int(client.ip[0]) & "." &
-                $int(client.ip[1]) & "." &
-                $int(client.ip[2]) & "." &
-                $int(client.ip[3])
-              ),
-              "server": client.server
-            })
-          except KeyError as e:
-            panic("Couldn't set the result: " & e.msg)
-
+          result.add(%* {
+            "ip": (
+              $int(client.ip[0]) & "." &
+              $int(client.ip[1]) & "." &
+              $int(client.ip[2]) & "." &
+              $int(client.ip[3])
+            ),
+            "server": client.server
+          })
           if client.server:
-            try:
-              res["result"][res["result"].len - 1]["port"] = % client.port
-            except KeyError as e:
-              panic("Couldn't add the port the result: " & e.msg)
+            result[result.len - 1]["port"] = % client.port
+
+      proc broadcast(
+        transaction: Option[Hash[256]] = none(Hash[256]),
+        block_JSON: Option[Hash[256]] = none(Hash[256])
+      ) {.forceCheck: [
+        JSONRPCError
+      ].} =
+        if transaction.isSome:
+          var tx: Transaction
+          try:
+            tx = functions.transactions.getTransaction(transaction.unsafeGet())
+          except IndexError:
+            raise newJSONRPCError(IndexError, "Transaction not found")
+          case tx:
+            of Mint as _:
+              raise newJSONRPCError(ValueError, "Transaction is a Mint")
+            of Claim as _:
+              functions.network.broadcast(MessageType.Claim, tx.serialize())
+            of Send as _:
+              functions.network.broadcast(MessageType.Send, tx.serialize())
+            of Data as _:
+              functions.network.broadcast(MessageType.Data, tx.serialize())
+
+        if block_JSON.isSome():
+          try:
+            let header: BlockHeader = functions.merit.getBlockByHash(block_JSON.unsafeGet()).header
+            if header.hash == functions.merit.getBlockByNonce(0).header.hash:
+              raise newJSONRPCError(ValueError, "Block is the genesis Block")
+            functions.network.broadcast(MessageType.BlockHeader, header.serialize())
+          except IndexError:
+            raise newJSONRPCError(IndexError, "Block not found")
+
   except Exception as e:
     panic("Couldn't create the Network Module: " & e.msg)

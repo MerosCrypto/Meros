@@ -23,9 +23,9 @@ def UnionedFamiliesSingleWinnerTest(
 
   def verifyUnionizingWon() -> None:
     for send in sends[:-1]:
-      if rpc.call("consensus", "getStatus", [send.hash.hex()])["verified"]:
+      if rpc.call("consensus", "getStatus", {"hash": send.hash.hex()})["verified"]:
         raise TestError("Meros verified a transaction which was beaten by a unionizing transaction.")
-    if not rpc.call("consensus", "getStatus", [sends[-1].hash.hex()])["verified"]:
+    if not rpc.call("consensus", "getStatus", {"hash": sends[-1].hash.hex()})["verified"]:
       raise TestError("Meros didn't verify the verified unionizing transaction.")
 
   Liver(

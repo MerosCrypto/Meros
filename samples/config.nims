@@ -1,6 +1,3 @@
-#Necessary flags.
-switch("threads", "on")
-
 #Optimize for size (which is faster than `opt=speed` for Meros (at least on x86_64)).
 switch("opt", "size")
 

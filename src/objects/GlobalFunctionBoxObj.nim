@@ -1,11 +1,13 @@
 import locks
 import sets
+import options
 
 import chronos
 
 import ../lib/[Errors, Hash]
 import ../Wallet/[MinerWallet, Wallet]
-import ../Wallet/Wallet
+
+import ../Database/Filesystem/Wallet/WalletDB
 
 import ../Database/Merit/objects/[BlockHeaderObj, BlockObj]
 
@@ -93,7 +95,18 @@ type
 
   ConsensusFunctionBox* = ref object
     getSendDifficulty*: proc (): uint16 {.gcsafe, raises: [].}
+    getSendDifficultyOfHolder*: proc (
+      holder: uint16
+    ): uint16 {.gcsafe, raises: [
+      IndexError
+    ].}
+
     getDataDifficulty*: proc (): uint16 {.gcsafe, raises: [].}
+    getDataDifficultyOfHolder*: proc (
+      holder: uint16
+    ): uint16 {.gcsafe, raises: [
+      IndexError
+    ].}
 
     isMalicious*: proc (
       nick: uint16,
@@ -265,25 +278,58 @@ type
     ].}
 
   PersonalFunctionBox* = ref object
-    getMinerWallet*: proc(): MinerWallet {.gcsafe, raises: [].}
+    getMinerWallet*: proc(): MinerWallet {.gcsafe, raises: [
+      ValueError
+    ].}
 
-    getWallet*: proc (): Wallet {.gcsafe, raises: [].}
+    getMnemonic*: proc (): string {.gcsafe, raises: [
+      ValueError
+    ].}
 
-    setMnemonic*: proc (
+    getAccount*: proc (): tuple[key: EdPublicKey, chainCode: Hash[256]] {.gcsafe, raises: [].}
+
+    setAccount*: proc (
+      key: EdPublicKey,
+      chainCode: Hash[256],
+      clear: bool = false
+    ) {.gcsafe, raises: [].}
+
+    setWallet*: proc (
       mnemonic: string,
-      paassword: string
+      password: string
     ) {.gcsafe, raises: [
       ValueError
     ].}
 
-    send*: proc (
-      destination: string,
-      amount: string
-    ): Future[Hash[256]] {.gcsafe.}
+    getAddress*: proc (
+      index: Option[uint32]
+    ): string {.gcsafe, raises: [
+      ValueError
+    ].}
+
+    getChangeKey*: proc (): EdPublicKey {.gcsafe, raises: [].}
+
+    getKeyIndex*: proc (
+      key: EdPublicKey
+    ): KeyIndex {.gcsafe, raises: [
+      IndexError
+    ].}
+
+    sign*: proc (
+      send: Send,
+      keys: seq[KeyIndex],
+      password: string
+    ) {.gcsafe, raises: [
+      IndexError,
+      ValueError
+    ].}
 
     data*: proc (
-      data: string
+      data: string,
+      password: string
     ): Future[Hash[256]] {.gcsafe.}
+
+    getUTXOs*: proc (): seq[UsableInput] {.gcsafe, raises: [].}
 
   NetworkFunctionBox* = ref object
     connect*: proc (

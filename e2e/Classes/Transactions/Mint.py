@@ -36,7 +36,7 @@ class Mint(
     }
     for output in self.outputs:
       result["outputs"].append({
-        "key": output[0],
+        "nick": output[0],
         "amount": str(output[1])
       })
     return result
@@ -47,5 +47,5 @@ class Mint(
   ) -> Any:
     outputs: List[Tuple[int, int]] = []
     for output in json["outputs"]:
-      outputs.append((output["key"], int(output["amount"])))
+      outputs.append((output["nick"], int(output["amount"])))
     return Mint(bytes.fromhex(json["hash"]), outputs)

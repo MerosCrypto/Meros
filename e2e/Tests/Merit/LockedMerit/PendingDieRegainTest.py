@@ -13,7 +13,7 @@ def PendingDieRegainTest(
   def verifyCorrectlyLocked(
     height: int
   ) -> None:
-    merit: Dict[str, Any] = rpc.call("merit", "getMerit", [0])
+    merit: Dict[str, Any] = rpc.call("merit", "getMerit", {"nick": 0})
     merit = {
       "merit": merit["merit"],
       "status": merit["status"]

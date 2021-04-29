@@ -22,14 +22,17 @@ def HundredTwoTest(
   #Verifies the Transaction is added, it has the right holders, the holders Merit surpasses the threshold, yet it isn't verified.
   def verify() -> None:
     for tx in transactions.txs:
-      status: Dict[str, Any] = rpc.call("consensus", "getStatus", [tx.hex()])
+      status: Dict[str, Any] = rpc.call("consensus", "getStatus", {"hash": tx.hex()})
       if set(status["verifiers"]) != set([0, 1]):
         raise TestError("Meros doesn't have the right list of verifiers for this Transaction.")
 
       if status["merit"] != 80:
         raise TestError("Meros doesn't have the right amount of Merit for this Transaction.")
 
-      if rpc.call("merit", "getMerit", [0])["merit"] + rpc.call("merit", "getMerit", [1])["merit"] < status["threshold"]:
+      if (
+        rpc.call("merit", "getMerit", {"nick": 0})["merit"] +
+        rpc.call("merit", "getMerit", {"nick": 1})["merit"]
+      ) < status["threshold"]:
         raise TestError("Merit sum of holders is less than the threshold.")
 
       if status["verified"]:

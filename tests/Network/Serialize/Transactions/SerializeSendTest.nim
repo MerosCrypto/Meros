@@ -20,7 +20,7 @@ suite "SerializeSend":
       outputs: seq[SendOutput]
       send: Send
       reloaded: Send
-      wallet: Wallet = newWallet("")
+      wallet: HDWallet = newWallet("").hd
 
   midFuzzTest "Serialize and parse.":
     #Create the inputs.
@@ -31,18 +31,14 @@ suite "SerializeSend":
     #Create the outputs.
     outputs = newSeq[SendOutput](rand(254) + 1)
     for o in 0 ..< outputs.len:
-      outputs[o] = newSendOutput(
-        wallet
-        .next(last = uint32(rand(200) * 1000))
-        .next(last = uint32(o * 1000)).publicKey,
-        uint64(rand(high(int32))))
+      outputs[o] = newSendOutput(wallet.publicKey, uint64(rand(high(int32))))
 
     #Create the Send.
     send = newSend(inputs, outputs)
 
     #The Meros protocol requires this signature be produced by the MuSig of every unique Wallet paid via the inputs.
     #Serialization/Parsing doesn't care at all.
-    wallet.next(last = uint32(rand(200) * 1000)).sign(send)
+    wallet.sign(send)
 
     #mine the Send.
     send.mine(uint32(3))

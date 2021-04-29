@@ -15,6 +15,9 @@ proc parseBlockBody*(
   ValueError
 ].} =
   #Packets Contents | Capacity | Sketch | Amount of Elements | Elements | Aggregate Signature
+  if bodyStr.len < HASH_LEN + INT_LEN:
+    raise newLoggedException(ValueError, "parseBlockBody not handed enough data to get the capacity.")
+
   result.capacity = bodyStr[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary()
   var
     sketchLen: int = result.capacity * SKETCH_HASH_LEN

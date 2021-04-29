@@ -13,6 +13,13 @@ proc parseClaim*(
   #Verify the input length.
   if claimStr.len < BYTE_LEN:
     raise newLoggedException(ValueError, "parseClaim not handed enough data to get the amount of inputs.")
+  if claimStr.len != (
+    BYTE_LEN +
+    (int(claimStr[0]) * (HASH_LEN + BYTE_LEN)) +
+    ED_PUBLIC_KEY_LEN +
+    BLS_SIGNATURE_LEN
+  ):
+    raise newLoggedException(ValueError, "parseClaim handed the wrong amount of data.")
 
   #Inputs Length | Inputs | Output Ed25519 Key | BLS Signature
   var claimSeq: seq[string] = claimStr.deserialize(

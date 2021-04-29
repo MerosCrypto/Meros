@@ -58,14 +58,14 @@ def TwoHundredThirtyTwoTest(
   #Cause the re-organization to fail.
   rpc.meros.live.connection.close()
   rpc.meros.sync.connection.close()
-  rpc.socket.close()
   sleep(35)
 
   #Reboot the node to reload the database.
   rpc.meros.quit()
-  rpc.meros.calledQuit = False
 
-  rpc.meros.process = Popen(["./build/Meros", "--data-dir", rpc.meros.dataDir, "--log-file", rpc.meros.log, "--db", rpc.meros.db, "--network", "devnet", "--tcp-port", str(rpc.meros.tcp), "--rpc-port", str(rpc.meros.rpc), "--no-gui"])
+  #Reset the RPC's tracking variables.
+  rpc.meros.calledQuit = False
+  rpc.meros.process = Popen(["./build/Meros", "--data-dir", rpc.meros.dataDir, "--log-file", rpc.meros.log, "--db", rpc.meros.db, "--network", "devnet", "--token", "TEST_TOKEN", "--tcp-port", str(rpc.meros.tcp), "--rpc-port", str(rpc.meros.rpc), "--no-gui"])
   while True:
     try:
       connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -80,6 +80,4 @@ def TwoHundredThirtyTwoTest(
   rpc.meros.syncConnect(main.blocks[0].header.hash)
   sendBlock(main.blocks[2])
 
-  rpc.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  rpc.socket.connect(("127.0.0.1", rpc.meros.rpc))
   verifyBlockchain(rpc, main)

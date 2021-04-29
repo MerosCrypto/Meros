@@ -10,12 +10,14 @@ const
   LISTFILE: string = staticRead("WordLists/English.txt")
   LIST: seq[string] = LISTFILE.splitLines()
 
-type Mnemonic* = object
+type Mnemonic* = ref object
    entropy*: string
    checksum*: string
    sentence*: string
 
 proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
+  result = Mnemonic()
+
   #Create the entropy.
   result.entropy = newString(32)
   randomFill(result.entropy)
@@ -50,13 +52,17 @@ proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
 
     #Increase the bit by 11.
     bit += 11
-  result.sentence = result.sentence[ 0 ..< result.sentence.len - 1]
+
+  #Remove the extra space at the end.
+  result.sentence = result.sentence[0 ..< result.sentence.len - 1]
 
 proc newMnemonic*(
   sentence: string
-): Mnemonic  {.forceCheck: [
+): Mnemonic {.forceCheck: [
   ValueError
 ].} =
+  result = Mnemonic()
+
   #Split the sentence.
   var words: seq[string] = sentence.split(" ").filter(
     proc (
@@ -67,6 +73,10 @@ proc newMnemonic*(
 
   #Set the sentence in the mnemonic.
   result.sentence = words.join(" ")
+
+  when not defined(merosTests):
+    if words.len != 24:
+      raise newException(ValueError, "Mnemonic has too little entropy.")
 
   #Decode the sentence.
   var
@@ -160,7 +170,7 @@ proc newMnemonic*(
 #Generate a secret using the Mnemonic and the password.
 proc unlock*(
   mnemonic: Mnemonic,
-  password: string = ""
+  password: string
 ): string {.inline, forceCheck: [].} =
   PDKDF2_HMAC_SHA2_512(mnemonic.sentence.toNFKD(), ("mnemonic" & password.toNFKD())).serialize()
 

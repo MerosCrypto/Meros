@@ -1,6 +1,10 @@
 import os
-import threadpool, locks
-import sequtils
+import locks
+when not defined(nogui):
+  import threadpool
+
+import options
+import strutils
 import sets, tables
 import json
 

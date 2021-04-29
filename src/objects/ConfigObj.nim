@@ -7,6 +7,7 @@ CLI options will override options from the settings file which will override the
 ]#
 
 import os
+import options
 import strutils
 import tables
 import json
@@ -26,9 +27,10 @@ OPTIONS:
   -l,  --log-file  <LOG_FILE>       File to save the log to.
   --db             <DB_NAME>        Name for the database file.
   -n,  --network   <NETWORK>        Network to connect to.
-  -ns, --no-server                  Don't accept incoming connections.
+  --token          <TOKEN>          Bearer authorization token to use for the RPC.
   -t,  --tcp-port  <PORT>           Port to listen for connections on.
   -r,  --rpc-port  <PORT>           Port the RPC should listen on.
+  -ns, --no-server                  Don't accept incoming connections.
   -nr, --no-rpc                     Don't listen on the RPC socket.
   -ng, --no-gui                     Don't start the GUI."""
 
@@ -38,9 +40,9 @@ OPTIONS:
     "d":  "data-dir",
     "l":  "log-file",
     "n":  "network",
-    "ns": "no-server",
     "t":  "tcp-port",
     "r":  "rpc-port",
+    "ns": "no-server",
     "nr": "no-rpc",
     "ng": "no-gui"
   }.toTable()
@@ -51,9 +53,10 @@ OPTIONS:
     "log-file":  1,
     "db":        1,
     "network":   1,
-    "no-server": 0,
+    "token":     1,
     "tcp-port":  1,
     "rpc-port":  1,
+    "no-server": 0,
     "no-rpc":    0,
     "no-gui":    0
   }.toTable()
@@ -64,13 +67,15 @@ type Config* = object
   db*: string
 
   network*: string
+  token*: Option[string]
 
-  #Listening for Meros connections or not.
-  server*: bool
   #Port for our server to listen on.
   tcpPort*: int
   #Port for the RPC to listen on.
   rpcPort*: int
+
+  #Listening for Meros connections or not.
+  server*: bool
 
   #Listen on the RPC socket or not.
   rpc*: bool
@@ -107,11 +112,12 @@ proc newConfig*(): Config {.forceCheck: [].} =
     db: "db",
 
     network: "testnet",
+    token: none(string),
 
-    server: true,
     tcpPort: 5132,
     rpcPort: 5133,
 
+    server: true,
     rpc: true,
     gui: true
   )
@@ -222,14 +228,17 @@ proc newConfig*(): Config {.forceCheck: [].} =
       doAssert(false, "Either couldn't read or parse the settings file despite it existing: " & e.msg)
 
   #Handle the settings.
-  template setParameter[X](
-    variable: var X,
+  template setParameter[T](
+    variable: var T,
     parameter: string,
     value: untyped,
     overrideValue: untyped
   ): untyped =
     try:
-      variable = value
+      when T is Option:
+        variable = some(value)
+      else:
+        variable = value
     except ValueError:
       echo "Invalid ", parameter, " value in the JSON settings. Please run --help for more info."
       quit(0)
@@ -237,7 +246,10 @@ proc newConfig*(): Config {.forceCheck: [].} =
       discard
 
     try:
-      variable = overrideValue
+      when T is Option:
+        variable = some(overrideValue)
+      else:
+        variable = overrideValue
     except KeyError:
       discard
     except ValueError:
@@ -254,6 +266,12 @@ proc newConfig*(): Config {.forceCheck: [].} =
     "network",
     settings.get("network", JString).getStr(),
     options["network"][0]
+  )
+
+  result.token.setParameter(
+    "token",
+    settings.get("token", JString).getStr(),
+    options["token"][0]
   )
 
   result.logFile &= result.network & ".log"

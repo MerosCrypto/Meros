@@ -3,41 +3,53 @@ import strutils
 import tables
 import json
 
-import asyncdispatch
-import asyncnet
+import httpclient
 
 #Argument types.
-const ARGUMENTS: Table[string, seq[char]] = {
+const ARGUMENTS: Table[string, seq[(string, char)]] = {
   "merit_getHeight":     @[],
   "merit_getDifficulty": @[],
-  "merit_getBlock":      @['i'],
+  "merit_getBlock":      @[("block", 'i')],
 
+  "merit_getPublicKey":     @[("nick", 'i')],
+  "merit_getNickname":      @[("key", 'b')],
   "merit_getTotalMerit":    @[],
   "merit_getUnlockedMerit": @[],
-  "merit_getMerit":         @['i'],
+  "merit_getMerit":         @[("nick", 'i')],
 
-  "merit_getBlockTemplate": @['b'],
-  "merit_publishBlock":     @['i', 'b'],
+  "merit_getBlockTemplate": @[("miner", 'b')],
+  "merit_publishBlock":     @[("id", 'i'), ("header", 'b')],
 
   "consensus_getSendDifficulty": @[],
   "consensus_getDataDifficulty": @[],
-  "consensus_getStatus":         @['b'],
+  "consensus_getStatus":         @[("hash", 'b')],
 
-  "transactions_getTransaction": @['b'],
-  "transactions_getUTXOs":       @['s'],
-  "transactions_getBalance":     @['s'],
-  "transactions_publishSend":    @['s'],
+  "transactions_getTransaction": @[("hash", 'b')],
+  "transactions_getUTXOs":       @[("address", 's')],
+  "transactions_getBalance":     @[("address", 's')],
 
-  "network_connect":  @['s', 'i'],
-  "network_getPeers": @[],
+  "transactions_publishTransaction":            @[("type", 's'), ("transaction", 'b')],
+  "transactions_publishTransactionWithoutWork": @[("type", 's'), ("transaction", 'b')],
 
-  "personal_getMiner":    @[],
-  "personal_setMnemonic": @['s', 's'],
-  "personal_getMnemonic": @[],
-  "personal_getAddress":  @[],
+  "network_connect":   @[("address", 's'), ("port", 'i')],
+  "network_getPeers":  @[],
+  "network_broadcast": @[("transaction", 'b')], #Skips over Block rebroadcasting as it should be extremely rarely needed.
 
-  "personal_send": @['s', 's'],
-  "personal_data": @['s'],
+  "personal_setWallet":  @[("mnemonic", 's'), ("password", 's')],
+  "personal_setAccount": @[("key", 'b'), ("chainCode", 'b')],
+
+  "personal_getMnemonic":        @[],
+  "personal_getMeritHolderKey":  @[],
+  "personal_getMeritHolderNick": @[],
+  "personal_getAccount":         @[],
+  "personal_getAddress":         @[],
+
+  "personal_send": @[("outputs", 'j'), ("password", 's')],
+  "personal_data": @[("data", 's'), ("password", 's')],
+
+  "personal_getUTXOs":               @[],
+  "personal_getTransactionTemplate": @[("outputs", 'j')], #Using this via the RPCSample would be incredibly pointless.
+                                                          #That said, it is an RPC method, and could be used to demonstrate WatchWallet functionality.
 
   "system_quit": @[]
 }.toTable()
@@ -48,16 +60,13 @@ proc readLine(): string =
   result.removeSuffix(Whitespace)
 
 var
-  client: AsyncSocket = newAsyncSocket()
   port: int = 5133
   payload: JSONNode = %* {
     "jsonrpc": "2.0",
     "id": 0,
-    "params": []
+    "params": {}
   }
   p: int = 1
-  res: string
-  counter: int = 0
 
 if paramCount() != 0:
   if (paramStr(p) == "-h") or (paramStr(p) == "--help"):
@@ -65,7 +74,6 @@ if paramCount() != 0:
 Meros RPC Sample.
 Parameters can be specified via command line arguments or the interactive
 prompt.
-
 ./build/Sample <MODULE> <METHOD>
 ./build/Sample <MODULE> <METHOD <ARG> <ARG> ...
 ./build/Sample <PORT>
@@ -94,22 +102,32 @@ if paramCount() >= p:
     quit(1)
 
   while p <= paramCount():
-    case ARGUMENTS[payload["method"].getStr()][payload["params"].len]:
+    let
+      fieldInfo: (string, char) = ARGUMENTS[payload["method"].getStr()][payload["params"].len]
+      fieldName: string = fieldInfo[0]
+    case fieldInfo[1]:
       of 's':
-        payload["params"].add(% paramStr(p))
+        payload["params"][fieldName] = % paramStr(p)
 
       of 'b':
         try:
-          payload["params"].add(% parseHexStr(paramStr(p)).toHex())
+          payload["params"][fieldName] = % parseHexStr(paramStr(p)).toHex()
         except ValueError:
           echo "Non-hex value passed at position ", p, "."
           quit(1)
 
       of 'i':
         try:
-          payload["params"].add(% parseInt(paramStr(p)))
+          payload["params"][fieldName] = % parseInt(paramStr(p))
         except ValueError:
           echo "Non-integer value passed at position ", p, "."
+          quit(1)
+
+      of 'j':
+        try:
+          payload["params"][fieldName] = parseJSON(paramStr(p))
+        except ValueError:
+          echo "Non-JSON value passed at position ", p, "."
           quit(1)
 
       else:
@@ -135,16 +153,17 @@ if not payload.hasKey("method"):
 #If the arguments weren't specificed via the CLI, get it via interactive prompt.
 if payload["params"].len == 0:
   for arg in ARGUMENTS[payload["method"].getStr()]:
-    case arg:
+    let fieldName: string = arg[0]
+    case arg[1]:
       of 's':
         echo "Please enter the next string argument for this method."
-        payload["params"].add(% readLine())
+        payload["params"][fieldName] = % readLine()
 
       of 'b':
         echo "Please enter the next binary argument for this method as hex."
         while true:
           try:
-            payload["params"].add(% parseHexStr(readLine()).toHex())
+            payload["params"][fieldName] = % parseHexStr(readLine()).toHex()
             break
           except ValueError:
             echo "Non-hex value passed. Please enter a hex value."
@@ -153,33 +172,35 @@ if payload["params"].len == 0:
         echo "Please enter the next integer argument for this method."
         while true:
           try:
-            payload["params"].add(% parseInt(readLine()))
+            payload["params"][fieldName] = % parseInt(readLine())
             break
           except ValueError:
             echo "Non-integer value passed. Please enter an integer value."
 
+      of 'j':
+        echo "Please enter the next JSON argument for this method."
+        while true:
+          try:
+            payload["params"][fieldName] = parseJSON(readLine())
+            break
+          except ValueError:
+            echo "Non-JSON value passed. Please enter a JSON value."
+
       else:
         doAssert(false, "Unknown argument type declared.")
 
-#Connect to the server.
-echo "Connecting..."
-waitFor client.connect("127.0.0.1", Port(port))
-echo "Connected."
-
-#Send the JSON.
-waitFor client.send($payload)
-echo "Sent."
-
-#Get the response back.
-while true:
-  res &= waitFor client.recv(1)
-  if res[^1] == res[0]:
-    inc(counter)
-  elif (res[^1] == ']') and (res[0] == '['):
-    dec(counter)
-  elif (res[^1] == '}') and (res[0] == '{'):
-    dec(counter)
-  if counter == 0:
-    break
-
+#Connect to the server, send the JSON, and get the response back.
+var
+  client: HttpClient = newHttpClient()
+  headers: HttpHeaders = newHttpheaders()
+headers["Authorization"] = "Bearer " & readFile("data/e2e/.token")
+let res: JSONNode = parseJSON(
+  client.request(
+    "http://localhost:" & $port,
+    "POST",
+    $ payload,
+    headers
+  ).body
+)
 echo res
+client.close()

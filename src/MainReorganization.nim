@@ -228,4 +228,4 @@ proc reorganize(
     result.headers.del(high(result.headers))
   else:
     logInfo "Not reorganizing", oldWork = oldWorkStr, newWork = newWorkStr
-    raise newException(NotEnoughWork, "Chain didn't have enough work to be worth reorganizing to.")
+    raise newLoggedException(NotEnoughWork, "Chain didn't have enough work to be worth reorganizing to.")

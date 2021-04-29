@@ -17,7 +17,7 @@ suite "SerializeSendOutput":
   lowFuzzTest "Serialize and parse.":
     var
       output: SendOutput = newSendOutput(
-        newWallet("").publicKey,
+        newWallet("").hd.publicKey,
         uint64(rand(int32.high))
       )
       reloaded: SendOutput = output.serialize().parseSendOutput()

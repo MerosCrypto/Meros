@@ -49,6 +49,11 @@ template OUTPUT(
 ): string =
   input.serialize()
 
+template USED_KEY(
+  key: EdPublicKey
+): string =
+  key.serialize() & "uk"
+
 template DATA_SENDER(
   hash: Hash[256]
 ): string =
@@ -158,6 +163,10 @@ proc save*(
   for o in 0 ..< tx.outputs.len:
     db.put(OUTPUT(tx.hash, o), tx.outputs[o].serialize())
 
+    #Save Ed keys as used if they're sent to.
+    if (tx of Claim) or (tx of Send):
+      db.put(USED_KEY(cast[SendOutput](tx.outputs[o]).key), "")
+
 proc mention*(
   db: DB,
   hash: Hash[256]
@@ -224,6 +233,16 @@ proc load*(
         panic("Claim's spent Mints' outputs couldn't be loaded from the DB: " & e.msg)
 
     claim.outputs[0].amount = amount
+
+proc loadIfKeyWasUsed*(
+  db: DB,
+  key: EdPublicKey
+): bool {.forceCheck: [].} =
+  try:
+    discard db.get(USED_KEY(key))
+    result = true
+  except DBReadError:
+    result = false
 
 proc isBeaten*(
   db: DB,
@@ -294,12 +313,18 @@ proc loadSpendable*(
     raise newLoggedException(DBReadError, e.msg)
 
   for i in countup(0, spendable.len - 1, 33):
-    result.add(
-      newFundedInput(
-        spendable[i ..< i + 32].toHash[:256](),
-        int(spendable[i + 32])
-      )
+    let input: FundedInput = newFundedInput(
+      spendable[i ..< i + 32].toHash[:256](),
+      int(spendable[i + 32])
     )
+
+    #Spendable isn't guaranteed consistency for a few reasons. This manifests as spent Transactions reappearing.
+    #Without a lot more tracking code, which would be decently intensive, it can't be made consistent.
+    #That said, by following up with this check, it can be.
+    #Theoretically, we could also move this check to addToSpendable, yet addToSpendable is caused for all UTXOs.
+    #loadSpendable is solely triggered via the RPC and therefore should run much more infrequently.
+    if db.loadSpenders(input).len == 0:
+      result.add(input)
 
 proc addToSpendable(
   db: DB,
@@ -328,18 +353,20 @@ proc removeFromSpendable(
   except DBReadError:
     return
 
-  #Remove the specified output.
-  for o in countup(0, spendable.len - 1, 33):
+  #Remove all occurrences of the specified output.
+  var o: int = 0
+  while o < spendable.len:
     if spendable[o ..< o + 33] == output:
-      db.put(SPENDABLE(key), spendable[0 ..< o] & spendable[o + 33 ..< spendable.len])
-      break
+      spendable = spendable[0 ..< o] & spendable[o + 33 ..< spendable.len]
+      continue
+    o += 33
+  db.put(SPENDABLE(key), spendable)
 
-#Add the Transaction's outputs to spendable while removing spent inputs.
+#Add the Transaction's outputs to spendable.
 proc verify*(
   db: DB,
   tx: Transaction
 ) {.forceCheck: [].} =
-  #Add spendable outputs.
   if (tx of Claim) or (tx of Send):
     for o in 0 ..< tx.outputs.len:
       db.addToSpendable(
@@ -348,49 +375,18 @@ proc verify*(
         o
       )
 
-    if tx of Send:
-      #Remove spent inputs.
-      for input in tx.inputs:
-        var key: EdPublicKey
-        try:
-          key = db.loadSendOutput(cast[FundedInput](input)).key
-        except DBReadError:
-          panic("Removing a non-existent output.")
-
-        db.removeFromSpendable(
-          key,
-          input.hash,
-          cast[FundedInput](input).nonce
-        )
-
-#Add a inputs back to spendable while removing unverified outputs.
+#Removes outputs from spendable.
 proc unverify*(
   db: DB,
   tx: Transaction
 ) {.forceCheck: [].} =
   if (tx of Claim) or (tx of Send):
-    #Remove outputs.
     for o in 0 ..< tx.outputs.len:
       db.removeFromSpendable(
         cast[SendOutput](tx.outputs[o]).key,
         tx.hash,
         o
       )
-
-    #Restore inputs.
-    if tx of Send:
-      for input in tx.inputs:
-        var key: EdPublicKey
-        try:
-          key = db.loadSendOutput(cast[FundedInput](input)).key
-        except DBReadError:
-          panic("Restoring a non-existent output.")
-
-        db.addToSpendable(
-          key,
-          input.hash,
-          cast[FundedInput](input).nonce
-        )
 
 #Mark a Transaction as beaten.
 proc beat*(
@@ -436,19 +432,6 @@ proc prune*(
 
     db.put(OUTPUT_SPENDERS(tx.inputs[i]), spenders)
 
-    #If we were the only spender of this output, restore the output as spendable.
-    if (spenders.len == 0) and (tx of Send):
-      try:
-        db.addToSpendable(
-          cast[SendOutput](
-            db.load(tx.inputs[i].hash).outputs[cast[FundedInput](tx.inputs[i]).nonce]
-          ).key,
-          tx.inputs[i].hash,
-          cast[FundedInput](tx.inputs[i]).nonce
-        )
-      except DBReadError:
-        panic("Couldn't load the Transaction the Transaction we're pruning spent.")
-
   for o in 0 ..< tx.outputs.len:
     #Delete its outputs and their spenders.
     db.del(OUTPUT(hash, o))
@@ -459,6 +442,9 @@ proc prune*(
       discard
     db.del(OUTPUT_SPENDERS(newFundedInput(hash, o)))
 
-    #If it has no spenders and is tracked by spendable, remove it.
-    if (spenders == "") and (tx.outputs[o] of SendOutput):
+    #If it is tracked by spendable, remove it.
+    #Should be handled by unverify, so I'm not really sure why this is here.
+    #That said, it doesn't hurt to have, and it's safe to run even if the outputs aren't present in spendable.
+    #-- Kayaba
+    if tx.outputs[o] of SendOutput:
       db.removeFromSpendable(cast[SendOutput](tx.outputs[o]).key, hash, o)

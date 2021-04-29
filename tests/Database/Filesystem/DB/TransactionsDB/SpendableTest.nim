@@ -17,7 +17,7 @@ suite "Spendable":
   midFuzzTest "Saving UTXOs, checking which UTXOs an account can spend, and deleting UTXOs.":
     var
       db = newTestDatabase()
-      wallets: seq[Wallet] = @[]
+      wallets: seq[HDWallet] = @[]
 
       outputs: seq[SendOutput] = @[]
       send: Send
@@ -63,7 +63,7 @@ suite "Spendable":
 
     #Generate 10 wallets.
     for _ in 0 ..< 10:
-      wallets.add(newWallet(""))
+      wallets.add(newWallet("").hd)
 
     #Test 100 Transactions.
     for _ in 0 .. 100:
@@ -88,37 +88,25 @@ suite "Spendable":
       compare()
 
       #Spend outputs.
-      var queue: seq[(EdPublicKey, FundedInput)] = @[]
       for key in spendable.keys():
         if spendable[key].len == 0:
           continue
 
         inputs = @[]
         var i: int = 0
-        while true:
+        while i != spendable[key].len:
           if rand(1) == 0:
             inputs.add(spendable[key][i])
             spendable[key].delete(i)
           else:
             inc(i)
 
-          if i == spendable[key].len:
-            break
-
         if inputs.len != 0:
           var outputKey: EdPublicKey = wallets[rand(10 - 1)].publicKey
           send = newSend(inputs, newSendOutput(outputKey, 0))
           db.save(send)
-          db.verify(send)
           sends.add(send)
-
-          queue.add((outputKey, newFundedInput(send.hash, 0)))
           spenders[send.hash.serialize() & char(0)] = outputKey
-
-      for output in queue:
-        if not spendable.hasKey(output[0]):
-          spendable[output[0]] = @[]
-        spendable[output[0]].add(output[1])
 
       compare()
 
@@ -126,19 +114,30 @@ suite "Spendable":
       if sends.len != 0:
         var s: int = rand(sends.high)
         db.unverify(sends[s])
-        for input in sends[s].inputs:
-          spendable[
-            spenders[input.hash.serialize() & char(cast[FundedInput](input).nonce)]
-          ].add(cast[FundedInput](input))
 
         for o1 in 0 ..< sends[s].outputs.len:
-          var output: SendOutput = cast[SendOutput](sends[s].outputs[o1])
-          for o2 in 0 ..< spendable[output.key].len:
-            if (
-              (spendable[output.key][o2].hash == sends[s].hash) and
-              (spendable[output.key][o2].nonce == o1)
-            ):
-              spendable[output.key].delete(o2)
-              break
+          var
+            output: SendOutput = cast[SendOutput](sends[s].outputs[o1])
+            o2: int = 0
+          if spendable.hasKey(output.key):
+            while o2 < spendable[output.key].len:
+              if (
+                (spendable[output.key][o2].hash == sends[s].hash) and
+                (spendable[output.key][o2].nonce == o1)
+              ):
+                spendable[output.key].delete(o2)
+              else:
+                inc(o2)
 
-      compare()
+        compare()
+
+    #Prune a Send.
+    db.prune(sends[sends.high].hash)
+    for input in sends[sends.high].inputs:
+      if not spendable.hasKey(spenders[input.hash.serialize() & char(cast[FundedInput](input).nonce)]):
+        spendable[spenders[input.hash.serialize() & char(cast[FundedInput](input).nonce)]] = @[]
+      spendable[
+        spenders[input.hash.serialize() & char(cast[FundedInput](input).nonce)]
+      ].add(cast[FundedInput](input))
+
+    compare()

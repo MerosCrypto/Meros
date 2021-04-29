@@ -35,7 +35,7 @@ suite "Transactions":
       )
 
       holder: MinerWallet = newMinerWallet()
-      wallets: seq[Wallet] = @[]
+      wallets: seq[HDWallet] = @[]
       #Reverse lookup Table.
       walletsLookup: Table[EdPublicKey, int] = initTable[EdPublicKey, int]()
 
@@ -95,8 +95,9 @@ suite "Transactions":
             claim,
             proc (
               h: uint16
-            ): BLSPublicKey =
-              holder.publicKey
+            ): BLSPublicKey {.gcsafe.} =
+              {.gcsafe.}:
+                holder.publicKey
           )
         of Send as send:
           transactions.add(send)
@@ -227,8 +228,9 @@ suite "Transactions":
                 claim,
                 proc (
                   h: uint16
-                ): BLSPublicKey =
-                  holder.publicKey
+                ): BLSPublicKey {.gcsafe.} =
+                  {.gcsafe.}:
+                    holder.publicKey
               )
             of Send as send:
               transactions.add(send)
@@ -272,8 +274,9 @@ suite "Transactions":
               claim,
               proc (
                 h: uint16
-              ): BLSPublicKey =
-                holder.publicKey
+              ): BLSPublicKey {.gcsafe.} =
+                {.gcsafe.}:
+                  holder.publicKey
             )
           of Send as send:
             transactions.add(send)
@@ -308,7 +311,7 @@ suite "Transactions":
     for b in 1 .. 30:
       #Create a random amount of Wallets.
       for _ in 0 ..< rand(2) + 2:
-        wallets.add(newWallet(""))
+        wallets.add(newWallet("").hd)
         walletsLookup[wallets[^1].publicKey] = wallets.len - 1
 
       #For each Wallet, create a random amount of Transactions.

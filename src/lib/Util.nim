@@ -2,7 +2,7 @@ import bitops
 import times
 
 import strutils
-export toHex, parseHexStr, parseHexInt, parseUInt
+export toHex, parseHexStr
 
 import stint
 import nimcrypto

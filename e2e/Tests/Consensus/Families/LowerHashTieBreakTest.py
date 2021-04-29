@@ -25,7 +25,7 @@ def LowerHashTieBreakTest(
     data: Data = datas[1]
     if int.from_bytes(data.hash, "little") > int.from_bytes(datas[2].hash, "little"):
       data = datas[2]
-    if not rpc.call("consensus", "getStatus", [data.hash.hex()])["verified"]:
+    if not rpc.call("consensus", "getStatus", {"hash": data.hash.hex()})["verified"]:
       raise TestError("Meros didn't verify the tied Transaction with a lower hash.")
 
   Liver(

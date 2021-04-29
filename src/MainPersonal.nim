@@ -1,128 +1,159 @@
 include MainTransactions
 
 proc mainPersonal(
-  wallet: WalletDB,
+  db: WalletDB,
   functions: GlobalFunctionBox,
   transactions: ref Transactions
 ) {.forceCheck: [].} =
-  functions.personal.getMinerWallet = proc (): MinerWallet {.forceCheck: [].} =
-    wallet.miner
+  functions.personal.getMinerWallet = proc (): MinerWallet {.forceCheck: [
+    ValueError
+  ].} =
+    if db.miner.isNil:
+      raise newException(ValueError, "Meros is running as a WatchWallet and has no Merit Holder.")
+    result = db.miner
 
-  functions.personal.getWallet = proc (): Wallet {.forceCheck: [].} =
-    wallet.wallet
+  functions.personal.getMnemonic = proc (): string {.forceCheck: [
+    ValueError
+  ].} =
+    try:
+      result = db.getMnemonic()
+    except ValueError as e:
+      raise e
 
-  functions.personal.setMnemonic = proc (
+  functions.personal.setAccount = proc (
+    key: EdPublicKey,
+    chainCode: Hash[256],
+    clear: bool = false
+  ) {.forceCheck: [].} =
+    if clear:
+      db.clearPrivateKeys()
+
+    var datas: seq[Data]
+    block handleDatas:
+      #Start with the initial data, discovering spenders until the tip.
+      var initial: Data
+      try:
+        initial = newData(Hash[256](), HDPublic(
+          key: key,
+          chainCode: chainCode
+        ).derivePublic(0).next(0).key.serialize())
+      except ValueError as e:
+        panic("Couldn't create an initial Data to discover a Data tip: " & e.msg)
+      try:
+        discard transactions[][initial.hash]
+      #No Datas.
+      except IndexError:
+        break handleDatas
+
+      var
+        last: Hash[256] = initial.hash
+        spenders: seq[Hash[256]] = transactions[].loadSpenders(newInput(last))
+      while spenders.len != 0:
+        last = spenders[0]
+        spenders = transactions[].loadSpenders(newInput(last))
+
+      #Grab the chain.
+      try:
+        datas = @[cast[Data](transactions[][last])]
+        while datas[^1].inputs[0].hash != Hash[256]():
+          datas.add(cast[Data](transactions[][datas[^1].inputs[0].hash]))
+      except IndexError as e:
+        panic("Couldn't get a Data chain from a discovered tip: " & e.msg)
+
+    db.setAccount(
+      key,
+      chainCode,
+      datas,
+      proc (
+        key: EdPublicKey
+      ): bool {.gcsafe, forceCheck: [].} =
+        transactions[].loadIfKeyWasUsed(key)
+    )
+
+  functions.personal.setWallet = proc (
     mnemonic: string,
     password: string
   ) {.forceCheck: [
     ValueError
   ].} =
+    var wallet: InsecureWallet
+    if mnemonic.len == 0:
+      wallet = newWallet(password)
+    else:
+      try:
+        wallet = newWallet(mnemonic, password)
+      except ValueError as e:
+        raise e
+
+    db.setMinerAndMnemonic(wallet)
+
     try:
-      wallet.setWallet(mnemonic, password)
+      let account: HDWallet = wallet.hd[0]
+      functions.personal.setAccount(account.publicKey, account.chainCode)
+    except ValueError as e:
+      panic("Account zero wasn't usable despite the above newWallet call making sure it was usable: " & e.msg)
+
+  functions.personal.getAccount = proc (): tuple[key: EdPublicKey, chainCode: Hash[256]] {.forceCheck: [].} =
+    (key: db.accountZero, chainCode: db.chainCode)
+
+  functions.personal.getAddress = proc (
+    index: Option[uint32]
+  ): string {.gcsafe, forceCheck: [
+    ValueError
+  ].} =
+    try:
+      result = db.getAddress(
+        index,
+        proc (
+          key: EdPublicKey
+        ): bool {.gcsafe, forceCheck: [].} =
+          transactions[].loadIfKeyWasUsed(key)
+      )
     except ValueError as e:
       raise e
 
-  functions.personal.send = proc (
-    destinationArg: string,
-    amountStr: string
-  ): Future[Hash[256]] {.forceCheck: [
-    ValueError,
-    NotEnoughMeros
-  ], async.} =
-    var
-      #Wallet we're using.
-      child: HDWallet
-      #Spendable UTXOs.
-      utxos: seq[FundedInput]
-      destination: Address
-      amountIn: uint64
-      amountOut: uint64
-      send: Send
+  functions.personal.getChangeKey = proc (): EdPublicKey {.gcsafe, forceCheck: [].} =
+    db.getChangeKey(
+      proc (
+        key: EdPublicKey
+      ): bool {.gcsafe, forceCheck: [].} =
+        transactions[].loadIfKeyWasUsed(key)
+    )
 
+  functions.personal.getKeyIndex = proc (
+    key: EdPublicKey
+  ): KeyIndex {.gcsafe, forceCheck: [
+    IndexError
+  ].} =
     try:
-      destination = destinationArg.getEncodedData()
-    except ValueError as e:
-      raise e
-
-    #Grab a child.
-    try:
-      child = wallet.wallet.external.next()
-    except ValueError as e:
-      panic("Wallet has no usable keys: " & e.msg)
-    utxos = transactions[].getUTXOs(child.publicKey)
-    try:
-      amountOut = parseUInt(amountStr)
-    except ValueError as e:
-      raise e
-
-    #Grab the needed UTXOs.
-    try:
-      var i: int = 0
-      while i < utxos.len:
-        if transactions[].loadSpenders(utxos[i]).len != 0:
-          utxos.delete(i)
-          continue
-
-        #Add this UTXO's amount to the amount in.
-        amountIn += transactions[][utxos[i].hash].outputs[utxos[i].nonce].amount
-
-        #Remove uneeded UTXOs.
-        if amountIn >= amountOut:
-          if i + 1 < utxos.len:
-            utxos.delete(i + 1, utxos.len - 1)
-          break
-
-        #Increment i.
-        inc(i)
+      result = db.getKeyIndex(key)
     except IndexError as e:
-      panic("Couldn't load a transaction we have an UTXO for: " & e.msg)
+      raise e
 
-    #Make sure we have enough Meros.
-    if amountIn < amountOut:
-      raise newLoggedException(NotEnoughMeros, "Wallet didn't have enough money to create a Send.")
-
-    #Create the outputs.
-    var outputs: seq[SendOutput] = @[
-      newSendOutput(destination, amountOut)
-    ]
-
-    #Add a change output.
-    if amountIn != amountOut:
-      outputs.add(newSendOutput(child.publicKey, amountIn - amountOut))
-
-    send = newSend(utxos, outputs)
-    child.sign(send)
-    send.mine(functions.consensus.getSendDifficulty())
-
-    #Add the Send.
+  functions.personal.sign = proc (
+    send: Send,
+    keys: seq[KeyIndex],
+    password: string
+  ) {.gcsafe, forceCheck: [
+    IndexError,
+    ValueError
+  ].} =
     try:
-      await functions.transactions.addSend(send)
+      db.getAggregateKey(keys, password).sign(send)
+    except IndexError as e:
+      raise e
     except ValueError as e:
-      panic("Created a Send which was invalid: " & e.msg)
-    except DataExists as e:
-      panic("Created a Send which already existed: " & e.msg)
-    except Exception as e:
-      panic("addSend threw an Exception despite catching every Exception: " & e.msg)
-
-    result = send.hash
+      raise e
 
   functions.personal.data = proc (
-    dataStr: string
+    dataStr: string,
+    password: string
   ): Future[Hash[256]] {.forceCheck: [
     ValueError
   ], async.} =
-    #Wallet we're using.
-    var child: HDWallet
-    try:
-      #Even though this call "next", this should always use the first Wallet.
-      #Just a note since our BIP 44 usage will change in the future.
-      child = wallet.wallet.external.next()
-    except ValueError as e:
-      panic("Wallet has no usable keys: " & e.msg)
-
     #Create the Data.
     try:
-      wallet.stepData(dataStr, child, functions.consensus.getDataDifficulty())
+      db.stepData(password, dataStr, functions.consensus.getDataDifficulty())
     except ValueError as e:
       raise e
 
@@ -134,12 +165,9 @@ proc mainPersonal(
     Because of that, the following iterative approach is used to add all 'new' Datas.
     ]#
     var toAdd: seq[Data] = @[]
-    for data in wallet.loadDatasFromTip():
+    for data in db.loadDatasFromTip():
       toAdd.add(data)
 
-      #Reached the initial Data.
-      if data.inputs[0].hash == Hash[256]():
-        break
       #We have the Data it relies on.
       try:
         discard transactions[][data.inputs[0].hash]
@@ -161,3 +189,6 @@ proc mainPersonal(
         panic("addData threw an Exception despite catching every Exception: " & e.msg)
 
     result = toAdd[0].hash
+
+  functions.personal.getUTXOs = proc (): seq[UsableInput] {.forceCheck: [].} =
+    db.getUTXOs(transactions)

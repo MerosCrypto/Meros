@@ -44,10 +44,10 @@ def TElementTest(
   dataDiff: SignedDataDifficulty = SignedDataDifficulty(0, 0, 0)
   dataDiff.sign(0, blsPrivKey)
   rpc.meros.signedElement(dataDiff)
-  sleep(0.5)
+  sleep(1.5)
 
   #Verify the block template has the DataDifficulty.
-  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", [blsPubKey])
+  template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey})
   template["header"] = bytes.fromhex(template["header"])
   if template["header"][36 : 68] != BlockHeader.createContents([], [dataDiff]):
     raise TestError("Block template doesn't have the Data Difficulty.")
@@ -76,25 +76,25 @@ def TElementTest(
   rpc.call(
     "merit",
     "publishBlock",
-    [
-      template["id"],
-      (
+    {
+      "id": template["id"],
+      "header": (
         template["header"] +
         block.header.proof.to_bytes(4, byteorder="little") +
         block.header.signature
       ).hex()
-    ]
+    }
   )
 
   #Create and transmit a new DataDifficulty.
   dataDiff = SignedDataDifficulty(3, 0, 0)
   dataDiff.sign(0, blsPrivKey)
   rpc.meros.signedElement(dataDiff)
-  sleep(0.5)
+  sleep(1.5)
 
   #Verify the block template has a MeritRemoval.
   #Thanks to implicit Merit Removals, this just means it has the new difficulty.
-  template = rpc.call("merit", "getBlockTemplate", [blsPubKey])
+  template = rpc.call("merit", "getBlockTemplate", {"miner": blsPubKey})
   template["header"] = bytes.fromhex(template["header"])
   if template["header"][36 : 68] != BlockHeader.createContents([], [dataDiff]):
     raise TestError("Block template doesn't have the Merit Removal.")
@@ -122,14 +122,14 @@ def TElementTest(
   rpc.call(
     "merit",
     "publishBlock",
-    [
-      template["id"],
-      (
+    {
+      "id": template["id"],
+      "header": (
         template["header"] +
         block.header.proof.to_bytes(4, byteorder="little") +
         block.header.signature
       ).hex()
-    ]
+    }
   )
 
   verifyBlockchain(rpc, merit.blockchain)

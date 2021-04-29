@@ -195,6 +195,27 @@ proc processBlock*(
           state.statuses[h] = MeritStatus.Unlocked
           state.db.appendMeritStatus(uint16(h), blockchain.height, byte(state.statuses[h]))
 
+  var
+    tCopy = state.total
+    cCopy = state.counted
+    pCopy = state.pending
+  try:
+    for h in 0 ..< state.merit.len:
+      tCopy -= state.merit[h]
+      if state.statuses[h] == MeritStatus.Unlocked:
+        cCopy -= state.merit[h]
+      if state.statuses[h] == MeritStatus.Pending:
+        cCopy -= state.merit[h]
+        pCopy -= state.merit[h]
+  except Exception as e:
+    panic("Exception when checking Merit status of a holder: " & e.msg)
+  if tCopy != 0:
+    panic("Total is wrong.")
+  if cCopy != 0:
+    panic("Counted is wrong.")
+  if pCopy != 0:
+    panic("Pending is wrong.")
+
   #Save the Merit amounts for the next Block.
   #This will be overwritten when we process the next Block, yet is needed for some statuses.
   state.saveMerits()
@@ -210,15 +231,14 @@ proc protocolThreshold*(
 
 #[
 Calculate the threshold for an Epoch that ends on the specified Block.
-This is meant to return 80% of the amount of Merit at the time of finalization.
-Thanks to truncation, it returns 55% in the worst case scenario (9).
-Anything below 5 would return 1, which is 25%, hence the max.
+This is meant to return 67% of the amount of Merit at the time of finalization.
 ]#
 proc nodeThresholdAt*(
   state: State,
   height: int
 ): int {.inline, forceCheck: [].} =
   (max(state.loadCounted(height), 5) div 5 * 4) + 1
+  #(state.loadCounted(height) * 2 div 3) + 1
 
 proc revert*(
   state: var State,

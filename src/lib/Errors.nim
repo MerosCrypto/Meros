@@ -111,13 +111,26 @@ proc newSpam*(
   result.argon = argon
   result.difficulty = difficulty
 
-proc newJSONRPCError*(
-  code: int,
+proc newJSONRPCError*[T: Exception or int](
+  error: typedesc[T] or T,
   msg: string,
   data: JSONNode = nil
 ): ref JSONRPCError =
   result = newLoggedException(JSONRPCError, msg)
-  result.code = code
+  when error is int:
+    result.code = error
+  elif error is Spam:
+    result.code = 2
+  elif error is NotEnoughMeros:
+    result.code = 1
+  elif error is DataMissing:
+    result.code = -1
+  elif error is IndexError:
+    result.code = -2
+  elif error is ValueError:
+    result.code = -3
+  else:
+    {.error: "Unknown Exception type passed to newJSONRPCError".}
   result.data = data
 
 #Getter for the MaliciousMeritHolder's removal as a MeritRemoval.

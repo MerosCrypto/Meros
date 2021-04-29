@@ -1,6 +1,7 @@
-import math
-
 import stint
+
+#Directly import mc_ed25519 for more control over Elliptic curve operations.
+import mc_ed25519
 
 import ../lib/[Errors, Util, Hash]
 
@@ -11,15 +12,25 @@ import ../Network/Serialize/SerializeCommon
 
 const
   #BIP 44 Coin Type.
-  COIN_TYPE {.intdefine.}: uint32 = 0
+  COIN_TYPE {.intdefine.}: uint32 = 5132
   #Ed25519's l value.
   l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
+  #Hardened derivation threshold.
+  HARDENED_THRESHOLD: uint32 = 1 shl 31
 
-type HDWallet* = object
-  chainCode*: Hash[256]
-  privateKey*: EdPrivateKey
-  publicKey*: EdPublicKey
-  address*: string
+type
+  HDWallet* = object
+    chainCode*: Hash[256]
+    privateKey*: EdPrivateKey
+    publicKey*: EdPublicKey
+    address*: string
+
+  HDPublic* = object
+    #Key and matching chain code.
+    key*: EdPublicKey
+    chainCode*: Hash[256]
+    #Index this key was of its parent.
+    index*: uint32
 
 func sign*(
   wallet: HDWallet,
@@ -35,20 +46,11 @@ func verify*(
   wallet.publicKey.verify(msg, sig)
 
 proc newHDWallet*(
-  secretArg: string
+  secret: string
 ): HDWallet {.forceCheck: [
   ValueError
 ].} =
-  #Parse the secret.
-  var secret: string = secretArg
-  if secret.len == 64:
-    try:
-      secret = secretArg.parseHexStr()
-    except ValueError:
-      raise newLoggedException(ValueError, "Hex-length secret with invalid Hex data passed to newHDWallet.")
-  elif secret.len == 32:
-    discard
-  else:
+  if secret.len != 32:
     raise newLoggedException(ValueError, "Invalid length secret passed to newHDWallet.")
 
   #Keys.
@@ -95,7 +97,7 @@ proc derive*(
     #Child index, in little endian.
     child: string = childArg.toBinary(INT_LEN)
     #Is this a Hardened derivation?
-    hardened: bool = childArg >= (uint32(2) ^ 31)
+    hardened: bool = childArg >= HARDENED_THRESHOLD
   for i in 0 ..< 32:
     pPrivateKeyL[31 - i] = byte(pPrivateKey[i])
     pPrivateKeyR[31 - i] = byte(pPrivateKey[32 + i])
@@ -126,7 +128,16 @@ proc derive*(
       zL[31 - i] = Z.data[i]
     zR[31 - i] = Z.data[i + 32]
 
-  #Calculate the Private Key.
+  #[
+  Calculate the Private Key.
+  WARNING: kL should probably be mod l here, as it's used as a scalar.
+  That said, the codebase Meros uses as a reference, due to being an existing implementation, just uses the 32-byte variable.
+  That said, this definitely isn't right; zR is explicitly % 2^256, and zL will overflow 32-bytes with enough of a depth.
+  THAT said, the codebase says kL mod l must != 0, suggesting it's not naturally mod l.
+  TL;DR the paper has an ambiguity; same ambiguity is dangerous; this should probably be mod l; it isn't.
+  Why isn't Meros, a cryptocurrency, which needs to be secure and proper concerned?
+  https://github.com/MerosCrypto/Meros/issues/266
+  ]#
   kL = (readUIntBE[256](zL) * 8) + readUIntBE[256](pPrivateKeyL)
   try:
     if kL mod l == 0:
@@ -158,6 +169,69 @@ proc derive*(
     chainCode: chainCode
   )
 
+proc derivePublic*(
+  parent: HDPublic,
+  child: uint32
+): HDPublic {.forceCheck: [
+  ValueError
+].} =
+  result.index = child
+
+  var
+    Z: Hash[512]
+    chainCodeExtended: Hash[512]
+  if child >= HARDENED_THRESHOLD:
+    panic("Asked to derive a public key with a hardened threshold.")
+  else:
+    Z = HMAC_SHA2_512(parent.chainCode.serialize(), '\2' & parent.key.serialize() & child.toBinary(INT_LEN))
+    chainCodeExtended = HMAC_SHA2_512(parent.chainCode.serialize(), '\3' & parent.key.serialize() & child.toBinary(INT_LEN))
+    copyMem(addr result.chainCode.data[0], addr chainCodeExtended.data[32], 32)
+
+  var zL: array[32, byte]
+  for i in 0 ..< 28:
+    zL[31 - i] = Z.data[i]
+
+  var
+    temp: EdPrivateKey
+    scalar: array[32, byte] = (readUIntBE[256](zL) * 8).toByteArrayBE()
+  for i in 0 ..< 32:
+    temp.data[31 - i] = cuchar(scalar[i])
+  result.key = temp.toPublicKey()
+
+  let
+    existingKey: ptr Point3 = cast[ptr Point3](alloc0(sizeof(Point3)))
+    offset: ptr Point3 = cast[ptr Point3](alloc0(sizeof(Point3)))
+    cached: ptr PointCached = cast[ptr PointCached](alloc0(sizeof(PointCached)))
+    resultKey: ptr PointP1P1 = cast[ptr PointP1P1](alloc0(sizeof(PointP1P1)))
+  var tempPub: EdPublicKey = parent.key
+
+  keyToNegativePoint(existingKey, addr tempPub.data[0])
+  serialize(addr tempPub.data[0], existingKey)
+  keyToNegativePoint(existingKey, addr tempPub.data[0])
+
+  keyToNegativePoint(offset, addr result.key.data[0])
+  serialize(addr result.key.data[0], offset)
+  keyToNegativePoint(offset, addr result.key.data[0])
+  p3ToCached(cached, offset)
+
+  add(resultKey, existingKey, cached)
+  p1p1ToP3(offset, resultKey)
+  serialize(addr result.key.data[0], offset)
+
+  dealloc(existingKey)
+  dealloc(offset)
+  dealloc(cached)
+  dealloc(resultKey)
+
+  if result.key.data[0] == cuchar(1):
+    var identity: bool = true
+    for i in 1 ..< result.key.data.len:
+      if result.key.data[i] != cuchar(0):
+        identity = false
+        break
+    if identity:
+      raise newLoggedException(ValueError, "Deriving this child key produced an unusable PublicKey.")
+
 #Derive a full path.
 proc derive*(
   wallet: HDWallet,
@@ -167,7 +241,7 @@ proc derive*(
 ].} =
   if path.len == 0:
     return wallet
-  if path.len >= 2^20:
+  if path.len >= (1 shl 20):
     raise newLoggedException(ValueError, "Derivation path depth is too big.")
 
   try:
@@ -186,9 +260,9 @@ proc `[]`*(
 ].} =
   try:
     result = wallet.derive(@[
-      uint32(44) + (uint32(2) ^ 31),
-      COIN_TYPE + (uint32(2) ^ 31),
-      account + (uint32(2) ^ 31)
+      uint32(44) + HARDENED_THRESHOLD,
+      COIN_TYPE + HARDENED_THRESHOLD,
+      account + HARDENED_THRESHOLD
     ])
 
     #Guarantee the external and internal chains are usable.
@@ -197,27 +271,34 @@ proc `[]`*(
   except ValueError as e:
     raise e
 
-#Grab the next valid key on this path.
-proc next*(
-  wallet: HDWallet,
-  path: seq[uint32] = @[],
-  last: uint32 = 0
-): HDWallet {.forceCheck: [
-  ValueError
-].} =
-  var
-    pathWallet: HDWallet
-    i: uint32 = last + 1
-  try:
-    pathWallet = wallet.derive(path)
-  except ValueError as e:
-    raise e
-
+#Grab the first valid key on this path.
+proc first*(
+  wallet: HDWallet
+): HDWallet {.forceCheck: [].} =
+  var i: uint32 = 0
   while true:
     try:
-      return pathWallet.derive(i)
+      return wallet.derive(i)
     except ValueError:
       inc(i)
-      if i == (uint32(2) ^ 31):
-        raise newLoggedException(ValueError, "This path is out of non-hardened keys.")
+      if i == HARDENED_THRESHOLD:
+        panic("Couldn't derive the first account before hitting 2 ** 31.")
+
+#Grab the next key on this path.
+proc next*(
+  parent: HDPublic,
+  start: uint32
+): HDPublic {.forceCheck: [
+  ValueError
+].} =
+  var i: uint32 = start
+  while true:
+    try:
+      result = parent.derivePublic(i)
+      break
+    #Keep going until we hit a valid address.
+    except ValueError:
+      i += 1
+      if i >= (1 shl 31):
+        raise newLoggedException(ValueError, "Couldn't derive the next key as this account is out of non-hardened keys.")
       continue

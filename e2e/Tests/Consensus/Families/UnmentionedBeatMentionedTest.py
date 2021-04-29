@@ -29,7 +29,7 @@ def UnmentionedBeatMentionedTest(
       raise TestError("Meros didn't broadcast the Verification.")
 
   def verifyMentionedWon() -> None:
-    if not rpc.call("consensus", "getStatus", [datas[2].hash.hex()])["verified"]:
+    if not rpc.call("consensus", "getStatus", {"hash": datas[2].hash.hex()})["verified"]:
       raise TestError("Meros didn't verify the only Transaction on chain which has finalized.")
 
   Liver(

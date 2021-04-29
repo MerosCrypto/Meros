@@ -289,7 +289,7 @@ class PrivateKey:
     if isinstance(key, int):
       key = blake2b(key.to_bytes(2 if key > 255 else 1, "little"), digest_size=32).digest()
 
-    key = key.rjust(48, b'\0')
+    key = bytes(48 - len(key)) + key
     self.value: Big384 = Big384()
     MilagroCurve.BIG_384_58_fromBytesLen(self.value, c_char_p(key), 48)
     MilagroCurve.BIG_384_58_mod(self.value, r)
@@ -319,4 +319,4 @@ class PrivateKey:
   ) -> bytes:
     result: Array[c_char] = create_string_buffer(48)
     MilagroCurve.BIG_384_58_toBytes(result, self.value)
-    return bytes(result)
+    return bytes(result)[16:]

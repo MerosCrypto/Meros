@@ -3,7 +3,8 @@ from enum import Enum
 from subprocess import Popen
 from time import sleep
 import socket
-import json
+
+import requests
 
 from e2e.Classes.Transactions.Transaction import Transaction
 from e2e.Classes.Transactions.Claim import Claim
@@ -133,9 +134,8 @@ def recv(
   header: MessageType = MessageType(result[0])
 
   #Get the rest of the message.
-  length: int
   for l in range(len(lengths[header])):
-    length = lengths[header][l]
+    length: int = lengths[header][l]
     if length < 0:
       length = int.from_bytes(
         result[-lengths[header][l - 1]:],
@@ -282,7 +282,7 @@ class Meros:
     self.rpc: int = rpc
 
     self.calledQuit: bool = False
-    self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", dataDir, "--log-file", self.log, "--db", self.db, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
+    self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", dataDir, "--log-file", self.log, "--db", self.db, "--network", "devnet", "--token", "TEST_TOKEN", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
     while True:
       sleep(1)
       try:
@@ -518,22 +518,17 @@ class Meros:
     self
   ) -> None:
     if not self.calledQuit:
-      rpcConnection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      rpcConnection.connect(("127.0.0.1", self.rpc))
-      rpcConnection.send(
-        bytes(
-          json.dumps(
-            {
-              "jsonrpc": "2.0",
-              "id": 0,
-              "method": "system_quit",
-              "params": []
-            }
-          ),
-          "utf-8"
-        )
+      requests.post(
+        "http://127.0.0.1:" + str(self.rpc),
+        json={
+          "jsonrpc": "2.0",
+          "id": 0,
+          "method": "system_quit"
+        },
+        headers={
+          "Authorization": "Bearer TEST_TOKEN"
+        }
       )
-      rpcConnection.close()
       self.calledQuit = True
 
     while self.process.poll() is None:

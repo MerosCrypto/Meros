@@ -39,15 +39,15 @@ def PruneUnaddableTest(
 
   def verifyAdded() -> None:
     for data in datas:
-      rpc.call("transactions", "getTransaction", [data.hash.hex()])
-      rpc.call("consensus", "getStatus", [data.hash.hex()])
+      rpc.call("transactions", "getTransaction", {"hash": data.hash.hex()})
+      rpc.call("consensus", "getStatus", {"hash": data.hash.hex()})
 
   def verifyPruned() -> None:
     for data in datas[2:]:
       with raises(TestError):
-        rpc.call("transactions", "getTransaction", [data.hash.hex()])
+        rpc.call("transactions", "getTransaction", {"hash": data.hash.hex()})
       with raises(TestError):
-        rpc.call("consensus", "getStatus", [data.hash.hex()])
+        rpc.call("consensus", "getStatus", {"hash": data.hash.hex()})
 
   Liver(
     rpc,

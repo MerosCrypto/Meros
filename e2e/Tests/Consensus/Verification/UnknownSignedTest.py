@@ -68,5 +68,5 @@ def VUnknownSignedTest(
     else:
       rpc.meros.syncTransaction(data)
       sleep(2)
-      if not rpc.call("consensus", "getStatus", [data.hash.hex()])["verifiers"]:
+      if not rpc.call("consensus", "getStatus", {"hash": data.hash.hex()})["verifiers"]:
         raise TestError("Meros didn't add the Verification.")

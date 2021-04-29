@@ -13,7 +13,7 @@ export Transaction
 
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export getUTXOs, loadSpenders, getAndPruneFamilyUnsafe, `==`, verify, unverify, beat, prune
+export getUTXOs, loadSpenders, loadIfKeyWasUsed, getAndPruneFamilyUnsafe, `==`, verify, unverify, beat, prune
 when defined(merosTests):
   export getSender
 
@@ -154,9 +154,8 @@ proc add*(
     except DBReadError:
       raise newLoggedException(ValueError, "Send spends a non-existant output.")
 
-    if not senders.contains(spent.key):
+    if amount != 0:
       senders.add(spent.key)
-
     amount += spent.amount
 
   #Subtract the amount the outpts spend.

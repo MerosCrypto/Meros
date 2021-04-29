@@ -51,14 +51,15 @@ type
     difficulty*: uint32
 
   #Interfaces/RPC Errors.
-  ParamError*   = object of CatchableError #Used when an invalid parameter is passed.
-  JSONRPCError* = object of CatchableError #Used when the RPC call errors.
+  RPCAuthorizationError* = object of CatchableError #Used when a method which requires authorization is called without it.
+  ParamError*            = object of CatchableError #Used when an invalid parameter is passed.
+  JSONRPCError*          = object of CatchableError #Used when the RPC call errors.
     code*: int
     data*: JSONNode
 
   #Interfaces/GUI Errors.
   WebViewError* = object of CatchableError #Used when WebView fails.
-  RPCError*   = object of CatchableError #Used when the GUI makes an invalid RPC call.
+  RPCError*     = object of CatchableError #Used when the GUI makes an invalid RPC call.
 
   #Interfaces Statuses.
   NotEnoughMeros* = object of CatchableError #Used when the RPC is instructed to create a Send for more Meros than it can.

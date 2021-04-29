@@ -1,3 +1,6 @@
+import strutils
+import json
+
 import chronos
 
 import ../../lib/Errors
@@ -5,51 +8,17 @@ import ../../lib/Errors
 import ../../objects/[ConfigObj, GlobalFunctionBoxObj]
 
 import objects/RPCObj
-export RPC
+export RPCObj.RPC
+import HTTP
 
 import Modules/[
+  SystemModule,
   TransactionsModule,
   ConsensusModule,
   MeritModule,
   PersonalModule,
   NetworkModule
 ]
-
-proc newRPC*(
-  functions: GlobalFunctionBox,
-  toRPC: ptr Channel[JSONNode],
-  toGUI: ptr Channel[JSONNode]
-): RPC {.forceCheck: [].} =
-  newRPCObj(
-    merge(
-      (prefix: "transactions_", rpc: TransactionsModule.module(functions)),
-      (prefix: "consensus_",  rpc: ConsensusModule.module(functions)),
-      (prefix: "merit_",    rpc: MeritModule.module(functions)),
-      (prefix: "personal_",   rpc: PersonalModule.module(functions)),
-      (prefix: "network_",    rpc: NetworkModule.module(functions))
-    ),
-    functions.system.quit,
-    toRPC,
-    toGUI
-  )
-
-#Add an error response to an existing JSONNode.
-proc error(
-  res: JSONNode,
-  code: int,
-  msg: string,
-  data: JSONNode = nil
-) {.forceCheck: [].} =
-  res["error"] = %* {
-    "code": code,
-    "message": msg
-  }
-
-  try:
-    if not data.isNil:
-      res["error"]["data"] = data
-  except KeyError as e:
-    panic("Couldn't set an error's data field, despite just creating the data: " & e.msg)
 
 #Create a new error response.
 proc newError(
@@ -60,233 +29,180 @@ proc newError(
 ): JSONNode {.forceCheck: [].} =
   result = %* {
     "jsonrpc": "2.0",
-    "id": id
+    "id": id,
+    "error": {
+      "code": code,
+      #These shouldn't have periods, as exemplified by the spec's lack of periods on official messages.
+      #Meros follows that standard, yet its own exceptions use periods.
+      #That means quoted exceptions will create a message ending with a period.
+      #Hence the if statement.
+      "message": if msg[^1] == '.': msg[0 ..< msg.len - 1] else: msg
+    }
   }
-  error(result, code,msg, data)
 
-#Handle a request and store the result in res.
-proc handle*(
-  rpc: RPC,
-  req: JSONNode,
-  res: ref JSONNode,
-  reply: proc (
-    res: JSONNode
-  ): Future[void] {.gcsafe.}
-) {.forceCheck: [], async.} =
-  #Verify the version.
   try:
-    if (not req.hasKey("jsonrpc")) or (req["jsonrpc"].getStr() != "2.0"):
-      error(res[], -32600, "Invalid Request")
-      return
+    if not data.isNil:
+      result["error"]["data"] = data
   except KeyError as e:
-    panic("Couldn't check the RPC version despite confirming its existence: " & e.msg)
+    panic("Couldn't set an error's data field, despite just creating the error: " & e.msg)
 
-  #Verify the method exists.
-  try:
-    if (not req.hasKey("method")) or (req["method"].kind != JString):
-      error(res[], -32600, "Invalid Request")
-      return
-  except KeyError as e:
-    panic("Couldn't check the RPC method despite confirming its existence: " & e.msg)
+proc newRPC*(
+  functions: GlobalFunctionBox,
+  toRPC: ptr Channel[JSONNode],
+  toGUI: ptr Channel[JSONNode],
+  token: string
+): RPC {.forceCheck: [].} =
+  var modules: seq[tuple[prefix: string, handle: RPCHandle]] = @[
+    (prefix: "system_",       handle: SystemModule.module(functions)),
+    (prefix: "transactions_", handle: TransactionsModule.module(functions)),
+    (prefix: "consensus_",    handle: ConsensusModule.module(functions)),
+    (prefix: "merit_",        handle: MeritModule.module(functions)),
+    (prefix: "personal_",     handle: PersonalModule.module(functions)),
+    (prefix: "network_",      handle: NetworkModule.module(functions))
+  ]
 
-  #Add params if it was omitted.
-  if (not req.hasKey("params")):
-    req["params"] = % []
-
-  #Make sure the param were an array.
-  try:
-    if req["params"].kind != JArray:
-      error(res[], -32600, "Invalid Request")
-      return
-  except KeyError as e:
-    panic("Couldn't check the RPC params despite confirming their existence: " & e.msg)
-
-  #Override for system_quit.
-  try:
-    if req["method"].getStr() == "system_quit":
-      res[]["result"] = % true
-      try:
-        await reply(res[])
-      except Exception as e:
-        panic("Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
-      rpc.quit()
-  except KeyError as e:
-    panic("Couldn't get the RPC method despite confirming its existence: " & e.msg)
-
-  try:
-    #Make sure the method exists.
-    if not rpc.functions.hasKey(req["method"].getStr()):
-      error(res[], -32601, "Method not found")
-      return
-
-    #Call the method.
-    await rpc.functions[req["method"].getStr()](res[], req["params"])
-
-  #Handle KeyErrors.
-  except KeyError as e:
-    panic("Couldn't call a RPC method despite confirming its existence: " & e.msg)
-
-  #If there was an invalid parameter, create the proper error response.
-  except ParamError:
-    try:
-      res[] = newError(req["id"], -32602, "Invalid params")
-    except KeyError as e:
-      panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
-    return
-
-  #If a parameter had an invalid value, create the proper response.
-  except JSONRPCError as e:
-    try:
-      res[] = newError(req["id"], e.code, e.msg, e.data)
-    except KeyError as e:
-      panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
-    return
-
-  #If we panic, make sure it bubbles up.
-  except AssertionError as e:
-    panic("RPC caused a panic: " & e.msg)
-
-  #Else, respond that we had an internal error.
-  #Generally, we would panic here, yet the amount of custom data that can be entered makes that a worrysome prospect.
-  except Exception:
-    try:
-      res[] = newError(req["id"], -32603, "Internal error")
-    except KeyError as e:
-      panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
-    return
-
-  #If the result isn't null and has no result field, provide a result field of true.
-  if (not res[].isNil) and (not res[].hasKey("result")):
-    res[]["result"] = % true
-
-#Handle a request and return the result.
-proc handle*(
-  rpc: RPC,
-  req: JSONNode,
-  reply: proc (
-    res: JSONNode
-  ): Future[void] {.gcsafe.}
-): Future[ref JSONNode] {.forceCheck: [], async.} =
-  #Init the result.
-  result = new(ref JSONNode)
-
-  #If this is a singular request...
-  if req.kind == JObject:
-    #Add an ID if it was omitted.
-    if not req.hasKey("id"):
-      req["id"] = % newJNull()
-
-    #Create the response.
-    try:
-      result[] = %* {
-        "jsonrpc": "2.0",
-        "id": req["id"]
-      }
-    except KeyError as e:
-      panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
-
-    #Handle it.
-    try:
-      await handle(rpc, req, result, reply)
-    except Exception as e:
-      panic("Couldn't handle the request (JSON; return res), despite catching all naturally thrown Exceptions: " & e.msg)
-
-  #If this was a batch request...
-  elif req.kind == JArray:
-    #Prepare the result.
-    var results: ref JSONNode = new(ref JSONNode)
-    results[] = newJArray()
-
-    #Iterate over each request.
-    for reqElem in req:
-      #Add an ID if it was omitted.
-      if not reqElem.hasKey("id"):
-        reqElem["id"] = % nil
-
-      #Prepare this specific result.
-      try:
-        result[] = %* {
-          "jsonrpc": "2.0",
-          "id": reqElem["id"]
-        }
-      except KeyError as e:
-        panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
-
-      #Check the request's type.
-      try:
-        if reqElem.kind != JObject:
-          results[].add(newError(reqElem["id"], -32600, "Invalid Request"))
-          continue
-      except KeyError as e:
-        panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
-
-      #Handle it.
-      try:
-        await handle(
-          rpc,
-          reqElem,
-          result,
-          proc (
-            res: JSONNode
-          ) {.forceCheck: [], async.} =
-            results[].add(res)
-            try:
-              await reply(results[])
-            except Exception as e:
-              panic("Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
-        )
-      except Exception as e:
-        panic("Couldn't handle the request (batch JSON; return res), despite catching all naturally thrown Exceptions: " & e.msg)
-
-      #If there was a result, add it.
-      if not result[].isNil:
-        results[].add(result[])
-
-    #Set result to results.
-    result = results
-
-  else:
-    error(result[], -32600, "Invalid Request")
-    return
-
-#Handle a string and return a string.
-proc handle*(
-  rpc: RPC,
-  reqStr: string,
-  reply: proc (
-    res: string
-  ): Future[void] {.gcsafe.}
-): Future[string] {.forceCheck: [], async.} =
-  var
-    req: JSONNode
-    res: ref JSONNode
-
-  #Parse the request.
-  try:
-    req = parseJSON(reqStr)
-  except Exception:
-    return $newError(newJNull(), -32700, "Parse error")
-
-  #Handle it.
-  try:
-    res = await rpc.handle(
-      req,
-      proc (
-        res: JSONNode
-      ) {.forceCheck: [], async.} =
+  proc createHandler(): RPCHandle {.forceCheck: [].} =
+    result = proc (
+      req: JSONNode,
+      reply: RPCReplyFunction,
+      authed: bool
+    ): Future[void] {.forceCheck: [], async.} =
+      if req.kind != JObject:
         try:
-          await reply($res)
+          await reply(newError(newJNull(), -32600, "Invalid Request"))
+          return
         except Exception as e:
-          panic("Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
-    )
-  except Exception as e:
-    panic("Couldn't handle the request (string), despite catching all naturally thrown Exceptions: " & e.msg)
+          panic("Couldn't call reply about a Invalid Request due to an Exception despite reply not naturally throwing anything: " & e.msg)
 
-  #Return the string.
-  if res[].isNil:
-    result = ""
-  else:
-    result = $res[]
+      #Provide a params value if one wasn't supplied, as it can be omitted.
+      if not req.hasKey("params"):
+        req["params"] = newJObject()
+
+      #Check the request as a whole.
+      try:
+        if not (
+          #Only valid if this is a notification call, which we don't use.
+          #It may be better to use a different error, yet this is close enough.
+          req.hasKey("id") and
+          #Invalid version string.
+          req.hasKey("jsonrpc") and (req["jsonrpc"].kind == JString) and (req["jsonrpc"].getStr() == "2.0") and
+          #Invalid ID type.
+          req.hasKey("id") and (
+            (req["id"].kind == JString) or
+            (req["id"].kind == JInt) or
+            (req["id"].kind == JFloat) or
+            (req["id"].kind == JNull)
+          ) and
+          #Technically invalid method field.
+          req.hasKey("method") and (req["method"].kind == JString) and
+          #Unstructured parameters.
+          ((not req.hasKey("params")) or ((req["params"].kind == JArray) or (req["params"].kind == JObject)))
+        ):
+          try:
+            await reply(newError(newJNull(), -32600, "Invalid Request"))
+          except Exception as e:
+            panic("Couldn't call reply about a Invalid Request due to an Exception despite reply not naturally throwing anything: " & e.msg)
+          return
+      except KeyError as e:
+        panic("Couldn't get a RPC request's field despite confirming its existence: " & e.msg)
+
+      #Supply params if they were omitted.
+      if not req.hasKey("params"):
+        req["params"] = newJObject()
+
+      #While array parameters are technically valid, they aren't used by Meros.
+      try:
+        if req["params"].kind != JObject:
+          try:
+            await reply(newError(req["id"], -32602, "Invalid params"))
+            return
+          except KeyError as e:
+            panic("Couldn't get the ID of the request despite confirming its existence: " & e.msg)
+          except Exception as e:
+            panic("Couldn't call reply about array params due to an Exception despite reply not naturally throwing anything: " & e.msg)
+      except KeyError as e:
+        panic("Couldn't get a RPC request's params field despite confirming its existence: " & e.msg)
+
+      #Check for extra fields.
+      #While we could let these slide, there isn't any good reason to allow them.
+      if req.len != 4:
+        try:
+          await reply(newError(req["id"], -32600, "Invalid Request", %* {
+            "reason": "Additional fields provided"
+          }))
+          return
+        except KeyError as e:
+          panic("Couldn't get the ID of the request despite confirming its existence: " & e.msg)
+        except Exception as e:
+          panic("Couldn't call reply about additional fields due to an Exception despite reply not naturally throwing anything: " & e.msg)
+
+      var methodStr: string
+      try:
+        methodStr = req["method"].getStr()
+      except KeyError as e:
+        panic("Couldn't get the method of the request despite confirming its existence: " & e.msg)
+
+      #Find the matching RPC module and pass it off.
+      var replied: bool = false
+      for rpc in modules:
+        if methodStr.startsWith(rpc.prefix):
+          #Remove the prefix so only the method is returned.
+          req["method"] = % methodStr[rpc.prefix.len ..< methodStr.len]
+
+          #This has no raises pragma and should only raise ParamError/JSONRPCError.
+          #That said, we also have to bubble up AssertionErrors and handle Exceptions.
+          #There may also be a KeyError floating...
+          try:
+            await rpc.handle(req, reply, authed)
+          #Not authorized.
+          except RPCAuthorizationError:
+            try:
+              await reply(%* {"unauthorized": true})
+            except Exception as e:
+              panic("reply threw an Exception despite not naturally throwing anything: " & e.msg)
+          #If there was an invalid parameter, create the proper error response.
+          except ParamError:
+            try:
+              await reply(newError(req["id"], -32602, "Invalid params"))
+            except KeyError as e:
+              panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+            except Exception as e:
+              panic("Couldn't call reply about a ParamError due to an Exception despite reply not naturally throwing anything: " & e.msg)
+
+          #If there was an invalid value, create the proper response.
+          except JSONRPCError as e:
+            try:
+              await reply(newError(req["id"], e.code, e.msg, e.data))
+            except KeyError as e:
+              panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+            except Exception as e:
+              panic("Couldn't call reply about a JSONRPCError due to an Exception despite reply not naturally throwing anything: " & e.msg)
+
+          #If we panic, make sure it bubbles up.
+          except AssertionError as e:
+            panic("RPC caused a panic: " & e.msg)
+
+          #If we hit a raw Exception, likely from the async runtime, panic.
+          except Exception as e:
+            panic("Raw Exception from the RPC, which may be something OTHER than async: " & e.msg)
+
+          replied = true
+          break
+
+      if not replied:
+        try:
+          await reply(newError(req["id"], -32601, "Method not found"))
+        except Exception as e:
+          panic("Couldn't call reply about the method not being found due to an Exception despite reply not naturally throwing anything: " & e.msg)
+
+  result = RPC(
+    handle: createHandler(),
+    toRPC: toRPC,
+    toGUI: toGUI,
+
+    token: token,
+    alive: true
+  )
 
 #Start up the RPC's connection to the GUI.
 proc start*(
@@ -295,7 +211,7 @@ proc start*(
   while rpc.alive:
     #Allow other async code to execute.
     try:
-      await sleepAsync(milliseconds(1))
+      await sleepAsync(1.milliseconds)
     except Exception as e:
       panic("Couldn't sleep for 1ms before checking the GUI->RPC channel for data: " & e.msg)
 
@@ -316,32 +232,27 @@ proc start*(
       continue
 
     #Handle the request.
-    var res: ref JSONNode
     try:
-      res = await rpc.handle(
+      #Can't directly inline due to an AST gen bug.
+      let rpcFuture: Future[void] = rpc.handle(
         data.msg,
         proc (
-          replyArg: JSONNode
+          reply: JSONNode
         ) {.forceCheck: [], async.} =
           try:
-            rpc.toGUI[].send(replyArg)
+            rpc.toGUI[].send(reply)
           except DeadThreadError as e:
             panic("Couldn't send to a dead thread: " & e.msg)
           except Exception as e:
             panic("Sending over a channel threw an Exception: " & e.msg)
+        , true
       )
+      await rpcFuture
     except Exception as e:
       panic("Couldn't handle the request from the GUI, despite catching all naturally thrown Exceptions: " & e.msg)
 
-    try:
-      rpc.toGUI[].send(res[])
-    except DeadThreadError as e:
-      panic("Couldn't send to a dead thread: " & e.msg)
-    except Exception as e:
-      panic("Sending over a channel threw an Exception: " & e.msg)
-
 #Create a function to handle a connection.
-proc handle(
+proc createSocketHandler(
   rpc: RPC
 ): proc (
   server: StreamServer,
@@ -349,72 +260,111 @@ proc handle(
 ): Future[void] {.gcsafe.} {.inline, forceCheck: [].} =
   result = proc (
     server: StreamServer,
-    socket: StreamTransport
+    socketArg: StreamTransport
   ) {.forceCheck: [], async.} =
+    logTrace "RPC connection occurred"
+
+    var socket: RPCSocket = newRPCSocket(socketArg)
+
     #Handle the client.
     while not socket.closed():
       #Read in a message.
-      var
-        data: string = ""
-        counter: int = 0
-        oldLen: int = 1
-      while true:
-        try:
-          data &= cast[string](await socket.read(1))
-        except Exception:
-          try:
-            socket.close()
-          except Exception:
-            discard
-          return
-
-        if data.len != oldLen:
-          try:
-            socket.close()
-          except Exception:
-            discard
-          return
-        inc(oldLen)
-
-        if data[^1] == data[0]:
-          inc(counter)
-        elif (data[^1] == ']') and (data[0] == '['):
-          dec(counter)
-        elif (data[^1] == '}') and (data[0] == '{'):
-          dec(counter)
-        if counter == 0:
+      var httpReq: tuple[body: string, token: string]
+      try:
+        httpReq = await socket.readHTTP()
+        if socket.closed():
           break
+      except Exception as e:
+        panic("readHTTP threw an error despite not naturally throwing anything: " & e.msg)
 
       #Handle the message.
-      var res: string
+      var parsedData: JSONNode
       try:
-        res = await rpc.handle(
-          data,
-          proc (
-            replyArg: string
-          ) {.forceCheck: [], async.} =
-            try:
-              if (await socket.write(replyArg)) != replyArg.len:
-                raise newException(Exception, "")
-            except Exception:
+        parsedData = parseJSON(httpReq.body)
+      except Exception:
+        try:
+          await socket.writeHTTP($(newError(newJNull(), -32700, "Parse error")))
+          continue
+        except Exception as e:
+          panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
+
+      let batch: bool = parsedData.kind == JArray
+      #Convert this to a list of 'requests' to simplify the below handling code.
+      if not batch:
+        parsedData = % [parsedData]
+
+      #If this is a batch request with length 0, this is an invalid request.
+      if parsedData.len == 0:
+        try:
+          await socket.writeHTTP($(newError(newJNull(), -32600, "Invalid Request")))
+          continue
+        except Exception as e:
+          panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
+
+      var
+        authorized: bool = httpReq.token == rpc.token
+        unauthorized: bool = false
+        res: JSONNode = newJArray()
+      try:
+        for req in parsedData:
+          if unauthorized:
+            break
+
+          #See above instance for clarification.
+          let rpcFuture: Future[void] = rpc.handle(
+            req,
+            proc (
+              replyArg: JSONNode
+            ) {.forceCheck: [], async.} =
+              if replyArg.hasKey("unauthorized"):
+                unauthorized = true
+                return
+              res.add(replyArg)
+
+              #If we're quitting, send what we have.
+              #We only check for "quit" as a mutation occurs, dropping the module, during its processing.
+              #Technically non-compliant for batch requests, as all further requests in the batch won't be fulfilled.
               try:
-                socket.close()
-              except Exception:
+                if (req.kind == JObject) and (req["method"] == (% "quit")) and (replyArg["result"] == (% true)):
+                  if not batch:
+                    res = res[0]
+                  try:
+                    await socket.writeHTTP($res)
+                  except Exception as e:
+                    panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
+              #Invalid request (syntactically or semantically).
+              except KeyError:
                 discard
-              return
-        )
+            ,
+            authorized
+          )
+          await rpcFuture
       except Exception as e:
         panic("RPC's handle threw an Exception despite not naturally throwing anything: " & e.msg)
 
-      try:
-        if (await socket.write(res)) != res.len:
-          raise newException(Exception, "")
-      except Exception:
+      if unauthorized:
         try:
-          socket.close()
-        except Exception:
-          discard
-        return
+          await socket.httpUnauthorized()
+        except Exception as e:
+          panic("httpUnauthorized threw an error despite not naturally throwing anything: " & e.msg)
+        continue
+
+      var resStr: string
+      #If this is an empty array, respond with nothing.
+      #Happens when all requests are for notifications, not for responses.
+      #Doesn't apply to Meros which doesn't use those (at least, not yet).
+      if res.len == 0:
+        #Redundant.
+        resStr = ""
+      else:
+        if not batch:
+          res = res[0]
+        resStr = $res
+
+      try:
+        await socket.writeHTTP($res)
+      except Exception as e:
+        panic("writeHTTP threw an error despite not naturally throwing anything: " & e.msg)
 
 #Start up the RPC's server socket.
 proc listen*(
@@ -423,7 +373,7 @@ proc listen*(
 ) {.forceCheck: [], async.} =
   #Create the server.
   try:
-    rpc.server = createStreamServer(initTAddress("0.0.0.0", config.rpcPort), handle(rpc), {ReuseAddr})
+    rpc.server = createStreamServer(initTAddress("0.0.0.0", config.rpcPort), createSocketHandler(rpc), {ReuseAddr})
   except OSError as e:
     panic("Couldn't create the RPC server due to an OSError: " & e.msg)
   except TransportAddressError as e:
@@ -455,5 +405,8 @@ proc shutdown*(
   if not rpc.server.isNil:
     try:
       rpc.server.close()
-    except Exception:
-      discard
+    except Exception as e:
+      logWarn "Couldn't shutdown the RPC server", reason = e.msg
+
+  #Set alive to false.
+  rpc.alive = false
