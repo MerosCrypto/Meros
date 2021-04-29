@@ -75,10 +75,10 @@ Meros RPC Sample.
 Parameters can be specified via command line arguments or the interactive
 prompt.
 ./build/Sample <MODULE> <METHOD>
-./build/Sample <MODULE> <METHOD <ARG_NAME> <ARG> <ARG_NAME> <ARG> ...
+./build/Sample <MODULE> <METHOD <ARG> <ARG> ...
 ./build/Sample <PORT>
 ./build/Sample <PORT> <MODULE> <METHOD>
-./build/Sample <PORT> <MODULE> <METHOD <ARG_NAME> <ARG> <ARG_NAME> <ARG> ..."""
+./build/Sample <PORT> <MODULE> <METHOD <ARG> <ARG> ..."""
     quit(1)
 
   try:
