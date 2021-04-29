@@ -321,6 +321,14 @@ def WatchWalletTest(
       if str(e) != "-3 This is a WatchWallet node; no Mnemonic is set.":
         raise TestError("data didn't error as expected when Meros didn't have a Wallet.")
 
+    #Also test getMeritHolderKey, as no Merit Holder key should exist.
+    try:
+      rpc.call("personal", "getMeritHolderKey")
+      raise TestError()
+    except Exception as e:
+      if str(e) != "-3 Node is running as a WatchWallet and has no Merit Holder.":
+        raise TestError("data didn't error as expected when Meros didn't have a Wallet.")
+
     #Try calling getTransactionTemplate spending way too much Meros.
     try:
       rpc.call(
