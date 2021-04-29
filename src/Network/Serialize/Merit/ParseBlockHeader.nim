@@ -23,13 +23,15 @@ proc parseBlockHeader*(
     BYTE_LEN
   )
 
+  const SHARED_LEN: int = INT_LEN + HASH_LEN + HASH_LEN + INT_LEN + INT_LEN + HASH_LEN + BYTE_LEN + INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
   if headerSeq[6] == "\0":
-    #< as the DBs call this will full blocks. Easier than detecting length and passing that splice.
-    if headerStr.len < 167:
+    #< as the DBs call this with full blocks, so we can't just check for equality.
+    #Easier than detecting length on that end and passing a splice.
+    if headerStr.len < (SHARED_LEN + NICKNAME_LEN):
       raise newLoggedException(ValueError, "parseBlockHeader not handed enough data for an existing miner header.")
   #This also handles the edge case where the flag is empty, as the string wasn't even long enough for that.
   else:
-    if headerStr.len < 261:
+    if headerStr.len < (SHARED_LEN + BLS_PUBLIC_KEY_LEN):
       raise newLoggedException(ValueError, "parseBlockHeader not handed enough data for a new miner header.")
 
   #Extract the rest of the header.
