@@ -158,11 +158,6 @@ def GetAddressTest(
     if rpc.call("personal", "getAddress") != expected:
       raise TestError("Meros didn't move to the next address once the existing one was used.")
 
-    #Reopen the sockets.
-    sleep(65)
-    rpc.meros.liveConnect(Blockchain().blocks[0].header.hash)
-    rpc.meros.syncConnect(Blockchain().blocks[0].header.hash)
-
     #Get a new address after sending to the address after it.
     #Use both, and then call getAddress.
     #getAddress should detect X is used, move to Y, detect Y is used, and move to Z.
@@ -171,9 +166,22 @@ def GetAddressTest(
 
     #Send to the next next addresses.
     for i in range(2):
-      last = createSend(rpc, last, getAddress(mnemonic, password, 3 + i))
+      addy: str = getAddress(mnemonic, password, 3 + i)
+
+      #Reopen the sockets. This isn't done outside of the loop due to the time deriving the final address can take.
+      #Due to how slow the reference Python code is, it is necessary to redo the socket connections.
+      sleep(65)
+      rpc.meros.liveConnect(Blockchain().blocks[0].header.hash)
+      rpc.meros.syncConnect(Blockchain().blocks[0].header.hash)
+
+      last = createSend(rpc, last, addy)
       if MessageType(rpc.meros.live.recv()[0]) != MessageType.SignedVerification:
         raise TestError("Meros didn't create and broadcast a SignedVerification for this Send.")
+
+      if i == 0:
+        #Close them again.
+        rpc.meros.live.connection.close()
+        rpc.meros.sync.connection.close()
 
     #Verify getAddress returns the existing next address.
     if rpc.call("personal", "getAddress") != expected:
