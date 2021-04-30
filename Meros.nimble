@@ -13,20 +13,28 @@ srcDir =  "src"
 skipExt = @["nim"]
 
 #Dependencies.
-requires "nim == 1.2.6"
-requires "https://github.com/MerosCrypto/Argon2 >= 1.1.2"
-requires "https://github.com/MerosCrypto/mc_randomx >= 0.9.4"
-requires "https://github.com/MerosCrypto/mc_bls >= 3.0.0"
+requires "nim == 1.2.12"
+
+#Dependencies that are dependencies of further dependencies and therefore need to be installed first.
+requires "https://github.com/status-im/nim-stint#bae3fc6"
+requires "https://github.com/status-im/nim-chronos#b964ba2"
+requires "https://github.com/status-im/nim-serialization#261de74"
+requires "https://github.com/status-im/nim-json-serialization#7999d25"
+
+#Trusted dependencies.
 requires "https://github.com/MerosCrypto/mc_ed25519 >= 1.1.1"
+requires "https://github.com/MerosCrypto/mc_bls >= 3.0.1"
 requires "https://github.com/MerosCrypto/mc_minisketch >= 0.8.5"
+requires "https://github.com/MerosCrypto/Argon2 >= 1.1.4"
+requires "https://github.com/MerosCrypto/mc_randomx >= 0.9.6"
 requires "https://github.com/MerosCrypto/mc_lmdb >= 2.0.0"
 requires "https://github.com/MerosCrypto/mc_webview >= 0.1.1"
 requires "https://github.com/kayabaNerve/ForceCheck >= 1.3.2"
-requires "nimcrypto >= 0.4.11"
-requires "normalize >= 0.7.1"
-requires "stint >= 0.0.1"
-requires "chronicles >= 0.8.1"
-requires "https://github.com/status-im/nim-chronos >= 2.3.9"
+
+#Every other dependency which may or may not follow semver + tag every release.
+requires "https://github.com/cheatfate/nimcrypto#b602bd4"
+requires "https://github.com/nitely/nim-normalize#db9a74a"
+requires "https://github.com/status-im/nim-chronicles#b60f707"
 
 #Procedures.
 proc gatherTestFiles(

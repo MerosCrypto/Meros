@@ -8,14 +8,14 @@
 - autoconf / automake / libtool _(for Minisketch)_
 - GTK+ 3 and WebKit _(for the GUI)_
 - choosenim
-- Nim 1.2.6
+- Nim 1.2.12
 
 To install every prerequisite, run:
 
 ```
 sudo pacman -S curl git gcc libtool autoconf automake pkgconf make cmake webkit2gtk
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
-choosenim 1.2.6
+choosenim 1.2.12
 ```
 
 You will have to update your path, as according to choosenim, before running any Nim-related commands.

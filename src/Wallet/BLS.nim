@@ -8,9 +8,7 @@ export SCALAR_LEN, G1_LEN, G2_LEN, toPublicKey, verify, aggregate, serialize, is
 
 import ../lib/objects/ErrorObjs
 
-const
-  r: StUInt[256] = "0x73EDA753299D7D483339D80809A1D80553BDA402FFFE5BFEFFFFFFFF00000001".parse(StUInt[256], 16)
-  DST {.strdefine.}: string = "MEROS-V00-CS01-with-BLS12381G1_XMD:SHA-256_SSWU_RO_"
+const DST {.strdefine.}: string = "MEROS-V00-CS01-with-BLS12381G1_XMD:SHA-256_SSWU_RO_"
 
 #[
 Type aliases for mc_bls.
@@ -25,29 +23,10 @@ type
   BLSAggregationInfo* = AggregationInfo
 
 proc newBLSPrivateKey*(
-  keyArg: string
+  key: string
 ): BLSPrivateKey {.forceCheck: [
   BLSError
 ].} =
-  if keyArg.len != SCALAR_LEN:
-    raise newException(BLSError, "Invalid private key length.")
-
-  #[
-  Mod by the curve order (r). Needed to create a valid scalar.
-  Milagro does this. blst doesn't automatically, and mc_bls doesn't by extension.
-  This should arguably be in mc_bls. That said, blst doesn't provide a scalar modulus.
-  This leaves mc_bls closer to blst and uses stint, which is already here.
-  This may be moved in the future.
-  ]#
-  var
-    key: string = keyArg
-    keyArr: array[SCALAR_LEN, byte]
-  try:
-    keyArr = (StUInt[SCALAR_LEN * 8].fromBytesBE(cast[seq[byte]](key)) mod r).toBytesBE()
-  except DivByZeroError as e:
-    doAssert(false, "Divided by zero when applying the moduli of the curve order: " & e.msg)
-  copyMem(addr key[0], addr keyArr[0], SCALAR_LEN)
-
   try:
     result = newPrivateKey(key)
   except BLSError as e:
