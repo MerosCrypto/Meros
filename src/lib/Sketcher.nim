@@ -49,7 +49,7 @@ proc toSketch(
   SaltError
 ].} =
   #Create the sketch.
-  result.sketch = newSketch(64, 0, capacity)
+  result.sketch = newSketch(64, 0, csize_t(capacity))
   result.hashes = initHashSet[uint64]()
 
   var hash: uint64
