@@ -76,7 +76,7 @@ let
 
 #Tasks.
 task clean, "Clean all build files.":
-  rmDir projectDir() / "build"
+  rmDir thisDir() / "build"
 
 task build, "Build Meros.":
   setCommand "nop"
@@ -116,7 +116,7 @@ task unit, "Run unit/integration tests.":
   allTestsFile.writeFile(contents)
 
   #Copy config.
-  cpFile(projectDir() / "tests" / "config.nims",  testWorkingDir / "config.nims")
+  cpFile(thisDir() / "tests" / "config.nims",  testWorkingDir / "config.nims")
 
   #Execute tests.
   nimExec "c -r " & allTestsFile & " " & params
@@ -133,7 +133,7 @@ task ci, "Run CI tasks.":
   nimbleExec "clean"
 
   mkDir testWorkingDir
-  cpFile(projectDir() / "tests" / "ci.cfg", testWorkingDir / "nim.cfg")
+  cpFile(thisDir() / "tests" / "ci.cfg", testWorkingDir / "nim.cfg")
   defer: rmFile testWorkingDir / "nim.cfg"
   nimbleExec "unit"
 
