@@ -1,5 +1,7 @@
 #pylint: disable=invalid-name
 
+#Reference implementation of ed25519.
+
 from typing import List
 
 import hashlib
