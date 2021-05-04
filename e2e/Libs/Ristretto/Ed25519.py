@@ -1,5 +1,8 @@
 #Wrapper around the reference implementation of ed25519 with an API matching https://pypi.org/project/ed25519/.
 
+#pylint: disable=no-name-in-module
+from gmpy2 import mpz
+
 import e2e.Libs.ed25519 as ed
 
 #pylint: disable=too-few-public-methods
@@ -25,7 +28,7 @@ class SigningKey:
     key[31] = key[31] & 127
     key[31] = key[31] | 64
     self.seed: bytes = seed
-    self.sk: int = int.from_bytes(key[:32], "little") % ed.l
+    self.sk: mpz = ed.decodeint(key[:32]) % ed.l
 
   def sign(
     self,

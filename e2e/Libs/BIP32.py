@@ -4,6 +4,9 @@ from typing import List, Tuple
 import hashlib
 import hmac
 
+#pylint: disable=no-name-in-module
+from gmpy2 import mpz
+
 import e2e.Libs.ed25519 as ed
 
 HARDENED_THRESHOLD: int = 1 << 31
@@ -54,11 +57,10 @@ def deriveKeyAndChainCode(
     #Said existing impl is probably wrong.
     #While we could move to the proper form, it's unclear, and Meros is planning on moving to Ristretto anyways.
     #That will void all these concerns.
-    kL = ed.encodeint((8 * ed.decodeint(bytes(zL))) + ed.decodeint(kL))
+    kL = ed.encodeint((mpz(8) * ed.decodeint(bytes(zL))) + ed.decodeint(kL))
     if (ed.decodeint(kL) % ed.l) == 0:
       raise Exception("Invalid child.")
-    #This modulus should be redundant given encodeint only uses the latter 32 bytes.
-    kR = ed.encodeint((ed.decodeint(zR) + ed.decodeint(kR)) % (1 << 256))
+    kR = ed.encodeint((ed.decodeint(zR) + ed.decodeint(kR)) % mpz(1 << 256))
     k = kL + kR
 
     A = ed.encodepoint(ed.scalarmult(ed.B, ed.decodeint(kL)))
