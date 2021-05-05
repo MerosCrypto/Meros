@@ -1,4 +1,4 @@
-#https://github.com/MerosCrypto/Meros/issues/155
+#https://github.com/MerosCrypto/Meros/issues/155.
 
 from typing import Dict, List, Any
 
@@ -39,10 +39,6 @@ def HundredFiftyFiveTest(
   blockchain: Blockchain = Blockchain()
   dataFilter: SpamFilter = SpamFilter(5)
 
-  #Handshake with the node.
-  rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
-  rpc.meros.syncConnect(blockchain.blocks[0].header.hash)
-
   #Call getBlockTemplate just to get an ID.
   #Skips the need to write a sync loop for the BlockBody.
   template: Dict[str, Any] = rpc.call(
@@ -71,6 +67,11 @@ def HundredFiftyFiveTest(
   block.mine(blsPrivKey, blockchain.difficulty())
   blockchain.add(block)
 
+  #Handshake with the node.
+  rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
+  rpc.meros.syncConnect(blockchain.blocks[0].header.hash)
+
+  #Publish the Block.
   rpc.call(
     "merit",
     "publishBlock",
@@ -79,7 +80,6 @@ def HundredFiftyFiveTest(
       "header": block.header.serialize().hex()
     }
   )
-
   if MessageType(rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
     raise TestError("Meros didn't broadcast the Block we just published.")
   #Ignore the Verification for the Block's Data.
