@@ -9,16 +9,14 @@ import ../../../lib/Errors
 const DATA*: string = staticRead("../static/Data.html")
 
 type
-  GUIObj* = object
+  GUI* = object
     toRPC: ptr Channel[JSONNode]
     toGUI: ptr Channel[JSONNode]
     webview*: WebView
 
-  GUI* = ref GUIObj
-
   Carry* = object
     fromMain*: ptr Channel[string]
-    gui*: ptr GUIObj
+    gui*: ptr GUI
 
   CarriedCallback* = object
     fn*: proc (
@@ -28,7 +26,7 @@ type
     ) {.cdecl, raises: [].}
     carry*: Carry
 
-func newGUIObj*(
+func newGUI*(
   toRPC: ptr Channel[JSONNode],
   toGUI: ptr Channel[JSONNode],
   webview: WebView
@@ -41,7 +39,7 @@ func newGUIObj*(
 
 #RPC helper.
 proc call*(
-  gui: GUIObj,
+  gui: GUI,
   module: string,
   methodStr: string,
   args: JSONNode = %* {}
