@@ -1,5 +1,7 @@
 #Wrapper around the reference implementation of ed25519 with an API matching https://pypi.org/project/ed25519/.
 
+#pylint: disable=invalid-name
+
 #pylint: disable=no-name-in-module
 from gmpy2 import mpz
 
