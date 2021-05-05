@@ -193,7 +193,7 @@ if payload["params"].len == 0:
 var
   client: HttpClient = newHttpClient()
   headers: HttpHeaders = newHttpheaders()
-headers["Authorization"] = "Bearer " & readFile("data/e2e/.token")
+headers["Authorization"] = "Bearer " & readFile("data/.token")
 let res: JSONNode = parseJSON(
   client.request(
     "http://localhost:" & $port,
