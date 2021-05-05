@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
   autoconf \
   automake \
   libtool \
-  webkit2gtk-4.0 \
   curl \
   xz-utils
 
