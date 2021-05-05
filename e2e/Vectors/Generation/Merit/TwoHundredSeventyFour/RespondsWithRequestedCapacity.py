@@ -1,6 +1,6 @@
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Classes.Transactions.Transactions import Data, Transactions
 
@@ -16,7 +16,7 @@ proto: PrototypeChain = PrototypeChain(1)
 
 #Create five Datas.
 #Six in total, thanks to the Block Data.
-data: Data = Data(bytes(32), edPrivKey.get_verifying_key().to_bytes())
+data: Data = Data(bytes(32), edPrivKey.get_verifying_key())
 for i in range(5):
   data.sign(edPrivKey)
   data.beat(dataFilter)

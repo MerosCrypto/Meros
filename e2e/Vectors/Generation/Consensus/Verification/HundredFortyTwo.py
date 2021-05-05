@@ -1,6 +1,6 @@
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Data, Transactions
@@ -12,7 +12,7 @@ from e2e.Classes.Consensus.SpamFilter import SpamFilter
 from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 transactions: Transactions = Transactions()
 spamFilter: SpamFilter = SpamFilter(5)
@@ -20,7 +20,7 @@ spamFilter: SpamFilter = SpamFilter(5)
 proto = PrototypeChain(1, False)
 proto.add(1)
 
-data: Data = Data(bytes(32), edPubKey.to_bytes())
+data: Data = Data(bytes(32), edPubKey)
 data.sign(edPrivKey)
 data.beat(spamFilter)
 transactions.add(data)

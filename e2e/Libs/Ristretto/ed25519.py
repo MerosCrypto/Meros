@@ -3,21 +3,10 @@
 #pylint: disable=no-name-in-module
 from gmpy2 import mpz
 
-import e2e.Libs.ed25519 as ed
+import e2e.Libs.Ristretto.ed as ed
 
-#pylint: disable=too-few-public-methods
-class VerifyingKey:
-  def __init__(
-    self,
-    key: bytes
-  ) -> None:
-    self.key: bytes = key
-
-  def to_bytes(
-    self
-  ) -> bytes:
-    return self.key
-
+#Called SigningKey for legacy reasons.
+#Naming preserved due to conflict with BLS's PrivateKey.
 class SigningKey:
   def __init__(
     self,
@@ -42,5 +31,5 @@ class SigningKey:
 
   def get_verifying_key(
     self
-  ) -> VerifyingKey:
-    return VerifyingKey(ed.encodepoint(ed.scalarmult(ed.B, self.sk)))
+  ) -> bytes:
+    return ed.encodepoint(ed.scalarmult(ed.B, self.sk))

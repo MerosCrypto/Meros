@@ -1,4 +1,4 @@
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
@@ -12,12 +12,12 @@ def DataTest(
   rpc: RPC
 ) -> None:
   privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-  pubKey: ed25519.VerifyingKey = privKey.get_verifying_key()
+  pubKey: bytes = privKey.get_verifying_key()
 
   genesis: bytes = Blockchain().blocks[0].header.hash
   spamFilter: SpamFilter = SpamFilter(5)
 
-  data: Data = Data(bytes(32), pubKey.to_bytes())
+  data: Data = Data(bytes(32), pubKey)
   data.sign(privKey)
   data.beat(spamFilter)
 

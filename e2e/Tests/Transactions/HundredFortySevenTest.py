@@ -3,8 +3,9 @@
 from typing import Dict, Any
 import json
 
-import ed25519
 from pytest import raises
+
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Classes.Merit.Merit import Merit
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
@@ -28,7 +29,7 @@ def HundredFortySevenTest(
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
   privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-  pubKey: ed25519.VerifyingKey = privKey.get_verifying_key()
+  pubKey: bytes = privKey.get_verifying_key()
 
   #Grab the Claim hash,
   claim: bytes = merit.blockchain.blocks[-1].body.packets[0].hash
@@ -37,8 +38,8 @@ def HundredFortySevenTest(
   send: Send = Send(
     [(claim, 0)],
     [
-      (pubKey.to_bytes(), 18446744073709551231),
-      (pubKey.to_bytes(), 385 + Claim.fromTransaction(transactions.txs[claim]).amount)
+      (pubKey, 18446744073709551231),
+      (pubKey, 385 + Claim.fromTransaction(transactions.txs[claim]).amount)
     ]
   )
   send.sign(privKey)

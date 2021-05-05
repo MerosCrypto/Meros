@@ -1,6 +1,6 @@
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Claim, Transactions
@@ -11,7 +11,7 @@ from e2e.Classes.Merit.Merit import Merit
 
 from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock, PrototypeChain
 
-edPubKey: bytes = ed25519.SigningKey(b'\0' * 32).get_verifying_key().to_bytes()
+edPubKey: bytes = ed25519.SigningKey(b'\0' * 32).get_verifying_key()
 
 proto: PrototypeChain = PrototypeChain(49, keepUnlocked=True)
 merit: Merit = Merit.fromJSON(proto.toJSON())

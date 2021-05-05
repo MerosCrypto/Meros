@@ -1,7 +1,7 @@
 from typing import Dict, List, Any
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Libs.BLS import PrivateKey
 
@@ -24,12 +24,12 @@ transactions: Transactions = Transactions()
 dataFilter: SpamFilter = SpamFilter(5)
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 blsPrivKey: PrivateKey = PrivateKey(0)
 
 #Generate a Data to verify for the VerificationPacket Block.
-data: Data = Data(bytes(32), edPubKey.to_bytes())
+data: Data = Data(bytes(32), edPubKey)
 data.sign(edPrivKey)
 data.beat(dataFilter)
 transactions.add(data)

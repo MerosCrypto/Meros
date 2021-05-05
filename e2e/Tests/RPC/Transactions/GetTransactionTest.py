@@ -1,7 +1,7 @@
 from typing import Dict, Any
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Classes.Transactions.Mint import Mint
 from e2e.Classes.Transactions.Transactions import Claim, Send, Data, Transactions
@@ -18,7 +18,7 @@ def GetTransactionTest(
   rpc: RPC
 ) -> None:
   privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-  pubKey: ed25519.VerifyingKey = privKey.get_verifying_key()
+  pubKey: bytes = privKey.get_verifying_key()
 
   sendFilter: SpamFilter = SpamFilter(3)
   dataFilter: SpamFilter = SpamFilter(5)
@@ -35,15 +35,12 @@ def GetTransactionTest(
 
   send: Send = Send(
     [(claim.hash, 0)],
-    [(
-      ed25519.SigningKey(b'\1' * 32).get_verifying_key().to_bytes(),
-      claim.amount
-    )]
+    [(ed25519.SigningKey(b'\1' * 32).get_verifying_key(), claim.amount)]
   )
   send.sign(privKey)
   send.beat(sendFilter)
 
-  data: Data = Data(bytes(32), pubKey.to_bytes())
+  data: Data = Data(bytes(32), pubKey)
   data.sign(privKey)
   data.beat(dataFilter)
 

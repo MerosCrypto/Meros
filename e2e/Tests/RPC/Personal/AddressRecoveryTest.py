@@ -11,9 +11,9 @@ from typing import Dict, List, Union, Any
 from time import sleep
 import json
 
-import ed25519
 from pytest import raises
 
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Transactions
@@ -40,7 +40,7 @@ def createSend(
       [(last.hash, 0)],
       [
         (decodeAddress(toAddress), 1),
-        (funded.get_verifying_key().to_bytes(), last.amount - 1)
+        (funded.get_verifying_key(), last.amount - 1)
       ]
     )
   else:
@@ -48,7 +48,7 @@ def createSend(
       [(last.hash, 1)],
       [
         (decodeAddress(toAddress), 1),
-        (funded.get_verifying_key().to_bytes(), last.outputs[1][1] - 1)
+        (funded.get_verifying_key(), last.outputs[1][1] - 1)
       ]
     )
 

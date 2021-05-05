@@ -6,10 +6,10 @@ from typing import Dict, List, Any
 from time import sleep
 import json
 
-import ed25519
 from bech32 import convertbits, bech32_encode
 
-import e2e.Libs.ed25519 as ed
+import e2e.Libs.Ristretto.ed as ed
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Transactions
@@ -85,7 +85,7 @@ def WatchWalletTest(
 ) -> None:
   #Keys to send funds to later.
   keys: List[bytes] = [
-    ed25519.SigningKey(i.to_bytes(1, "little") * 32).get_verifying_key().to_bytes() for i in range(5)
+    ed25519.SigningKey(i.to_bytes(1, "little") * 32).get_verifying_key() for i in range(5)
   ]
 
   #Backup the Mnemonic so we can independently derive this data and verify it.

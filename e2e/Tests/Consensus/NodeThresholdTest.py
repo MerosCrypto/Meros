@@ -1,7 +1,7 @@
 from typing import List
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
@@ -18,7 +18,7 @@ def NodeThresholdTest(
 
   dataFilter: SpamFilter = SpamFilter(5)
 
-  datas: List[Data] = [Data(bytes(32), edPrivKey.get_verifying_key().to_bytes())]
+  datas: List[Data] = [Data(bytes(32), edPrivKey.get_verifying_key())]
   datas[-1].sign(edPrivKey)
   datas[-1].beat(dataFilter)
 

@@ -4,7 +4,7 @@ from typing import Dict, List, Any
 from time import sleep
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey, Signature
 
 from e2e.Classes.Merit.Blockchain import BlockHeader
@@ -29,7 +29,7 @@ def EightyEightTest(
   rpc: RPC
 ) -> None:
   edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-  edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+  edPubKey: bytes = edPrivKey.get_verifying_key()
 
   blsPrivKey: PrivateKey = PrivateKey(0)
   blsPubKey: str = blsPrivKey.toPublicKey().serialize().hex()
@@ -52,7 +52,7 @@ def EightyEightTest(
     raise TestError("Meros didn't broadcast the Block Header it just added.")
 
   #Create two Datas.
-  datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
+  datas: List[Data] = [Data(bytes(32), edPubKey)]
   datas.append(Data(datas[0].hash, b"Hello there! General Kenobi."))
 
   for data in datas:

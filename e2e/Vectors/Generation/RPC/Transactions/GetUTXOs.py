@@ -1,7 +1,7 @@
 from typing import Dict, List, Any
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Transactions
@@ -15,10 +15,10 @@ merit: Merit = Merit.fromJSON(PrototypeChain(47).toJSON())
 transactions: Transactions = Transactions()
 
 privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-pubKey: bytes = privKey.get_verifying_key().to_bytes()
+pubKey: bytes = privKey.get_verifying_key()
 
 recipientPriv: ed25519.SigningKey = ed25519.SigningKey(b'\1' * 32)
-recipientPub: bytes = recipientPriv.get_verifying_key().to_bytes()
+recipientPub: bytes = recipientPriv.get_verifying_key()
 
 olderClaim: Claim = Claim([(merit.mints[-1], 0)], pubKey)
 olderClaim.sign(PrivateKey(0))
@@ -53,7 +53,7 @@ send.sign(privKey)
 send.beat(SpamFilter(3))
 transactions.add(send)
 
-otherRecipient: bytes = ed25519.SigningKey(b'\2' * 32).get_verifying_key().to_bytes()
+otherRecipient: bytes = ed25519.SigningKey(b'\2' * 32).get_verifying_key()
 
 spendingSend: Send = Send([(send.hash, 0)], [(otherRecipient, 1)])
 spendingSend.sign(recipientPriv)

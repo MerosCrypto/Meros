@@ -1,9 +1,10 @@
 from typing import Dict, List, Any
 import json
 
-import ed25519
 from bech32 import convertbits, bech32_encode
 from pytest import raises
+
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Classes.Transactions.Transactions import Send, Data, Transactions
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
@@ -24,10 +25,10 @@ def TGUUnverifyTest(
 
   def test() -> None:
     recipient: ed25519.SigningKey = ed25519.SigningKey(b'\1' * 32)
-    recipientPub: bytes = recipient.get_verifying_key().to_bytes()
+    recipientPub: bytes = recipient.get_verifying_key()
     address: str = bech32_encode("mr", convertbits(bytes([0]) + recipientPub, 8, 5))
 
-    otherRecipient: bytes = ed25519.SigningKey(b'\2' * 32).get_verifying_key().to_bytes()
+    otherRecipient: bytes = ed25519.SigningKey(b'\2' * 32).get_verifying_key()
     otherAddress: str = bech32_encode("mr", convertbits(bytes([0]) + otherRecipient, 8, 5))
 
     #Create a Send.

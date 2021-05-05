@@ -1,6 +1,6 @@
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Classes.Transactions.Transactions import Data, Transactions
 
@@ -13,12 +13,12 @@ transactions: Transactions = Transactions()
 dataFilter: SpamFilter = SpamFilter(5)
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 proto: PrototypeChain = PrototypeChain(1, keepUnlocked=False)
 
 #Create the Data and a successor.
-first: Data = Data(bytes(32), edPubKey.to_bytes())
+first: Data = Data(bytes(32), edPubKey)
 first.sign(edPrivKey)
 first.beat(dataFilter)
 transactions.add(first)

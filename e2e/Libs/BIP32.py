@@ -7,7 +7,7 @@ import hmac
 #pylint: disable=no-name-in-module
 from gmpy2 import mpz
 
-import e2e.Libs.ed25519 as ed
+import e2e.Libs.Ristretto.ed as ed
 
 HARDENED_THRESHOLD: int = 1 << 31
 

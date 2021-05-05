@@ -3,7 +3,7 @@
 from typing import List
 from time import sleep
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey, Signature
 
 from e2e.Classes.Transactions.Data import Data
@@ -31,7 +31,7 @@ def HundredSixSignedElementsTest(
   sig: Signature = blsPrivKey.sign(bytes())
 
   #Create a Data for the Verification.
-  data: Data = Data(bytes(32), edPrivKey.get_verifying_key().to_bytes())
+  data: Data = Data(bytes(32), edPrivKey.get_verifying_key())
   data.sign(edPrivKey)
   data.beat(SpamFilter(5))
 

@@ -7,7 +7,7 @@ from hashlib import sha256
 from bip_utils import Bip39WordsNum, Bip39MnemonicGenerator, Bip39SeedGenerator
 from bech32 import convertbits, bech32_encode, bech32_decode
 
-import e2e.Libs.ed25519 as ed
+import e2e.Libs.Ristretto.ed as ed
 import e2e.Libs.BIP32 as BIP32
 
 from e2e.Tests.Errors import TestError

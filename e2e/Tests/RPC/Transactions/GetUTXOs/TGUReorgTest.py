@@ -1,9 +1,10 @@
 from typing import Dict, List, Tuple, Union, Any
 import json
 
-import ed25519
 from bech32 import convertbits, bech32_encode
 from pytest import raises
+
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Transactions
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
@@ -22,7 +23,7 @@ def createSend(
   to: bytes,
   key: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 ) -> Send:
-  pub: bytes = key.get_verifying_key().to_bytes()
+  pub: bytes = key.get_verifying_key()
   actualInputs: List[Tuple[bytes, int]] = []
   outputs: List[Tuple[bytes, int]] = [(to, 1)]
   toSpend: int = 0
@@ -32,7 +33,7 @@ def createSend(
       toSpend += txInput.amount
     else:
       for n in range(len(txInput.outputs)):
-        if txInput.outputs[n][0] == key.get_verifying_key().to_bytes():
+        if txInput.outputs[n][0] == key.get_verifying_key():
           actualInputs.append((txInput.hash, n))
           toSpend += txInput.outputs[n][1]
   if toSpend > 1:
@@ -100,7 +101,7 @@ def TGUReorgTest(
 
   def test() -> None:
     recipient: ed25519.SigningKey = ed25519.SigningKey(b'\1' * 32)
-    recipientPub: bytes = recipient.get_verifying_key().to_bytes()
+    recipientPub: bytes = recipient.get_verifying_key()
     address: str = bech32_encode("mr", convertbits(bytes([0]) + recipientPub, 8, 5))
 
     #Create a Send.

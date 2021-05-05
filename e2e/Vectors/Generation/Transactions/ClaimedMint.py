@@ -1,6 +1,6 @@
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Claim import Claim
@@ -17,7 +17,7 @@ transactions: Transactions = Transactions()
 
 claim: Claim = Claim(
   [(merit.mints[-1], 0)],
-  ed25519.SigningKey(b'\0' * 32).get_verifying_key().to_bytes()
+  ed25519.SigningKey(b'\0' * 32).get_verifying_key()
 )
 claim.sign(PrivateKey(0))
 transactions.add(claim)

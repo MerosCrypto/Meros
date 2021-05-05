@@ -1,7 +1,7 @@
 from typing import Dict, Tuple, Any
 from hashlib import blake2b
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Classes.Transactions.Transaction import Transaction
 from e2e.Classes.Consensus.SpamFilter import SpamFilter

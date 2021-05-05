@@ -7,10 +7,10 @@ from typing import Dict, List, Any
 from time import sleep
 import json
 
-import ed25519
 from bech32 import convertbits, bech32_encode
 from pytest import raises
 
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey
 from e2e.Libs.RandomX import RandomX
 
@@ -150,7 +150,7 @@ def PersonalSendTest(
     #Send all funds out of Wallet.
     #Tests MuSig signing and change UTXO detection.
     privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-    pubKey: bytes = privKey.get_verifying_key().to_bytes()
+    pubKey: bytes = privKey.get_verifying_key()
     sends.append(
       rpc.call(
         "personal",

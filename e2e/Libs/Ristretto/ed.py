@@ -1,6 +1,8 @@
 #pylint: disable=invalid-name
 
-#Reference implementation of ed25519.
+#Reference implementation of ed25519 modernized and modified to use gmp.
+#~3x faster using gmp.
+#-75x slower that PyPi's ed25519, which wraps Supercop, and is reportedly ~20x slower than PyNaCL.
 
 from typing import List
 import hashlib

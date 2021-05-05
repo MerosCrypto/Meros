@@ -1,7 +1,7 @@
 from typing import Dict, List, Any
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Libs.BLS import PrivateKey
 
@@ -13,13 +13,13 @@ from e2e.Classes.Consensus.SpamFilter import SpamFilter
 from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 
 privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-pubKey: ed25519.VerifyingKey = privKey.get_verifying_key()
+pubKey: bytes = privKey.get_verifying_key()
 
 spamFilter: SpamFilter = SpamFilter(5)
 
 proto: PrototypeChain = PrototypeChain(1, keepUnlocked=False)
 
-data: Data = Data(bytes(32), pubKey.to_bytes())
+data: Data = Data(bytes(32), pubKey)
 datas: List[Dict[str, Any]] = []
 verifs: List[Dict[str, Any]] = []
 for _ in range(2):
@@ -34,7 +34,7 @@ for _ in range(2):
 
 privKey = ed25519.SigningKey(b'\1' * 32)
 pubKey = privKey.get_verifying_key()
-data = Data(bytes(32), pubKey.to_bytes())
+data = Data(bytes(32), pubKey)
 for i in range(5):
   data.sign(privKey)
   data.beat(spamFilter)

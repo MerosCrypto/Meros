@@ -2,7 +2,7 @@ from typing import IO, Dict, List, Any
 from hashlib import blake2b
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
 from e2e.Classes.Transactions.Claim import Claim
@@ -27,7 +27,7 @@ merit: Merit = Merit()
 dataFilter: SpamFilter = SpamFilter(5)
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
@@ -35,7 +35,7 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 merit.add(Block.fromJSON(blankBlocks[0]))
 
 #Create the Data.
-data: Data = Data(bytes(32), edPubKey.to_bytes())
+data: Data = Data(bytes(32), edPubKey)
 data.sign(edPrivKey)
 data.beat(dataFilter)
 transactions.add(data)
@@ -80,10 +80,7 @@ for _ in range(5):
   merit.add(block)
 
 #Create the Claim.
-claim: Claim = Claim(
-  [(merit.mints[0], 0), (merit.mints[0], 0)],
-  edPubKey.to_bytes()
-)
+claim: Claim = Claim([(merit.mints[0], 0), (merit.mints[0], 0)], edPubKey)
 claim.sign(blsPrivKey)
 transactions.add(claim)
 

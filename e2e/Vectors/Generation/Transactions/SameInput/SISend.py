@@ -1,6 +1,6 @@
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Send import Send
@@ -19,9 +19,9 @@ transactions: Transactions = Transactions()
 sendFilter: SpamFilter = SpamFilter(3)
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
-claim: Claim = Claim([(merit.mints[-1], 0)], edPubKey.to_bytes())
+claim: Claim = Claim([(merit.mints[-1], 0)], edPubKey)
 claim.sign(PrivateKey(0))
 transactions.add(claim)
 merit.add(
@@ -34,10 +34,7 @@ merit.add(
 #Create a Send spending it twice.
 send: Send = Send(
   [(claim.hash, 0), (claim.hash, 0)],
-  [(
-    edPubKey.to_bytes(),
-    Claim.fromTransaction(transactions.txs[claim.hash]).amount * 2
-  )]
+  [(edPubKey, Claim.fromTransaction(transactions.txs[claim.hash]).amount * 2)]
 )
 send.sign(edPrivKey)
 send.beat(sendFilter)

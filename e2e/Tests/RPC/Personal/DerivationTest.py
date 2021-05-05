@@ -8,7 +8,7 @@ from bip_utils import Bip39WordsNum, Bip39MnemonicGenerator, Bip39MnemonicValida
 from bech32 import convertbits, bech32_encode
 
 from e2e.Libs.BLS import PrivateKey
-import e2e.Libs.ed25519 as ed
+import e2e.Libs.Ristretto.ed as ed
 import e2e.Libs.BIP32 as BIP32
 
 from e2e.Classes.Transactions.Transactions import Data

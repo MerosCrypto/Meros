@@ -1,7 +1,7 @@
 from typing import List
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
 from e2e.Classes.Transactions.Data import Data
@@ -16,7 +16,7 @@ from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 proto: PrototypeChain = PrototypeChain(1, False)
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 blsPrivKey: PrivateKey = PrivateKey(0)
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
@@ -24,7 +24,7 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 spamFilter: SpamFilter = SpamFilter(5)
 
 #Create the initial Data and two competing Datas.
-datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
+datas: List[Data] = [Data(bytes(32), edPubKey)]
 datas.append(Data(datas[0].hash, b"Initial Data."))
 datas.append(Data(datas[0].hash, b"Second Data."))
 for data in datas:

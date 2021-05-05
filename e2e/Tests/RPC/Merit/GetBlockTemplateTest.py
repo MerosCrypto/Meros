@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 import time
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 
 from e2e.Libs.RandomX import RandomX
 from e2e.Libs.BLS import PrivateKey
@@ -40,7 +40,7 @@ def getBlockTemplateTest(
   rpc: RPC
 ) -> None:
   edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-  edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+  edPubKey: bytes = edPrivKey.get_verifying_key()
   blockchain: Blockchain = Blockchain()
 
   #Get multiple templates to verify they share an ID if they're requested within the same second.
@@ -126,7 +126,7 @@ def getBlockTemplateTest(
       raise TestError("Meros didn't delete old template IDs.")
 
   #Test VerificationPacket inclusion.
-  data: Data = Data(bytes(32), edPubKey.to_bytes())
+  data: Data = Data(bytes(32), edPubKey)
   data.sign(edPrivKey)
   data.beat(SpamFilter(5))
   verif: SignedVerification = SignedVerification(data.hash)

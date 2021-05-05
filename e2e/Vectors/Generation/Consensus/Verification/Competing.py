@@ -1,7 +1,7 @@
 from typing import List
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Claim import Claim
@@ -21,13 +21,13 @@ transactions: Transactions = Transactions()
 sendFilter: SpamFilter = SpamFilter(3)
 
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKeys: List[ed25519.VerifyingKey] = [
+edPubKeys: List[bytes] = [
   edPrivKey.get_verifying_key(),
   ed25519.SigningKey(b'\1' * 32).get_verifying_key()
 ]
 
 #Create the Claim.
-claim: Claim = Claim([(merit.mints[-1], 0)], edPubKeys[0].to_bytes())
+claim: Claim = Claim([(merit.mints[-1], 0)], edPubKeys[0])
 claim.sign(PrivateKey(0))
 transactions.add(claim)
 merit.add(
@@ -51,7 +51,7 @@ for i in range(2):
   send: Send = Send(
     [(claim.hash, 0)],
     [(
-      edPubKeys[i].to_bytes(),
+      edPubKeys[i],
       Claim.fromTransaction(transactions.txs[claim.hash]).amount
     )]
   )
