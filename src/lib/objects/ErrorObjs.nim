@@ -57,9 +57,5 @@ type
     code*: int
     data*: JSONNode
 
-  #Interfaces/GUI Errors.
-  WebViewError* = object of CatchableError #Used when WebView fails.
-  RPCError*     = object of CatchableError #Used when the GUI makes an invalid RPC call.
-
   #Interfaces Statuses.
   NotEnoughMeros* = object of CatchableError #Used when the RPC is instructed to create a Send for more Meros than it can.

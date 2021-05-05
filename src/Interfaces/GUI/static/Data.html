@@ -1,17 +1,24 @@
 <html>
+  <script>
+    window.publishData = async function() {
+      let data = document.getElementById('data').value || "";
+      let dataRes = await RPC_call('personal', 'data', {data});
+      if (dataRes['error']) {
+        alert('Error creating the data: ' + dataRes['error']['message']);
+      } else {
+        document.getElementById('hash').innerHTML = dataRes['result'];
+      }
+    }
+  </script>
+
   <body>
-    <h1>Send</h1>
-    <button onclick="GUI.load('send')">Send</button>
-    <button onclick="GUI.load('data')">Data</button>
-    <button onclick="GUI.quit()">Quit</button>
+    <h1>Data</h1>
+    <button onclick="GUI_quit()">Quit</button>
     <hr>
 
     Data: <input type="text" id="data"></input>
     <br>
-    <button onclick="
-      var data = document.getElementById('data').value;
-      Personal.data(data);
-    ">Publish</button>
+    <button onclick="publishData()">Publish</button>
 
     <br>
     <hr>

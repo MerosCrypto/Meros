@@ -1,62 +1,54 @@
-import strformat
+import json
 
 import ../../../lib/Errors
 
 import ../objects/GUIObj
 
+var carried: CarriedCallback
+
 proc addTo*(
   gui: GUI,
-  loop: proc () {.raises: [
-    WebViewError
-  ].}
+  poll: CarriedCallback
 ) {.forceCheck: [].} =
   try:
-    gui.webview.bindProcNoArg(
-      "GUI",
-      "quit",
-      proc () {.forceCheck: [].} =
-        try:
-          discard gui.call("system", "quit")
-        except RPCError as e:
-          gui.webview.error("RPC Error", e.msg)
-          return
-    )
-
-    #Loop function to allow the GUI thread to do something other than WebView.
-    gui.webview.bindProcNoArg(
-      "GUI",
-      "loop",
-      loop
-    )
-
-    #Load a new page.
     gui.webview.bindProc(
-      "GUI",
-      "load",
+      "GUI_quit",
       proc (
-        pageArg: string
-      ) {.forceCheck: [].} =
-        var page: string
+        id: cstring,
+        jsonArgs: cstring,
+        carriedArgs: pointer
+      ) {.cdecl, forceCheck: [].} =
+        discard cast[ptr GUIObj](carriedArgs)[].call("system", "quit")
+      ,
+      addr gui[]
+    )
 
-        #Case off the page we're trying to load.
-        case pageArg:
-          of "send":
-            page = SEND
-          of "data":
-            page = DATA
-          else:
-            panic("Tried to load a page we couldn't identify.")
+    #poll function to allow the GUI thread to do something other than WebView.
+    carried = poll
+    gui.webview.bindProc("GUI_poll", carried.fn, addr carried.carry)
 
-        #Format it as a line of JS code.
+    gui.webview.bindProc(
+      "RPC_call",
+      proc (
+        id: cstring,
+        jsonArgs: cstring,
+        carriedArgs: pointer
+      ) {.cdecl, forceCheck: [].} =
+        var args: JSONNode
         try:
-          page = &"document.body.innerHTML = (`{page}`);"
+          args = parseJSON($jsonArgs)
         except ValueError as e:
-          gui.webview.error("Value Error", "Couldn't format the JS to display the main page: " & e.msg)
-          return
-
-        if gui.webview.eval(page) != 0:
-          gui.webview.error("RPC Error", "Couldn't eval the JS to load a new page.")
-          return
+          logDebug "Invalid JSON from WebView", json = jsonArgs
+          panic("WebView handed invalid JSON to a bound proc: " & e.msg)
+        except Exception as e:
+          panic("parseJSON raised a Defect: " & e.msg)
+        cast[ptr GUIObj](carriedArgs)[].webview.returnProc(
+          id,
+          0,
+          $cast[ptr GUIObj](carriedArgs)[].call(args[0].getStr(), args[1].getStr(), args[2])
+        )
+      ,
+      addr gui[]
     )
   except KeyError as e:
     panic("Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)

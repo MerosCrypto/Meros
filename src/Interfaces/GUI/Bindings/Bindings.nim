@@ -1,17 +1,12 @@
 import ../../../lib/Errors
 
 import ../objects/GUIObj
-import GUIBindings, PersonalBindings, NetworkBindings
+import GUIBindings
 
+#Meant to be expanded with dedicated RPC functions for each RPC route.
+#Currently just binds GUI_quit, GUI_poll, and RPC_call via the GUIBindings file.
 proc createBindings*(
   gui: GUI,
-  loop: proc () {.raises: [
-    WebViewError
-  ].}
+  poll: CarriedCallback
 ) {.forceCheck: [].} =
-  try:
-    GUIBindings.addTo(gui, loop)
-  except WebViewError as e:
-    panic("GUIBindings.addTo threw a WebViewError just by passing it loop, despite having a blank raises pragma: " & e.msg)
-  PersonalBindings.addTo(gui)
-  NetworkBindings.addTo(gui)
+  GUIBindings.addTo(gui, poll)

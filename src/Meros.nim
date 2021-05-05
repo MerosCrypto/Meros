@@ -65,7 +65,7 @@ proc main() {.thread.} =
 
     #Shutdown the GUI.
     try:
-      fromMain.send("shutdown")
+      fromMain.send("quit")
     except DeadThreadError as e:
       echo "Couldn't shutdown the GUI due to a DeadThreadError: " & e.msg
     except Exception as e:

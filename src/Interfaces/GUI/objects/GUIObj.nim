@@ -6,14 +6,27 @@ export mc_webview
 import ../../../lib/Errors
 
 #Constants of the HTML.
-const
-  SEND*: string = staticRead("../static/Send.html")
-  DATA*: string = staticRead("../static/Data.html")
+const DATA*: string = staticRead("../static/Data.html")
 
-type GUI* = ref object
-  toRPC: ptr Channel[JSONNode]
-  toGUI: ptr Channel[JSONNode]
-  webview*: WebView
+type
+  GUIObj* = object
+    toRPC: ptr Channel[JSONNode]
+    toGUI: ptr Channel[JSONNode]
+    webview*: WebView
+
+  GUI* = ref GUIObj
+
+  Carry* = object
+    fromMain*: ptr Channel[string]
+    gui*: ptr GUIObj
+
+  CarriedCallback* = object
+    fn*: proc (
+      id: cstring,
+      jsonArgs: cstring,
+      carriedArgs: pointer
+    ) {.cdecl, raises: [].}
+    carry*: Carry
 
 func newGUIObj*(
   toRPC: ptr Channel[JSONNode],
@@ -28,22 +41,16 @@ func newGUIObj*(
 
 #RPC helper.
 proc call*(
-  gui: GUI,
+  gui: GUIObj,
   module: string,
   methodStr: string,
-  argsArg: varargs[JSONNode, `%*`]
-): JSONNode {.forceCheck: [
-  RPCError
-].} =
-  #Extract the args.
-  var args: JSONNode = newJArray()
-  for arg in argsArg:
-    args.add(arg)
-
+  args: JSONNode = %* {}
+): JSONNode {.cdecl, forceCheck: [].} =
   #Send the call.
   try:
     gui.toRPC[].send(%* {
       "jsonrpc": "2.0",
+      "id": 0,
       "method": module & "_" & methodStr,
       "params": args
     })
@@ -64,16 +71,3 @@ proc call*(
     panic("Couldn't receive data from the RPC due to an ValueError: " & e.msg)
   except Exception as e:
     panic("Couldn't receive data from the RPC due to an Exception: " & e.msg)
-
-  #If it has an error, throw it.
-  if result.hasKey("error"):
-    try:
-      raise newLoggedException(RPCError, result["error"]["message"].getStr() & " (" & $result["error"]["code"] & ")" & ".")
-    except KeyError as e:
-      panic("Couldn't get a JSON field despite confirming it exists: " & e.msg)
-
-  #Return the result.
-  try:
-    result = result["result"]
-  except KeyError as e:
-    panic("RPC didn't error yet didn't reply with a result either: " & e.msg)
