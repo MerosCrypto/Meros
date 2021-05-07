@@ -32,7 +32,7 @@ class WeierstrassCurve(
     #pylint: disable=invalid-name
     self.B: FieldElement = self.FieldType(B)
 
-    #This my be a misuse of isogeny, where we may want the underlying Curve to have these values.
+    #This may be a misuse of isogeny, where we may want the underlying Curve to have these values.
     #The following SSWU algorithms also always use the isogenous points which isn't correct.
     #That said, this code can be used with a curve which isn't complimented by mirroring the A/B values.
     #So theoretically incorrect, yet the code works, especially since we only need this for BLS12-381 G1 which has an isogenous compliment.
