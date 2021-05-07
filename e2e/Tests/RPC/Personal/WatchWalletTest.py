@@ -8,7 +8,6 @@ import json
 
 from bech32 import convertbits, bech32_encode
 
-import e2e.Libs.Ristretto.ed as ed
 import e2e.Libs.Ristretto.ed25519 as ed25519
 from e2e.Libs.BLS import PrivateKey
 
@@ -74,7 +73,7 @@ def checkTemplate(
     if key not in keys:
       keys.append(key)
 
-  if template["publicKey"] != ed.aggregate(keys).hex().upper():
+  if template["publicKey"] != ed25519.aggregate([ed25519.Ed25519Point(key) for key in keys]).serialize().hex().upper():
     if len(keys) == 1:
       raise TestError("Template public key isn't correct when only a single key is present.")
     raise TestError("Public key aggregation isn't correct.")
