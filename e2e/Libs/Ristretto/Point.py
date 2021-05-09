@@ -1,7 +1,5 @@
 from typing import List, Union
 
-#pylint: disable=no-name-in-module,c-extension-no-member
-import gmpy2
 from gmpy2 import mpz
 
 from e2e.Libs.Ristretto.FieldElement import FieldElement, d
@@ -52,11 +50,12 @@ class Point:
       res = res + self
     return res
 
+  #TODO: remove this.
   def serialize(
     self
   ) -> bytes:
-    res: bytearray = bytearray(gmpy2.to_binary(self.underlying[1].underlying)[2:].ljust(32, b"\0"))
-    res[-1] = (((res[-1] << 1) & 255) >> 1) | ((int(self.underlying[0].underlying) & 1) << 7)
-    return bytes(res)
+    #res: bytearray = bytearray(gmpy2.to_binary(self.underlying[1].underlying)[2:].ljust(32, b"\0"))
+    #res[-1] = (((res[-1] << 1) & 255) >> 1) | ((int(self.underlying[0].underlying) & 1) << 7)
+    return bytes(32)
 
 BASEPOINT: Point = Point(B)

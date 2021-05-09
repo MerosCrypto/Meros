@@ -1,14 +1,12 @@
 from typing import List, Union
 
-#pylint: disable=no-name-in-module,c-extension-no-member
-import gmpy2
 from gmpy2 import mpz
 
 from e2e.Libs.Ristretto.Point import Point, BASEPOINT
 
 l: mpz = mpz(2**252 + 27742317777372353535851937790883648493)
 
-class Scalar():
+class Scalar:
   underlying: mpz
 
   def __init__(
@@ -18,7 +16,7 @@ class Scalar():
     if isinstance(scalar, bytearray):
       scalar = bytes(scalar)
     if isinstance(scalar, bytes):
-      self.underlying = gmpy2.from_binary(b"\1\1" + scalar)
+      self.underlying = mpz(int.from_bytes(scalar, "little"))
     elif isinstance(scalar, int):
       self.underlying = mpz(scalar)
     else:
@@ -45,6 +43,6 @@ class Scalar():
   def serialize(
     self
   ) -> bytes:
-    return gmpy2.to_binary(self.underlying)[2:].ljust(32, b"\0")
+    return int(self.underlying).to_bytes(32, "little")
 
 MODULUS: Scalar = Scalar(l)

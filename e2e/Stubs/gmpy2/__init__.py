@@ -78,13 +78,3 @@ def powmod(
   mod: mpz
 ) -> mpz:
   ...
-
-def to_binary(
-  x: mpz
-) -> bytes:
-  ...
-
-def from_binary(
-  x: bytes
-) -> mpz:
-  ...

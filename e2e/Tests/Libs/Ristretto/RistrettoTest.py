@@ -3,7 +3,7 @@ from typing import List, Tuple
 from pytest import raises
 
 from e2e.Libs.Ristretto.ed25519 import BASEPOINT
-from e2e.Libs.Ristretto.Ristretto import hashToCurve, RistrettoScalar, RistrettoPoint
+from e2e.Libs.Ristretto.Ristretto import RistrettoScalar, RistrettoPoint
 
 from e2e.Tests.Errors import TestError
 
@@ -93,21 +93,16 @@ def RistrettoTest() -> None:
   basepoint: RistrettoPoint = RistrettoPoint(BASEPOINT)
   for b in range(len(multiples)):
     if multiples[b] != (basepoint * RistrettoScalar(b)).serialize().hex():
-      print(multiples[b])
       raise TestError("Basepoint multiple was incorrect.")
-    """
-    if multiples[b] != RistrettoPoint(multiples[b]).serialize():
+    if multiples[b] != RistrettoPoint(bytes.fromhex(multiples[b])).serialize().hex():
       raise TestError("Couldn't encode and decode.")
-    """
 
-"""
   for point in badEncodings:
     with raises(Exception):
       RistrettoPoint(bytes.fromhex(point))
-"""
 
 """
   for hTP in hashToPoints:
-    if not hashToCurve(hTP[0].encode("utf-8")).serialize().hex() == hTP[1]:
+    if htp[1] != Ristretto.hashToCurve(hTP[0].encode("utf-8")).serialize().hex():
       raise TestError("Hash to point was incorrect.")
 """

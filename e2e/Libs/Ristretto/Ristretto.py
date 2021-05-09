@@ -1,10 +1,8 @@
 from typing import List, Tuple, Union
 
-#pylint: disable=no-name-in-module,c-extension-no-member
-import gmpy2
 from gmpy2 import mpz
 
-from e2e.Libs.Ristretto.FieldElement import FieldElement, q
+from e2e.Libs.Ristretto.FieldElement import FieldElement, q, d
 from e2e.Libs.Ristretto.Scalar import Scalar
 from e2e.Libs.Ristretto.Point import Point
 
@@ -67,7 +65,7 @@ class RistrettoPoint:
     res: FieldElement = (Z - Y) * D
     if res.isNegative():
       res = res.negate()
-    return gmpy2.to_binary(res.underlying)[2:].ljust(32, b"\0")
+    return int(res.underlying).to_bytes(32, "little")
 
   def __init__(
     self,
@@ -75,6 +73,26 @@ class RistrettoPoint:
   ) -> None:
     if isinstance(point, bytes):
       #Decode.
+      s: FieldElement = FieldElement(int.from_bytes(point, "little"))
+      if s.isNegative():
+        raise Exception("Negative field element.")
+      u1: FieldElement = FieldElement(1) + (s * s).negate()
+      u2: FieldElement = FieldElement(1) - (s * s).negate()
+      v: FieldElement = (d * (u1 * u1)).negate() - (u2 * u2)
+      root: bool
+      I: FieldElement
+      (root, I) = invSqrRoot(FieldElement(1), v * u2 * u2)
+      if not root:
+        raise Exception("Point doesn't have a root.")
+      Dx: FieldElement = I * u2
+      Dy: FieldElement = I * Dx * v
+      x: FieldElement = FieldElement(2) * s * Dx
+      if x.isNegative():
+        x = x.negate()
+      y: FieldElement = u1 * Dy
+      if (y == FieldElement(0)) or (x * y).isNegative():
+        raise Exception("y is 0 or negative product.")
+      self.underlying = Point([x, y])
       if self.serialize() != point:
         raise Exception("Non-canonical or invalid encoding used.")
     else:
