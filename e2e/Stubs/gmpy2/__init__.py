@@ -72,6 +72,13 @@ class mpz:
   ) -> 'mpz':
     ...
 
+def powmod(
+  b: mpz,
+  e: mpz,
+  mod: mpz
+) -> mpz:
+  ...
+
 def to_binary(
   x: mpz
 ) -> bytes:
