@@ -70,6 +70,12 @@ class FieldElement:
   ) -> 'FieldElement':
     return FieldElement(gmpy2.powmod(self.underlying, other, q))
 
+  def __eq__(
+    self,
+    other: 'FieldElement'
+  ) -> 'bool':
+    return self.underlying == other.underlying
+
   def inv(
     self
   ) -> 'FieldElement':

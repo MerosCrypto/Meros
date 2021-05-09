@@ -1,4 +1,4 @@
-#Wrapper around the reference implementation of ed25519 with an API matching https://pypi.org/project/ed25519/.
+#Wrapper around a heavily modified reference implementation of ed25519 with an API matching https://pypi.org/project/ed25519/.
 #The file is named ed25519 for the same reason.
 #pylint: disable=invalid-name
 
