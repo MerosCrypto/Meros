@@ -1,4 +1,5 @@
 from typing import List, Tuple, Union
+import hashlib
 
 from gmpy2 import mpz
 
@@ -6,11 +7,12 @@ from e2e.Libs.Ristretto.FieldElement import FieldElement, q, d
 from e2e.Libs.Ristretto.Scalar import Scalar
 from e2e.Libs.Ristretto.Point import Point
 
-#TODO: How was this calculated?
+#These should be removed for their actual calculations.
 SQRT_M1: FieldElement = FieldElement(19681161376707505956807079304988542015446066515923890162744021073123829784752)
 INVSQRT_A_MINUS_D: FieldElement = FieldElement(54469307008909316920995813868745141605393597292927456921205312896311721017578)
+SQRT_AD_MINUS_ONE: FieldElement = FieldElement(25063068953384623474111414158702152701244531502492656460079210482610430750235)
 
-def invSqrRoot(
+def sqrRootRatio(
   u: FieldElement,
   v: FieldElement
 ) -> Tuple[bool, FieldElement]:
@@ -45,7 +47,7 @@ class RistrettoPoint:
 
     u1: FieldElement = (Z + Y) * (Z - Y)
     u2: FieldElement = T
-    root: Tuple[bool, FieldElement] = invSqrRoot(FieldElement(1), u1 * u2 * u2)
+    root: Tuple[bool, FieldElement] = sqrRootRatio(FieldElement(1), u1 * u2 * u2)
     I: FieldElement = root[1]
 
     D1: FieldElement = u1 * I
@@ -81,7 +83,7 @@ class RistrettoPoint:
       v: FieldElement = (d * (u1 * u1)).negate() - (u2 * u2)
       root: bool
       I: FieldElement
-      (root, I) = invSqrRoot(FieldElement(1), v * u2 * u2)
+      (root, I) = sqrRootRatio(FieldElement(1), v * u2 * u2)
       if not root:
         raise Exception("Point doesn't have a root.")
       Dx: FieldElement = I * u2
@@ -119,6 +121,38 @@ class RistrettoPoint:
     )
 
 def hashToCurve(
-  message: bytes
+  msg: bytes
 ) -> RistrettoPoint:
-  raise Exception("Not implemented.")
+  ONE: FieldElement = FieldElement(1)
+
+  hash: bytes = hashlib.sha512(msg).digest()
+  res: List[Point] = []
+  for i in range(2):
+    r0: FieldElement = FieldElement(int.from_bytes(hash[i * 32 : (i + 1) * 32], "little") & ((2 ** 255) - 1))
+    r: FieldElement = SQRT_M1 * r0 * r0
+    Ns: FieldElement = (r + ONE) * (ONE - (d * d))
+    c: FieldElement = FieldElement(0) - ONE
+    D: FieldElement = (c - (d * r)) * (r + d)
+
+    isSquare: bool
+    s: FieldElement
+    (isSquare, s) = sqrRootRatio(Ns, D)
+    sr0: FieldElement = s * r0
+    if not sr0.isNegative():
+      sr0 = sr0.negate()
+    if not isSquare:
+      s = sr0
+      c = r
+
+    Nt: FieldElement = (c * (r - ONE) * ((d - ONE) * (d - ONE))) - D
+    W0: FieldElement = FieldElement(2) * s * D
+    W1: FieldElement = Nt * SQRT_AD_MINUS_ONE
+    W2: FieldElement = ONE - (s * s)
+    W3: FieldElement = ONE + (s * s)
+    X: FieldElement = W0 * W3
+    Y: FieldElement = W2 * W1
+    Z: FieldElement = W1 * W3
+
+    res.append(Point([X * Z.inv(), Y * Z.inv()]))
+
+  return RistrettoPoint(res[0] + res[1])

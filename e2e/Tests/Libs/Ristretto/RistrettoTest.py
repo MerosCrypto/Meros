@@ -3,7 +3,7 @@ from typing import List, Tuple
 from pytest import raises
 
 from e2e.Libs.Ristretto.ed25519 import BASEPOINT
-from e2e.Libs.Ristretto.Ristretto import RistrettoScalar, RistrettoPoint
+from e2e.Libs.Ristretto.Ristretto import RistrettoScalar, RistrettoPoint, hashToCurve
 
 from e2e.Tests.Errors import TestError
 
@@ -101,8 +101,7 @@ def RistrettoTest() -> None:
     with raises(Exception):
       RistrettoPoint(bytes.fromhex(point))
 
-"""
+  #Test hash to curve. It's not used anywhere in Meros, yet it ensures accuracy of our Ristretto implementation.
   for hTP in hashToPoints:
-    if htp[1] != Ristretto.hashToCurve(hTP[0].encode("utf-8")).serialize().hex():
+    if hTP[1] != hashToCurve(hTP[0].encode("utf-8")).serialize().hex():
       raise TestError("Hash to point was incorrect.")
-"""
