@@ -9,7 +9,7 @@ import json
 
 from pytest import raises
 
-import e2e.Libs.Ristretto.ed25519 as ed
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 from e2e.Libs.RandomX import RandomX
 
@@ -30,7 +30,7 @@ def createSend(
   last: Union[Claim, Send],
   toAddress: str
 ) -> Send:
-  funded: ed.SigningKey = ed.SigningKey(b'\0' * 32)
+  funded: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
   if isinstance(last, Claim):
     send: Send = Send(
       [(last.hash, 0)],
@@ -112,7 +112,7 @@ def GetAddressTest(
 
     #Spending TX.
     send: Send = Send([(hashes[-1], 0)], [(bytes(32), 1)])
-    send.signature = ed.SigningKey(getPrivateKey(mnemonic, password, 1)).sign(b"MEROS" + send.hash)
+    send.signature = Ristretto.SigningKey(getPrivateKey(mnemonic, password, 1)).sign(b"MEROS" + send.hash)
     send.beat(SpamFilter(3))
     if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
       raise TestError("Meros didn't broadcast back the spending Send.")

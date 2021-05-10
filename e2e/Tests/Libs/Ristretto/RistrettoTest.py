@@ -2,8 +2,7 @@ from typing import List, Tuple
 
 from pytest import raises
 
-from e2e.Libs.Ristretto.ed25519 import BASEPOINT
-from e2e.Libs.Ristretto.Ristretto import RistrettoScalar, RistrettoPoint, hashToCurve
+from e2e.Libs.Ristretto.Ristretto import BASEPOINT, RistrettoScalar, RistrettoPoint, hashToCurve
 
 from e2e.Tests.Errors import TestError
 

@@ -13,7 +13,7 @@ import json
 
 from pytest import raises
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Transactions
@@ -34,7 +34,7 @@ def createSend(
   last: Union[Claim, Send],
   toAddress: str
 ) -> Send:
-  funded: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+  funded: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
   if isinstance(last, Claim):
     send: Send = Send(
       [(last.hash, 0)],

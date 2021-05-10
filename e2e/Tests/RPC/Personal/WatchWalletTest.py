@@ -8,7 +8,7 @@ import json
 
 from bech32 import convertbits, bech32_encode
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Transactions
@@ -28,7 +28,7 @@ def createSend(
   to: bytes
 ) -> bytes:
   send: Send = Send([(claim.hash, 0)], [(to, claim.amount)])
-  send.sign(ed25519.SigningKey(b'\0' * 32))
+  send.sign(Ristretto.SigningKey(b'\0' * 32))
   send.beat(SpamFilter(3))
   if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
     raise TestError("Meros didn't send back a Send.")
@@ -73,7 +73,7 @@ def checkTemplate(
     if key not in keys:
       keys.append(key)
 
-  if template["publicKey"] != ed25519.aggregate([ed25519.Ed25519Point(key) for key in keys]).serialize().hex().upper():
+  if template["publicKey"] != Ristretto.aggregate([Ristretto.RistrettoPoint(key) for key in keys]).serialize().hex().upper():
     if len(keys) == 1:
       raise TestError("Template public key isn't correct when only a single key is present.")
     raise TestError("Public key aggregation isn't correct.")
@@ -84,7 +84,7 @@ def WatchWalletTest(
 ) -> None:
   #Keys to send funds to later.
   keys: List[bytes] = [
-    ed25519.SigningKey(i.to_bytes(1, "little") * 32).get_verifying_key() for i in range(5)
+    Ristretto.SigningKey(i.to_bytes(1, "little") * 32).get_verifying_key() for i in range(5)
   ]
 
   #Backup the Mnemonic so we can independently derive this data and verify it.

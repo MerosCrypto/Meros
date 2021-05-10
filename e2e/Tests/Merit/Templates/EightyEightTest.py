@@ -4,7 +4,7 @@ from typing import Dict, List, Any
 from time import sleep
 import json
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey, Signature
 
 from e2e.Classes.Merit.Blockchain import BlockHeader
@@ -28,7 +28,7 @@ from e2e.Tests.Merit.Verify import verifyBlockchain
 def EightyEightTest(
   rpc: RPC
 ) -> None:
-  edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+  edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
   edPubKey: bytes = edPrivKey.get_verifying_key()
 
   blsPrivKey: PrivateKey = PrivateKey(0)

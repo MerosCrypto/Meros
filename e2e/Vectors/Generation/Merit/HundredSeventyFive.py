@@ -2,7 +2,7 @@ from typing import List
 from hashlib import blake2b
 import json
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Transaction, Claim, Send, \
@@ -16,7 +16,7 @@ from e2e.Classes.Merit.Merit import Merit
 
 from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock, PrototypeChain
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(blake2b(b"\0", digest_size=32).digest())
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(blake2b(b"\0", digest_size=32).digest())
 edPubKey: bytes = edPrivKey.get_verifying_key()
 
 spamFilter: SpamFilter = SpamFilter(3)

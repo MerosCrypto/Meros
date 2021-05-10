@@ -1,7 +1,7 @@
 from typing import List
 import json
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
@@ -14,7 +14,7 @@ from e2e.Tests.Errors import TestError
 def NodeThresholdTest(
   rpc: RPC
 ) -> None:
-  edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+  edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
 
   dataFilter: SpamFilter = SpamFilter(5)
 

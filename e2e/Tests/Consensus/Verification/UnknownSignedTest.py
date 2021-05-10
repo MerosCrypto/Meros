@@ -1,7 +1,7 @@
 from time import time, sleep
 import json
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Libs.BLS import PrivateKey
 
@@ -32,7 +32,7 @@ def VUnknownSignedTest(
 
   #Create a valid Data.
   #Uneccessary at this time, but good preparation for the future.
-  privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+  privKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
   data: Data = Data(bytes(32), privKey.get_verifying_key())
   data.sign(privKey)
   data.beat(SpamFilter(5))

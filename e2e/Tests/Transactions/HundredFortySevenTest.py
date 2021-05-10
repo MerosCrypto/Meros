@@ -5,7 +5,7 @@ import json
 
 from pytest import raises
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Classes.Merit.Merit import Merit
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
@@ -28,7 +28,7 @@ def HundredFortySevenTest(
   merit: Merit = Merit.fromJSON(vectors["blockchain"])
   transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
-  privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+  privKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
   pubKey: bytes = privKey.get_verifying_key()
 
   #Grab the Claim hash,

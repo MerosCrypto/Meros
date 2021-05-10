@@ -7,7 +7,7 @@ import hmac
 #pylint: disable=no-name-in-module
 from gmpy2 import mpz
 
-import e2e.Libs.Ristretto.ed25519 as ed
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 HARDENED_THRESHOLD: int = 1 << 31
 
@@ -35,7 +35,7 @@ def deriveKeyAndChainCode(
   k = kL + kR
 
   #Parent public key/chain code.
-  A: bytes = ed.Ed25519Scalar(kL).toPoint().serialize()
+  A: bytes = Ristretto.RistrettoScalar(kL).toPoint().serialize()
   c: bytes = hashlib.sha256(bytes([1]) + secret).digest()
 
   #Derive each child.
@@ -58,12 +58,12 @@ def deriveKeyAndChainCode(
     #While we could move to the proper form, it's unclear, and Meros is planning on moving to Ristretto anyways.
     #That will void all these concerns.
     kL = ((8 * int.from_bytes(zL, "little")) + int.from_bytes(kL, "little")).to_bytes(32, "little")
-    if ed.Ed25519Scalar(kL).underlying == mpz(0):
+    if Ristretto.RistrettoScalar(kL).underlying == mpz(0):
       raise Exception("Invalid child.")
     kR = ((int.from_bytes(zR, "little") + int.from_bytes(kR, "little")) % (1 << 256)).to_bytes(32, "little")
     k = kL + kR
 
-    A = ed.Ed25519Scalar(kL).toPoint().serialize()
+    A = Ristretto.RistrettoScalar(kL).toPoint().serialize()
 
   return (k, c)
 

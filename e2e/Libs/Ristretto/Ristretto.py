@@ -1,11 +1,15 @@
 from typing import List, Tuple, Union
 import hashlib
 
+#pylint: disable=no-name-in-module
 from gmpy2 import mpz
 
 from e2e.Libs.Ristretto.FieldElement import FieldElement, q, d
 from e2e.Libs.Ristretto.Scalar import Scalar
-from e2e.Libs.Ristretto.Point import Point
+from e2e.Libs.Ristretto.Point import Point, BASEPOINT
+
+#BASEPOINT is imported to be exported.
+_: Point = BASEPOINT
 
 #These should be removed for their actual calculations.
 SQRT_M1: FieldElement = FieldElement(19681161376707505956807079304988542015446066515923890162744021073123829784752)
@@ -29,32 +33,36 @@ def sqrRootRatio(
     r = r.negate()
   return (correctSign or flippedSign, r)
 
-class RistrettoScalar(
-  Scalar
-):
-  ...
-
 class RistrettoPoint:
   underlying: Point
 
   def serialize(
     self
   ) -> bytes:
+    #pylint: disable=invalid-name
     X: FieldElement = self.underlying.underlying[0]
+    #pylint: disable=invalid-name
     Y: FieldElement = self.underlying.underlying[1]
+    #pylint: disable=invalid-name
     Z: FieldElement = FieldElement(1)
+    #pylint: disable=invalid-name
     T: FieldElement = X * Y
 
     u1: FieldElement = (Z + Y) * (Z - Y)
     u2: FieldElement = T
     root: Tuple[bool, FieldElement] = sqrRootRatio(FieldElement(1), u1 * u2 * u2)
+    #pylint: disable=invalid-name
     I: FieldElement = root[1]
 
+    #pylint: disable=invalid-name
     D1: FieldElement = u1 * I
+    #pylint: disable=invalid-name
     D2: FieldElement = u2 * I
 
+    #pylint: disable=invalid-name
     Zinv: FieldElement = D1 * D2 * T
 
+    #pylint: disable=invalid-name
     D: FieldElement
     if (T * Zinv).isNegative():
       (X, Y) = (Y * SQRT_M1, X * SQRT_M1)
@@ -82,11 +90,14 @@ class RistrettoPoint:
       u2: FieldElement = FieldElement(1) - (s * s).negate()
       v: FieldElement = (d * (u1 * u1)).negate() - (u2 * u2)
       root: bool
+      #pylint: disable=invalid-name
       I: FieldElement
       (root, I) = sqrRootRatio(FieldElement(1), v * u2 * u2)
       if not root:
         raise Exception("Point doesn't have a root.")
+      #pylint: disable=invalid-name
       Dx: FieldElement = I * u2
+      #pylint: disable=invalid-name
       Dy: FieldElement = I * Dx * v
       x: FieldElement = FieldElement(2) * s * Dx
       if x.isNegative():
@@ -102,7 +113,7 @@ class RistrettoPoint:
 
   def __mul__(
     self,
-    scalar: RistrettoScalar
+    scalar: 'RistrettoScalar'
   ) -> 'RistrettoPoint':
     return RistrettoPoint(self.underlying * scalar.underlying)
 
@@ -120,16 +131,21 @@ class RistrettoPoint:
       )
     )
 
+#This should be moved into our Hash to Curve folder, as it's literally a hash to curve algorithm.
+#Also, this isn't used in Meros. It just makes our implementation complete and enables further testing of this code.
+#pylint: disable=too-many-locals
 def hashToCurve(
   msg: bytes
 ) -> RistrettoPoint:
+  #pylint: disable=invalid-name
   ONE: FieldElement = FieldElement(1)
 
-  hash: bytes = hashlib.sha512(msg).digest()
+  hashed: bytes = hashlib.sha512(msg).digest()
   res: List[Point] = []
   for i in range(2):
-    r0: FieldElement = FieldElement(int.from_bytes(hash[i * 32 : (i + 1) * 32], "little") & ((2 ** 255) - 1))
+    r0: FieldElement = FieldElement(int.from_bytes(hashed[i * 32 : (i + 1) * 32], "little") & ((2 ** 255) - 1))
     r: FieldElement = SQRT_M1 * r0 * r0
+    #pylint: disable=invalid-name
     Ns: FieldElement = (r + ONE) * (ONE - (d * d))
     c: FieldElement = FieldElement(0) - ONE
     D: FieldElement = (c - (d * r)) * (r + d)
@@ -144,15 +160,89 @@ def hashToCurve(
       s = sr0
       c = r
 
+    #pylint: disable=invalid-name
     Nt: FieldElement = (c * (r - ONE) * ((d - ONE) * (d - ONE))) - D
+    #pylint: disable=invalid-name
     W0: FieldElement = FieldElement(2) * s * D
+    #pylint: disable=invalid-name
     W1: FieldElement = Nt * SQRT_AD_MINUS_ONE
+    #pylint: disable=invalid-name
     W2: FieldElement = ONE - (s * s)
+    #pylint: disable=invalid-name
     W3: FieldElement = ONE + (s * s)
+    #pylint: disable=invalid-name
     X: FieldElement = W0 * W3
+    #pylint: disable=invalid-name
     Y: FieldElement = W2 * W1
+    #pylint: disable=invalid-name
     Z: FieldElement = W1 * W3
 
     res.append(Point([X * Z.inv(), Y * Z.inv()]))
 
   return RistrettoPoint(res[0] + res[1])
+
+class RistrettoScalar(
+  Scalar
+):
+  def toPoint(
+    self
+  ) -> RistrettoPoint:
+    return RistrettoPoint(Scalar.toPoint(self))
+
+#pylint: disable=invalid-name
+def Bint(
+  m: bytes
+) -> Scalar:
+  return Scalar(hashlib.blake2b(m).digest())
+
+#Aggregate Ristretto public keys for usage with MuSig.
+def aggregate(
+  keys: List[RistrettoPoint]
+) -> RistrettoPoint:
+  #Single key/no different keys.
+  if len({key.serialize() for key in keys}) == 1:
+    return keys[0]
+
+  #pylint: disable=invalid-name
+  L: bytes = b""
+  for key in keys:
+    L = L + key.serialize()
+  L = hashlib.blake2b(L).digest()
+
+  res: Point = keys[0].underlying * Bint(b"agg" + L + keys[0].serialize()).underlying
+  for k in range(1, len(keys)):
+    res = res + (keys[k].underlying * Bint(b"agg" + L + keys[k].serialize()).underlying)
+  return RistrettoPoint(res)
+
+#Called SigningKey for legacy reasons.
+#Naming preserved due to conflict with BLS's PrivateKey.
+class SigningKey:
+  def __init__(
+    self,
+    seed: bytes
+  ) -> None:
+    esk: bytes = seed
+    if len(seed) != 64:
+      eskA: bytearray = bytearray(hashlib.sha512(seed).digest())
+      eskA[0] = eskA[0] & 248
+      eskA[31] = eskA[31] & 127
+      eskA[31] = eskA[31] | 64
+      esk = bytes(eskA)
+    self.scalar: Scalar = Scalar(esk[:32])
+    self.nonce: bytes = esk[32:]
+    self.publicKey: bytes = RistrettoPoint(self.scalar.toPoint()).serialize()
+
+  def sign(
+    self,
+    msg: bytes
+  ) -> bytes:
+    r: Scalar = Bint(self.nonce + msg)
+    #pylint: disable=invalid-name
+    R: bytes = RistrettoPoint(r.toPoint()).serialize()
+    k: Scalar = Bint(R + self.publicKey + msg)
+    return R + (r + (k * self.scalar)).serialize()
+
+  def get_verifying_key(
+    self
+  ) -> bytes:
+    return self.publicKey

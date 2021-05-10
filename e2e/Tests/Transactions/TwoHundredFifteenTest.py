@@ -1,7 +1,7 @@
 from typing import Dict, List, Any
 import json
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Libs.BLS import PrivateKey
 
@@ -26,7 +26,7 @@ def TwoHundredFifteenTest(
   sendFilter: SpamFilter = SpamFilter(3)
   dataFilter: SpamFilter = SpamFilter(5)
 
-  privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+  privKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
   pubKey: bytes = privKey.get_verifying_key()
 
   def syncUnknown() -> None:

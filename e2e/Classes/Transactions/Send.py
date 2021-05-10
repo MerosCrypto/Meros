@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple, Any
 from hashlib import blake2b
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Classes.Transactions.Transaction import Transaction
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
@@ -62,7 +62,7 @@ class Send(
 
   def sign(
     self,
-    privKey: ed25519.SigningKey
+    privKey: Ristretto.SigningKey
   ) -> None:
     self.signature = privKey.sign(b"MEROS" + self.hash)
 

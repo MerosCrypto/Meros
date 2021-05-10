@@ -1,7 +1,7 @@
 from typing import List
 import json
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
 from e2e.Classes.Transactions.Data import Data
@@ -15,7 +15,7 @@ from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 
 proto: PrototypeChain = PrototypeChain(1, False)
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
 edPubKey: bytes = edPrivKey.get_verifying_key()
 
 blsPrivKey: PrivateKey = PrivateKey(0)

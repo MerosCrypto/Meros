@@ -1,6 +1,6 @@
 import json
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Data, Transactions
@@ -11,7 +11,7 @@ from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
 from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
 edPubKey: bytes = edPrivKey.get_verifying_key()
 
 transactions: Transactions = Transactions()

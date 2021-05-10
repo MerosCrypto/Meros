@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Union
 
 #pylint: disable=no-name-in-module,c-extension-no-member
 import gmpy2
@@ -13,6 +13,8 @@ EIGHT: mpz = mpz(8)
 
 q: mpz = mpz(2**255 - 19)
 
+#This should inherit from hashToCurve's FieldElement as we already have a fully defined type.
+#Will also enable moving this into that library.
 class FieldElement:
   underlying: mpz
 
@@ -81,10 +83,12 @@ class FieldElement:
   ) -> 'FieldElement':
     return self ** (q - TWO)
 
+  #Used to generate the Ed25519 basepoint.
   def recoverX(
     self
   ) -> 'FieldElement':
-    d: FieldElement = FieldElement(-121665) * FieldElement(121666).inv()
+    #Uses d which is defined below.
+    #pylint: disable=invalid-name
     I: FieldElement = FieldElement(TWO) ** ((q - ONE) // FOUR)
 
     y2: FieldElement = self * self

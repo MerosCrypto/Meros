@@ -1,7 +1,7 @@
 from typing import Dict, Any
 import json
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Data, Transactions
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
@@ -18,10 +18,10 @@ from e2e.Tests.Errors import TestError
 def PublishTransactionTest(
   rpc: RPC
 ) -> None:
-  privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+  privKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
   pubKey: bytes = privKey.get_verifying_key()
 
-  sentToKey: ed25519.SigningKey = ed25519.SigningKey(b'\1' * 32)
+  sentToKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\1' * 32)
 
   sendFilter: SpamFilter = SpamFilter(3)
   dataFilter: SpamFilter = SpamFilter(5)

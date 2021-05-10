@@ -1,6 +1,6 @@
 import json
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Send import Send
@@ -18,7 +18,7 @@ merit: Merit = PrototypeChain.withMint()
 transactions: Transactions = Transactions()
 sendFilter: SpamFilter = SpamFilter(3)
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
 edPubKey: bytes = edPrivKey.get_verifying_key()
 
 claim: Claim = Claim([(merit.mints[-1], 0)], edPubKey)

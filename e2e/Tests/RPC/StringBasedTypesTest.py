@@ -1,7 +1,7 @@
 #Tests handling of erroneous values for hex/Hash/BLSPublicKey/EdPublicKey.
 #Address is tested in the AddressTest.
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
@@ -14,7 +14,7 @@ from e2e.Tests.Errors import TestError
 def StringBasedTypesTest(
   rpc: RPC
 ) -> None:
-  edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+  edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
   edPubKey: bytes = edPrivKey.get_verifying_key()
   blsPubKey: PublicKey = PrivateKey(0).toPublicKey()
 

@@ -1,7 +1,7 @@
 #Generate a Blocks with multiple VerificationPackets for the same Transaction - these should be invalid.
 import json
 
-import e2e.Libs.Ristretto.ed25519 as ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
@@ -13,7 +13,7 @@ from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 proto: PrototypeChain = PrototypeChain(1)
 proto.add(1)
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
 edPubKey: bytes = edPrivKey.get_verifying_key()
 
 #Create a Data.
