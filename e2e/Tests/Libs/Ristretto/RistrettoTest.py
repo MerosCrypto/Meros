@@ -92,11 +92,20 @@ hashToPoints: List[Tuple[str, str]] = [
 def RistrettoTest() -> None:
   basepoint: RistrettoPoint = RistrettoPoint(BASEPOINT)
   for b in range(len(multiples)):
+    #Encoding.
     if multiples[b] != (basepoint * RistrettoScalar(b)).serialize().hex():
       raise TestError("Basepoint multiple was incorrect.")
+    #Decoding.
     if multiples[b] != RistrettoPoint(bytes.fromhex(multiples[b])).serialize().hex():
       raise TestError("Couldn't encode and decode.")
 
+  #Test the equality operator.
+  if RistrettoPoint(bytes.fromhex(multiples[0])) != RistrettoPoint(bytes.fromhex(multiples[0])):
+    raise Exception("Equal points were considered inequal.")
+  if RistrettoPoint(bytes.fromhex(multiples[0])) == RistrettoPoint(bytes.fromhex(multiples[1])):
+    raise Exception("Inequal points were considered equal.")
+
+  #Test decoding invalid points.
   for point in badEncodings:
     with raises(Exception):
       RistrettoPoint(bytes.fromhex(point))
