@@ -50,7 +50,7 @@ template OUTPUT(
   input.serialize()
 
 template USED_KEY(
-  key: EdPublicKey
+  key: RistrettoPublicKey
 ): string =
   key.serialize() & "uk"
 
@@ -60,7 +60,7 @@ template DATA_SENDER(
   hash.serialize() & "se"
 
 template SPENDABLE(
-  key: EdPublicKey
+  key: RistrettoPublicKey
 ): string =
   key.serialize() & "$p"
 
@@ -182,7 +182,7 @@ proc unmention*(
 proc saveDataSender*(
   db: DB,
   data: Data,
-  sender: EdPublicKey
+  sender: RistrettoPublicKey
 ) {.forceCheck: [].} =
   db.put(DATA_SENDER(data.hash), sender.serialize())
 
@@ -236,7 +236,7 @@ proc load*(
 
 proc loadIfKeyWasUsed*(
   db: DB,
-  key: EdPublicKey
+  key: RistrettoPublicKey
 ): bool {.forceCheck: [].} =
   try:
     discard db.get(USED_KEY(key))
@@ -270,11 +270,11 @@ proc loadSpenders*(
 proc loadDataSender*(
   db: DB,
   hash: Hash[256]
-): EdPublicKey {.forceCheck: [
+): RistrettoPublicKey {.forceCheck: [
   DBReadError
 ].} =
   try:
-    result = newEdPublicKey(db.get(DATA_SENDER(hash)))
+    result = newRistrettoPublicKey(db.get(DATA_SENDER(hash)))
   except Exception as e:
     raise newLoggedException(DBReadError, e.msg)
 
@@ -302,7 +302,7 @@ proc loadSendOutput*(
 
 proc loadSpendable*(
   db: DB,
-  key: EdPublicKey
+  key: RistrettoPublicKey
 ): seq[FundedInput] {.forceCheck: [
   DBReadError
 ].} =
@@ -328,7 +328,7 @@ proc loadSpendable*(
 
 proc addToSpendable(
   db: DB,
-  key: EdPublicKey,
+  key: RistrettoPublicKey,
   hash: Hash[256],
   nonce: int
 ) {.forceCheck: [].} =
@@ -339,7 +339,7 @@ proc addToSpendable(
 
 proc removeFromSpendable(
   db: DB,
-  key: EdPublicKey,
+  key: RistrettoPublicKey,
   hash: Hash[256],
   nonce: int
 ) {.forceCheck: [].} =

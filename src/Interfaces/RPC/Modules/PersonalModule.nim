@@ -31,7 +31,7 @@ proc module*(
           raise newJSONRPCError(ValueError, "Invalid mnemonic or password")
 
       proc setAccount(
-        key: EdPublicKey,
+        key: RistrettoPublicKey,
         chainCode: Hash[256]
       ) {.requireAuth, forceCheck: [].} =
         functions.personal.setAccount(key, chainCode, true)
@@ -64,7 +64,7 @@ proc module*(
           raise newJSONRPCError(IndexError, "Wallet doesn't have a Merit Holder nickname assigned")
 
       proc getAccount(): JSONNode {.requireAuth, forceCheck: [].} =
-        let data: tuple[key: EdPublicKey, chainCode: Hash[256]] = functions.personal.getAccount()
+        let data: tuple[key: RistrettoPublicKey, chainCode: Hash[256]] = functions.personal.getAccount()
         result = %* {
           "key": $data.key,
           "chainCode": $data.chainCode
@@ -156,7 +156,7 @@ proc module*(
               let addy: Address = output["address"].getStr().getEncodedData()
               case addy.addyType:
                 of AddressType.PublicKey:
-                  outputs.add(newSendOutput(newEdPublicKey(cast[string](addy.data)), amount))
+                  outputs.add(newSendOutput(newRistrettoPublicKey(cast[string](addy.data)), amount))
             except ValueError:
               raise newJSONRPCError(ValueError, "Invalid address/amount")
           except KeyError as e:
@@ -172,7 +172,7 @@ proc module*(
               raise newJSONRPCError(ValueError, "Invalid address to send from")
             case addy.addyType:
               of AddressType.PublicKey:
-                let key: EdPublicKey = newEdPublicKey(cast[string](addy.data))
+                let key: RistrettoPublicKey = newRistrettoPublicKey(cast[string](addy.data))
                 for utxo in functions.transactions.getUTXOs(key):
                   try:
                     utxos.add(UsableInput(
@@ -189,7 +189,7 @@ proc module*(
         #Filter to a minimal UTXO set.
         #Considering it doesn't sort highest amount to lowest, this isn't truly minimal.
         var
-          keys: seq[EdPublicKey] = @[]
+          keys: seq[RistrettoPublicKey] = @[]
           u: int = 0
         while u < utxos.len:
           keys.add(utxos[u].key)
@@ -237,7 +237,7 @@ proc module*(
                 case addy.addyType:
                   of AddressType.PublicKey:
                     result["outputs"].add(%* {
-                      "key": $newEdPublicKey(cast[string](addy.data)),
+                      "key": $newRistrettoPublicKey(cast[string](addy.data)),
                       "amount": $change
                     })
               except ValueError:
@@ -281,7 +281,7 @@ proc module*(
             ))
           for output in txTemplate["outputs"]:
             #There's a note above about the use of parseBiggestUInt which applies here as well.
-            outputs.add(newSendOutput(newEdPublicKey(parseHexStr(output["key"].getStr())), parseBiggestUInt(output["amount"].getStr())))
+            outputs.add(newSendOutput(newRistrettoPublicKey(parseHexStr(output["key"].getStr())), parseBiggestUInt(output["amount"].getStr())))
         except KeyError, ValueError:
           panic("personal_send failed due to personal_getTransactionTemplate not returning a valid template.")
         send = newSend(inputs, outputs)

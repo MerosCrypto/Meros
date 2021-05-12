@@ -21,7 +21,7 @@ proc parseClaim*(
   ):
     raise newLoggedException(ValueError, "parseClaim handed the wrong amount of data.")
 
-  #Inputs Length | Inputs | Output Ed25519 Key | BLS Signature
+  #Inputs Length | Inputs | Output Ristretto Key | BLS Signature
   var claimSeq: seq[string] = claimStr.deserialize(
     BYTE_LEN,
     int(claimStr[0]) * (HASH_LEN + BYTE_LEN),
@@ -40,7 +40,7 @@ proc parseClaim*(
     )
 
   #Create the Claim.
-  result = newClaimObj(inputs, newEdPublicKey(claimSeq[2]))
+  result = newClaimObj(inputs, newRistrettoPublicKey(claimSeq[2]))
   result.hash = Blake256("\1" & claimStr[0 ..< claimStr.len - BLS_SIGNATURE_LEN])
 
   #Set the signature.

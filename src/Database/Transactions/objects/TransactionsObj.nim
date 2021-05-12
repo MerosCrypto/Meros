@@ -29,13 +29,13 @@ type Transactions* = object
 proc getSender*(
   transactions: var Transactions,
   data: Data
-): EdPublicKey {.forceCheck: [
+): RistrettoPublicKey {.forceCheck: [
   DataMissing
 ].} =
   if data.isFirstData:
     if data.data.len != 32:
       raise newLoggedException(DataMissing, "Initial data wasn't provided a public key.")
-    result = newEdPublicKey(data.data)
+    result = newRistrettoPublicKey(data.data)
   else:
     if data.inputs[0].hash == transactions.genesis:
       return transactions.dataWallet.publicKey
@@ -162,7 +162,7 @@ proc newTransactionsObj*(
 #Load a Public Key's UTXOs.
 proc getUTXOs*(
   transactions: Transactions,
-  key: EdPublicKey
+  key: RistrettoPublicKey
 ): seq[FundedInput] {.forceCheck: [].} =
   try:
     result = transactions.db.loadSpendable(key)
@@ -263,6 +263,6 @@ proc loadSpenders*(
 
 proc loadIfKeyWasUsed*(
   transactions: Transactions,
-  key: EdPublicKey
+  key: RistrettoPublicKey
 ): bool {.inline, forceCheck: [].} =
   transactions.db.loadIfKeyWasUsed(key)

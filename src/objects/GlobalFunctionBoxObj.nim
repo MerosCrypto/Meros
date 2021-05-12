@@ -39,7 +39,7 @@ type
     ].}
 
     getUTXOs*: proc (
-      key: EdPublicKey
+      key: RistrettoPublicKey
     ): seq[FundedInput] {.gcsafe, raises: [].}
 
     getSpenders*: proc (
@@ -286,10 +286,10 @@ type
       ValueError
     ].}
 
-    getAccount*: proc (): tuple[key: EdPublicKey, chainCode: Hash[256]] {.gcsafe, raises: [].}
+    getAccount*: proc (): tuple[key: RistrettoPublicKey, chainCode: Hash[256]] {.gcsafe, raises: [].}
 
     setAccount*: proc (
-      key: EdPublicKey,
+      key: RistrettoPublicKey,
       chainCode: Hash[256],
       clear: bool = false
     ) {.gcsafe, raises: [].}
@@ -307,10 +307,10 @@ type
       ValueError
     ].}
 
-    getChangeKey*: proc (): EdPublicKey {.gcsafe, raises: [].}
+    getChangeKey*: proc (): RistrettoPublicKey {.gcsafe, raises: [].}
 
     getKeyIndex*: proc (
-      key: EdPublicKey
+      key: RistrettoPublicKey
     ): KeyIndex {.gcsafe, raises: [
       IndexError
     ].}

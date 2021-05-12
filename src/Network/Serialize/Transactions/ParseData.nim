@@ -1,5 +1,4 @@
 import ../../../lib/[Errors, Hash]
-import ../../../Wallet/Wallet
 
 import ../../../Database/Transactions/objects/DataObj
 
@@ -46,6 +45,6 @@ proc parseData*(
     raise newSpam("Data didn't beat the difficulty.", hash, argon, factor * diff)
 
   result.hash = hash
-  result.signature = newEdSignature(dataSeq[3])
+  result.signature = cast[seq[byte]](dataSeq[3])
   result.proof = uint32(dataSeq[4].fromBinary())
   result.argon = argon

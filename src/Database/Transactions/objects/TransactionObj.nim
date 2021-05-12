@@ -18,9 +18,9 @@ type
   MintOutput* = ref object of Output
     key*: uint16
 
-  #SendOutput, which sends to an EdPublicKey. This is also used by Claim.
+  #SendOutput, which sends to an RistrettoPublicKey. This is also used by Claim.
   SendOutput* = ref object of Output
-    key*: EdPublicKey
+    key*: RistrettoPublicKey
 
   Transaction* = ref object of RootObj
     inputs*: seq[Input]
@@ -78,14 +78,14 @@ func newMintOutput*(
   )
 
 func newClaimOutput*(
-  key: EdPublicKey
+  key: RistrettoPublicKey
 ): SendOutput {.inline, forceCheck: [].} =
   SendOutput(
     key: key
   )
 
 func newSendOutput*(
-  key: EdPublicKey,
+  key: RistrettoPublicKey,
   amount: uint64
 ): SendOutput {.inline, forceCheck: [].} =
   SendOutput(
@@ -93,14 +93,10 @@ func newSendOutput*(
     amount: amount
   )
 
-func newSendOutput*(
+proc newSendOutput*(
   addy: Address,
   amount: uint64
 ): SendOutput {.forceCheck: [].} =
   case addy.addyType:
     of AddressType.PublicKey:
-      var key: EdPublicKey
-      for b in 0 ..< 32:
-        key.data[b] = cuchar(addy.data[b])
-
-      result = newSendOutput(key, amount)
+      result = newSendOutput(newRistrettoPublicKey(cast[string](addy.data)), amount)

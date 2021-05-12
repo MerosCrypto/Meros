@@ -147,7 +147,7 @@ proc mainTransactions(
       raise e
 
   functions.transactions.getUTXOs = proc (
-    key: EdPublicKey
+    key: RistrettoPublicKey
   ): seq[FundedInput] {.forceCheck: [].} =
     transactions[].getUTXOs(key)
 

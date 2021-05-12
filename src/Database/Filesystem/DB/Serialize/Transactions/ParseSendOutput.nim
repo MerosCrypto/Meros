@@ -15,4 +15,4 @@ proc parseSendOutput*(
   )
 
   #Create the SendOutput.
-  result = newSendOutput(newEdPublicKey(outputSeq[0]), uint64(outputSeq[1].fromBinary()))
+  result = newSendOutput(newRistrettoPublicKey(outputSeq[0]), uint64(outputSeq[1].fromBinary()))

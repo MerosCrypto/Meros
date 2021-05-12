@@ -187,11 +187,16 @@ def PublishTransactionTest(
 
     #Invalid Data (signature).
     invalidData: Data = Data(bytes(32), sentToKey.get_verifying_key())
+    invalidData.sign(sentToKey)
+    sig: bytes = invalidData.signature
+
     newData: bytearray = bytearray(invalidData.data)
     newData[-1] = newData[-1] ^ 1
-    invalidData.data = bytes(newData)
-    invalidData.sign(sentToKey)
+    #Reconstruct to rehash.
+    invalidData = Data(bytes(32), bytes(newData))
+    invalidData.signature = sig
     invalidData.beat(dataFilter)
+
     try:
       rpc.call(
         "transactions",

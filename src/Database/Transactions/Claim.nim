@@ -9,7 +9,7 @@ import ../../Network/Serialize/Transactions/SerializeClaim
 
 proc newClaim*(
   inputs: varargs[FundedInput],
-  output: EdPublicKey
+  output: RistrettoPublicKey
 ): Claim {.forceCheck: [
   ValueError
 ].} =

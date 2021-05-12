@@ -13,8 +13,8 @@ const DST {.strdefine.}: string = "MEROS-V00-CS01-with-BLS12381G1_XMD:SHA-256_SS
 #[
 Type aliases for mc_bls.
 mc_bls solely calls keys, keys.
-As Meros also uses Ed25519, there's a requirement to distinguish.
-Hence the BLS/Ed prefixed.
+As Meros also uses Ristretto, there's a requirement to distinguish.
+Hence the BLS/Ristretto prefixes.
 ]#
 type
   BLSPrivateKey* = PrivateKey

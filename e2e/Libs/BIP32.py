@@ -31,7 +31,7 @@ def deriveKeyAndChainCode(
   kLArr[0] = (kL[0] >> 3) << 3
   kLArr[31] = ((kL[31] << 1) & 255) >> 1
   kLArr[31] = kLArr[31] | (1 << 6)
-  kL = bytes(kLArr)
+  kL = Ristretto.RistrettoScalar(kLArr).serialize()
   k = kL + kR
 
   #Parent public key/chain code.
@@ -53,11 +53,8 @@ def deriveKeyAndChainCode(
     for _ in range(4):
       zL.append(0)
     zR: bytes = Z[32:]
-    #This should probably be mod l. That said, the paper isn't clear, and Meros defers to the existing impl.
-    #Said existing impl is probably wrong.
-    #While we could move to the proper form, it's unclear, and Meros is planning on moving to Ristretto anyways.
-    #That will void all these concerns.
-    kL = ((8 * int.from_bytes(zL, "little")) + int.from_bytes(kL, "little")).to_bytes(32, "little")
+    #This performs a mod l on kL which the BIP32-Ed25519 doesn't specify. That said, it's required to form a valid private key.
+    kL = Ristretto.RistrettoScalar(((8 * int.from_bytes(zL, "little")) + int.from_bytes(kL, "little")).to_bytes(32, "little")).serialize()
     if Ristretto.RistrettoScalar(kL).underlying == mpz(0):
       raise Exception("Invalid child.")
     kR = ((int.from_bytes(zR, "little") + int.from_bytes(kR, "little")) % (1 << 256)).to_bytes(32, "little")

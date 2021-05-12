@@ -40,5 +40,5 @@ method serialize*(
       output.amount.toBinary(MEROS_LEN)
 
   result &=
-    send.signature.serialize() &
+    cast[string](send.signature) &
     send.proof.toBinary(INT_LEN)

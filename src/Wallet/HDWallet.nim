@@ -1,49 +1,42 @@
 import stint
 
-#Directly import mc_ed25519 for more control over Elliptic curve operations.
-import mc_ed25519
+#Directly import mc_ristretto for more control over Elliptic curve operations.
+import mc_ristretto except sign
 
 import ../lib/[Errors, Util, Hash]
 
-import Ed25519, Address
-export Ed25519, Address
+import Ristretto, Address
+export Ristretto, Address
 
 import ../Network/Serialize/SerializeCommon
 
 const
   #BIP 44 Coin Type.
   COIN_TYPE {.intdefine.}: uint32 = 5132
-  #Ed25519's l value.
-  l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
   #Hardened derivation threshold.
   HARDENED_THRESHOLD: uint32 = 1 shl 31
 
 type
   HDWallet* = object
     chainCode*: Hash[256]
-    privateKey*: EdPrivateKey
-    publicKey*: EdPublicKey
+    privateKey*: RistrettoPrivateKey
+    publicKey*: RistrettoPublicKey
     address*: string
 
   HDPublic* = object
     #Key and matching chain code.
-    key*: EdPublicKey
+    key*: RistrettoPublicKey
     chainCode*: Hash[256]
     #Index this key was of its parent.
     index*: uint32
 
+let identity: RistrettoPublicKey = newScalar(newSeq[byte](32)).toPoint()
+
 func sign*(
   wallet: HDWallet,
   msg: string
-): EdSignature {.inline, forceCheck: [].} =
-  wallet.privateKey.sign(wallet.publicKey, msg)
-
-func verify*(
-  wallet: HDWallet,
-  msg: string,
-  sig: EdSignature
-): bool {.inline, forceCheck: [].} =
-  wallet.publicKey.verify(msg, sig)
+): seq[byte] {.inline, forceCheck: [].} =
+  wallet.privateKey.sign(msg)
 
 proc newHDWallet*(
   secret: string
@@ -53,31 +46,38 @@ proc newHDWallet*(
   if secret.len != 32:
     raise newLoggedException(ValueError, "Invalid length secret passed to newHDWallet.")
 
-  #Keys.
-  var
-    privateKey: EdPrivateKey
-    publicKey: EdPublicKey
-
   #Create the Private Key.
-  privateKey.data = cast[array[64, cuchar]](SHA2_512(secret).data)
-  if (byte(privateKey.data[31]) and 0b00100000) != 0:
+  var privateKeyBytes: seq[byte] = @(SHA2_512(secret).data)
+  if (byte(privateKeyBytes[31]) and 0b00100000) != 0:
     raise newLoggedException(ValueError, "Secret generated an invalid private key.")
-  privateKey.data[0]  = cuchar(byte(privateKey.data[0])  and (not byte(0b00000111)))
-  privateKey.data[31] = cuchar(byte(privateKey.data[31]) and (not byte(0b10000000)))
-  privateKey.data[31] = cuchar(byte(privateKey.data[31]) or       byte(0b01000000))
+  privateKeyBytes[0]  = byte(privateKeyBytes[0])  and (not byte(0b00000111))
+  privateKeyBytes[31] = byte(privateKeyBytes[31]) and (not byte(0b10000000))
+  privateKeyBytes[31] = byte(privateKeyBytes[31]) or       byte(0b01000000)
 
   #Create the Public Key.
-  publicKey = privateKey.toPublicKey()
+  var
+    #This performs a mod l on kL which the BIP32-Ed25519 doesn't specify. That said, it's required to form a valid private key.
+    privateKey: RistrettoPrivateKey = newRistrettoPrivateKey(privateKeyBytes)
+    publicKey: RistrettoPublicKey = privateKey.toPublicKey()
 
   result = HDWallet(
     #Set the Wallet fields.
     privateKey: privateKey,
     publicKey: publicKey,
-    address: newAddress(AddressType.PublicKey, publicKey.serialize()),
+    address: newAddress(AddressType.PublicKey, cast[string](publicKey.serialize())),
 
     #Create the chain code.
     chainCode: SHA2_256('\1' & secret)
   )
+
+#Shim since StInt only provides toByteArrayBE.
+func toByteArrayLE[bits: static int](
+  x: StUInt[bits]
+): seq[byte] {.inline, forceCheck: [].} =
+  #This is absolutely horrendous.
+  #reverse takes a string yet StInt gives an array.
+  #We convert that to a seq, cast to a string, reverse, cast back to a seq[byte], and return that.
+  cast[seq[byte]](cast[string](@(x.toByteArrayBE())).reverse())
 
 #Derive a Child HD Wallet.
 proc derive*(
@@ -89,10 +89,10 @@ proc derive*(
   var
     #Parent properties, serieslized in little endian.
     pChainCode: string = wallet.chainCode.serialize()
-    pPrivateKey: string = wallet.privateKey.serialize()
+    pPrivateKey: string = cast[string](wallet.privateKey.serialize())
     pPrivateKeyL: array[32, byte]
     pPrivateKeyR: array[32, byte]
-    pPublicKey: string = wallet.publicKey.serialize()
+    pPublicKey: string = cast[string](wallet.publicKey.serialize())
 
     #Child index, in little endian.
     child: string = childArg.toBinary(INT_LEN)
@@ -130,40 +130,31 @@ proc derive*(
 
   #[
   Calculate the Private Key.
-  WARNING: kL should probably be mod l here, as it's used as a scalar.
-  That said, the codebase Meros uses as a reference, due to being an existing implementation, just uses the 32-byte variable.
-  That said, this definitely isn't right; zR is explicitly % 2^256, and zL will overflow 32-bytes with enough of a depth.
-  THAT said, the codebase says kL mod l must != 0, suggesting it's not naturally mod l.
-  TL;DR the paper has an ambiguity; same ambiguity is dangerous; this should probably be mod l; it isn't.
-  Why isn't Meros, a cryptocurrency, which needs to be secure and proper concerned?
-  https://github.com/MerosCrypto/Meros/issues/266
+  This performs a mod l on kL which the BIP32-Ed25519 doesn't specify. That said, it's required to form a valid private key.
   ]#
-  kL = (readUIntBE[256](zL) * 8) + readUIntBE[256](pPrivateKeyL)
+  var kLBytes: seq[byte]
   try:
-    if kL mod l == 0:
-      raise newLoggedException(ValueError, "Deriving this child key produced an unusable PrivateKey.")
-  except DivByZeroError:
-    panic("Performing a modulus of Ed25519's l raised a DivByZeroError.")
+    kLBytes = newScalar(((readUIntBE[256](zL) * 8) + readUIntBE[256](pPrivateKeyL)).toByteArrayLE()).serialize()
+    if kLBytes == newSeq[byte](32):
+      raise newLoggedException(Exception, "Deriving this child key produced an unusable PrivateKey.")
+  except ValueError as e:
+    panic("Couldn't construct a scalar from a 32-byte value: " & e.msg)
+  #Needed due to mc_ristretto using ValueError as well.
+  except Exception as e:
+    raise newException(ValueError, e.msg)
 
   kR = readUIntBE[256](zR) + readUIntBE[256](pPrivateKeyR)
 
-  #Set the PrivateKey.
+  #Set the Private and Public keys.
   var
-    tempL: array[32, byte] = kL.toByteArrayBE()
-    tempR: array[32, byte] = kR.toByteArrayBE()
-    privateKey: EdPrivateKey
-  for i in 0 ..< 32:
-    privateKey.data[31 - i] = cuchar(tempL[i])
-    privateKey.data[63 - i] = cuchar(tempR[i])
-
-  #Create the Public Key.
-  var publicKey: EdPublicKey = privateKey.toPublicKey()
+    privateKey: RistrettoPrivateKey = newRistrettoPrivateKey(kLBytes & @(kR.toByteArrayLE()))
+    publicKey: RistrettoPublicKey = privateKey.toPublicKey()
 
   result = HDWallet(
     #Set the Wallet fields.
     privateKey: privateKey,
     publicKey: publicKey,
-    address: newAddress(AddressType.PublicKey, publicKey.serialize()),
+    address: newAddress(AddressType.PublicKey, cast[string](publicKey.serialize())),
 
     #Set the chain code.
     chainCode: chainCode
@@ -183,54 +174,21 @@ proc derivePublic*(
   if child >= HARDENED_THRESHOLD:
     panic("Asked to derive a public key with a hardened threshold.")
   else:
-    Z = HMAC_SHA2_512(parent.chainCode.serialize(), '\2' & parent.key.serialize() & child.toBinary(INT_LEN))
-    chainCodeExtended = HMAC_SHA2_512(parent.chainCode.serialize(), '\3' & parent.key.serialize() & child.toBinary(INT_LEN))
+    Z = HMAC_SHA2_512(parent.chainCode.serialize(), '\2' & cast[string](parent.key.serialize()) & child.toBinary(INT_LEN))
+    chainCodeExtended = HMAC_SHA2_512(parent.chainCode.serialize(), '\3' & cast[string](parent.key.serialize()) & child.toBinary(INT_LEN))
     copyMem(addr result.chainCode.data[0], addr chainCodeExtended.data[32], 32)
 
   var zL: array[32, byte]
   for i in 0 ..< 28:
     zL[31 - i] = Z.data[i]
 
-  var
-    temp: EdPrivateKey
-    scalar: array[32, byte] = (readUIntBE[256](zL) * 8).toByteArrayBE()
-  for i in 0 ..< 32:
-    temp.data[31 - i] = cuchar(scalar[i])
-  result.key = temp.toPublicKey()
+  try:
+    result.key = newScalar((readUIntBE[256](zL) * 8).toByteArrayLE()).toPoint() + parent.key
+  except ValueError as e:
+    panic("Couldn't construct a scalar from a 32-byte value: " & e.msg)
 
-  let
-    existingKey: ptr Point3 = cast[ptr Point3](alloc0(sizeof(Point3)))
-    offset: ptr Point3 = cast[ptr Point3](alloc0(sizeof(Point3)))
-    cached: ptr PointCached = cast[ptr PointCached](alloc0(sizeof(PointCached)))
-    resultKey: ptr PointP1P1 = cast[ptr PointP1P1](alloc0(sizeof(PointP1P1)))
-  var tempPub: EdPublicKey = parent.key
-
-  keyToNegativePoint(existingKey, addr tempPub.data[0])
-  serialize(addr tempPub.data[0], existingKey)
-  keyToNegativePoint(existingKey, addr tempPub.data[0])
-
-  keyToNegativePoint(offset, addr result.key.data[0])
-  serialize(addr result.key.data[0], offset)
-  keyToNegativePoint(offset, addr result.key.data[0])
-  p3ToCached(cached, offset)
-
-  add(resultKey, existingKey, cached)
-  p1p1ToP3(offset, resultKey)
-  serialize(addr result.key.data[0], offset)
-
-  dealloc(existingKey)
-  dealloc(offset)
-  dealloc(cached)
-  dealloc(resultKey)
-
-  if result.key.data[0] == cuchar(1):
-    var identity: bool = true
-    for i in 1 ..< result.key.data.len:
-      if result.key.data[i] != cuchar(0):
-        identity = false
-        break
-    if identity:
-      raise newLoggedException(ValueError, "Deriving this child key produced an unusable PublicKey.")
+  if result.key == identity:
+    raise newLoggedException(ValueError, "Deriving this child key produced an unusable PublicKey.")
 
 #Derive a full path.
 proc derive*(
