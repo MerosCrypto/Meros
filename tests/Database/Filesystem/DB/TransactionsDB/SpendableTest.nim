@@ -23,13 +23,13 @@ suite "Spendable":
       send: Send
 
       #Public Key -> Spendable Outputs.
-      spendable: Table[EdPublicKey, seq[FundedInput]] = initTable[EdPublicKey, seq[FundedInput]]()
+      spendable: Table[RistrettoPublicKey, seq[FundedInput]] = initTable[RistrettoPublicKey, seq[FundedInput]]()
       inputs: seq[FundedInput] = @[]
       #Loaded Spendable.
       loaded: seq[FundedInput] = @[]
       sends: seq[Send] = @[]
       #Who can spend a FundedInput.
-      spenders: Table[string, EdPublicKey] = initTable[string, EdPublicKey]()
+      spenders: Table[string, RistrettoPublicKey] = initTable[string, RistrettoPublicKey]()
 
     proc inputSort(
       x: FundedInput,
@@ -102,7 +102,7 @@ suite "Spendable":
             inc(i)
 
         if inputs.len != 0:
-          var outputKey: EdPublicKey = wallets[rand(10 - 1)].publicKey
+          var outputKey: RistrettoPublicKey = wallets[rand(10 - 1)].publicKey
           send = newSend(inputs, newSendOutput(outputKey, 0))
           db.save(send)
           sends.add(send)

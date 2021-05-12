@@ -83,7 +83,7 @@ class FieldElement:
   ) -> 'FieldElement':
     return self ** (q - TWO)
 
-  #Used to generate the Ed25519 basepoint.
+  #Used to generate the Ed25519/Ristretto basepoint.
   def recoverX(
     self
   ) -> 'FieldElement':

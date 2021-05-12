@@ -37,7 +37,7 @@ suite "Transactions":
       holder: MinerWallet = newMinerWallet()
       wallets: seq[HDWallet] = @[]
       #Reverse lookup Table.
-      walletsLookup: Table[EdPublicKey, int] = initTable[EdPublicKey, int]()
+      walletsLookup: Table[RistrettoPublicKey, int] = initTable[RistrettoPublicKey, int]()
 
       #Planned Sends.
       plans: Table[int, seq[seq[SendOutput]]] = initTable[int, seq[seq[SendOutput]]]()
@@ -50,7 +50,7 @@ suite "Transactions":
       revertedMints: HashSet[Hash[256]] = initHashSet[Hash[256]]()
       #Mapping of Transaction to Mint trees.
       mintTrees: Table[Hash[256], HashSet[Hash[256]]] = initTable[Hash[256], HashSet[Hash[256]]]()
-      dataTips: Table[EdPublicKey, Hash[256]] = initTable[EdPublicKey, Hash[256]]()
+      dataTips: Table[RistrettoPublicKey, Hash[256]] = initTable[RistrettoPublicKey, Hash[256]]()
       #Table of a hash to the Block it first appeared on.
       first: Table[Hash[256], int] = initTable[Hash[256], int]()
 

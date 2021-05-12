@@ -13,19 +13,19 @@ proc verify(
 
   #Test recreating the Public Key.
   check:
-    newEdPublicKey(wallet.publicKey.serialize()).serialize() == wallet.publicKey.serialize()
-    $newEdPublicKey(parseHexStr($wallet.publicKey)) == $wallet.publicKey
+    newRistrettoPublicKey(wallet.publicKey.serialize()).serialize() == wallet.publicKey.serialize()
+    $newRistrettoPublicKey(parseHexStr($wallet.publicKey)) == $wallet.publicKey
 
   #Create messages.
   var
     msg: string
-    sig: EdSignature
+    sig: seq[byte]
   for m in 1 .. rand(100):
     msg = ""
     for _ in 0 ..< m:
       msg &= char(rand(255))
     sig = wallet.sign(msg)
-    check wallet.verify(msg, sig)
+    check wallet.publicKey.verify(msg, sig)
 
 suite "Wallet":
   noFuzzTest "New Wallet without password.":
