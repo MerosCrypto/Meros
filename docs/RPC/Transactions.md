@@ -23,7 +23,7 @@ The result is an object, as follows:
     - `nick` (int): Miner nickname.
 
     When `descendant` == "Claim" or `descendant` == "Send":
-    - `key` (string): Ed25519 Public Key.
+    - `key` (string): Ristretto Public Key (yet not one guaranteed to be valid).
 
 - `hash` (string)
 
