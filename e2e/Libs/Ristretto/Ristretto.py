@@ -223,11 +223,7 @@ class SigningKey:
   ) -> None:
     esk: bytes = seed
     if len(seed) != 64:
-      eskA: bytearray = bytearray(hashlib.sha512(seed).digest())
-      eskA[0] = eskA[0] & 248
-      eskA[31] = eskA[31] & 127
-      eskA[31] = eskA[31] | 64
-      esk = bytes(eskA)
+      esk = hashlib.sha512(seed).digest()
     self.scalar: Scalar = Scalar(esk[:32])
     self.nonce: bytes = esk[32:]
     self.publicKey: bytes = RistrettoPoint(self.scalar.toPoint()).serialize()

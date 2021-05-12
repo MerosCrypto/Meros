@@ -61,17 +61,10 @@ def verifyMnemonicAndAccount(
   except Exception:
     raise TestError("Meros gave us an invalid Mnemonic to derive (or the test generated an unusable one).")
 
-  #For some reason, pylint decided to add in detection of stdlib members.
-  #It doesn't do it properly, and thinks encodepoint returns a string.
-  #It returns bytes, which does have hex as a method.
-  #pylint: disable=no-member
   if rpc.call("personal", "getAccount") != {
     "key": RistrettoScalar(extendedKey[:32]).toPoint().serialize().hex().upper(),
     "chainCode": chainCode.hex().upper()
   }:
-    #The Nim tests ensure accurate BIP 32 derivation thanks to vectors.
-    #That leaves BIP 39/44 in the air.
-    #This isn't technically true due to an ambiguity/the implementation we used the vectors of, yet it's true enough for this comment.
     raise TestError("Meros generated a different account public key.")
 
   #Also test that the correct public key is used when creating Datas.

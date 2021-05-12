@@ -46,18 +46,9 @@ proc newHDWallet*(
   if secret.len != 32:
     raise newLoggedException(ValueError, "Invalid length secret passed to newHDWallet.")
 
-  #Create the Private Key.
-  var privateKeyBytes: seq[byte] = @(SHA2_512(secret).data)
-  if (byte(privateKeyBytes[31]) and 0b00100000) != 0:
-    raise newLoggedException(ValueError, "Secret generated an invalid private key.")
-  privateKeyBytes[0]  = byte(privateKeyBytes[0])  and (not byte(0b00000111))
-  privateKeyBytes[31] = byte(privateKeyBytes[31]) and (not byte(0b10000000))
-  privateKeyBytes[31] = byte(privateKeyBytes[31]) or       byte(0b01000000)
-
-  #Create the Public Key.
+  #Create the Private and Public Keys.
   var
-    #This performs a mod l on kL which the BIP32-Ed25519 doesn't specify. That said, it's required to form a valid private key.
-    privateKey: RistrettoPrivateKey = newRistrettoPrivateKey(privateKeyBytes)
+    privateKey: RistrettoPrivateKey = newRistrettoPrivateKey(@(SHA2_512(secret).data))
     publicKey: RistrettoPublicKey = privateKey.toPublicKey()
 
   result = HDWallet(
@@ -87,10 +78,9 @@ proc derive*(
   ValueError
 ].} =
   var
-    #Parent properties, serieslized in little endian.
+    #Parent properties, serialized in little endian.
     pChainCode: string = wallet.chainCode.serialize()
-    pPrivateKey: string = cast[string](wallet.privateKey.serialize())
-    pPrivateKeyL: array[32, byte]
+    pPrivateKey: seq[byte] = wallet.privateKey.serialize()
     pPrivateKeyR: array[32, byte]
     pPublicKey: string = cast[string](wallet.publicKey.serialize())
 
@@ -99,8 +89,7 @@ proc derive*(
     #Is this a Hardened derivation?
     hardened: bool = childArg >= HARDENED_THRESHOLD
   for i in 0 ..< 32:
-    pPrivateKeyL[31 - i] = byte(pPrivateKey[i])
-    pPrivateKeyR[31 - i] = byte(pPrivateKey[32 + i])
+    pPrivateKeyR[31 - i] = pPrivateKey[32 + i]
 
   #Calculate Z and the Chaincode.
   var
@@ -108,46 +97,40 @@ proc derive*(
     chainCodeExtended: Hash[512]
     chainCode: Hash[256]
   if hardened:
-    Z = HMAC_SHA2_512(pChainCode, '\0' & pPrivateKey & child)
-    chainCodeExtended = HMAC_SHA2_512(pChainCode, '\1' & pPrivateKey & child)
+    Z = HMAC_SHA2_512(pChainCode, '\0' & cast[string](pPrivateKey) & child)
+    chainCodeExtended = HMAC_SHA2_512(pChainCode, '\1' & cast[string](pPrivateKey) & child)
     copyMem(addr chainCode.data[0], addr chainCodeExtended.data[32], 32)
   else:
     Z = HMAC_SHA2_512(pChainCode, '\2' & pPublicKey & child)
     chainCodeExtended = HMAC_SHA2_512(pChainCode, '\3' & pPublicKey & child)
     copyMem(addr chainCode.data[0], addr chainCodeExtended.data[32], 32)
 
-  var
-    #Z left and right.
-    zL: array[32, byte]
-    zR: array[32, byte]
-    #Key left and right.
-    kL: StUInt[256]
-    kR: StUInt[256]
-  for i in 0 ..< 32:
-    if i < 28:
-      zL[31 - i] = Z.data[i]
-    zR[31 - i] = Z.data[i + 32]
-
-  #[
-  Calculate the Private Key.
-  This performs a mod l on kL which the BIP32-Ed25519 doesn't specify. That said, it's required to form a valid private key.
-  ]#
-  var kLBytes: seq[byte]
+  #Calculate the Private Key.
+  var cScalar: Scalar
   try:
-    kLBytes = newScalar(((readUIntBE[256](zL) * 8) + readUIntBE[256](pPrivateKeyL)).toByteArrayLE()).serialize()
-    if kLBytes == newSeq[byte](32):
-      raise newLoggedException(Exception, "Deriving this child key produced an unusable PrivateKey.")
+    let
+      zScalar: Scalar = newScalar(Z.data[0 ..< 32])
+      pScalar: Scalar = newScalar(pPrivateKey[0 ..< 32])
+    cScalar = zScalar + pScalar
   except ValueError as e:
     panic("Couldn't construct a scalar from a 32-byte value: " & e.msg)
-  #Needed due to mc_ristretto using ValueError as well.
-  except Exception as e:
-    raise newException(ValueError, e.msg)
+  #Isn't the chance of this equivalent to randomly finding a specific key?
+  #If this isn't needed, a lot of exception handling can be removed.
+  #Remnant from BIP32-Ed25519.
+  if cScalar.serialize() == newSeq[byte](32):
+    raise newLoggedException(ValueError, "Deriving this child key produced an unusable PrivateKey.")
 
+  #Nonce variables.
+  var
+    zR: array[32, byte]
+    kR: StUInt[256]
+  for i in 0 ..< 32:
+    zR[31 - i] = Z.data[32 + i]
   kR = readUIntBE[256](zR) + readUIntBE[256](pPrivateKeyR)
 
   #Set the Private and Public keys.
   var
-    privateKey: RistrettoPrivateKey = newRistrettoPrivateKey(kLBytes & @(kR.toByteArrayLE()))
+    privateKey: RistrettoPrivateKey = newRistrettoPrivateKey(cScalar.serialize() & @(kR.toByteArrayLE()))
     publicKey: RistrettoPublicKey = privateKey.toPublicKey()
 
   result = HDWallet(
@@ -178,14 +161,12 @@ proc derivePublic*(
     chainCodeExtended = HMAC_SHA2_512(parent.chainCode.serialize(), '\3' & cast[string](parent.key.serialize()) & child.toBinary(INT_LEN))
     copyMem(addr result.chainCode.data[0], addr chainCodeExtended.data[32], 32)
 
-  var zL: array[32, byte]
-  for i in 0 ..< 28:
-    zL[31 - i] = Z.data[i]
-
+  var zScalar: Scalar
   try:
-    result.key = newScalar((readUIntBE[256](zL) * 8).toByteArrayLE()).toPoint() + parent.key
+    zScalar = newScalar(Z.data[0 ..< 32])
   except ValueError as e:
     panic("Couldn't construct a scalar from a 32-byte value: " & e.msg)
+  result.key = zScalar.toPoint() + parent.key
 
   if result.key == identity:
     raise newLoggedException(ValueError, "Deriving this child key produced an unusable PublicKey.")
@@ -200,7 +181,7 @@ proc derive*(
   if path.len == 0:
     return wallet
   if path.len >= (1 shl 20):
-    raise newLoggedException(ValueError, "Derivation path depth is too big.")
+    raise newLoggedException(ValueError, "Derivation path is too deep.")
 
   try:
     result = wallet.derive(path[0])
