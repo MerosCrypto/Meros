@@ -22,7 +22,7 @@ requires "https://github.com/status-im/nim-serialization#261de74"
 requires "https://github.com/status-im/nim-json-serialization#7999d25"
 
 #Trusted dependencies.
-requires "https://github.com/MerosCrypto/mc_ed25519 >= 1.1.1"
+requires "https://github.com/MerosCrypto/mc_ristretto >= 0.2.0"
 requires "https://github.com/MerosCrypto/mc_bls >= 3.0.1"
 requires "https://github.com/MerosCrypto/mc_minisketch >= 1.0.0"
 requires "https://github.com/MerosCrypto/Argon2 >= 1.1.4"

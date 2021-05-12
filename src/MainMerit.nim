@@ -337,7 +337,7 @@ proc mainMerit(
               wallet.getPublicKey(
                 some(firstAddress),
                 proc (
-                  key: EdPublicKey
+                  key: RistrettoPublicKey
                 ): bool {.gcsafe, forceCheck: [].} =
                   transactions[].loadIfKeyWasUsed(key)
               )

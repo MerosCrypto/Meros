@@ -36,12 +36,12 @@ template CHANGE_INDEX(): string =
   "c"
 
 template ADDRESS_CHANGE(
-  key: EdPublicKey
+  key: RistrettoPublicKey
 ): string =
   "ac" & key.serialize()
 
 template ADDRESS_INDEX(
-  key: EdPublicKey
+  key: RistrettoPublicKey
 ): string =
   "i" & key.serialize()
 
@@ -88,7 +88,7 @@ type
 
     mnemonic: Mnemonic
     miner*: MinerWallet
-    accountZero*: EdPublicKey
+    accountZero*: RistrettoPublicKey
     chainCode*: Hash[256]
 
     when defined(merosTests):
@@ -118,7 +118,7 @@ type
 
   UsableInput* = object
     index*: KeyIndex
-    key*: EdPublicKey
+    key*: RistrettoPublicKey
     address*: string
     utxo*: FundedInput
 
@@ -261,7 +261,7 @@ proc newWalletDB*(
     else:
       result.miner = newMinerWallet(minerKey)
 
-    result.accountZero = newEdPublicKey(result.get(ACCOUNT_ZERO()))
+    result.accountZero = newRistrettoPublicKey(result.get(ACCOUNT_ZERO()))
     result.chainCode = result.get(CHAIN_CODE()).toHash[:256]()
     result.nextIndex = cast[uint32](result.get(NEXT_ADDRESS_INDEX()).fromBinary())
     result.changeIndex = cast[uint32](result.get(CHANGE_INDEX()).fromBinary())
@@ -346,9 +346,9 @@ proc getPublicKey*(
   db: WalletDB,
   index: Option[uint32],
   used: proc (
-    key: EdPublicKey
+    key: RistrettoPublicKey
   ): bool {.gcsafe, raises: [].}
-): EdPublicKey {.forceCheck: [
+): RistrettoPublicKey {.forceCheck: [
   ValueError
 ].} =
   var
@@ -410,7 +410,7 @@ proc getAddress*(
   db: WalletDB,
   index: Option[uint32],
   used: proc (
-    key: EdPublicKey
+    key: RistrettoPublicKey
   ): bool {.gcsafe, raises: [].}
 ): string {.forceCheck: [
   ValueError
@@ -423,9 +423,9 @@ proc getAddress*(
 proc getChangeKey*(
   db: WalletDB,
   used: proc (
-    key: EdPublicKey
+    key: RistrettoPublicKey
   ): bool {.gcsafe, raises: [].}
-): EdPublicKey {.forceCheck: [].} =
+): RistrettoPublicKey {.forceCheck: [].} =
   var
     internal: HDPublic
     child: HDPublic
@@ -458,7 +458,7 @@ proc getChangeKey*(
 
 proc getKeyIndex*(
   db: WalletDB,
-  key: EdPublicKey
+  key: RistrettoPublicKey
 ): KeyIndex {.forceCheck: [
   IndexError
 ].} =
@@ -500,11 +500,11 @@ proc setMinerAndMnemonic*(
 #Set the account.
 proc setAccount*(
   db: WalletDB,
-  key: EdPublicKey,
+  key: RistrettoPublicKey,
   chainCode: Hash[256],
   datas: seq[Data],
   used: proc (
-    key: EdPublicKey
+    key: RistrettoPublicKey
   ): bool {.gcsafe, raises: [].}
 ) {.forceCheck: [].} =
   db.accountZero = key
@@ -540,7 +540,7 @@ proc setAccount*(
     flag: bool
 
   proc discoveryUsed(
-    key: EdPublicKey
+    key: RistrettoPublicKey
   ): bool {.gcsafe, forceCheck: [].} =
     if key.used:
       usedAny = true
@@ -558,7 +558,7 @@ proc setAccount*(
       except ValueError as e:
         panic("Tried to set a wallet which has billions of addresses used: " & e.msg)
       try:
-        items.add((ADDRESS_INDEX(newEdPublicKey(cast[string](buffer[^1].getEncodedData().data))), db.nextIndex.toBinary()))
+        items.add((ADDRESS_INDEX(newRistrettoPublicKey(cast[string](buffer[^1].getEncodedData().data))), db.nextIndex.toBinary()))
       except ValueError as e:
         panic("Generated an invalid address: " & e.msg)
 
@@ -573,7 +573,7 @@ proc setAccount*(
       if buffer.len == ADDRESS_DISCOVERY_THRESHOLD:
         for address in buffer:
           try:
-            if newEdPublicKey(cast[string](address.getEncodedData().data)).used:
+            if newRistrettoPublicKey(cast[string](address.getEncodedData().data)).used:
               break
             elif address == buffer[^1]:
               break outer
@@ -608,7 +608,7 @@ proc setAccount*(
   db.changeIndex = 0
   while true:
     try:
-      let key: EdPublicKey = HDPublic(
+      let key: RistrettoPublicKey = HDPublic(
         key: db.accountZero,
         chainCode: db.chainCode
       ).derivePublic(1).next(db.changeIndex).key
@@ -684,7 +684,7 @@ proc getAggregateKey*(
   except ValueError as e:
     panic("Unlocked the Wallet, yet it's unusable: " & e.msg)
 
-  var keys: seq[EdPrivateKey] = @[]
+  var keys: seq[RistrettoPrivateKey] = @[]
   for index in indexes:
     try:
       keys.add(

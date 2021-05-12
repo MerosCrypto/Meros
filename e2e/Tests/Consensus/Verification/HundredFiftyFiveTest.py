@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Any
 
-import ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Merit.Blockchain import BlockHeader
@@ -24,11 +24,11 @@ from e2e.Tests.Errors import TestError
 def HundredFiftyFiveTest(
   rpc: RPC
 ) -> None:
-  edPrivKeys: List[ed25519.SigningKey] = [
-    ed25519.SigningKey(b'\0' * 32),
-    ed25519.SigningKey(b'\1' * 32)
+  edPrivKeys: List[Ristretto.SigningKey] = [
+    Ristretto.SigningKey(b'\0' * 32),
+    Ristretto.SigningKey(b'\1' * 32)
   ]
-  edPubKeys: List[ed25519.VerifyingKey] = [
+  edPubKeys: List[bytes] = [
     edPrivKeys[0].get_verifying_key(),
     edPrivKeys[1].get_verifying_key()
   ]
@@ -87,8 +87,8 @@ def HundredFiftyFiveTest(
     raise TestError("Meros didn't send the SignedVerification for the Block's Data.")
 
   datas: List[Data] = [
-    Data(bytes(32), edPubKeys[0].to_bytes()),
-    Data(bytes(32), edPubKeys[1].to_bytes())
+    Data(bytes(32), edPubKeys[0]),
+    Data(bytes(32), edPubKeys[1])
   ]
 
   for d in range(len(datas)):

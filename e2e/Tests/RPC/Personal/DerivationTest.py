@@ -8,7 +8,7 @@ from bip_utils import Bip39WordsNum, Bip39MnemonicGenerator, Bip39MnemonicValida
 from bech32 import convertbits, bech32_encode
 
 from e2e.Libs.BLS import PrivateKey
-import e2e.Libs.ed25519 as ed
+from e2e.Libs.Ristretto.Ristretto import RistrettoScalar
 import e2e.Libs.BIP32 as BIP32
 
 from e2e.Classes.Transactions.Transactions import Data
@@ -61,19 +61,10 @@ def verifyMnemonicAndAccount(
   except Exception:
     raise TestError("Meros gave us an invalid Mnemonic to derive (or the test generated an unusable one).")
 
-  #For some reason, pylint decided to add in detection of stdlib members.
-  #It doesn't do it properly, and thinks encodepoint returns a string.
-  #It returns bytes, which does have hex as a method.
-  #pylint: disable=no-member
   if rpc.call("personal", "getAccount") != {
-    "key": ed.encodepoint(
-      ed.scalarmult(ed.B, ed.decodeint(extendedKey[:32]) % ed.l)
-    ).hex().upper(),
+    "key": RistrettoScalar(extendedKey[:32]).toPoint().serialize().hex().upper(),
     "chainCode": chainCode.hex().upper()
   }:
-    #The Nim tests ensure accurate BIP 32 derivation thanks to vectors.
-    #That leaves BIP 39/44 in the air.
-    #This isn't technically true due to an ambiguity/the implementation we used the vectors of, yet it's true enough for this comment.
     raise TestError("Meros generated a different account public key.")
 
   #Also test that the correct public key is used when creating Datas.
@@ -81,9 +72,7 @@ def verifyMnemonicAndAccount(
   data: str = rpc.call("personal", "data", {"data": "a", "password": password})
   initial: Data = Data(
     bytes(32),
-    ed.encodepoint(
-      ed.scalarmult(ed.B, ed.decodeint(getPrivateKey(mnemonic, password, 0)[:32]) % ed.l)
-    )
+    RistrettoScalar(getPrivateKey(mnemonic, password, 0)[:32]).toPoint().serialize()
   )
   #Checks via the initial Data.
   if bytes.fromhex(rpc.call("transactions", "getTransaction", {"hash": data})["inputs"][0]["hash"]) != initial.hash:
@@ -146,10 +135,7 @@ def DerivationTest(
     addr: str = bech32_encode(
       "mr",
       convertbits(
-        (
-          bytes([0]) +
-          ed.encodepoint(ed.scalarmult(ed.B, ed.decodeint(key[:32]) % ed.l))
-        ),
+        bytes([0]) + RistrettoScalar(key[:32]).toPoint().serialize(),
         8,
         5
       )

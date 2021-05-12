@@ -21,5 +21,5 @@ method serialize*(
   data.inputs[0].hash.serialize() &
   char(data.data.len - 1) &
   data.data &
-  data.signature.serialize() &
+  cast[string](data.signature) &
   data.proof.toBinary(INT_LEN)

@@ -1,7 +1,7 @@
 from typing import List
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Libs.BLS import PrivateKey, Signature
 
@@ -18,8 +18,8 @@ from e2e.Vectors.Generation.PrototypeChain import PrototypeBlock
 
 blsPrivKey: PrivateKey = PrivateKey(0)
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 dataFilter: SpamFilter = SpamFilter(5)
 
@@ -29,7 +29,7 @@ blocks.append(PrototypeBlock(1200, minerID=blsPrivKey).finish(0, Merit()))
 
 #Create five Datas and matching Verifications.
 #The test only sends a couple of the Verifications; that said, it's easy to generate the Block signature thanks to this.
-txs: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
+txs: List[Data] = [Data(bytes(32), edPubKey)]
 verifs: List[SignedVerification] = []
 for i in range(5):
   txs[-1].sign(edPrivKey)

@@ -52,7 +52,7 @@ proc parseSend*(
     raise newLoggedException(ValueError, "parseSend handed a Send with no outputs.")
   for i in countup(0, sendSeq[3].len - 1, 40):
     outputs[i div 40] = newSendOutput(
-      newEdPublicKey(sendSeq[3][i ..< i + 32]),
+      newRistrettoPublicKey(sendSeq[3][i ..< i + 32]),
       uint64(sendSeq[3][i + 32 ..< i + 40].fromBinary())
     )
 
@@ -68,6 +68,6 @@ proc parseSend*(
     raise newSpam("Send didn't beat the difficulty.", hash, argon, factor * diff)
 
   result.hash = hash
-  result.signature = newEdSignature(sendSeq[4])
+  result.signature = cast[seq[byte]](sendSeq[4])
   result.proof = uint32(sendSeq[5].fromBinary())
   result.argon = argon

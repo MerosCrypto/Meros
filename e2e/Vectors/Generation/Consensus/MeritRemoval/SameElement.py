@@ -1,6 +1,6 @@
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
@@ -19,8 +19,8 @@ proto: PrototypeChain = PrototypeChain(1, False)
 blsPrivKey: PrivateKey = PrivateKey(0)
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 #Create the SendDifficulty MR.
 sendDiff: SignedSendDifficulty = SignedSendDifficulty(4, 0)
@@ -33,7 +33,7 @@ dataDiff.sign(0, blsPrivKey)
 dataDiffMR: SignedMeritRemoval = SignedMeritRemoval(dataDiff, dataDiff)
 
 #Create the Verification MR.
-data: Data = Data(bytes(32), edPubKey.to_bytes())
+data: Data = Data(bytes(32), edPubKey)
 data.sign(edPrivKey)
 data.beat(SpamFilter(5))
 

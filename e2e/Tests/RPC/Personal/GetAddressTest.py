@@ -7,11 +7,10 @@ from typing import Dict, List, Union, Any
 from time import sleep
 import json
 
-import ed25519
 from pytest import raises
 
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
-import e2e.Libs.ed25519 as ed
 from e2e.Libs.RandomX import RandomX
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Transactions
@@ -31,13 +30,13 @@ def createSend(
   last: Union[Claim, Send],
   toAddress: str
 ) -> Send:
-  funded: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+  funded: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
   if isinstance(last, Claim):
     send: Send = Send(
       [(last.hash, 0)],
       [
         (decodeAddress(toAddress), 1),
-        (funded.get_verifying_key().to_bytes(), last.amount - 1)
+        (funded.get_verifying_key(), last.amount - 1)
       ]
     )
   else:
@@ -45,7 +44,7 @@ def createSend(
       [(last.hash, 1)],
       [
         (decodeAddress(toAddress), 1),
-        (funded.get_verifying_key().to_bytes(), last.outputs[1][1] - 1)
+        (funded.get_verifying_key(), last.outputs[1][1] - 1)
       ]
     )
   send.sign(funded)
@@ -113,10 +112,7 @@ def GetAddressTest(
 
     #Spending TX.
     send: Send = Send([(hashes[-1], 0)], [(bytes(32), 1)])
-    send.signature = ed.sign(
-      b"MEROS" + send.hash,
-      getPrivateKey(mnemonic, password, 1)
-    )
+    send.signature = Ristretto.SigningKey(getPrivateKey(mnemonic, password, 1)).sign(b"MEROS" + send.hash)
     send.beat(SpamFilter(3))
     if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
       raise TestError("Meros didn't broadcast back the spending Send.")

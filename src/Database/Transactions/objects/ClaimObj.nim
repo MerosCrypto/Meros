@@ -10,7 +10,7 @@ type Claim* = ref object of Transaction
 
 func newClaimObj*(
   inputs: varargs[FundedInput],
-  output: EdPublicKey
+  output: RistrettoPublicKey
 ): Claim {.inline, forceCheck: [].} =
   Claim(
     inputs: cast[seq[Input]](@inputs),

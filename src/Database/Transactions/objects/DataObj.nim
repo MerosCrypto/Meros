@@ -1,12 +1,11 @@
 import ../../../lib/[Errors, Hash]
-import ../../../Wallet/Wallet
 
 import TransactionObj
 export TransactionObj
 
 type Data* = ref object of Transaction
   data*: string
-  signature*: EdSignature
+  signature*: seq[byte]
   proof*: uint32
   argon*: Hash[256]
 

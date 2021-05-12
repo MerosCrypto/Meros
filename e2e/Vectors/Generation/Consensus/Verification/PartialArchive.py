@@ -2,7 +2,7 @@ from typing import List
 from hashlib import blake2b
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey, PublicKey
 
 from e2e.Classes.Transactions.Data import Data
@@ -20,8 +20,8 @@ blockchain: Blockchain = Blockchain()
 
 dataFilter: SpamFilter = SpamFilter(5)
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 blsPrivKeys: List[PrivateKey] = [
   PrivateKey(blake2b(b'\0', digest_size=32).digest()),
@@ -48,7 +48,7 @@ for h in range(2):
   blockchain.add(block)
 
 #Create a Data and two Signed Verifications.
-data: Data = Data(bytes(32), edPubKey.to_bytes())
+data: Data = Data(bytes(32), edPubKey)
 data.sign(edPrivKey)
 data.beat(dataFilter)
 

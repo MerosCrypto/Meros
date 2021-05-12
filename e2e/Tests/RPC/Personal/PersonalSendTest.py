@@ -7,10 +7,10 @@ from typing import Dict, List, Any
 from time import sleep
 import json
 
-import ed25519
 from bech32 import convertbits, bech32_encode
 from pytest import raises
 
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 from e2e.Libs.RandomX import RandomX
 
@@ -40,7 +40,7 @@ def createSend(
   to: bytes
 ) -> bytes:
   send: Send = Send([(claim.hash, 0)], [(to, claim.amount)])
-  send.sign(ed25519.SigningKey(b'\0' * 32))
+  send.sign(Ristretto.SigningKey(b'\0' * 32))
   send.beat(SpamFilter(3))
   if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
     raise TestError("Meros didn't send back a Send.")
@@ -149,8 +149,8 @@ def PersonalSendTest(
 
     #Send all funds out of Wallet.
     #Tests MuSig signing and change UTXO detection.
-    privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-    pubKey: bytes = privKey.get_verifying_key().to_bytes()
+    privKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
+    pubKey: bytes = privKey.get_verifying_key()
     sends.append(
       rpc.call(
         "personal",
@@ -177,7 +177,7 @@ def PersonalSendTest(
     mnemonic = rpc.call("personal", "getMnemonic")
     nodeKey: bytes = decodeAddress(rpc.call("personal", "getAddress"))
     send: Send = Send([(bytes.fromhex(sends[-1]), 0)], [(nodeKey, claims[0].amount // 2), (nodeKey, claims[0].amount // 2)])
-    send.sign(ed25519.SigningKey(b'\0' * 32))
+    send.sign(Ristretto.SigningKey(b'\0' * 32))
     send.beat(SpamFilter(3))
     if rpc.meros.liveTransaction(send) != rpc.meros.live.recv():
       raise TestError("Meros didn't send back a Send.")

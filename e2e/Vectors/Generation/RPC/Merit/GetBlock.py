@@ -1,7 +1,7 @@
 from typing import List
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Data, Transactions
@@ -26,24 +26,24 @@ transactions: Transactions = Transactions()
 
 claim: Claim = Claim(
   [(merit.mints[-1], 0)],
-  ed25519.SigningKey(b'\0' * 32).get_verifying_key().to_bytes()
+  Ristretto.SigningKey(b'\0' * 32).get_verifying_key()
 )
 claim.sign(PrivateKey(0))
 transactions.add(claim)
 
 send: Send = Send(
   [(claim.hash, 0)],
-  [(ed25519.SigningKey(b'\1' * 32).get_verifying_key().to_bytes(), claim.amount)]
+  [(Ristretto.SigningKey(b'\1' * 32).get_verifying_key(), claim.amount)]
 )
-send.sign(ed25519.SigningKey(b'\0' * 32))
+send.sign(Ristretto.SigningKey(b'\0' * 32))
 send.beat(SpamFilter(3))
 transactions.add(send)
 
 datas: List[Data] = [
-  Data(bytes(32), ed25519.SigningKey(b'\0' * 32).get_verifying_key().to_bytes())
+  Data(bytes(32), Ristretto.SigningKey(b'\0' * 32).get_verifying_key())
 ]
 for _ in range(4):
-  datas[-1].sign(ed25519.SigningKey(b'\0' * 32))
+  datas[-1].sign(Ristretto.SigningKey(b'\0' * 32))
   datas[-1].beat(SpamFilter(5))
   transactions.add(datas[-1])
   datas.append(Data(datas[-1].hash, b'\0'))

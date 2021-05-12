@@ -5,7 +5,7 @@ import TransactionObj
 export TransactionObj
 
 type Send* = ref object of Transaction
-  signature*: EdSignature
+  signature*: seq[byte]
   proof*: uint32
   argon*: Hash[256]
 

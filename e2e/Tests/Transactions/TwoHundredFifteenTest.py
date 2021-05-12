@@ -1,7 +1,7 @@
 from typing import Dict, List, Any
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Libs.BLS import PrivateKey
 
@@ -26,33 +26,30 @@ def TwoHundredFifteenTest(
   sendFilter: SpamFilter = SpamFilter(3)
   dataFilter: SpamFilter = SpamFilter(5)
 
-  privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-  pubKey: ed25519.VerifyingKey = privKey.get_verifying_key()
+  privKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
+  pubKey: bytes = privKey.get_verifying_key()
 
   def syncUnknown() -> None:
-    claim: Claim = Claim([(merit.mints[0], 0)], pubKey.to_bytes())
+    claim: Claim = Claim([(merit.mints[0], 0)], pubKey)
     claim.sign(PrivateKey(0))
 
     #Create a series of Sends, forming a diamond.
     #Cross sendB and sendC to actually force this to work in an ordered fashion to pass.
     sendA: Send = Send(
       [(claim.hash, 0)],
-      [
-        (pubKey.to_bytes(), claim.amount // 2),
-        (pubKey.to_bytes(), claim.amount // 2)
-      ]
+      [(pubKey, claim.amount // 2), (pubKey, claim.amount // 2)]
     )
     sendB: Send = Send(
       [(sendA.hash, 0)],
-      [(pubKey.to_bytes(), sendA.outputs[0][1] // 2), (pubKey.to_bytes(), sendA.outputs[0][1] // 2)]
+      [(pubKey, sendA.outputs[0][1] // 2), (pubKey, sendA.outputs[0][1] // 2)]
     )
     sendC: Send = Send(
       [(sendA.hash, 1), (sendB.hash, 1)],
-      [(pubKey.to_bytes(), sendA.outputs[1][1] + sendB.outputs[1][1])]
+      [(pubKey, sendA.outputs[1][1] + sendB.outputs[1][1])]
     )
     sendD: Send = Send(
       [(sendB.hash, 0), (sendC.hash, 0)],
-      [(pubKey.to_bytes(), claim.amount)]
+      [(pubKey, claim.amount)]
     )
     for send in [sendA, sendB, sendC, sendD]:
       send.sign(privKey)
@@ -68,7 +65,7 @@ def TwoHundredFifteenTest(
       raise TestError("Meros didn't broadcast the Send.")
 
     #Do the same for a few Data Transactions.
-    datas: List[Data] = [Data(bytes(32), pubKey.to_bytes())]
+    datas: List[Data] = [Data(bytes(32), pubKey)]
     datas.append(Data(datas[-1].hash, bytes(1)))
     datas.append(Data(datas[-1].hash, bytes(1)))
     for data in datas:

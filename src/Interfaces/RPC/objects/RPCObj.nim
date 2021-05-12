@@ -163,11 +163,11 @@ template retrieveFromJSON*[T](
         raise newLoggedException(ParamError, "retrieveFromJSON expected a 32-byte hex string (64 chars).")
       res.toHash[:256]()
 
-    elif $(expectedType) == "EdPublicKey":
+    elif $(expectedType) == "PublicKey":
       var res: string = retrieveFromJSON(value, hex)
       if res.len != 32:
         raise newLoggedException(ParamError, "retrieveFromJSON expected a 32-byte hex string (64 chars).")
-      newEdPublicKey(res)
+      newRistrettoPublicKey(res)
 
     #BLS Public Key.
     elif $(expectedType) == "G2":

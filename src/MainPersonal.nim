@@ -21,7 +21,7 @@ proc mainPersonal(
       raise e
 
   functions.personal.setAccount = proc (
-    key: EdPublicKey,
+    key: RistrettoPublicKey,
     chainCode: Hash[256],
     clear: bool = false
   ) {.forceCheck: [].} =
@@ -65,7 +65,7 @@ proc mainPersonal(
       chainCode,
       datas,
       proc (
-        key: EdPublicKey
+        key: RistrettoPublicKey
       ): bool {.gcsafe, forceCheck: [].} =
         transactions[].loadIfKeyWasUsed(key)
     )
@@ -93,7 +93,7 @@ proc mainPersonal(
     except ValueError as e:
       panic("Account zero wasn't usable despite the above newWallet call making sure it was usable: " & e.msg)
 
-  functions.personal.getAccount = proc (): tuple[key: EdPublicKey, chainCode: Hash[256]] {.forceCheck: [].} =
+  functions.personal.getAccount = proc (): tuple[key: RistrettoPublicKey, chainCode: Hash[256]] {.forceCheck: [].} =
     (key: db.accountZero, chainCode: db.chainCode)
 
   functions.personal.getAddress = proc (
@@ -105,23 +105,23 @@ proc mainPersonal(
       result = db.getAddress(
         index,
         proc (
-          key: EdPublicKey
+          key: RistrettoPublicKey
         ): bool {.gcsafe, forceCheck: [].} =
           transactions[].loadIfKeyWasUsed(key)
       )
     except ValueError as e:
       raise e
 
-  functions.personal.getChangeKey = proc (): EdPublicKey {.gcsafe, forceCheck: [].} =
+  functions.personal.getChangeKey = proc (): RistrettoPublicKey {.gcsafe, forceCheck: [].} =
     db.getChangeKey(
       proc (
-        key: EdPublicKey
+        key: RistrettoPublicKey
       ): bool {.gcsafe, forceCheck: [].} =
         transactions[].loadIfKeyWasUsed(key)
     )
 
   functions.personal.getKeyIndex = proc (
-    key: EdPublicKey
+    key: RistrettoPublicKey
   ): KeyIndex {.gcsafe, forceCheck: [
     IndexError
   ].} =

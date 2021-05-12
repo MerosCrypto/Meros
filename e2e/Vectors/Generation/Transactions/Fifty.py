@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple, Union
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Send import Send
@@ -20,19 +20,19 @@ transactions: Transactions = Transactions()
 
 sendFilter: SpamFilter = SpamFilter(3)
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKeys: List[ed25519.VerifyingKey] = [
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
+edPubKeys: List[bytes] = [
   edPrivKey.get_verifying_key(),
-  ed25519.SigningKey(b'\1' * 32).get_verifying_key()
+  Ristretto.SigningKey(b'\1' * 32).get_verifying_key()
 ]
 
 sendFilter: SpamFilter = SpamFilter(3)
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 #Create the Claim.
-claim: Claim = Claim([(merit.mints[-1], 0)], edPubKeys[0].to_bytes())
+claim: Claim = Claim([(merit.mints[-1], 0)], edPubKeys[0])
 claim.sign(PrivateKey(0))
 transactions.add(claim)
 merit.add(
@@ -44,17 +44,14 @@ merit.add(
 
 #Create 12 Sends.
 sends: List[Send] = []
-sends.append(Send([(claim.hash, 0)], [(edPubKey.to_bytes(), claim.amount)]))
+sends.append(Send([(claim.hash, 0)], [(edPubKey, claim.amount)]))
 for _ in range(12):
   sends[-1].sign(edPrivKey)
   sends[-1].beat(sendFilter)
   transactions.add(sends[-1])
 
   sends.append(
-    Send(
-      [(sends[-1].hash, 0)],
-      [(edPubKey.to_bytes(), sends[-1].outputs[0][1])]
-    )
+    Send([(sends[-1].hash, 0)], [(edPubKey, sends[-1].outputs[0][1])])
   )
 
 #Order to verify the Transactions in.

@@ -119,7 +119,7 @@ proc add*(
 
   var
     #Sender.
-    senders: seq[EdPublicKey] = newSeq[EdPublicKey](1)
+    senders: seq[RistrettoPublicKey] = newSeq[RistrettoPublicKey](1)
 
     #Set of spent inputs.
     inputSet: HashSet[string] = initHashSet[string]()
@@ -200,7 +200,7 @@ proc add*(
     raise newLoggedException(ValueError, "Data doesn't have one input.")
 
   #Load the sender (which also verifies the input exists, if it's not the sender's key).
-  var sender: EdPublicKey
+  var sender: RistrettoPublicKey
   try:
     sender = transactions.getSender(data)
   except DataMissing as e:

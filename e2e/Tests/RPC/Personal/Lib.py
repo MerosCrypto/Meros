@@ -7,7 +7,7 @@ from hashlib import sha256
 from bip_utils import Bip39WordsNum, Bip39MnemonicGenerator, Bip39SeedGenerator
 from bech32 import convertbits, bech32_encode, bech32_decode
 
-import e2e.Libs.ed25519 as ed
+from e2e.Libs.Ristretto.Ristretto import RistrettoScalar
 import e2e.Libs.BIP32 as BIP32
 
 from e2e.Tests.Errors import TestError
@@ -70,9 +70,7 @@ def getPublicKey(
   password: str,
   skip: int
 ) -> bytes:
-  return ed.encodepoint(
-    ed.scalarmult(ed.B, ed.decodeint(getPrivateKey(mnemonic, password, skip)[:32]) % ed.l)
-  )
+  return RistrettoScalar(getPrivateKey(mnemonic, password, skip)[:32]).toPoint().serialize()
 
 def getChangePublicKey(
   mnemonic: str,
@@ -103,7 +101,7 @@ def getChangePublicKey(
         raise Exception("Invalid mnemonic passed to getPrivateKey.")
       continue
 
-  return ed.encodepoint(ed.scalarmult(ed.B, ed.decodeint(extendedKey[:32]) % ed.l))
+  return RistrettoScalar(extendedKey[:32]).toPoint().serialize()
 
 def getAddress(
   mnemonic: str,

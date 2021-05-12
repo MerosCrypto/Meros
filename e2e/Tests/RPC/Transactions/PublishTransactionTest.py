@@ -1,7 +1,7 @@
 from typing import Dict, Any
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Classes.Transactions.Transactions import Claim, Send, Data, Transactions
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
@@ -18,10 +18,10 @@ from e2e.Tests.Errors import TestError
 def PublishTransactionTest(
   rpc: RPC
 ) -> None:
-  privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-  pubKey: ed25519.VerifyingKey = privKey.get_verifying_key()
+  privKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
+  pubKey: bytes = privKey.get_verifying_key()
 
-  sentToKey: ed25519.SigningKey = ed25519.SigningKey(b'\1' * 32)
+  sentToKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\1' * 32)
 
   sendFilter: SpamFilter = SpamFilter(3)
   dataFilter: SpamFilter = SpamFilter(5)
@@ -38,12 +38,12 @@ def PublishTransactionTest(
 
   send: Send = Send(
     [(claim.hash, 0)],
-    [(sentToKey.get_verifying_key().to_bytes(), claim.amount)]
+    [(sentToKey.get_verifying_key(), claim.amount)]
   )
   send.sign(privKey)
   send.beat(sendFilter)
 
-  data: Data = Data(bytes(32), pubKey.to_bytes())
+  data: Data = Data(bytes(32), pubKey)
   data.sign(privKey)
   data.beat(dataFilter)
 
@@ -93,11 +93,11 @@ def PublishTransactionTest(
     verifyTransaction(rpc, data)
 
     #Create a new Send/Data and publish them without work.
-    sendSentWithoutWork: Send = Send([(send.hash, 0)], [(pubKey.to_bytes(), claim.amount)])
+    sendSentWithoutWork: Send = Send([(send.hash, 0)], [(pubKey, claim.amount)])
     sendSentWithoutWork.sign(sentToKey)
     sendSentWithoutWork.beat(sendFilter)
 
-    dataSentWithoutWork: Data = Data(bytes(32), sentToKey.get_verifying_key().to_bytes())
+    dataSentWithoutWork: Data = Data(bytes(32), sentToKey.get_verifying_key())
     dataSentWithoutWork.sign(sentToKey)
     dataSentWithoutWork.beat(dataFilter)
 
@@ -186,12 +186,17 @@ def PublishTransactionTest(
         raise TestError("publishTransaction didn't error when passed a non-parsable Send (a Data).")
 
     #Invalid Data (signature).
-    invalidData: Data = Data(bytes(32), sentToKey.get_verifying_key().to_bytes())
+    invalidData: Data = Data(bytes(32), sentToKey.get_verifying_key())
+    invalidData.sign(sentToKey)
+    sig: bytes = invalidData.signature
+
     newData: bytearray = bytearray(invalidData.data)
     newData[-1] = newData[-1] ^ 1
-    invalidData.data = bytes(newData)
-    invalidData.sign(sentToKey)
+    #Reconstruct to rehash.
+    invalidData = Data(bytes(32), bytes(newData))
+    invalidData.signature = sig
     invalidData.beat(dataFilter)
+
     try:
       rpc.call(
         "transactions",

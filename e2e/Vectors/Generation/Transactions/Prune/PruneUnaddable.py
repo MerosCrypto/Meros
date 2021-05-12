@@ -1,7 +1,7 @@
 from typing import List
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
 
 from e2e.Classes.Transactions.Data import Data
@@ -14,13 +14,13 @@ from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 
 dataFilter: SpamFilter = SpamFilter(5)
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 proto: PrototypeChain = PrototypeChain(1, keepUnlocked=False)
 
 #Create the original Data.
-datas: List[Data] = [Data(bytes(32), edPubKey.to_bytes())]
+datas: List[Data] = [Data(bytes(32), edPubKey)]
 datas[0].sign(edPrivKey)
 datas[0].beat(dataFilter)
 

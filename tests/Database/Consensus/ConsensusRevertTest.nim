@@ -69,8 +69,8 @@ suite "ConsensusRevert":
 
       #Copy of Transactions.
       txs: Table[Hash[256], Transaction] = initTable[Hash[256], Transaction]()
-      utxos: Table[EdPublicKey, seq[FundedInput]] = initTable[EdPublicKey, seq[FundedInput]]()
-      dataTips: Table[EdPublicKey, Hash[256]] = initTable[EdPublicKey, Hash[256]]()
+      utxos: Table[RistrettoPublicKey, seq[FundedInput]] = initTable[RistrettoPublicKey, seq[FundedInput]]()
+      dataTips: Table[RistrettoPublicKey, Hash[256]] = initTable[RistrettoPublicKey, Hash[256]]()
 
       #Copy of verifications.
       verifications: Table[Hash[256], Table[Hash[256], HashSet[uint16]]] = initTable[Hash[256], Table[Hash[256], HashSet[uint16]]]()
@@ -134,7 +134,7 @@ suite "ConsensusRevert":
           for rawInput in send.inputs:
             var
               input: FundedInput = cast[FundedInput](rawInput)
-              key: EdPublicKey = cast[SendOutput](txs[input.hash].outputs[input.nonce]).key
+              key: RistrettoPublicKey = cast[SendOutput](txs[input.hash].outputs[input.nonce]).key
             for i in 0 ..< utxos[key].len:
               if (utxos[key][i].hash == input.hash) and (utxos[key][i].nonce == input.nonce):
                 utxos[key].del(i)

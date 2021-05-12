@@ -3,8 +3,9 @@
 from typing import Dict, Any
 import json
 
-import ed25519
 from bech32 import convertbits, bech32_encode
+
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Classes.Transactions.Transactions import Send, Transactions
 
@@ -17,8 +18,8 @@ from e2e.Tests.Errors import TestError
 def TGUBasicTest(
   rpc: RPC
 ) -> None:
-  recipient: ed25519.SigningKey = ed25519.SigningKey(b'\1' * 32)
-  recipientPub: bytes = recipient.get_verifying_key().to_bytes()
+  recipient: Ristretto.SigningKey = Ristretto.SigningKey(b'\1' * 32)
+  recipientPub: bytes = recipient.get_verifying_key()
   address: str = bech32_encode("mr", convertbits(bytes([0]) + recipientPub, 8, 5))
 
   vectors: Dict[str, Any]

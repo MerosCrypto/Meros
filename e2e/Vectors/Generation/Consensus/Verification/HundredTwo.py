@@ -1,6 +1,6 @@
 import json
 
-import ed25519
+import e2e.Libs.Ristretto.Ristretto as Ristretto
 
 from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
@@ -13,8 +13,8 @@ from e2e.Vectors.Generation.PrototypeChain import PrototypeChain
 transactions: Transactions = Transactions()
 spamFilter: SpamFilter = SpamFilter(5)
 
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+edPrivKey: Ristretto.SigningKey = Ristretto.SigningKey(b'\0' * 32)
+edPubKey: bytes = edPrivKey.get_verifying_key()
 
 proto: PrototypeChain = PrototypeChain(5)
 for _ in range(80):
@@ -23,7 +23,7 @@ for _ in range(80):
 for _ in range(14):
   proto.add(2)
 
-data: Data = Data(bytes(32), edPubKey.to_bytes())
+data: Data = Data(bytes(32), edPubKey)
 data.sign(edPrivKey)
 data.beat(spamFilter)
 transactions.add(data)

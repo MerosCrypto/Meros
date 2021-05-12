@@ -81,7 +81,7 @@ proc `%`(
       except KeyError as e:
         panic("Couldn't add a Send's inputs' nonces/outputs' keys to its inputs/outputs: " & e.msg)
 
-      result["signature"] = % $send.signature
+      result["signature"] = % cast[string](send.signature).toHex()
       result["proof"] = % send.proof
 
     of Data as data:
@@ -89,7 +89,7 @@ proc `%`(
 
       result["data"] = % data.data.toHex()
 
-      result["signature"] = % $data.signature
+      result["signature"] = % cast[string](data.signature).toHex()
       result["proof"] = % data.proof
 
 proc module*(
@@ -115,7 +115,7 @@ proc module*(
         var utxos: seq[FundedInput]
         case address.addyType:
           of AddressType.PublicKey:
-            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](address.data)))
+            utxos = functions.transactions.getUTXOs(newRistrettoPublicKey(cast[string](address.data)))
 
         result = % []
         for utxo in utxos:
@@ -131,7 +131,7 @@ proc module*(
         var utxos: seq[FundedInput]
         case address.addyType:
           of AddressType.PublicKey:
-            utxos = functions.transactions.getUTXOs(newEdPublicKey(cast[string](address.data)))
+            utxos = functions.transactions.getUTXOs(newRistrettoPublicKey(cast[string](address.data)))
 
         var balance: uint64 = 0
         for utxo in utxos:
@@ -148,17 +148,14 @@ proc module*(
         JSONRPCError
       ], async.} =
         try:
-          var difficulty: uint32
           case type_JSON:
             of "Claim":
               functions.transactions.addClaim(parseClaim(transaction))
             of "Send":
-              difficulty = functions.consensus.getSendDifficulty()
               await functions.transactions.addSend(
-                parseSend(transaction, difficulty)
+                parseSend(transaction, functions.consensus.getSendDifficulty())
               )
             of "Data":
-              difficulty = functions.consensus.getDataDifficulty()
               await functions.transactions.addData(
                 parseData(transaction, functions.consensus.getDataDifficulty())
               )
