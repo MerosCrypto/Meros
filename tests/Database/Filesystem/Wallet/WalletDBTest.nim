@@ -66,7 +66,7 @@ suite "WalletDB":
       #Close the reloaded DB.
       w2.close()
 
-  midFuzzTest "Reloaded WalletDB/detects Verifying Competing.":
+  lowFuzzTest "Reloaded WalletDB/detects Verifying Competing.":
     #Fill it with 250 Transactions.
     for t in 0 ..< 250:
       tx = Transaction()

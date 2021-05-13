@@ -4,7 +4,7 @@ export suite, suiteStarted, TestStatus, TestResult, testStarted, checkpoint, che
 
 import ../src/lib/[Util, Hash]
 
-const TEST_FUZZING_LOW  {.intdefine.}: int = 1
+const TEST_FUZZING_LOW  {.intdefine.}: int = 2
 const TEST_FUZZING_MID  {.intdefine.}: int = 4
 const TEST_FUZZING_HIGH {.intdefine.}: int = 8
 
