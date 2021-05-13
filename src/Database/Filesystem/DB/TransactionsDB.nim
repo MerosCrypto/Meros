@@ -425,10 +425,12 @@ proc prune*(
     except DBReadError as e:
       panic("Couldn't get the spenders of a spent input: " & e.msg)
 
-    for h in countup(0, spenders.len - 1, 32):
+    var h: int = 0
+    while h < spenders.len:
       if spenders[h ..< h + 32] == hashStr:
         spenders = spenders[0 ..< h] & spenders[h + 32 ..< spenders.len]
-        break
+      else:
+        h += 32
 
     db.put(OUTPUT_SPENDERS(tx.inputs[i]), spenders)
 

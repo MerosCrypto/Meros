@@ -1,5 +1,4 @@
 import ../../../lib/[Errors, Hash]
-import ../../../Wallet/Wallet
 
 import ../../../Database/Transactions/objects/DataObj
 

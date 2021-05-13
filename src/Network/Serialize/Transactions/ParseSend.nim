@@ -23,8 +23,8 @@ proc parseSend*(
     BYTE_LEN +
     (sendStr[0].fromBinary() * (HASH_LEN + BYTE_LEN)) +
     BYTE_LEN +
-    (sendStr[outputLenPos].fromBinary() * (ED_PUBLIC_KEY_LEN + MEROS_LEN)) +
-    ED_SIGNATURE_LEN +
+    (sendStr[outputLenPos].fromBinary() * (RISTRETTO_PUBLIC_KEY_LEN + MEROS_LEN)) +
+    RISTRETTO_SIGNAURE_LEN +
     INT_LEN
   ):
     raise newLoggedException(ValueError, "parseSend handed the wrong amount of data.")
@@ -34,8 +34,8 @@ proc parseSend*(
     BYTE_LEN,
     sendStr[0].fromBinary() * (HASH_LEN + BYTE_LEN),
     BYTE_LEN,
-    sendStr[outputLenPos].fromBinary() * (ED_PUBLIC_KEY_LEN + MEROS_LEN),
-    ED_SIGNATURE_LEN,
+    sendStr[outputLenPos].fromBinary() * (RISTRETTO_PUBLIC_KEY_LEN + MEROS_LEN),
+    RISTRETTO_SIGNAURE_LEN,
     INT_LEN
   )
 
@@ -61,7 +61,7 @@ proc parseSend*(
 
   #Verify the Send isn't spam.
   var
-    hash: Hash[256] = Blake256("\2" & sendStr[0 ..< sendStr.len - (ED_SIGNATURE_LEN + INT_LEN)])
+    hash: Hash[256] = Blake256("\2" & sendStr[0 ..< sendStr.len - (RISTRETTO_SIGNAURE_LEN + INT_LEN)])
     argon: Hash[256] = Argon(hash.serialize(), sendSeq[5].pad(8))
     factor: uint32 = result.getDifficultyFactor()
   if argon.overflows(factor * diff):

@@ -16,7 +16,7 @@ proc parseClaim*(
   if claimStr.len != (
     BYTE_LEN +
     (int(claimStr[0]) * (HASH_LEN + BYTE_LEN)) +
-    ED_PUBLIC_KEY_LEN +
+    RISTRETTO_PUBLIC_KEY_LEN +
     BLS_SIGNATURE_LEN
   ):
     raise newLoggedException(ValueError, "parseClaim handed the wrong amount of data.")
@@ -25,7 +25,7 @@ proc parseClaim*(
   var claimSeq: seq[string] = claimStr.deserialize(
     BYTE_LEN,
     int(claimStr[0]) * (HASH_LEN + BYTE_LEN),
-    ED_PUBLIC_KEY_LEN,
+    RISTRETTO_PUBLIC_KEY_LEN,
     BLS_SIGNATURE_LEN
   )
 

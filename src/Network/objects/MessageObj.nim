@@ -63,9 +63,9 @@ const
     MessageType.Busy:           @[BYTE_LEN, -PEER_LEN],
     MessageType.BlockchainTail: @[HASH_LEN],
 
-    MessageType.Claim: @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), ED_PUBLIC_KEY_LEN + BLS_SIGNATURE_LEN],
-    MessageType.Send:  @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), BYTE_LEN, -(ED_PUBLIC_KEY_LEN + MEROS_LEN), ED_SIGNATURE_LEN + INT_LEN],
-    MessageType.Data:  @[HASH_LEN, BYTE_LEN, -BYTE_LEN, BYTE_LEN, ED_SIGNATURE_LEN + INT_LEN],
+    MessageType.Claim: @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), RISTRETTO_PUBLIC_KEY_LEN + BLS_SIGNATURE_LEN],
+    MessageType.Send:  @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), BYTE_LEN, -(RISTRETTO_PUBLIC_KEY_LEN + MEROS_LEN), RISTRETTO_SIGNAURE_LEN + INT_LEN],
+    MessageType.Data:  @[HASH_LEN, BYTE_LEN, -BYTE_LEN, BYTE_LEN, RISTRETTO_SIGNAURE_LEN + INT_LEN],
 
     MessageType.SignedVerification:   @[NICKNAME_LEN + HASH_LEN + BLS_SIGNATURE_LEN],
     MessageType.SignedSendDifficulty: @[NICKNAME_LEN + INT_LEN + DIFFICULTY_LEN + BLS_SIGNATURE_LEN],

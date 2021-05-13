@@ -1,10 +1,15 @@
 import ../../../lib/[Errors, Hash]
-import ../../../Wallet/Wallet
 
 import TransactionObj
 export TransactionObj
 
 type Send* = ref object of Transaction
+  #This used to be an array and would always have 64 bytes.
+  #With the move to a seq[byte] from Ristretto, this premise changes, and this actually caused a test to fail as it didn't set a signature.
+  #We could have the below constructor set a length of 64 to regain this behavior, yet then we couldn't detect if it was already signed.
+  #That said, we already don't do that as we have a quality signature flow which didn't need to.
+  #No other tests/code made any assumption, leaving their behavior unchanged.
+  #Because of all of this, this behavior change has solely been documented for now.
   signature*: seq[byte]
   proof*: uint32
   argon*: Hash[256]

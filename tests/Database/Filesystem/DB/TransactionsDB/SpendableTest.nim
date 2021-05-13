@@ -75,6 +75,7 @@ suite "Spendable":
         )
 
       send = newSend(@[], outputs)
+      send.signature = newSeq[byte](64)
       db.save(send)
 
       if rand(2) != 0:
@@ -104,6 +105,7 @@ suite "Spendable":
         if inputs.len != 0:
           var outputKey: RistrettoPublicKey = wallets[rand(10 - 1)].publicKey
           send = newSend(inputs, newSendOutput(outputKey, 0))
+          send.signature = newSeq[byte](64)
           db.save(send)
           sends.add(send)
           spenders[send.hash.serialize() & char(0)] = outputKey

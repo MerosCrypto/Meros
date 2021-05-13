@@ -20,7 +20,7 @@ proc parseData*(
     HASH_LEN +
     BYTE_LEN +
     (int(dataStr[HASH_LEN]) + 1) +
-    ED_SIGNATURE_LEN +
+    RISTRETTO_SIGNAURE_LEN +
     INT_LEN
   ):
     raise newLoggedException(ValueError, "parseData handed the wrong amount of data.")
@@ -30,7 +30,7 @@ proc parseData*(
     HASH_LEN,
     BYTE_LEN,
     int(dataStr[HASH_LEN]) + 1,
-    ED_SIGNATURE_LEN,
+    RISTRETTO_SIGNAURE_LEN,
     INT_LEN
   )
 
