@@ -131,10 +131,4 @@ task test, "Run all tests.":
 
 task ci, "Run CI tasks.":
   nimbleExec "clean"
-
-  mkDir testWorkingDir
-  cpFile(thisDir() / "tests" / "ci.cfg", testWorkingDir / "nim.cfg")
-  defer: rmFile testWorkingDir / "nim.cfg"
-  nimbleExec "unit"
-
-  nimbleExec "e2e"
+  nimbleExec "test"
