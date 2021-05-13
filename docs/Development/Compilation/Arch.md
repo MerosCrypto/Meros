@@ -7,6 +7,7 @@
 - CMake _(for RandomX)_
 - autoconf / automake / libtool _(for Minisketch)_
 - GTK+ 3 and WebKit _(for the GUI)_
+- Rust
 - choosenim
 - Nim 1.2.12
 
@@ -14,6 +15,7 @@ To install every prerequisite, run:
 
 ```
 sudo pacman -S curl git gcc libtool autoconf automake pkgconf make cmake webkit2gtk
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 1.2.12
 ```

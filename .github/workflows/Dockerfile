@@ -1,4 +1,4 @@
-FROM ubuntu:devel AS builder
+FROM rust:1.52.1 as builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
