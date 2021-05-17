@@ -30,13 +30,5 @@ proc mine*(
   data: Data,
   baseDifficulty: uint32
 ) {.forceCheck: [].} =
-  var
-    difficulty: uint32 = data.getDifficultyFactor() * baseDifficulty
-    proof: uint32 = 0
-    hash: Hash[256] = Argon(data.hash.serialize(), proof.toBinary(SALT_LEN))
-  while hash.overflows(difficulty):
-    inc(proof)
-    hash = Argon(data.hash.serialize(), proof.toBinary(SALT_LEN))
-
-  data.proof = proof
-  data.argon = hash
+  while data.overflows(baseDifficulty):
+    inc(data.proof)

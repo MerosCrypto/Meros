@@ -58,16 +58,10 @@ proc parseSend*(
 
   #Create the Send.
   result = newSendObj(inputs, outputs)
-
-  #Verify the Send isn't spam.
-  var
-    hash: Hash[256] = Blake256("\2" & sendStr[0 ..< sendStr.len - (RISTRETTO_SIGNAURE_LEN + INT_LEN)])
-    argon: Hash[256] = Argon(hash.serialize(), sendSeq[5].pad(8))
-    factor: uint32 = result.getDifficultyFactor()
-  if argon.overflows(factor * diff):
-    raise newSpam("Send didn't beat the difficulty.", hash, argon, factor * diff)
-
-  result.hash = hash
+  result.hash = Blake256("\2" & sendStr[0 ..< sendStr.len - (RISTRETTO_SIGNAURE_LEN + INT_LEN)])
   result.signature = cast[seq[byte]](sendSeq[4])
   result.proof = uint32(sendSeq[5].fromBinary())
-  result.argon = argon
+
+  #Verify the Send isn't spam.
+  if result.overflows(diff):
+    raise newSpam("Send didn't beat the difficulty.", result.hash, result.getDifficultyFactor() * diff)

@@ -1,4 +1,4 @@
-import ../../../lib/[Errors, Hash]
+import ../../../lib/[Errors, Util, Hash]
 
 import TransactionObj
 export TransactionObj
@@ -29,3 +29,16 @@ proc getDifficultyFactor*(
   data: Data
 ): uint32 {.inline, forceCheck: [].} =
   (uint32(101) + uint32(data.data.len)) div uint32(102)
+
+#Check if the Data's argon hash overflows against the specified difficulty.
+proc overflows*(
+  data: Data,
+  baseDifficulty: uint32
+): bool {.inline, forceCheck: [].} =
+  if baseDifficulty == 0:
+    return false
+
+  result = Argon(
+    data.hash.serialize(),
+    data.proof.toBinary(8)
+  ).overflows(data.getDifficultyFactor() * baseDifficulty)

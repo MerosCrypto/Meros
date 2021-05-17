@@ -45,8 +45,6 @@ type
   Spam* = object of CatchableError #Used when a Send/Data doesn't beat the difficulty.
     #Hash of the Transaction.
     hash*: Hash[256]
-    #Argon hash.
-    argon*: Hash[256]
     #Difficulty the argon hash was multiplied by.
     difficulty*: uint32
 

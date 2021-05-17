@@ -176,11 +176,12 @@ proc mainConsensus(
             of Claim as claim:
               functions.transactions.addClaim(claim)
             of Send as send:
-              if send.argon.overflows(send.getDifficultyFactor() * functions.consensus.getSendDifficulty()):
+              #Manually check for spam since synced TXs bypass this check, assuming they're needed for operation.
+              if send.overflows(functions.consensus.getSendDifficulty()):
                 raise newLoggedException(ValueError, "Send doesn't pass the spam check.")
               await functions.transactions.addSend(send)
             of Data as data:
-              if data.argon.overflows(data.getDifficultyFactor() * functions.consensus.getDataDifficulty()):
+              if data.overflows(functions.consensus.getDataDifficulty()):
                 raise newLoggedException(ValueError, "Data doesn't pass the spam check.")
               await functions.transactions.addData(data)
         except ValueError as e:

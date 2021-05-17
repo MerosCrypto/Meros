@@ -1,4 +1,4 @@
-import ../../../lib/[Errors, Hash]
+import ../../../lib/[Errors, Util, Hash]
 
 import TransactionObj
 export TransactionObj
@@ -32,3 +32,16 @@ proc getDifficultyFactor*(
     (uint32(33) * uint32(send.inputs.len)) +
     (uint32(40) * uint32(send.outputs.len))
   ) div uint32(143)
+
+#Check if the Send's argon hash overflows against the specified difficulty.
+proc overflows*(
+  send: Send,
+  baseDifficulty: uint32
+): bool {.forceCheck: [].} =
+  if baseDifficulty == 0:
+    return false
+
+  result = Argon(
+    send.hash.serialize(),
+    send.proof.toBinary(8)
+  ).overflows(send.getDifficultyFactor() * baseDifficulty)

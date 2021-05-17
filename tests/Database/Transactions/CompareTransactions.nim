@@ -54,7 +54,6 @@ proc compare*(
         tx2 of Send
         send.signature == cast[Send](tx2).signature
         send.proof == cast[Send](tx2).proof
-        send.argon == cast[Send](tx2).argon
       for o in 0 ..< tx1.outputs.len:
         compare(cast[SendOutput](tx1.outputs[o]), cast[SendOutput](tx2.outputs[o]))
 
@@ -64,7 +63,6 @@ proc compare*(
         data.data == cast[Data](tx2).data
         data.signature == cast[Data](tx2).signature
         data.proof == cast[Data](tx2).proof
-        data.argon == cast[Data](tx2).argon
 
     else:
       check false

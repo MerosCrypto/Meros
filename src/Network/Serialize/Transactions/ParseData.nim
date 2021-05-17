@@ -35,16 +35,10 @@ proc parseData*(
   )
 
   result = newDataObj(dataSeq[0].toHash[:256](), dataSeq[2])
-
-  #Verify the Data isn't spam.
-  var
-    hash: Hash[256] = Blake256("\3" & dataSeq[0] & dataSeq[2])
-    argon: Hash[256] = Argon(hash.serialize(), dataSeq[4].pad(8))
-    factor: uint32 = result.getDifficultyFactor()
-  if argon.overflows(factor * diff):
-    raise newSpam("Data didn't beat the difficulty.", hash, argon, factor * diff)
-
-  result.hash = hash
+  result.hash = Blake256("\3" & dataSeq[0] & dataSeq[2])
   result.signature = cast[seq[byte]](dataSeq[3])
   result.proof = uint32(dataSeq[4].fromBinary())
-  result.argon = argon
+
+  #Verify the Data isn't spam.
+  if result.overflows(diff):
+    raise newSpam("Data didn't beat the difficulty.", result.hash, result.getDifficultyFactor() * diff)
