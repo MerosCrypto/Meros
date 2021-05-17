@@ -1,5 +1,6 @@
 #Necessary flags.
 switch("threads", "on")
+switch("passL", "-z muldefs") #Needed due to usage of mc_ristretto AND mc_wry.
 switch("experimental", "caseStmtMacros")
 switch("define", "SIGN_PREFIX=MEROS")
 switch("define", "DST=MEROS-V00-CS01-with-BLS12381G1_XMD:SHA-256_SSWU_RO_")

@@ -1,49 +1,37 @@
-import uri
 import json
 
 import ../../lib/Errors
 
 import objects/GUIObj
-export GUI, newGUI, call
 
-import Bindings/Bindings
+var gui: GUI
+proc guiRPC(
+  req: RpcRequest
+): cstring {.cdecl.} =
+  case $req.rpc_method:
+    #Used to give this thread a chance to execute Nim code.
+    of "gui_poll":
+      #Get a message if one exists.
+      var msg: tuple[dataAvailable: bool, msg: string]
+      try:
+        msg = gui.fromMain[].tryRecv()
+      except ValueError as e:
+        panic("Couldn't try to receive a message from main due to a ValueError: " & e.msg)
+      except Exception as e:
+        panic("Couldn't try to receive a message from main due to a Exception: " & e.msg)
 
-#Create a poll which enables Meros to handle thread communications despite WebView capturing the thread.
-proc newPoll(
-  gui: var GUI,
-  fromMain: ptr Channel[string]
-): CarriedCallback {.forceCheck: [].} =
-  result.carry = Carry(
-    fromMain: fromMain,
-    gui: addr gui
-  )
-
-  #Poll. Called by WebView 10 times a second.
-  result.fn = proc (
-    id: cstring,
-    jsonArgs: cstring,
-    carriedArgs: pointer
-  ) {.cdecl, forceCheck: [].} =
-    let carrying: Carry = cast[ptr Carry](carriedArgs)[]
-
-    #Get a message if one exists.
-    var msg: tuple[dataAvailable: bool, msg: string]
-    try:
-      msg = carrying.fromMain[].tryRecv()
-    except ValueError as e:
-      panic("Couldn't try to receive a message from main due to a ValueError: " & e.msg)
-    except Exception as e:
-      panic("Couldn't try to receive a message from main due to a Exception: " & e.msg)
-
-    #If there is a message, switch on it.
-    if msg.dataAvailable:
-      case msg.msg:
-        of "quit":
-          carrying.gui.webview.terminate()
-        else:
-          panic("Received an unknown message to the WebView thread: " & msg.msg)
-
-    carrying.gui.webview.returnProc(id, 0, "")
+      #If there is a message, switch on it.
+      if msg.dataAvailable:
+        case msg.msg:
+          of "quit":
+            gui.webview.terminate()
+          else:
+            panic("Received an unknown message to the WebView thread: " & msg.msg)
+    else:
+      var params: JSONNode = parseJSON($req.params)
+      if params.len == 0:
+        params.add(%* {})
+      return $gui.call($req.rpc_method, params[0])
 
 proc newGUI*(
   fromMain: ptr Channel[string],
@@ -52,28 +40,16 @@ proc newGUI*(
   width: int,
   height: int
 ) {.forceCheck: [].} =
-  var gui: GUI
+  #Create the GUI.
   try:
-    gui = newGUI(toRPC, toGUI, newWebView(not defined(merosRelease)))
-    if gui.webview.isNil:
-      echo "This system doesn't support running Meros with its GUI. Please start Meros with the `--no-gui` flag to continue."
-      quit(1)
-    gui.webview.setTitle("Meros")
-    gui.webview.setSize(cint(width), cint(height), SizeHint.None)
+    gui = newGUI(fromMain, toRPC, toGUI, newWebView("Meros", "data:text/html,\r\n" & DATA, guiRPC))
   except Exception as e:
     panic("Couldn't create the WebView: " & e.msg)
 
-  #Load the main page.
-  try:
-    gui.webview.navigate("data:text/html," & encodeURL(DATA));
-  except ValueError as e:
-    panic("Couldn't format/evaluate the JS to load the main page: " & e.msg)
+  #Make sure it's valid.
+  if not gui.webview.valid:
+    echo "This system doesn't support running Meros with its GUI. Please start Meros with the `--no-gui` flag to continue."
+    quit(1)
 
-  #Add the Bindings.
-  gui.createBindings(newPoll(gui, fromMain))
-
-  #Start the loop.
-  gui.webview.eval("setInterval(GUI_poll, 5000)")
-
-  #Run the GUI.
+  #Run it.
   gui.webview.run()

@@ -1,37 +1,27 @@
 import json
 
-import mc_webview
-export mc_webview
+import mc_wry
+export mc_wry
 
 import ../../../lib/Errors
 
 #Constants of the HTML.
 const DATA*: string = staticRead("../static/Data.html")
 
-type
-  GUI* = object
-    toRPC: ptr Channel[JSONNode]
-    toGUI: ptr Channel[JSONNode]
-    webview*: WebView
-
-  Carry* = object
-    fromMain*: ptr Channel[string]
-    gui*: ptr GUI
-
-  CarriedCallback* = object
-    fn*: proc (
-      id: cstring,
-      jsonArgs: cstring,
-      carriedArgs: pointer
-    ) {.cdecl, raises: [].}
-    carry*: Carry
+type GUI* = object
+  fromMain*: ptr Channel[string]
+  toRPC: ptr Channel[JSONNode]
+  toGUI: ptr Channel[JSONNode]
+  webview*: WebView
 
 func newGUI*(
+  fromMain: ptr Channel[string],
   toRPC: ptr Channel[JSONNode],
   toGUI: ptr Channel[JSONNode],
   webview: WebView
 ): GUI {.inline, forceCheck: [].} =
   GUI(
+    fromMain: fromMain,
     toRPC: toRPC,
     toGUI: toGUI,
     webview: webview
@@ -40,16 +30,15 @@ func newGUI*(
 #RPC helper.
 proc call*(
   gui: GUI,
-  module: string,
   methodStr: string,
-  args: JSONNode = %* {}
+  args: JSONNode
 ): JSONNode {.cdecl, forceCheck: [].} =
   #Send the call.
   try:
     gui.toRPC[].send(%* {
       "jsonrpc": "2.0",
       "id": 0,
-      "method": module & "_" & methodStr,
+      "method": methodStr,
       "params": args
     })
   except DeadThreadError as e:
@@ -59,8 +48,8 @@ proc call*(
 
   #If this is quit, don't bother trying to receive the result.
   #It should send a proper response, but we don't need it and recv is blocking.
-  if (module == "system") and (methodStr == "quit"):
-    return
+  if methodStr == "system_quit":
+    return %* {}
 
   #Receive the result.
   try:
