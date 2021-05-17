@@ -14,7 +14,7 @@
 To install every prerequisite, run:
 
 ```
-sudo apt-get install curl git gcc g++ make cmake autoconf automake libtool gtk+-3.0 at-spi2-core webkit2gtk-4.0
+sudo apt-get install curl git gcc g++ clang make cmake autoconf automake libtool libwebkit2gtk-4.0-dev libgtksourceview-3.0-dev libappindicator3-dev
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 1.2.12
