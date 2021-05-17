@@ -27,6 +27,7 @@ proc guiRPC(
             gui.webview.terminate()
           else:
             panic("Received an unknown message to the WebView thread: " & msg.msg)
+      return "{}"
     else:
       var params: JSONNode = parseJSON($req.params)
       if params.len == 0:

@@ -8,8 +8,9 @@
       } else {
         document.getElementById("hash").innerHTML = dataRes["result"];
       }
-    }
-    setInterval(() => rpc.call("gui_poll"), 200);
+    };
+
+    setInterval(() => rpc.call("gui_poll"), 1000);
   </script>
 
   <body>
