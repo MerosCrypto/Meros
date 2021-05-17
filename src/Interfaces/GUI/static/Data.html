@@ -1,19 +1,21 @@
 <html>
   <script>
     window.publishData = async function() {
-      let data = document.getElementById('data').value || "";
-      let dataRes = await RPC_call('personal', 'data', {data});
-      if (dataRes['error']) {
-        alert('Error creating the data: ' + dataRes['error']['message']);
+      let data = document.getElementById("data").value || "";
+      let dataRes = await rpc.call("personal_data", {data});
+      if (dataRes["error"]) {
+        alert("Error creating the data: " + dataRes["error"]["message"]);
       } else {
-        document.getElementById('hash').innerHTML = dataRes['result'];
+        document.getElementById("hash").innerHTML = dataRes["result"];
       }
-    }
+    };
+
+    setInterval(() => rpc.call("gui_poll"), 1000);
   </script>
 
   <body>
     <h1>Data</h1>
-    <button onclick="GUI_quit()">Quit</button>
+    <button onclick="rpc.call('system_quit')">Quit</button>
     <hr>
 
     Data: <input type="text" id="data"></input>
