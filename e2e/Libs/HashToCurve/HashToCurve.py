@@ -4,7 +4,7 @@
 #By keeping this on Milagro, while Meros moves to blst, we increase separation, and therefore accuracy and security.
 #This is not constant time or further tested by Sage, instead using test vectors and comparison against blst.
 
-from typing import Type, Callable, List, Any
+from typing import Type, Callable, List
 from abc import ABC, abstractmethod
 
 from e2e.Libs.HashToCurve.Elements import FieldElement, GroupElement
@@ -76,7 +76,7 @@ class SuiteParameters(
   def hashToCurve(
     self,
     msg: bytes
-  ) -> Any:
+  ) -> "GroupElement":
     #Steps 1-3.
     #pylint: disable=invalid-name
     Qs: List[GroupElement] = [self.curve.mapToCurve(self.curve.FieldType(u)) for u in self.hashToField(msg, 2)]

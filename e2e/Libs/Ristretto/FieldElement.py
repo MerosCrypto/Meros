@@ -28,20 +28,20 @@ class FieldElement:
 
   def __add__(
     self,
-    other: 'FieldElement'
-  ) -> 'FieldElement':
+    other: "FieldElement"
+  ) -> "FieldElement":
     return FieldElement(self.underlying + other.underlying)
 
   def __mul__(
     self,
-    other: 'FieldElement'
-  ) -> 'FieldElement':
+    other: "FieldElement"
+  ) -> "FieldElement":
     return FieldElement(self.underlying * other.underlying)
 
   def __sub__(
     self,
-    other: 'FieldElement'
-  ) -> 'FieldElement':
+    other: "FieldElement"
+  ) -> "FieldElement":
     return FieldElement(self.underlying - other.underlying)
 
   def isNegative(
@@ -51,13 +51,13 @@ class FieldElement:
 
   def negate(
     self
-  ) -> 'FieldElement':
+  ) -> "FieldElement":
     return FieldElement(ZERO - self.underlying)
 
   def __floordiv__(
     self,
     other: mpz
-  ) -> 'FieldElement':
+  ) -> "FieldElement":
     return FieldElement(self.underlying // other)
 
   def __mod__(
@@ -69,24 +69,24 @@ class FieldElement:
   def __pow__(
     self,
     other: mpz
-  ) -> 'FieldElement':
+  ) -> "FieldElement":
     return FieldElement(gmpy2.powmod(self.underlying, other, q))
 
   def __eq__(
     self,
-    other: 'FieldElement'
-  ) -> 'bool':
+    other: "FieldElement"
+  ) -> bool:
     return self.underlying == other.underlying
 
   def inv(
     self
-  ) -> 'FieldElement':
+  ) -> "FieldElement":
     return self ** (q - TWO)
 
   #Used to generate the Ed25519/Ristretto basepoint.
   def recoverX(
     self
-  ) -> 'FieldElement':
+  ) -> "FieldElement":
     #Uses d which is defined below.
     #pylint: disable=invalid-name
     I: FieldElement = FieldElement(TWO) ** ((q - ONE) // FOUR)

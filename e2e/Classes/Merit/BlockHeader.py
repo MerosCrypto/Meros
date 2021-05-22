@@ -168,7 +168,7 @@ class BlockHeader:
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "BlockHeader":
     return BlockHeader(
       json["version"],
       bytes.fromhex(json["last"]),

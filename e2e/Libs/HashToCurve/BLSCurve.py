@@ -53,7 +53,7 @@ class BLS12_381_F1(
   def __add__(
     self,
     other: Any
-  ) -> Any:
+  ) -> "BLS12_381_F1":
     result: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_add(byref(result), byref(self.value), byref(BLS12_381_F1(other).value))
     return BLS12_381_F1(result)
@@ -61,7 +61,7 @@ class BLS12_381_F1(
   def __sub__(
     self,
     other: Any
-  ) -> Any:
+  ) -> "BLS12_381_F1":
     result: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_sub(byref(result), byref(self.value), byref(BLS12_381_F1(other).value))
     return BLS12_381_F1(result)
@@ -69,7 +69,7 @@ class BLS12_381_F1(
   def __mul__(
     self,
     other: Any
-  ) -> Any:
+  ) -> "BLS12_381_F1":
     result: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_mul(byref(result), byref(self.value), byref(BLS12_381_F1(other).value))
     return BLS12_381_F1(result)
@@ -78,13 +78,13 @@ class BLS12_381_F1(
     self,
     other: FieldElement,
     q: int
-  ) -> Any:
+  ) -> "BLS12_381_F1":
     return self * (other ** (q - 2))
 
   def __pow__(
     self,
     exp: int
-  ) -> Any:
+  ) -> "BLS12_381_F1":
     result: BLS12_381_F1 = BLS12_381_F1()
     MilagroCurve.FP_BLS381_pow(byref(result.value), byref(self.value), BLS12_381_F1(exp).value.toBig384())
     return result
@@ -117,31 +117,31 @@ class BLS12_381_F1(
 
   def negative(
     self
-  ) -> Any:
+  ) -> "BLS12_381_F1":
     result: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_neg(byref(result), byref(self.value))
     return BLS12_381_F1(result)
 
   def isSquare(
     self,
-    q: FieldElement
+    q: int
   ) -> bool:
     squareCheck: FieldElement = self ** ((q - 1) // 2)
     return (squareCheck == BLS12_381_F1(0)) or (squareCheck == BLS12_381_F1(1))
 
   def sqrt(
     self
-  ) -> Any:
+  ) -> "BLS12_381_F1":
     result: FP1Obj = FP1Obj()
     MilagroCurve.FP_BLS381_sqrt(byref(result), byref(self.value))
     return BLS12_381_F1(result)
 
   def serialize(
     self
-  ) -> str:
+  ) -> bytes:
     buffer: Array[c_char] = create_string_buffer(48)
     MilagroCurve.BIG_384_58_toBytes(buffer, self.value.toBig384())
-    return bytes(buffer).hex()
+    return bytes(buffer)
 
 class BLS12_381_G1(
   GroupElement
@@ -170,7 +170,7 @@ class BLS12_381_G1(
   def __add__(
     self,
     other: Any
-  ) -> GroupElement:
+  ) -> "BLS12_381_G1":
     result: G1Obj = G1Obj()
     MilagroCurve.ECP_BLS381_copy(byref(result), byref(self.value))
     MilagroCurve.ECP_BLS381_add(byref(result), byref(other.value))
@@ -178,7 +178,7 @@ class BLS12_381_G1(
 
   def clearCofactor(
     self
-  ) -> GroupElement:
+  ) -> "BLS12_381_G1":
     result: BLS12_381_G1 = BLS12_381_G1(self.value)
     MilagroCurve.ECP_BLS381_mul(byref(result.value), BLS12_381_F1(15132376222941642753).value.toBig384())
     return result
@@ -186,13 +186,13 @@ class BLS12_381_G1(
   @property
   def x(
     self
-  ) -> str:
+  ) -> bytes:
     return BLS12_381_F1(self.value.x).serialize()
 
   @property
   def y(
     self
-  ) -> str:
+  ) -> bytes:
     return BLS12_381_F1(self.value.y).serialize()
 
 ISOGENY_CONSTANTS: List[List[BLS12_381_F1]] = [
@@ -287,7 +287,7 @@ def isogenyMap(
   yNum: BLS12_381_F1 = innerMap(x, ISOGENY_CONSTANTS[2])
   yDen: BLS12_381_F1 = innerMap(x, ISOGENY_CONSTANTS[3])
 
-  return (xNum.div(xDen, q), (y * yNum).div(yDen, q))
+  return (xNum.div(xDen, q), BLS12_381_F1((y * yNum).div(yDen, q)))
 
 #pylint: disable=too-few-public-methods
 class BLS12381G1Curve(

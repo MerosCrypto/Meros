@@ -5,7 +5,7 @@ class Response:
 
   def json(
     self
-  ) -> Dict[str, Any]:
+  ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     ...
 
 def post(

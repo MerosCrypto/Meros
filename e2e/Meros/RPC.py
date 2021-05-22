@@ -40,7 +40,9 @@ class RPC:
 
     if request.status_code != 200:
       raise TestError("HTTP status isn't 200: " + str(request.status_code))
-    result: Dict[str, Any] = request.json()
+    result: Union[Dict[str, Any], List[Dict[str, Any]]] = request.json()
+    if isinstance(result, list):
+      raise NodeError("Meros returned a JSON array for a single RPC request.")
 
     if result["jsonrpc"] != "2.0":
       raise TestError("Meros didn't respond with the \"jsonrpc\" field.")

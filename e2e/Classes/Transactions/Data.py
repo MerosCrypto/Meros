@@ -75,7 +75,7 @@ class Data(
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "Data":
     return Data(
       bytes.fromhex(json["inputs"][0]["hash"]),
       bytes.fromhex(json["data"]),

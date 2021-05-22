@@ -76,7 +76,7 @@ class BlockBody:
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "BlockBody":
     packets: List[VerificationPacket] = []
     elements: List[Element] = []
 

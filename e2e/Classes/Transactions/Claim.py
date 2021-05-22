@@ -86,7 +86,7 @@ class Claim(
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "Claim":
     result: Claim = Claim(
       [],
       bytes.fromhex(json["outputs"][0]["key"]),

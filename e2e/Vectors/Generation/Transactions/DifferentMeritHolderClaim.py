@@ -10,7 +10,7 @@ from e2e.Classes.Transactions.Data import Data
 from e2e.Classes.Transactions.Transactions import Transactions
 
 from e2e.Classes.Consensus.Verification import SignedVerification
-from e2e.Classes.Consensus.VerificationPacket import SignedVerificationPacket
+from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
 from e2e.Classes.Consensus.SpamFilter import SpamFilter
 
 from e2e.Classes.Merit.BlockHeader import BlockHeader
@@ -70,11 +70,7 @@ for v in range(2):
   verifs[v].sign(v, blsPrivKeys[v])
 
 #Create the packets.
-packet: SignedVerificationPacket = SignedVerificationPacket(
-  data.hash,
-  [0, 1],
-  Signature.aggregate([verifs[0].signature, verifs[1].signature])
-)
+packet: VerificationPacket = VerificationPacket(data.hash, [0, 1])
 
 #Create a Block containing the packet.
 block = Block(
@@ -88,7 +84,7 @@ block = Block(
     0,
     merit.blockchain.blocks[-1].header.time + 1200
   ),
-  BlockBody([packet], [], packet.signature)
+  BlockBody([packet], [], Signature.aggregate([verifs[0].signature, verifs[1].signature]))
 )
 block.mine(blsPrivKeys[0], merit.blockchain.difficulty())
 merit.add(block)
@@ -125,7 +121,7 @@ for m in range(2):
   #Verify the Claim.
   sv: SignedVerification = SignedVerification(claim.hash)
   sv.sign(0, blsPrivKeys[0])
-  packet = SignedVerificationPacket(claim.hash, [0], sv.signature)
+  packet = VerificationPacket(claim.hash, [0])
 
   #Archive it.
   block = Block(
@@ -139,7 +135,7 @@ for m in range(2):
       0,
       merit.blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([packet], [], packet.signature)
+    BlockBody([packet], [], sv.signature)
   )
   block.mine(blsPrivKeys[0], merit.blockchain.difficulty())
   merits[m].add(block)

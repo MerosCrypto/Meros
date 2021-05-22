@@ -1,9 +1,6 @@
 from typing import Dict, List, Any
 
-from e2e.Libs.BLS import Signature
-
-from e2e.Classes.Consensus.Element import Element, SignedElement
-from e2e.Classes.Consensus.Verification import SignedVerification
+from e2e.Classes.Consensus.Element import Element
 
 VERIFICATION_PACKET_PREFIX: bytes = b'\1'
 
@@ -46,54 +43,5 @@ class VerificationPacket(
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "VerificationPacket":
     return VerificationPacket(bytes.fromhex(json["hash"]), json["holders"])
-
-class SignedVerificationPacket(
-  SignedElement,
-  VerificationPacket
-):
-  def __init__(
-    self,
-    txHash: bytes,
-    holders: List[int] = [],
-    signature: Signature = Signature()
-  ) -> None:
-    VerificationPacket.__init__(self, txHash, holders)
-    self.signature: Signature = signature
-
-  def add(
-    self,
-    verif: SignedVerification
-  ) -> None:
-    self.holders.append(verif.holder)
-    if self.signature.isInf():
-      self.signature = verif.signature
-    else:
-      self.signature = Signature.aggregate([self.signature, verif.signature])
-
-  def signedSerialize(
-    self
-  ) -> bytes:
-    return VerificationPacket.serialize(self) + self.signature.serialize()
-
-  def toSignedJSON(
-    self
-  ) -> Dict[str, Any]:
-    return {
-      "descendant": "VerificationPacket",
-      "holders": self.holders,
-      "hash": self.hash.hex().upper(),
-      "signed": True,
-      "signature": self.signature.serialize().hex().upper()
-    }
-
-  @staticmethod
-  def fromSignedJSON(
-    json: Dict[str, Any]
-  ) -> Any:
-    return SignedVerificationPacket(
-      bytes.fromhex(json["hash"]),
-      json["holders"],
-      Signature(bytes.fromhex(json["signature"]))
-    )

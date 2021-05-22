@@ -1,11 +1,11 @@
-from typing import List, Tuple, Union, Any
+from typing import List, Tuple, Union
 from ctypes import Array, c_char_p, c_char, create_string_buffer, byref
 from hashlib import blake2b, sha256
 
 from e2e.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, G1Obj, r
 from e2e.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
 
-from e2e.Libs.HashToCurve.BLSCurve import BLS12381G1Curve
+from e2e.Libs.HashToCurve.BLSCurve import BLS12_381_G1, BLS12381G1Curve
 from e2e.Libs.HashToCurve.ExpandMessage import expandMessageXMD
 from e2e.Libs.HashToCurve.Weierstrass import WeierstrassSuiteParameters
 
@@ -43,7 +43,7 @@ PARAMETERS = MerosParameters()
 def msgToG(
   msg: bytes
 ) -> G1Obj:
-  return PARAMETERS.hashToCurve(msg).value
+  return BLS12_381_G1(PARAMETERS.hashToCurve(msg)).value
 
 def serialize(
   g: Big384,
@@ -147,8 +147,8 @@ class PublicKey:
 
   @staticmethod
   def aggregate(
-    keys: List[Any]
-  ) -> Any:
+    keys: List["PublicKey"]
+  ) -> "PublicKey":
     result: PublicKey = PublicKey.__new__(PublicKey)
     result.value = G2Obj()
 
@@ -183,8 +183,8 @@ class AggregationInfo:
 
   @staticmethod
   def aggregate(
-    agInfos: List[Any]
-  ) -> Any:
+    agInfos: List["AggregationInfo"]
+  ) -> "AggregationInfo":
     if not agInfos:
       raise Exception("No Aggregation Infos passed to aggregate.")
 
@@ -261,8 +261,8 @@ class Signature:
 
   @staticmethod
   def aggregate(
-    sigs: List[Any]
-  ) -> Any:
+    sigs: List["Signature"]
+  ) -> "Signature":
     result: Signature = Signature.__new__(Signature)
     result.value = G1Obj()
 

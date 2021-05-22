@@ -26,14 +26,14 @@ class Scalar:
 
   def __add__(
     self,
-    other: 'Scalar'
-  ) -> 'Scalar':
+    other: "Scalar"
+  ) -> "Scalar":
     return Scalar(self.underlying + other.underlying)
 
   def __mul__(
     self,
-    scalar: 'Scalar'
-  ) -> 'Scalar':
+    scalar: "Scalar"
+  ) -> "Scalar":
     return Scalar(self.underlying * scalar.underlying)
 
   def toPoint(

@@ -28,7 +28,7 @@ class Transactions:
   @staticmethod
   def fromJSON(
     json: Dict[str, Dict[str, Any]]
-  ) -> Any:
+  ) -> "Transactions":
     result = Transactions()
     for tx in json:
       if json[tx]["descendant"] == "Claim":

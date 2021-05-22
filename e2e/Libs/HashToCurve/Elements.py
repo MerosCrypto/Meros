@@ -18,21 +18,21 @@ class FieldElement(
   def __add__(
     self,
     other: Any
-  ) -> Any:
+  ) -> "FieldElement":
     ...
 
   @abstractmethod
   def __sub__(
     self,
     other: Any
-  ) -> Any:
+  ) -> "FieldElement":
     ...
 
   @abstractmethod
   def __mul__(
     self,
     other: Any
-  ) -> Any:
+  ) -> "FieldElement":
     ...
 
   @abstractmethod
@@ -40,14 +40,14 @@ class FieldElement(
     self,
     other: Any,
     q: Any
-  ) -> Any:
+  ) -> "FieldElement":
     ...
 
   @abstractmethod
   def __pow__(
     self,
     exp: int
-  ) -> Any:
+  ) -> "FieldElement":
     ...
 
   @abstractmethod
@@ -74,20 +74,20 @@ class FieldElement(
   @abstractmethod
   def negative(
     self
-  ) -> Any:
+  ) -> "FieldElement":
     ...
 
   @abstractmethod
   def isSquare(
     self,
-    q: Any
+    q: int
   ) -> bool:
     ...
 
   @abstractmethod
   def sqrt(
     self
-  ) -> Any:
+  ) -> "FieldElement":
     ...
 
 class GroupElement(
@@ -98,30 +98,30 @@ class GroupElement(
     self,
     x: FieldElement,
     y: FieldElement
-  ) -> Any:
+  ) -> None:
     ...
 
   @abstractmethod
   def __add__(
     self,
     other: Any
-  ) -> Any:
+  ) -> "GroupElement":
     ...
 
   @abstractmethod
   def clearCofactor(
     self
-  ) -> Any:
+  ) -> "GroupElement":
     ...
 
   @abstractproperty
   def x(
     self
-  ) -> str:
+  ) -> bytes:
     ...
 
   @abstractproperty
   def y(
     self
-  ) -> str:
+  ) -> bytes:
     ...

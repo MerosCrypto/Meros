@@ -22,5 +22,5 @@ def MapToCurveTest() -> None:
 
     for vector in curve["vectors"]:
       result: GroupElement = params.curve.mapToCurve(params.curve.FieldType(int(vector["u"], 16)))
-      if (result.x != vector["x"]) or (result.y != vector["y"]):
+      if (result.x.hex() != vector["x"]) or (result.y.hex() != vector["y"]):
         raise TestError("Incorrect map.")

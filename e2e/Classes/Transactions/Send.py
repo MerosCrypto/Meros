@@ -113,7 +113,7 @@ class Send(
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "Send":
     inputs: List[Tuple[bytes, int]] = []
     outputs: List[Tuple[bytes, int]] = []
     for txInput in json["inputs"]:
