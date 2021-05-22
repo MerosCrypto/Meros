@@ -24,8 +24,8 @@ class Point:
 
   def __add__(
     self,
-    other: 'Point'
-  ) -> 'Point':
+    other: "Point"
+  ) -> "Point":
     x1: FieldElement = self.underlying[0]
     y1: FieldElement = self.underlying[1]
     x2: FieldElement = other.underlying[0]
@@ -42,7 +42,7 @@ class Point:
   def __mul__(
     self,
     scalar: mpz
-  ) -> 'Point':
+  ) -> "Point":
     if scalar == ZERO:
       return Point([FieldElement(ZERO), ONE])
     res: Point = self * (scalar // TWO)

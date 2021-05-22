@@ -1,5 +1,3 @@
-from typing import Any
-
 from enum import Enum
 
 class Bip39WordsNum(Enum):
@@ -10,14 +8,14 @@ class Bip39MnemonicGenerator:
   @staticmethod
   def FromWordsNumber(
     num: Bip39WordsNum
-  ) -> Any:
+  ) -> str:
     ...
 
 class Bip39MnemonicValidator:
   def __init__(
     self,
     mnemonic: str
-  ) -> Any:
+  ) -> None:
     ...
 
   def Validate(
@@ -29,7 +27,7 @@ class Bip39SeedGenerator:
   def __init__(
     self,
     mnemonic: str
-  ) -> Any:
+  ) -> None:
     ...
 
   def Generate(

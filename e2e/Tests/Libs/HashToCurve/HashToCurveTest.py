@@ -23,5 +23,5 @@ def HashToCurveTest() -> None:
 
     for vector in suite["vectors"]:
       result: GroupElement = params.hashToCurve(vector["msg"].encode("utf-8"))
-      if (result.x != vector["x"]) or (result.y != vector["y"]):
+      if (result.x.hex() != vector["x"]) or (result.y.hex() != vector["y"]):
         raise TestError("Incorrect point.")

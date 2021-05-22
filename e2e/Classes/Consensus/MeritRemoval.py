@@ -7,7 +7,7 @@ from e2e.Classes.Consensus.Verification import Verification, SignedVerification
 from e2e.Classes.Consensus.SendDifficulty import SendDifficulty, SignedSendDifficulty
 from e2e.Classes.Consensus.DataDifficulty import DataDifficulty, SignedDataDifficulty
 
-MeritRemovalElement = Union[
+SignedMeritRemovalElement = Union[
   SignedVerification,
   SignedSendDifficulty,
   SignedDataDifficulty
@@ -17,7 +17,7 @@ class PartialMeritRemoval:
   def __init__(
     self,
     e1: Element,
-    e2: MeritRemovalElement,
+    e2: SignedMeritRemovalElement,
     holder: int = -1
   ) -> None:
     self.e1: Element = e1
@@ -59,7 +59,7 @@ class PartialMeritRemoval:
   @staticmethod
   def fromSignedJSON(
     jsonArg: Dict[str, Any]
-  ) -> Any:
+  ) -> "PartialMeritRemoval":
     json: Dict[str, Any] = dict(jsonArg)
     json["elements"] = list(json["elements"])
     json["elements"][0] = dict(json["elements"][0])
@@ -68,7 +68,7 @@ class PartialMeritRemoval:
     json["elements"][0]["holder"] = json["holder"]
     json["elements"][1]["holder"] = json["holder"]
 
-    e1: MeritRemovalElement = SignedVerification(bytes(32), 0)
+    e1: Element = Verification(bytes(32), 0)
     if json["elements"][0]["descendant"] == "Verification":
       e1 = Verification.fromJSON(json["elements"][0])
     elif json["elements"][0]["descendant"] == "SendDifficulty":
@@ -76,7 +76,7 @@ class PartialMeritRemoval:
     elif json["elements"][0]["descendant"] == "DataDifficulty":
       e1 = DataDifficulty.fromJSON(json["elements"][0])
 
-    e2: MeritRemovalElement = SignedVerification(bytes(32), 0)
+    e2: SignedMeritRemovalElement = SignedVerification(bytes(32), 0)
     if json["elements"][1]["descendant"] == "Verification":
       e2 = SignedVerification.fromSignedJSON(json["elements"][1])
     elif json["elements"][1]["descendant"] == "SendDifficulty":
@@ -91,8 +91,8 @@ class SignedMeritRemoval(
 ):
   def __init__(
     self,
-    e1: MeritRemovalElement,
-    e2: MeritRemovalElement,
+    e1: SignedMeritRemovalElement,
+    e2: SignedMeritRemovalElement,
     holder: int = -1
   ) -> None:
     PartialMeritRemoval.__init__(self, e1, e2, holder)
@@ -110,7 +110,7 @@ class SignedMeritRemoval(
   @staticmethod
   def fromSignedJSON(
     jsonArg: Dict[str, Any]
-  ) -> Any:
+  ) -> "SignedMeritRemoval":
     json: Dict[str, Any] = dict(jsonArg)
     json["elements"] = list(json["elements"])
     json["elements"][0] = dict(json["elements"][0])
@@ -118,7 +118,7 @@ class SignedMeritRemoval(
     json["elements"][0]["holder"] = json["holder"]
     json["elements"][1]["holder"] = json["holder"]
 
-    e1: MeritRemovalElement = SignedVerification(bytes(32), 0)
+    e1: SignedMeritRemovalElement = SignedVerification(bytes(32), 0)
     if json["elements"][0]["descendant"] == "Verification":
       e1 = SignedVerification.fromSignedJSON(json["elements"][0])
     elif json["elements"][0]["descendant"] == "SendDifficulty":
@@ -126,7 +126,7 @@ class SignedMeritRemoval(
     elif json["elements"][0]["descendant"] == "DataDifficulty":
       e1 = SignedDataDifficulty.fromSignedJSON(json["elements"][0])
 
-    e2: MeritRemovalElement = SignedVerification(bytes(32), 0)
+    e2: SignedMeritRemovalElement = SignedVerification(bytes(32), 0)
     if json["elements"][1]["descendant"] == "Verification":
       e2 = SignedVerification.fromSignedJSON(json["elements"][1])
     elif json["elements"][1]["descendant"] == "SendDifficulty":

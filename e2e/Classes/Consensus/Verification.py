@@ -40,7 +40,7 @@ class Verification(
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "Verification":
     return Verification(bytes.fromhex(json["hash"]), json["holder"])
 
 class SignedVerification(
@@ -83,7 +83,7 @@ class SignedVerification(
   @staticmethod
   def fromSignedJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "SignedVerification":
     return SignedVerification(
       bytes.fromhex(json["hash"]),
       json["holder"],

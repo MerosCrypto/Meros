@@ -113,13 +113,13 @@ class RistrettoPoint:
 
   def __mul__(
     self,
-    scalar: 'RistrettoScalar'
-  ) -> 'RistrettoPoint':
+    scalar: "RistrettoScalar"
+  ) -> "RistrettoPoint":
     return RistrettoPoint(self.underlying * scalar.underlying)
 
   def __eq__(
     self,
-    other: 'RistrettoPoint'
+    other: "RistrettoPoint"
   ) -> bool:
     return (
       (self.underlying.underlying[0] * other.underlying.underlying[1]) == (

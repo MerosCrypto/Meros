@@ -39,7 +39,7 @@ class Merit:
   @staticmethod
   def fromJSON(
     json: List[Dict[str, Any]]
-  ) -> Any:
+  ) -> "Merit":
     result: Merit = Merit.__new__(Merit)
     result.blockchain = Blockchain.fromJSON(json)
     result.state = State()

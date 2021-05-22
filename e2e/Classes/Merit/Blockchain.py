@@ -38,11 +38,8 @@ class Blockchain:
 
   def __eq__(
     self,
-    other: Any
+    other: "Blockchain"
   ) -> bool:
-    if not isinstance(other, Blockchain):
-      raise Exception("Comparison between Blockchain and non-Blockchain.")
-
     if len(self.blocks) != len(other.blocks):
       return False
     for i in range(len(self.blocks)):
@@ -52,7 +49,7 @@ class Blockchain:
 
   def __ne__(
     self,
-    other: Any
+    other: "Blockchain"
   ) -> bool:
     return not self == other
 
@@ -123,7 +120,7 @@ class Blockchain:
   @staticmethod
   def fromJSON(
     blocks: List[Dict[str, Any]]
-  ) -> Any:
+  ) -> "Blockchain":
     result = Blockchain()
     for block in blocks:
       result.add(Block.fromJSON(block))

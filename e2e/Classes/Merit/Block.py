@@ -16,11 +16,8 @@ class Block:
 
   def __eq__(
     self,
-    other: Any
+    other: "Block"
   ) -> bool:
-    if not isinstance(other, Block):
-      raise Exception("Comparison between Block and non-Block.")
-
     selfBlock: Dict[str, Any] = self.toJSON()
     otherBlock: Dict[str, Any] = other.toJSON()
 
@@ -37,7 +34,7 @@ class Block:
 
   def __ne__(
     self,
-    other: Any
+    other: "Block"
   ) -> bool:
     return not self == other
 
@@ -59,7 +56,7 @@ class Block:
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "Block":
     return Block(
       BlockHeader.fromJSON(json["header"]),
       BlockBody.fromJSON(json)

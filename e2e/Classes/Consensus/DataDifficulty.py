@@ -43,7 +43,7 @@ class DataDifficulty(
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "DataDifficulty":
     return DataDifficulty(json["difficulty"], json["nonce"], json["holder"])
 
 class SignedDataDifficulty(
@@ -88,7 +88,7 @@ class SignedDataDifficulty(
   @staticmethod
   def fromSignedJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "SignedDataDifficulty":
     return SignedDataDifficulty(
       json["difficulty"],
       json["nonce"],

@@ -44,7 +44,7 @@ class Mint(
   @staticmethod
   def fromJSON(
     json: Dict[str, Any]
-  ) -> Any:
+  ) -> "Mint":
     outputs: List[Tuple[int, int]] = []
     for output in json["outputs"]:
       outputs.append((output["nick"], int(output["amount"])))
