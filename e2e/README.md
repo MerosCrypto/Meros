@@ -52,7 +52,7 @@ pyright -p e2e
 
 Meros supports linting via Pylint:
 
-`./venv/bin/python3 -m pylint --rcfile=e2e/Pylint/pylintrc e2e`
+`./venv/bin/python3 -m pylint --rcfile=e2e/MerosPylint/pylintrc e2e`
 
 ### Running
 

@@ -262,7 +262,7 @@ def getMultilineExpansionlength(
 
 #MyPy is failing to ID this, even with the stub files.
 class MultilineExpansionChecker(
-  BaseChecker  #type: ignore
+  BaseChecker #type: ignore
 ):
   __implements__: Any = IRawChecker
   name: str = "multiline-expansion"
