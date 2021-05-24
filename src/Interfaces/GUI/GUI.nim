@@ -48,7 +48,7 @@ proc newGUI*(
     panic("Couldn't create the WebView: " & e.msg)
 
   #Make sure it's valid.
-  if not gui.webview.valid:
+  if gui.webview.isNil:
     echo "This system doesn't support running Meros with its GUI. Please start Meros with the `--no-gui` flag to continue."
     quit(1)
 
