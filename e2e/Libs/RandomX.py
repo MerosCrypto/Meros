@@ -4,6 +4,7 @@ from ctypes import cdll, c_int, c_char, \
 
 from threading import currentThread
 import os
+import platform
 
 #Import the RandomX library.
 #pylint: disable=invalid-name
@@ -11,7 +12,10 @@ RandomXLib: Any
 if os.name == "nt":
   RandomXLib = cdll.LoadLibrary("e2e/Libs/mc_randomx/RandomX/build/randomx")
 else:
-  RandomXLib = cdll.LoadLibrary("e2e/Libs/mc_randomx/RandomX/build/librandomx.so")
+  extension: str = ".so"
+  if platform == "Darwin":
+    extension = ".dylib"
+  RandomXLib = cdll.LoadLibrary("e2e/Libs/mc_randomx/RandomX/build/librandomx" + extension)
 
 RandomXLib.randomx_get_flags.randomx_get_flags = None
 RandomXLib.randomx_get_flags.restype = c_int

@@ -3,6 +3,7 @@ from ctypes import cdll, c_uint64, c_uint32, c_size_t, c_char, \
            Array, c_char_p, c_void_p, create_string_buffer, byref
 
 import os
+import platform
 from hashlib import blake2b
 
 from e2e.Classes.Consensus.VerificationPacket import VerificationPacket
@@ -18,7 +19,10 @@ MinisketchLib: Any
 if os.name == "nt":
   MinisketchLib = cdll.LoadLibrary("e2e/Libs/minisketch")
 else:
-  MinisketchLib = cdll.LoadLibrary("e2e/Libs/libminisketch.so")
+  extension: str = ".so"
+  if platform == "Darwin":
+    extension = ".dylib"
+  MinisketchLib = cdll.LoadLibrary("e2e/Libs/libminisketch" + extension)
 
 MinisketchLib.minisketch_create.argtypes = [c_uint32, c_uint32, c_size_t]
 MinisketchLib.minisketch_create.restype = c_void_p
