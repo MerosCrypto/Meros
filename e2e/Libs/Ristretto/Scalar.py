@@ -1,6 +1,5 @@
 from typing import Union
 
-#pylint: disable=no-name-in-module
 from gmpy2 import mpz
 
 from e2e.Libs.Ristretto.Point import Point, BASEPOINT

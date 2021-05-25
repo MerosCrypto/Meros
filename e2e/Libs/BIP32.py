@@ -4,7 +4,6 @@ from typing import List, Tuple
 import hashlib
 import hmac
 
-#pylint: disable=no-name-in-module
 from gmpy2 import mpz
 
 import e2e.Libs.Ristretto.Ristretto as Ristretto

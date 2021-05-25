@@ -28,7 +28,7 @@ limit-inference-results=100
 
 # List of plugins (as comma separated values of python modules names) to load,
 # usually to register additional checkers.
-load-plugins=Pylint.MultilineExpansionChecker
+load-plugins=MerosPylint.MultilineExpansionChecker
 
 # Pickle collected data for later comparisons.
 persistent=yes
@@ -74,6 +74,13 @@ disable=
     #Too many false positives.
     dangerous-default-value,
 
+    #Had excessive false positives yet only on macOS.
+    no-member,
+
+    #Had a couple false positives on Linux and also a couple on macOS with regards to the standard library.
+    c-extension-no-member,
+    no-name-in-module,
+
     #Too many false positives.
     consider-using-enumerate,
 
@@ -103,7 +110,7 @@ disable=
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
-enable=c-extension-no-member
+enable=
 
 
 [REPORTS]

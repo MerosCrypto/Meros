@@ -1,4 +1,4 @@
-argon2-cffi==19.1.0
+argon2-cffi==20.1.0
 gmpy2==2.0.8
 bech32==1.2.0
 bip-utils==1.7.0

@@ -26,9 +26,9 @@ requires "https://github.com/MerosCrypto/mc_ristretto >= 0.2.1"
 requires "https://github.com/MerosCrypto/mc_bls >= 3.0.1"
 requires "https://github.com/MerosCrypto/mc_minisketch >= 1.0.0"
 requires "https://github.com/MerosCrypto/Argon2 >= 1.1.4"
-requires "https://github.com/MerosCrypto/mc_randomx >= 0.9.7"
+requires "https://github.com/MerosCrypto/mc_randomx >= 0.9.8"
 requires "https://github.com/MerosCrypto/mc_lmdb >= 2.0.0"
-requires "https://github.com/MerosCrypto/mc_wry >= 0.3.3"
+requires "https://github.com/MerosCrypto/mc_wry >= 0.3.4"
 requires "https://github.com/kayabaNerve/ForceCheck >= 1.3.2"
 
 #Every other dependency which may or may not follow semver + tag every release.

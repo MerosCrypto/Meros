@@ -63,9 +63,6 @@ suite "WalletDB":
       for v in w1.verified.keys():
         check w1.verified[v] == w2.verified[v]
 
-      #Close the reloaded DB.
-      w2.close()
-
   lowFuzzTest "Reloaded WalletDB/detects Verifying Competing.":
     #Fill it with 250 Transactions.
     for t in 0 ..< 250:
@@ -188,8 +185,17 @@ suite "WalletDB":
         fnCache == wallet.finalizedNonces
         wallet.finalizedNonces == finalizedNonces
 
-      #Reload and compare the Wallet DBs.
-      compare(wallet, newWalletDB(Hash[256](), "./data/tests/test-wallet" & $getThreadID(), 1073741824))
+      #Close the existing DB.
+      wallet.close()
+
+      #Reload it for comparison.
+      let toCompare: WalletDB = newWalletDB(Hash[256](), "./data/tests/test-wallet" & $getThreadID(), 1073741824)
+
+      #Compare the Wallet DBs.
+      compare(wallet, toCompare)
+
+      #Continue with the currently open DB.
+      wallet = toCompare
 
     #Close the DB.
     wallet.close()

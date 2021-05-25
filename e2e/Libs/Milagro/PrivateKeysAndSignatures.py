@@ -1,21 +1,23 @@
 from typing import Type, List, Tuple, Any
 from ctypes import cdll, Structure, POINTER, c_char_p, c_int64, c_int32, c_int, byref
 import os
+import platform
 
 #Import the Milagro shared libraries.
 #pylint: disable=invalid-name
 MilagroCurve: Any
-if os.name == "nt":
-  MilagroCurve = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/amcl_curve_BLS381")
-else:
-  MilagroCurve = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_curve_BLS381.so")
-
 #pylint: disable=invalid-name
 MilagroPairing: Any
 if os.name == "nt":
+  MilagroCurve = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/amcl_curve_BLS381")
   MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/amcl_pairing_BLS381")
 else:
-  MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_pairing_BLS381.so")
+  extension: str = ".so"
+  if platform.system() == "Darwin":
+    extension = ".dylib"
+  cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_core" + extension)
+  MilagroCurve = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_curve_BLS381" + extension)
+  MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_pairing_BLS381" + extension)
 
 #Define the structures.
 Big384 = c_int64 * 7

@@ -21,7 +21,7 @@ curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 1.2.12
 ```
 
-You will have to update your path, as according to choosenim, before running any Nim-related commands.
+You will have to update your path after installing Homebrew, Rust, and choosenim. Their installers will say how to.
 
 ### Meros
 

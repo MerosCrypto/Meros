@@ -4,10 +4,10 @@ End-to-End tests written in Python to test Meros's networking code and the RPC.
 
 ### Setup
 
-First, ensure virtualenv is installed. Then, setup the Meros testing environment:
+First, ensure virtualenv, GMP, MPFR, and MPC are installed. Then, setup the Meros testing environment:
 
 ```
-virtualenv -p python3 ./venv
+virtualenv -p python3.9 ./venv
 ./venv/bin/pip install -r ./e2e/requirements.txt
 ```
 
@@ -52,7 +52,7 @@ pyright -p e2e
 
 Meros supports linting via Pylint:
 
-`./venv/bin/python3 -m pylint --rcfile=e2e/Pylint/pylintrc e2e`
+`./venv/bin/python3 -m pylint --rcfile=e2e/MerosPylint/pylintrc e2e`
 
 ### Running
 
