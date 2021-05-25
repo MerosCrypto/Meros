@@ -1,7 +1,11 @@
 #This library returns the max amount of open files, as well as how many files we have open.
 #It's under Network/ because its only used to determine if we've hit our max peer count.
 
-import os
+when not defined(MacOSX):
+  import os
+else:
+  import osproc
+  import strutils
 
 import ../lib/Errors
 
@@ -52,17 +56,26 @@ when PROC_FS or DEV_FS:
   proc update*(
     tracker: FileLimitTracker
   ) {.forceCheck: [].} =
-    tracker.socketsSinceLastUpdate = 0
-    tracker.current = 0
     try:
       when PROC_FS:
+        tracker.current = 0
         for file in walkDir("/proc/self/fd"):
           inc(tracker.current)
-      when DEV_FS:
-        for file in walkDir("/dev/fd"):
-          inc(tracker.current)
+      elif DEV_FS:
+        #This is horrific. We SHOULD call walkDir again.
+        #That said, walkDir doesn't work; it kept returning 0 .. 9 and 10 if it exists.
+        #This still works and should work on every Mac due to its extremely basic command usage.
+        #If a proper solution exists, please let me know.
+        #-- Kayaba
+        try:
+          tracker.current = parseInt(execProcess("ls /dev/fd | wc -l").strip())
+        except ValueError as e:
+          panic("wc -l didn't return an integer: " & e.msg)
+        except Exception as e:
+          panic("Couldn't run wc and ls: " & e.msg)
     except OSError as e:
       panic("Couldn't detect the amount of open files: " & e.msg)
+    tracker.socketsSinceLastUpdate = 0
 
 else:
   {.fatal: "Meros cannot build on this system because it doesn't know how to get the amount of opened files.".}
