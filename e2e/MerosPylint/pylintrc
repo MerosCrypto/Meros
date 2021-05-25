@@ -74,6 +74,12 @@ disable=
     #Too many false positives.
     dangerous-default-value,
 
+    #Had excessive false positives yet only on macOS.
+    no-member,
+
+    #Had a couple false positives on Linux and also a couple on macOS with regards to the standard library.
+    c-extension-no-member,
+
     #Too many false positives.
     consider-using-enumerate,
 
@@ -103,7 +109,7 @@ disable=
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
-enable=c-extension-no-member
+enable=
 
 
 [REPORTS]
