@@ -13,7 +13,7 @@ if os.name == "nt":
   MilagroPairing = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/amcl_pairing_BLS381")
 else:
   extension: str = ".so"
-  if platform == "Darwin":
+  if platform.system() == "Darwin":
     extension = ".dylib"
   cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_core" + extension)
   MilagroCurve = cdll.LoadLibrary("e2e/Libs/incubator-milagro-crypto-c/build/lib/libamcl_curve_BLS381" + extension)

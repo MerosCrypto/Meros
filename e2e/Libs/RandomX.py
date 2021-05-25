@@ -13,7 +13,7 @@ if os.name == "nt":
   RandomXLib = cdll.LoadLibrary("e2e/Libs/mc_randomx/RandomX/build/randomx")
 else:
   extension: str = ".so"
-  if platform == "Darwin":
+  if platform.system() == "Darwin":
     extension = ".dylib"
   RandomXLib = cdll.LoadLibrary("e2e/Libs/mc_randomx/RandomX/build/librandomx" + extension)
 

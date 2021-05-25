@@ -20,7 +20,7 @@ if os.name == "nt":
   MinisketchLib = cdll.LoadLibrary("e2e/Libs/minisketch")
 else:
   extension: str = ".so"
-  if platform == "Darwin":
+  if platform.system() == "Darwin":
     extension = ".dylib"
   MinisketchLib = cdll.LoadLibrary("e2e/Libs/libminisketch" + extension)
 
