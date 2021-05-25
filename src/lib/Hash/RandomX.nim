@@ -7,7 +7,7 @@ import HashCommon
 type
   #Flags + VM + Cache.
   RandomXObj = object
-    flags: RandomXFlags
+    flags: cint
     cacheKey*: string
     cache: RandomXCache
     vm: RandomXVM
