@@ -1,6 +1,5 @@
 from typing import List
 
-#pylint: disable=no-name-in-module
 from gmpy2 import mpz
 
 from e2e.Libs.Ristretto.FieldElement import FieldElement, d

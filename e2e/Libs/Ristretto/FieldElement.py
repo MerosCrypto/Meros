@@ -1,6 +1,5 @@
 from typing import Union
 
-#pylint: disable=no-name-in-module
 import gmpy2
 from gmpy2 import mpz
 

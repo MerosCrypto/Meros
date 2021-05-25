@@ -79,6 +79,7 @@ disable=
 
     #Had a couple false positives on Linux and also a couple on macOS with regards to the standard library.
     c-extension-no-member,
+    no-name-in-module,
 
     #Too many false positives.
     consider-using-enumerate,
