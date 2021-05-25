@@ -7,7 +7,7 @@ End-to-End tests written in Python to test Meros's networking code and the RPC.
 First, ensure virtualenv, GMP, MPFR, and MPC are installed. Then, setup the Meros testing environment:
 
 ```
-virtualenv -p python3 ./venv
+virtualenv -p python3.9 ./venv
 ./venv/bin/pip install -r ./e2e/requirements.txt
 ```
 
