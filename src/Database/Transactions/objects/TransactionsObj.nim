@@ -9,9 +9,6 @@ import ../../Consensus/Elements/objects/VerificationPacketObj
 
 import ../../Merit/Blockchain
 
-import FamilyManagerObj
-export FamilyManagerObj
-
 import ../Transaction as TransactionFile
 
 type Transactions* = object
@@ -22,8 +19,6 @@ type Transactions* = object
   dataWallet*: HDWallet
   #Cache of transactions which have yet to leave Epochs.
   transactions*: Table[Hash[256], Transaction]
-  #Family tracker:
-  families*: FamilyManager
 
 #Get a Data's sender.
 proc getSender*(
@@ -111,8 +106,7 @@ proc newTransactionsObj*(
   result = Transactions(
     db: db,
     genesis: blockchain.genesis,
-    transactions: initTable[Hash[256], Transaction](),
-    families: newFamilyManager(blockchain.genesis)
+    transactions: initTable[Hash[256], Transaction]()
   )
 
   try:
@@ -141,7 +135,6 @@ proc newTransactionsObj*(
         try:
           var tx: Transaction = db.load(packet.hash)
           result.add(tx, false)
-          result.families.register(tx.inputs)
         except ValueError as e:
           panic("Adding a reloaded Transaction raised a ValueError: " & e.msg)
         except DBReadError as e:

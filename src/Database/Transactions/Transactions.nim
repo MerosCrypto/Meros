@@ -259,11 +259,6 @@ proc archive*(
   for packet in newBlock.body.packets:
     #This is an ugly line used to access a cache this system doesn't have proper access to.
     if transactions.db.transactions.unmentioned.contains(packet.hash):
-      try:
-        transactions.families.register(transactions[packet.hash].inputs)
-      except IndexError as e:
-        panic("Couldn't get a transaction included in a Block: " & e.msg)
-
       transactions.mention(packet.hash)
 
   for hash in epoch.keys():
