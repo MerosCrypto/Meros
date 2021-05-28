@@ -5,7 +5,6 @@ import ../../Wallet/Wallet
 import objects/SendObj
 export SendObj
 
-import ../../Network/Serialize/SerializeCommon
 import ../../Network/Serialize/Transactions/SerializeSend
 
 proc newSend*(

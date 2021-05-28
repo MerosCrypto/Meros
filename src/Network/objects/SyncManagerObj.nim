@@ -364,9 +364,8 @@ proc handle*(
             res = newMessage(MessageType.DataMissing)
 
         of MessageType.SketchHashesRequest:
-          var requested: Block
           try:
-            requested = manager.functions.merit.getBlockByHash(msg.message.toHash[:256]())
+            var requested: Block = manager.functions.merit.getBlockByHash(msg.message.toHash[:256]())
             res = newMessage(MessageType.SketchHashes, requested.body.packets.len.toBinary(INT_LEN))
             for packet in requested.body.packets:
               res.message &= sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)
@@ -374,9 +373,8 @@ proc handle*(
             res = newMessage(MessageType.DataMissing)
 
         of MessageType.SketchHashRequests:
-          var requested: Block
           try:
-            requested = manager.functions.merit.getBlockByHash(msg.message[0 ..< HASH_LEN].toHash[:256]())
+            var requested: Block = manager.functions.merit.getBlockByHash(msg.message[0 ..< HASH_LEN].toHash[:256]())
 
             #Create a Table of the Sketch Hashes.
             var packets: Table[string, VerificationPacket] = initTable[string, VerificationPacket]()

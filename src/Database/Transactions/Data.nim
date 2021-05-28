@@ -4,7 +4,6 @@ import ../../Wallet/Wallet
 import objects/DataObj
 export DataObj
 
-import ../../Network/Serialize/SerializeCommon
 import ../../Network/Serialize/Transactions/SerializeData
 
 proc newData*(

@@ -189,8 +189,6 @@ proc sync*(
     packets: seq[VerificationPacket] = @[]
     #Missing Sketch Hashes.
     missingPackets: seq[uint64] = @[]
-    #SketchResult.
-    sketchResult: SketchResult
 
     #Transactions included in the Block.
     includedTXs: HashSet[Hash[256]] = initHashSet[Hash[256]]()
@@ -202,6 +200,7 @@ proc sync*(
 
   try:
     #Try to resolve the Sketch.
+    var sketchResult: SketchResult
     try:
       sketchResult = sketcher.merge(
         newBlock.sketch,
