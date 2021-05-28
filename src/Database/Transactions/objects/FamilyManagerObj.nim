@@ -1,6 +1,6 @@
 import sets, tables
 
-import ../../../lib/Errors
+import ../../../lib/[Errors, Hash]
 import ./TransactionObj
 
 type
@@ -11,12 +11,16 @@ type
     merged: FamilyID
 
   FamilyManager* = ref object
+    genesis: Hash[256]
     lastID: uint64
     inputMap: Table[Input, FamilyID]
     families: Table[uint64, HashSet[Input]]
 
-func newFamilyManager*(): FamilyManager {.inline, forceCheck: [].} =
+func newFamilyManager*(
+  genesis: Hash[256]
+): FamilyManager {.inline, forceCheck: [].} =
   FamilyManager(
+    genesis: genesis,
     lastID: 1,
     inputMap: initTable[Input, FamilyID](),
     families: initTable[uint64, HashSet[Input]]()
@@ -51,6 +55,10 @@ proc register*(
   families: FamilyManager,
   inputs: seq[Input]
 ) {.forceCheck: [].} =
+  #Don't track families for magic inputs as used in Datas.
+  if (inputs[0].hash == Hash[256]()) or (inputs[0].hash == families.genesis):
+    return
+
   var
     family: FamilyID
     temp: FamilyID

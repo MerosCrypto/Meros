@@ -112,7 +112,7 @@ proc newTransactionsObj*(
     db: db,
     genesis: blockchain.genesis,
     transactions: initTable[Hash[256], Transaction](),
-    families: newFamilyManager()
+    families: newFamilyManager(blockchain.genesis)
   )
 
   try:
