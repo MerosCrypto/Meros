@@ -172,12 +172,14 @@ def WatchWalletTest(
       raise TestError("WatchWallet Meros couldn't get its UTXOs.")
 
     #Also test balance getting.
-    if rpc.call("personal", "getBalance") != sum(
-      [
-        int(
-          rpc.call("transactions", "getTransaction", {"hash": send.hex()})["outputs"][0]["amount"]
-        ) for send in sends[:2]
-      ]
+    if rpc.call("personal", "getBalance") != str(
+      sum(
+        [
+          int(
+            rpc.call("transactions", "getTransaction", {"hash": send.hex()})["outputs"][0]["amount"]
+          ) for send in sends[:2]
+        ]
+      )
     ):
       raise TestError("WatchWallet Meros couldn't get its balance.")
 
@@ -201,12 +203,14 @@ def WatchWalletTest(
       raise TestError("WatchWallet Meros couldn't get its UTXOs.")
 
     #Again test the balance.
-    if rpc.call("personal", "getBalance") != sum(
-      [
-        int(
-          rpc.call("transactions", "getTransaction", {"hash": send.hex()})["outputs"][0]["amount"]
-        ) for send in sends[:3]
-      ]
+    if rpc.call("personal", "getBalance") != str(
+      sum(
+        [
+          int(
+            rpc.call("transactions", "getTransaction", {"hash": send.hex()})["outputs"][0]["amount"]
+          ) for send in sends[:3]
+        ]
+      )
     ):
       raise TestError("WatchWallet Meros couldn't get its balance.")
 

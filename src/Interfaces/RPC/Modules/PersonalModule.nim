@@ -112,12 +112,14 @@ proc module*(
             "nonce": utxo.utxo.nonce
           })
 
-      proc getBalance(): uint64 {.requireAuth, forceCheck: [].} =
+      proc getBalance(): string {.requireAuth, forceCheck: [].} =
+        var balance: uint64 = 0
         for utxo in functions.personal.getUTXOs():
           try:
-            result += functions.transactions.getTransaction(utxo.utxo.hash).outputs[utxo.utxo.nonce].amount
+            balance += functions.transactions.getTransaction(utxo.utxo.hash).outputs[utxo.utxo.nonce].amount
           except IndexError as e:
             panic("Had a UTXO for a non-existent Transaction: " & e.msg)
+        result = $balance
 
       proc getTransactionTemplate(
         #_JSON is used to distinguish the name from the below variables, not out of necessity due to using a keyword.

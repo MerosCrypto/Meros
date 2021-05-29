@@ -83,6 +83,12 @@ The result is an array of objects, each as follows:
 - `hash`    (string)
 - `nonce`   (int)
 
+### `getBalance`
+
+`getBalance` replies with the sum of the value of every UTXO known to the node's Wallet, AKA its balance. If you only want the balance for a specific address, use `transactions_getBalance`.
+
+The result is a string of the balance.
+
 ### `getTransactionTemplate`
 
 `getTransactionTemplate` replies with a signable transaction template usable by a program with the relevant private keys.
