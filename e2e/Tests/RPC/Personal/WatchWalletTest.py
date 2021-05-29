@@ -171,6 +171,16 @@ def WatchWalletTest(
     ):
       raise TestError("WatchWallet Meros couldn't get its UTXOs.")
 
+    #Also test balance getting.
+    if rpc.call("personal", "getBalance") != sum(
+      [
+        int(
+          rpc.call("transactions", "getTransaction", {"hash": send.hex()})["outputs"][0]["amount"]
+        ) for send in sends[:2]
+      ]
+    ):
+      raise TestError("WatchWallet Meros couldn't get its balance.")
+
     #Verify the third Send.
     verify(rpc, sends[-1])
 
@@ -189,6 +199,16 @@ def WatchWalletTest(
       ]
     ):
       raise TestError("WatchWallet Meros couldn't get its UTXOs.")
+
+    #Again test the balance.
+    if rpc.call("personal", "getBalance") != sum(
+      [
+        int(
+          rpc.call("transactions", "getTransaction", {"hash": send.hex()})["outputs"][0]["amount"]
+        ) for send in sends[:3]
+      ]
+    ):
+      raise TestError("WatchWallet Meros couldn't get its balance.")
 
     #Verify it can craft a Transaction Template properly.
     claimsAmount: int = sum(claim.amount for claim in claims)

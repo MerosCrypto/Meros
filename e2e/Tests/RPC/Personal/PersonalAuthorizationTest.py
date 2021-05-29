@@ -18,6 +18,7 @@ def PersonalAuthorizationTest(
     "send",
     "data",
     "getUTXOs",
+    "getBalance",
     "getTransactionTemplate"
   ]:
     try:
