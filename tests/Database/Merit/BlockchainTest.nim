@@ -63,36 +63,35 @@ suite "Blockchain":
       if state.holders.len != removed.card:
         #Randomize the Packets.
         packets = @[]
-        for _ in 0 ..< rand(0):#300):
+        for _ in 0 ..< rand(300):
           packets.add(newValidVerificationPacket(state.holders, removed))
 
         #Randomize the Elements/removals.
         elements = @[]
         toRemove = {}
-        if rand(1) == 0:
-          for _ in 0 ..< 3:
-            var
-              holder: uint16 = getNonMaliciousHolder()
-              elementNonce: int
-            try:
-              elementNonce = elementNonces[holder]
-            except KeyError:
-              elementNonce = 0
-            elementNonces[holder] = elementNonce + 1
+        for _ in 0 ..< rand(3):
+          var
+            holder: uint16 = getNonMaliciousHolder()
+            elementNonce: int
+          try:
+            elementNonce = elementNonces[holder]
+          except KeyError:
+            elementNonce = 0
+          elementNonces[holder] = elementNonce + 1
 
-            case rand(2):
-              of 0:
-                var sd: SignedSendDifficulty = newSignedSendDifficultyObj(elementNonce, uint16(rand(high(int16))))
-                miners[holder].sign(sd)
-                elements.add(sd)
-              of 1:
-                var dd: SignedDataDifficulty = newSignedDataDifficultyObj(elementNonce, uint16(rand(high(int16))))
-                miners[holder].sign(dd)
-                elements.add(dd)
-              of 2:
-                toRemove.incl(holder)
-              else:
-                panic("Generated a number outside of the provided range.")
+          case rand(2):
+            of 0:
+              var sd: SignedSendDifficulty = newSignedSendDifficultyObj(elementNonce, uint16(rand(high(int16))))
+              miners[holder].sign(sd)
+              elements.add(sd)
+            of 1:
+              var dd: SignedDataDifficulty = newSignedDataDifficultyObj(elementNonce, uint16(rand(high(int16))))
+              miners[holder].sign(dd)
+              elements.add(dd)
+            of 2:
+              toRemove.incl(holder)
+            else:
+              panic("Generated a number outside of the provided range.")
 
       #Decide if this is a nickname or new miner Block.
       if (miners.len == removed.card) or (rand(2) == 0):
