@@ -190,5 +190,8 @@ proc mainPersonal(
 
     result = toAdd[0].hash
 
+  functions.personal.getTXOs = proc (): HashSet[Input] {.forceCheck: [].} =
+    db.getTXOs(transactions)
+
   functions.personal.getUTXOs = proc (): seq[UsableInput] {.forceCheck: [].} =
     db.getUTXOs(transactions)

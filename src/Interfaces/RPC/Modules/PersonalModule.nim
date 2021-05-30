@@ -1,5 +1,6 @@
 import options
 import strutils
+import sets
 import json
 
 import chronos
@@ -7,6 +8,7 @@ import chronos
 import ../../../lib/[Errors, Hash, Util]
 import ../../../Wallet/[MinerWallet, Wallet]
 import ../../../Database/Transactions/Send
+import ../../../Database/Consensus/TransactionStatus
 
 from ../../../Database/Filesystem/Wallet/WalletDB import KeyIndex, UsableInput
 
@@ -325,6 +327,80 @@ proc module*(
           panic("addSend threw an Exception despite catching all errors: " & e.msg)
 
         result = $send.hash
+
+      proc getTransactionHistory(): JSONNode =
+        result = % []
+        #See note below about butchering the timeline.
+        #Originally was HashSet[FundedInput] which had a nicer API, notably in the WalletDB code.
+        #That had an unknown issue where the contains function would return false for true cases.
+        #Hence the usage of the less descriptive Input.
+        let txos: HashSet[Input] = functions.personal.getTXOs()
+        for txo in txos:
+          result.add(%* {
+            "type": "receive",
+            "amount": $cast[SendOutput](functions.transactions.getTransaction(txo.hash).outputs[cast[FundedInput](txo).nonce]).amount,
+            "txos": [{
+              "hash": $txo.hash,
+              "nonce": cast[FundedInput](txo).nonce
+            }]
+          })
+
+        #This uses a second loop so all received TXOs are established before we start saying we spent them.
+        #This prevents saying "there's a Send with a currently unknown to you TXO which may or may not appear later".
+        #That said, this does butcher the timeline a bit.
+        #It'd be optimal to improve this in the future with something which mixes them without time travel concerns.
+        #The usage of a HashSet above also butchers the timeline.
+        var included: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+        for txo in txos:
+          let spenders: seq[Hash[256]] = functions.transactions.getSpenders(txo)
+          if spenders.len == 0:
+            continue
+
+          var tx: Transaction = nil
+          for spender in spenders:
+            var status: TransactionStatus
+            try:
+              status = functions.consensus.getStatus(spender)
+            except IndexError as e:
+              panic("Status of a Transaction's spender does not exist: " & e.msg)
+
+            if status.verified:
+              try:
+                tx = functions.transactions.getTransaction(spender)
+              except IndexError as e:
+                panic("Spender of a Transaction does not exist: " & e.msg)
+              break
+
+          #If this has no verified spender, yet does have a spender, assume the earliest is best.
+          if tx.isNil:
+            try:
+              tx = functions.transactions.getTransaction(spenders[0])
+            except IndexError as e:
+              panic("Spender of a Transaction does not exist: " & e.msg)
+
+          #Needed thanks to the likely odds of a spender spending multiple TXOs.
+          if included.contains(tx.hash):
+            break
+          included.incl(tx.hash)
+
+          var amount: uint64 = 0
+          for output in tx.outputs:
+            amount += cast[SendOutput](output).amount
+
+          result.add(%* {
+            "type": "send",
+            "amount": $amount,
+            "txos": []
+          })
+          for input in tx.inputs:
+            #Technically, this could be a MuSig TX, meaning some inputs wouldn't be ours.
+            #(a legitimate MuSig TX; not the naive version Meros uses internally).
+            if txos.contains(input):
+              #Can't use ^1 here, for *some* reason.
+              result[result.len - 1]["txos"].add(%* {
+                "hash": $input.hash,
+                "nonce": cast[FundedInput](input).nonce
+              })
 
   except Exception as e:
     panic("Couldn't create the Consensus Module: " & e.msg)

@@ -777,6 +777,63 @@ iterator loadDatasFromTip*(
       done = true
     tip = data.inputs[0].hash
 
+proc getTXOs*(
+  db: WalletDB,
+  transactions: ref Transactions
+): HashSet[Input] {.forceCheck: [].} =
+  result = initHashSet[Input]()
+
+  #Get both chains.
+  var
+    internal: HDPublic
+    external: HDPublic
+  try:
+    internal = HDPublic(
+      key: db.accountZero,
+      chainCode: db.chainCode
+    ).derivePublic(1)
+
+    external = HDPublic(
+      key: db.accountZero,
+      chainCode: db.chainCode
+    ).derivePublic(0)
+  except ValueError as e:
+    panic("WalletDB has an unusable Wallet: " & e.msg)
+
+  for address in db.addresses:
+    var child: HDPublic
+    try:
+      child = external.derivePublic(address)
+    except ValueError as e:
+      panic("WalletDB has an unusable address: " & e.msg)
+
+    result = result + cast[seq[Input]](transactions[].getTXOs(child.key)).toHashSet()
+
+  #Get the UTXOs for the current address which generally isn't part of db.addresses.
+  #There is one known edge case to this, where an implicitly returned address is then explicitly returned.
+  #This wider check is useful for guaranteeing a lack of duplication.
+  #Also, the above edge case is handled properly by the implicit indexing code.
+  if db.nextIndex notin db.addresses:
+    var child: HDPublic
+    try:
+      child = external.derivePublic(db.nextIndex)
+    except ValueError as e:
+      panic("WalletDB has an unusable address: " & e.msg)
+
+    result = result + cast[seq[Input]](transactions[].getTXOs(child.key)).toHashSet()
+
+  #Get change UTXOs.
+  #Inclusive in order to support change addresses which have been used, yet we haven't since called getChangeKey.
+  for address in 0 .. db.changeIndex:
+    var child: HDPublic
+    try:
+      child = internal.derivePublic(address)
+    except ValueError:
+      continue
+
+    result = result + cast[seq[Input]](transactions[].getTXOs(child.key)).toHashSet()
+
+#This and getTXOs are almost identical and should be merged if possible.
 proc getUTXOs*(
   db: WalletDB,
   transactions: ref Transactions

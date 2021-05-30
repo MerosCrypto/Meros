@@ -111,3 +111,14 @@ The result is an object, as follows:
   - `key`    (string)
   - `amount` (string)
 - `publicKey` (string): The public key this transaction will be checked against. Used to verify the correct private key is being used.
+
+### `getTransactionHistory`
+
+`getTransactionHistory` replies with a list of fund movements in and out of the wallet. The order is not guaranteed, and this may include unconfirmed transactions. It should not be used to confirm payments.
+
+The result is a list of objects, each as follows:
+- `type`   (string): "receive" or "send"
+- `amount` (string): Amount received or sent.
+- `txos`  (array of objects, each as follows): TXOs involved in this movement.
+  - `hash`  (string)
+  - `nonce` (int)

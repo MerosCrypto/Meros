@@ -38,6 +38,10 @@ type
       IndexError
     ].}
 
+    getTXOs*: proc (
+      key: RistrettoPublicKey
+    ): seq[FundedInput] {.gcsafe, raises: [].}
+
     getUTXOs*: proc (
       key: RistrettoPublicKey
     ): seq[FundedInput] {.gcsafe, raises: [].}
@@ -329,6 +333,7 @@ type
       password: string
     ): Future[Hash[256]] {.gcsafe.}
 
+    getTXOs*: proc (): HashSet[Input] {.gcsafe, raises: [].}
     getUTXOs*: proc (): seq[UsableInput] {.gcsafe, raises: [].}
 
   NetworkFunctionBox* = ref object

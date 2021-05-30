@@ -59,7 +59,7 @@ template DATA_SENDER(
 ): string =
   hash.serialize() & "se"
 
-template SPENDABLE(
+template TXOS(
   key: RistrettoPublicKey
 ): string =
   key.serialize() & "$p"
@@ -300,44 +300,48 @@ proc loadSendOutput*(
   except Exception as e:
     raise newLoggedException(DBReadError, e.msg)
 
+proc loadTXOs*(
+  db: DB,
+  key: RistrettoPublicKey
+): seq[FundedInput] {.forceCheck: [].} =
+  var txos: string
+  try:
+    txos = db.get(TXOS(key))
+  except Exception:
+    txos = ""
+
+  for i in countup(0, txos.len - 1, 33):
+    result.add(
+      newFundedInput(
+        txos[i ..< i + 32].toHash[:256](),
+        int(txos[i + 32])
+      )
+    )
+
 proc loadSpendable*(
   db: DB,
   key: RistrettoPublicKey
-): seq[FundedInput] {.forceCheck: [
-  DBReadError
-].} =
-  var spendable: string
-  try:
-    spendable = db.get(SPENDABLE(key))
-  except Exception as e:
-    raise newLoggedException(DBReadError, e.msg)
+): seq[FundedInput] {.forceCheck: [].} =
+  result = db.loadTXOs(key)
+  var t: int = 0
+  while t < result.len:
+    if db.loadSpenders(result[t]).len != 0:
+      result.del(t)
+      continue
+    inc(t)
 
-  for i in countup(0, spendable.len - 1, 33):
-    let input: FundedInput = newFundedInput(
-      spendable[i ..< i + 32].toHash[:256](),
-      int(spendable[i + 32])
-    )
-
-    #Spendable isn't guaranteed consistency for a few reasons. This manifests as spent Transactions reappearing.
-    #Without a lot more tracking code, which would be decently intensive, it can't be made consistent.
-    #That said, by following up with this check, it can be.
-    #Theoretically, we could also move this check to addToSpendable, yet addToSpendable is caused for all UTXOs.
-    #loadSpendable is solely triggered via the RPC and therefore should run much more infrequently.
-    if db.loadSpenders(input).len == 0:
-      result.add(input)
-
-proc addToSpendable(
+proc addToTXOs(
   db: DB,
   key: RistrettoPublicKey,
   hash: Hash[256],
   nonce: int
 ) {.forceCheck: [].} =
   try:
-    db.put(SPENDABLE(key), db.get(SPENDABLE(key)) & hash.serialize() & char(nonce))
+    db.put(TXOS(key), db.get(TXOS(key)) & hash.serialize() & char(nonce))
   except DBReadError:
-    db.put(SPENDABLE(key), hash.serialize() & char(nonce))
+    db.put(TXOS(key), hash.serialize() & char(nonce))
 
-proc removeFromSpendable(
+proc removeFromTXOs(
   db: DB,
   key: RistrettoPublicKey,
   hash: Hash[256],
@@ -349,7 +353,7 @@ proc removeFromSpendable(
 
   #Load the output.
   try:
-    spendable = db.get(SPENDABLE(key))
+    spendable = db.get(TXOS(key))
   except DBReadError:
     return
 
@@ -360,7 +364,7 @@ proc removeFromSpendable(
       spendable = spendable[0 ..< o] & spendable[o + 33 ..< spendable.len]
       continue
     o += 33
-  db.put(SPENDABLE(key), spendable)
+  db.put(TXOS(key), spendable)
 
 #Add the Transaction's outputs to spendable.
 proc verify*(
@@ -369,7 +373,7 @@ proc verify*(
 ) {.forceCheck: [].} =
   if (tx of Claim) or (tx of Send):
     for o in 0 ..< tx.outputs.len:
-      db.addToSpendable(
+      db.addToTXOs(
         cast[SendOutput](tx.outputs[o]).key,
         tx.hash,
         o
@@ -382,7 +386,7 @@ proc unverify*(
 ) {.forceCheck: [].} =
   if (tx of Claim) or (tx of Send):
     for o in 0 ..< tx.outputs.len:
-      db.removeFromSpendable(
+      db.removeFromTXOs(
         cast[SendOutput](tx.outputs[o]).key,
         tx.hash,
         o
@@ -449,4 +453,4 @@ proc prune*(
     #That said, it doesn't hurt to have, and it's safe to run even if the outputs aren't present in spendable.
     #-- Kayaba
     if tx.outputs[o] of SendOutput:
-      db.removeFromSpendable(cast[SendOutput](tx.outputs[o]).key, hash, o)
+      db.removeFromTXOs(cast[SendOutput](tx.outputs[o]).key, hash, o)

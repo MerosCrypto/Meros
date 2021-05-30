@@ -146,6 +146,11 @@ proc mainTransactions(
     except IndexError as e:
       raise e
 
+  functions.transactions.getTXOs = proc (
+    key: RistrettoPublicKey
+  ): seq[FundedInput] {.forceCheck: [].} =
+    transactions[].getTXOs(key)
+
   functions.transactions.getUTXOs = proc (
     key: RistrettoPublicKey
   ): seq[FundedInput] {.forceCheck: [].} =

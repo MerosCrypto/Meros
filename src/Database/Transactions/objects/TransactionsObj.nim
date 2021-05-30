@@ -159,15 +159,19 @@ proc newTransactionsObj*(
   except IndexError as e:
     panic("Couldn't load hashes from the Blockchain while reloading Transactions: " & e.msg)
 
+#Load a Public Key's TXOs.
+proc getTXOs*(
+  transactions: Transactions,
+  key: RistrettoPublicKey
+): seq[FundedInput] {.inline, forceCheck: [].} =
+  transactions.db.loadTXOs(key)
+
 #Load a Public Key's UTXOs.
 proc getUTXOs*(
   transactions: Transactions,
   key: RistrettoPublicKey
-): seq[FundedInput] {.forceCheck: [].} =
-  try:
-    result = transactions.db.loadSpendable(key)
-  except DBReadError:
-    result = @[]
+): seq[FundedInput] {.inline, forceCheck: [].} =
+  transactions.db.loadSpendable(key)
 
 #Mark a Transaction as mentioned.
 proc mention*(

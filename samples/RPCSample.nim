@@ -48,8 +48,10 @@ const ARGUMENTS: Table[string, seq[(string, char)]] = {
   "personal_data": @[("data", 's'), ("password", 's')],
 
   "personal_getUTXOs":               @[],
+  "personal_getBalance":             @[],
   "personal_getTransactionTemplate": @[("outputs", 'j')], #Using this via the RPCSample would be incredibly pointless.
                                                           #That said, it is an RPC method, and could be used to demonstrate WatchWallet functionality.
+  "personal_getTransactionHistory":  @[],
 
   "system_quit": @[]
 }.toTable()
