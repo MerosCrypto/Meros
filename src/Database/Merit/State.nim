@@ -281,7 +281,7 @@ proc revert*(
       #Don't add Merit back if the miner has a MeritRemoval.
       var removed: bool = false
       try:
-        removed = state.db.loadRemovalHeight(nick) <= height
+        removed = state.db.loadRemovalHeight(nick) < height
       except DBReadError:
         discard
       if not removed:
