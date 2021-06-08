@@ -25,11 +25,22 @@ type
     created: uint
 
   Epochs* = ref object
-    genesis: Hash.Hash[256]
-    lastID: uint
-    inputMap: Table[Input, FamilyID]
-    families: Table[uint, Family]
-    epochs: Deque[HashSet[uint]]
+    when not defined(merosTests):
+      genesis: Hash.Hash[256]
+      functions: GlobalFunctionBox
+      height: uint
+      lastID: uint
+      inputMap: Table[Input, FamilyID]
+      families: Table[uint, Family]
+      epochs: Deque[HashSet[uint]]
+    else:
+      genesis*: Hash.Hash[256]
+      functions*: GlobalFunctionBox
+      height*: uint
+      lastID*: uint
+      inputMap*: Table[Input, FamilyID]
+      families*: Table[uint, Family]
+      epochs*: Deque[HashSet[uint]]
 
 func resolve(
   id: FamilyID
@@ -44,19 +55,25 @@ func hash(
   hash(id.resolve().id)
 
 func newEpochs*(
-  genesis: Hash.Hash[256]
-): Epochs {.inline, forceCheck: [].} =
-  Epochs(
+  genesis: Hash.Hash[256],
+  functions: GlobalFunctionBox,
+  height: uint
+): Epochs {.forceCheck: [].} =
+  result = Epochs(
     genesis: genesis,
+    functions: functions,
+    height: height,
     lastID: 1,
     inputMap: initTable[Input, FamilyID](),
     families: initTable[uint, Family](),
-    epochs: initDeque[HashSet[uint]](5)
+    epochs: initDeque[HashSet[uint]]()
   )
+  for _ in 0 ..< 5:
+    result.epochs.addLast(initHashSet[uint]())
 
 #Works for the case where a single family is passed.
 #Also brings up merged families and dependents.
-proc merge(
+func merge(
   epochs: Epochs,
   families: seq[FamilyID]
 ): FamilyID {.forceCheck: [].} =
@@ -118,10 +135,13 @@ proc merge(
 #Adding a transaction whose parent never went through Epochs will produce UB.
 proc register*(
   epochs: Epochs,
-  functions: GlobalFunctionBox,
   inputs: seq[Input],
   height: uint
 ) {.forceCheck: [].} =
+  if epochs.height < height:
+    inc(epochs.height)
+    epochs.epochs.addLast(initHashSet[uint]())
+
   #Don't track families for magic inputs as used in Datas.
   #Could be inside the loop, yet such TXs only have one input.
   #Could have a check this is the only input, yet that's the only reason these hashes would be valid.
@@ -180,7 +200,8 @@ proc register*(
     #Check if we're a dependent.
     #We do this by checking if we have any inputs whose inputs are in Epochs.
     try:
-      for parentInput in functions.transactions.getTransaction(input.hash).inputs:
+      for parentInput in epochs.functions.transactions.getTransaction(input.hash).inputs:
+        #Doesn't need a check for being a magic input due to those never entering Epochs in the first place.
         var parent: uint
         try:
           parent = epochs.inputMap[parentInput].resolve().id
@@ -195,15 +216,19 @@ proc register*(
       panic("Couldn't get a Transaction despite it being in Epochs: " & e.msg)
 
 #Pops off the newly finalized inputs.
-proc pop*(
+func pop*(
   epochs: Epochs
 ): HashSet[Input] {.forceCheck: [].} =
+  #Handle not having any Transactions included in the Block.
+  if epochs.epochs.len == 5:
+    inc(epochs.height)
+    epochs.epochs.addLast(initHashSet[uint]())
+
   var families: HashSet[uint]
   try:
     families = epochs.epochs.popFirst()
   except IndexError as e:
     panic("Couldn't pop from the Epochs: " & e.msg)
-  epochs.epochs.addLast(initHashSet[uint]())
 
   result = initHashSet[Input]()
   for family in families:
@@ -220,7 +245,7 @@ when defined(merosTests):
     e1: Epochs,
     e2: Epochs
   ): bool =
-    if e1.inputMap.keys().toSeq().toHashSet() != e2.inputMap.keys().toSeq().toHashSet():
+    if toSeq(e1.inputMap.keys()).toHashSet() != toSeq(e2.inputMap.keys()).toHashSet():
       return false
 
     for input in e1.inputMap.keys():
@@ -233,10 +258,10 @@ when defined(merosTests):
         return false
       #Doesn't check dependants length as duplicates may exist.
       for dependant in f1.dependants:
-        let dependants: HashSet[Input] = f1.families[dependant.resolve().id].inputs
+        let dependants: HashSet[Input] = e1.families[dependant.resolve().id].inputs
         var found: bool = false
         for possibility in f2.dependants:
-          if f2.families[possibility.resolve().id].inputs == dependants:
+          if e2.families[possibility.resolve().id].inputs == dependants:
             found = true
             break
         if not found:
@@ -245,10 +270,10 @@ when defined(merosTests):
     if e1.epochs.len != e2.epochs.len:
       panic("Epochs length was different. Even in testing, this should never happen.")
     for e in 0 ..< e1.epochs.len:
-      for f in e1.epochs[e]:
+      for f1 in e1.epochs[e]:
         #No risk of duplicates; just a lack of a canonical ordering.
         var found: bool = false
-        for f2 in e2.epoch[e]:
+        for f2 in e2.epochs[e]:
           if e1.families[f1].inputs == e2.families[f2].inputs:
             found = true
             break

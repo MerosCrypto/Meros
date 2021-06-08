@@ -11,8 +11,6 @@ import ../../Transactions/objects/TransactionObj
 import ../../Transactions/Data as DataFile
 import ../../Transactions/objects/TransactionsObj
 
-import ../../Merit/objects/EpochsObj
-
 import ../../../Network/Serialize/SerializeCommon
 
 import ../DB/Serialize/Transactions/[DBSerializeTransaction, ParseTransaction]
@@ -173,32 +171,20 @@ proc del(
 
 proc commit*(
   db: WalletDB,
-  popped: Epoch,
-  getTransaction: proc (
-    hash: Hash[256]
-  ): MerosTransaction {.gcsafe, raises: [
-    IndexError
-  ].}
+  popped: HashSet[Input]
 ) {.forceCheck: [].} =
   #Mark all inputs of all finalized Transactions as finalized.
   var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]]()
-  for hash in popped.keys():
-    var tx: MerosTransaction
+  for input in popped:
     try:
-      tx = getTransaction(hash)
-    except IndexError as e:
-      panic("Couldn't get a Transaction that's now out of Epochs: " & e.msg)
-
-    for input in tx.inputs:
-      try:
-        items.add((INPUT_NONCE(db.verified[input.serialize()]), char(1) & input.serialize()))
-        #If the nonce of this input is the same as the last finalized nonce, increment.
-        if db.verified[input.serialize()] == db.finalizedNonces:
-          inc(db.finalizedNonces)
-        db.verified.del(input.serialize())
-      #We never verified a Transaction spending this input.
-      except KeyError:
-        continue
+      items.add((INPUT_NONCE(db.verified[input.serialize()]), char(1) & input.serialize()))
+      #If the nonce of this input is the same as the last finalized nonce, increment.
+      if db.verified[input.serialize()] == db.finalizedNonces:
+        inc(db.finalizedNonces)
+      db.verified.del(input.serialize())
+    #We never verified a Transaction spending this input.
+    except KeyError:
+      continue
   db.put(items)
 
   #To handle out of order finalizations, do one last pass through.
