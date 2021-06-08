@@ -131,6 +131,8 @@ func merge(
     except KeyError as e:
       panic("Couldn't get a dependant family despite resolution: " & e.msg)
 
+  result = target
+
 #Requires registration in order.
 #Adding a transaction whose parent never went through Epochs will produce UB.
 proc register*(
@@ -190,7 +192,7 @@ proc register*(
   #Add ourselves to the family.
   var family: Family
   try:
-    family = epochs.families[familyID.resolve().id]
+    family = epochs.families[familyID.id]
   except KeyError as e:
     panic("Couldn't get a family we just created: " & e.msg)
   for input in inputs:
