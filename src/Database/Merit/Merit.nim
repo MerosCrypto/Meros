@@ -1,7 +1,10 @@
-import tables
+import sets, tables
 
 import ../../lib/[Errors, Util]
 import ../../Wallet/MinerWallet
+import ../../objects/GlobalFunctionBoxObj
+
+import ../Transactions/objects/TransactionObj
 
 import ../Filesystem/DB/MeritDB
 
@@ -19,6 +22,7 @@ type Merit* = ref object
 
 proc newMerit*(
   db: DB,
+  functions: GlobalFunctionBox,
   genesis: string,
   blockTime: int,
   initialDifficulty: uint64,
@@ -33,7 +37,7 @@ proc newMerit*(
     )
   )
   result.state = newState(db, deadBlocks, result.blockchain)
-  result.epochs = newEpochs(result.blockchain)
+  result.epochs = newEpochs(functions, result.blockchain)
 
 #Add a Block to the Blockchain.
 proc processBlock*(
@@ -46,9 +50,9 @@ proc processBlock*(
 #Updates the State and Epochs. Needed due to how the TX/Consensus DAG flow.
 proc postProcessBlock*(
   merit: Merit
-): (Epoch, StateChanges) {.forceCheck: [].} =
+): (HashSet[Input], StateChanges) {.forceCheck: [].} =
   #Have the Epochs process the Block and return the popped Epoch.
-  result[0] = merit.epochs.shift(merit.blockchain.tail)
+  result[0] = merit.epochs.shift(merit.blockchain.tail, uint(merit.blockchain.height))
 
   #Have the State process the block.
   result[1] = merit.state.processBlock(merit.blockchain)
@@ -74,10 +78,11 @@ proc revertMinersAndHolders*(
 
 proc revert*(
   merit: Merit,
+  functions: GlobalFunctionBox,
   height: int
 ) {.forceCheck: [].} =
   #Reverting the Blockchain reverts the State as well.
   merit.blockchain.revert(merit.state, height)
   #We don't have an Epochs reversion algorithm. We just rebuild it.
-  #If the amount of Blocks reverted is greater than the Epochs length, this is faster.
-  merit.epochs = newEpochs(merit.blockchain)
+  #If the amount of Blocks reverted is greater than the Epochs length, this is faster anyways.
+  merit.epochs = newEpochs(functions, merit.blockchain)

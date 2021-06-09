@@ -27,7 +27,7 @@ suite "Epochs":
         except KeyError:
           panic("Epochs asked for non-existent Transaction.")
 
-    var epochs: Epochs = newEpochs(genesis, functions, 1)
+    var epochs: Epochs = newEpochsObj(genesis, functions, 1)
 
     proc randomHash(): Hash[256] =
       for b in 0 ..< 32:

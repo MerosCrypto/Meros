@@ -26,11 +26,11 @@ type
 
   Epochs* = ref object
     when not defined(merosTests):
-      genesis: Hash.Hash[256]
-      functions: GlobalFunctionBox
+      genesis*: Hash.Hash[256]
+      functions*: GlobalFunctionBox
       height: uint
       lastID: uint
-      inputMap: Table[Input, FamilyID]
+      inputMap*: Table[Input, FamilyID]
       families: Table[uint, Family]
       epochs: Deque[HashSet[uint]]
     else:
@@ -54,7 +54,7 @@ func hash(
 ): hashes.Hash {.forceCheck: [].} =
   hash(id.resolve().id)
 
-func newEpochs*(
+func newEpochsObj*(
   genesis: Hash.Hash[256],
   functions: GlobalFunctionBox,
   height: uint
@@ -73,7 +73,7 @@ func newEpochs*(
 
 #Works for the case where a single family is passed.
 #Also brings up merged families and dependents.
-func merge(
+proc merge(
   epochs: Epochs,
   families: seq[FamilyID]
 ): FamilyID {.forceCheck: [].} =
@@ -204,21 +204,21 @@ proc register*(
     try:
       for parentInput in epochs.functions.transactions.getTransaction(input.hash).inputs:
         #Doesn't need a check for being a magic input due to those never entering Epochs in the first place.
-        var parent: uint
+        var parent: FamilyID
         try:
-          parent = epochs.inputMap[parentInput].resolve().id
+          parent = epochs.inputMap[parentInput]
         except KeyError:
           continue
 
         try:
-          epochs.families[parent].dependants.incl(familyID)
+          epochs.families[parent.resolve().id].dependants.incl(familyID)
         except KeyError as e:
           panic("Couldn't get the family of a parent in Epochs: " & e.msg)
     except IndexError as e:
       panic("Couldn't get a Transaction despite it being in Epochs: " & e.msg)
 
 #Pops off the newly finalized inputs.
-func pop*(
+proc pop*(
   epochs: Epochs
 ): HashSet[Input] {.forceCheck: [].} =
   #Handle not having any Transactions included in the Block.
