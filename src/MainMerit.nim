@@ -24,7 +24,6 @@ proc mainMerit(
   #Create the Merit.
   merit[] = newMerit(
     database,
-    functions,
     params.GENESIS,
     params.BLOCK_TIME,
     params.BLOCK_DIFFICULTY,
@@ -735,3 +734,9 @@ proc mainMerit(
       )
     except ValueError as e:
       raise e
+
+proc meritFollowup*(
+  functions: GlobalFunctionBox,
+  merit: ref Merit
+) {.forceCheck: [].} =
+  merit[].createEpochs(functions)

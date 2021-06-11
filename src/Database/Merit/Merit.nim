@@ -22,7 +22,6 @@ type Merit* = ref object
 
 proc newMerit*(
   db: DB,
-  functions: GlobalFunctionBox,
   genesis: string,
   blockTime: int,
   initialDifficulty: uint64,
@@ -37,7 +36,12 @@ proc newMerit*(
     )
   )
   result.state = newState(db, deadBlocks, result.blockchain)
-  result.epochs = newEpochs(functions, result.blockchain)
+
+proc createEpochs*(
+  merit: Merit,
+  functions: GlobalFunctionBox
+) {.inline, forceCheck: [].} =
+  merit.epochs = newEpochs(functions, merit.blockchain)
 
 #Add a Block to the Blockchain.
 proc processBlock*(
