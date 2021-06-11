@@ -52,6 +52,7 @@ proc shift*(
         try:
           #Check if the parent was finalized.
           #Will be true a large portion of the time and is a much cheaper check.
+          #Doesn't use TransactionStatus.finalized as that will consider Transactions which haven't been through Epochs as finalized if beaten.
           if epochs.functions.consensus.getStatus(input.hash).merit == -1:
             #If it's not finalized, check presence in Epochs.
             for parentInput in epochs.functions.transactions.getTransaction(input.hash).inputs:

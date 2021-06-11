@@ -80,7 +80,7 @@ proc flag*(
         panic("Couldn't get the status of a Transaction in Epochs at one point: " & e.msg)
 
       #Don't recalculate Transactions which have already finalized.
-      if status.merit != -1:
+      if status.finalized:
         continue
 
       #Don't bother checking Transactions which have yet to be verified.
@@ -654,7 +654,7 @@ proc archive*(
   state: State,
   shifted: seq[VerificationPacket],
   elements: seq[BlockElement],
-  popped: Epoch,
+  popped: HashSet[Input],
   changes: StateChanges
 ) {.forceCheck: [].} =
   #Delete every mentioned hash in the Block from unmentioned.
@@ -723,66 +723,16 @@ proc archive*(
   except KeyError:
     panic("Tried to archive an Element for a non-existent holder.")
 
-  #Finalize every popped family.
-  #First requires expanding from TX to family.
-  var
-    inputs: seq[HashSet[Input]] = newSeq[HashSet[Input]](popped.len)
-    families: seq[seq[Hash[256]]] = newSeq[seq[Hash[256]]](popped.len)
-    i: int = 0
+  #Finalize every popped input.
+  #First requires expanding from inputs to Transactions.
+  var txs: HashSet[Hash[256]] = @[]
   #First requires getting every TX from every family.
-  for hash in popped.keys():
+  for input in popped:
     try:
-      #The Consensus test doesn't actually create transactions; just hashes registered in the cache.
-      #Work around this edge case, wrapped in a define to ensure it's never used in a live scenario.
-      #This should be impossible when actually run.
-      when defined(merosTests):
-        if consensus.functions.transactions.getTransaction(hash).inputs.len == 0:
-          families[i] = @[hash]
-          inc(i)
-          continue
-
-      var tx: Transaction = consensus.functions.transactions.getTransaction(hash)
-      if (tx of Data) and (tx.inputs[0].hash == Hash[256]()) or (tx.inputs[0].hash == consensus.genesis):
-        families[i].add(hash)
-      else:
-        inputs[i] = consensus.functions.transactions.getAndPruneFamilyUnsafe(tx.inputs[0])
-        #Part of a different family.
-        if inputs.len == 0:
-          continue
-        for input in inputs[i]:
-          families[i] &= consensus.functions.transactions.getSpenders(input)
-        families[i] = families[i].deduplicate()
-      inc(i)
+      txs = txs + consensus.functions.transactions.getSpenders(input).toHashSet()
     except IndexError:
       panic("Couldn't get a Transaction we're finalizing: " & $hash)
-  inputs.setLen(i)
-  families.setLen(i)
-
-  #Iterate over each family using a queue.
-  var cyclical: bool = false
-  while families.len != 0:
-    var
-      lenAtStart: int = families.len
-      i: int = 0
-    while i < families.len:
-      try:
-        consensus.finalize(state, inputs[i], families[i], cyclical)
-      except UnfinalizedParents:
-        inc(i)
-        continue
-      #We should be able to use del here, as del should take the last element and move it.
-      #Therefore, the pair indexes should be the same. That said, it's best to pick the safer option.
-      inputs.delete(i)
-      families.delete(i)
-
-    if lenAtStart == families.len:
-      if cyclical:
-        panic("Couldn't finalize the last family.")
-      for f in 1 ..< families.len:
-        families[0] &= families[f]
-      families.setLen(1)
-      cyclical = true
-      logInfo "Cyclical transaction family found ", family = families[0]
+  consensus.finalize(state, txs.toSeq())
 
   #Reclaulcate every close Status.
   var toDelete: seq[Hash[256]] = @[]
@@ -794,7 +744,7 @@ proc archive*(
       panic("Couldn't get the status of a Transaction that's close to being verified: " & $hash)
 
     #Remove finalized Transactions.
-    if status.merit != -1:
+    if status.finalized:
       toDelete.add(hash)
       continue
 

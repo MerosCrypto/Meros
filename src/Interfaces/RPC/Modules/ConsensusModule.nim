@@ -69,7 +69,7 @@ proc module*(
           "merit":     merit,
           "threshold": functions.consensus.getThreshold(status.epoch),
           "verified":  status.verified,
-          "finalized": status.merit != -1,
+          "finalized": status.finalized,
           "competing": status.competing,
           "beaten":    status.beaten
         }

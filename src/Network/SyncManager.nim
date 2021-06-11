@@ -444,9 +444,9 @@ proc sync*(
     except IndexError as e:
       panic("Couldn't get the status of a Transaction we're confirmed to have: " & e.msg)
 
-    #Verify the Transaction is still in Epochs.
-    if status.merit != -1:
-      raise newLoggedException(ValueError, "Block has a Transaction out of Epochs.")
+    #Verify the Transaction is still in Epochs and wasn't beaten.
+    if status.finalized:
+      raise newLoggedException(ValueError, "Block has a Verification for a Transaction either out of Epochs or beaten.")
 
     #Check the packet's holders.
     for holder in packet.holders:

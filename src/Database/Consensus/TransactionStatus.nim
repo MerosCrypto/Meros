@@ -8,6 +8,13 @@ import Elements/[Verification, VerificationPacket]
 import objects/TransactionStatusObj
 export TransactionStatusObj
 
+#Check if a TransactionStatus is finalized.
+#Considers beaten Transaction as finalized despite still being in Epochs due to their immutability.
+proc finalized*(
+  status: TransactionStatus
+): bool {.forceCheck: [].} =
+  (status.merit == -1) or status.beaten
+
 proc add*(
   status: TransactionStatus,
   verif: SignedVerification
@@ -15,7 +22,7 @@ proc add*(
   DataExists
 ].} =
   #Don't change the status of finalized Transactions.
-  if status.merit != -1:
+  if status.finalized:
     return
 
   #Raise DataExists if this verifier was already added.
