@@ -1,9 +1,9 @@
-import sets, tables
+import sets
 
 import ../../lib/[Errors, Hash]
 import ../../Wallet/[Wallet, MinerWallet]
 
-import ../Merit/[Block, Blockchain, Epochs]
+import ../Merit/[Block, Blockchain, Rewards]
 
 import ../Filesystem/DB/Serialize/Transactions/DBSerializeTransaction
 import ../Filesystem/DB/TransactionsDB
@@ -12,10 +12,7 @@ import Transaction
 export Transaction
 
 import objects/TransactionsObj
-export TransactionsObj.Transactions, `[]`
-export getUTXOs, loadSpenders, loadIfKeyWasUsed, getAndPruneFamilyUnsafe, `==`, verify, unverify, beat, prune
-when defined(merosTests):
-  export getSender
+export TransactionsObj
 
 proc newTransactions*(
   db: DB,
@@ -254,15 +251,16 @@ proc mint*(
 proc archive*(
   transactions: var Transactions,
   newBlock: Block,
-  epoch: Epoch
+  epoch: HashSet[Input]
 ) {.forceCheck: [].} =
   for packet in newBlock.body.packets:
     #This is an ugly line used to access a cache this system doesn't have proper access to.
     if transactions.db.transactions.unmentioned.contains(packet.hash):
       transactions.mention(packet.hash)
 
-  for hash in epoch.keys():
-    transactions.del(hash)
+  for input in epoch:
+    for hash in transactions.loadSpenders(input):
+      transactions.del(hash)
 
 #Discover a Transaction tree.
 #Provides an ordered tree, filled with duplicates.

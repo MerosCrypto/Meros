@@ -31,7 +31,6 @@ type
     #These used to be the same field, until Merit Removals were made implicit, and no longer a descendant of Element.
     element*: Element
     removalRef*: MeritRemovalParent
-  UnfinalizedParents* = object of CatchableError #Status used when we try to finalize a family which relies on another.
 
   #Database/Merit Statuses.
   NotInEpochs*   = object of CatchableError #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.

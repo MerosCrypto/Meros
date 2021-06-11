@@ -1,4 +1,6 @@
-import algorithm, sets, tables
+import sequtils
+import algorithm
+import sets, tables
 
 import ../../../lib/[Errors, Hash]
 import ../../../Wallet/MinerWallet
@@ -409,27 +411,25 @@ proc unverify*(
     #Notify the Transactions DAG about the unverification.
     consensus.functions.transactions.unverify(child)
 
-#Finalize a family.
+#Finalize the latest Epoch.
 proc finalize*(
   consensus: var Consensus,
   state: State,
   txHashes: seq[Hash[256]]
-) {.forceCheck: [
-  UnfinalizedParents
-].} =
+): seq[seq[uint16]] {.forceCheck: [].} =
   type FinalizableTransaction = object
     tx: Transaction
     status: TransactionStatus
   var txs: seq[FinalizableTransaction] = @[]
 
   #Grab each TX and calculate their Merit.
-  for i in 0 ..< family.len:
+  for i in 0 ..< txHashes.len:
     var status: TransactionStatus
     try:
       txs.add(FinalizableTransaction(
         tx: consensus.functions.transactions.getTransaction(txHashes[i])
       ))
-      status = consensus.getStatus(family[i])
+      status = consensus.getStatus(txHashes[i])
     except IndexError as e:
       panic("Couldn't get the status of a Transaction (or the Transaction itself) we're finalizing: " & e.msg)
 
@@ -587,10 +587,11 @@ proc finalize*(
       txs.delete(i)
       continue
 
-    i = (i + 1) % tx.len
+    i = (i + 1) mod txs.len
 
   #Now that we've marked the beaten TXs as so, run the tree verifications.
   for tx in toVerify:
+    result.add(toSeq(tx.status.holders.items()))
     consensus.calculateMerit(state, tx.tx.hash, tx.status)
     consensus.db.save(tx.tx.hash, tx.status)
     consensus.statuses.del(tx.tx.hash)

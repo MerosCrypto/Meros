@@ -24,6 +24,7 @@ proc mainMerit(
   #Create the Merit.
   merit[] = newMerit(
     database,
+    functions,
     params.GENESIS,
     params.BLOCK_TIME,
     params.BLOCK_DIFFICULTY,
@@ -310,7 +311,7 @@ proc mainMerit(
     #Commit the DBs.
     database.commit(merit.blockchain.height)
     try:
-      wallet.commit(finalized, functions.transactions.getTransaction)
+      wallet.commit(finalized)
     except IndexError as e:
       panic("Passing a function that could raise an IndexError raised an IndexError: " & e.msg)
 
@@ -508,6 +509,7 @@ proc mainMerit(
             reorgInfo = await reorganize(
               database,
               wallet,
+              functions,
               merit[],
               consensus,
               transactions,
@@ -539,6 +541,7 @@ proc mainMerit(
               reorgRecover(
                 database,
                 wallet,
+                functions,
                 merit[],
                 consensus,
                 transactions,
@@ -551,6 +554,7 @@ proc mainMerit(
               reorgRecover(
                 database,
                 wallet,
+                functions,
                 merit[],
                 consensus,
                 transactions,

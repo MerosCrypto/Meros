@@ -656,7 +656,7 @@ proc archive*(
   elements: seq[BlockElement],
   popped: HashSet[Input],
   changes: StateChanges
-) {.forceCheck: [].} =
+): seq[seq[uint16]] {.forceCheck: [].} =
   #Delete every mentioned hash in the Block from unmentioned.
   for packet in shifted:
     consensus.unmentioned.excl(packet.hash)
@@ -725,14 +725,11 @@ proc archive*(
 
   #Finalize every popped input.
   #First requires expanding from inputs to Transactions.
-  var txs: HashSet[Hash[256]] = @[]
+  var txs: HashSet[Hash[256]] = initHashSet[Hash[256]]()
   #First requires getting every TX from every family.
   for input in popped:
-    try:
-      txs = txs + consensus.functions.transactions.getSpenders(input).toHashSet()
-    except IndexError:
-      panic("Couldn't get a Transaction we're finalizing: " & $hash)
-  consensus.finalize(state, txs.toSeq())
+    txs = txs + consensus.functions.transactions.getSpenders(input).toHashSet()
+  result = consensus.finalize(state, txs.toSeq())
 
   #Reclaulcate every close Status.
   var toDelete: seq[Hash[256]] = @[]

@@ -9,10 +9,9 @@ import State
 import objects/EpochsObj
 export EpochsObj
 
-type
-  Reward* = object
-    nick*: uint16
-    score*: uint64
+type Reward* = object
+  nick*: uint16
+  score*: uint64
 
 func newReward*(
   nick: uint16,

@@ -46,10 +46,6 @@ type
       input: Input
     ): seq[Hash[256]] {.gcsafe, raises: [].}
 
-    getAndPruneFamilyUnsafe*: proc (
-      input: Input
-    ): HashSet[Input] {.gcsafe, raises: [].}
-
     addClaim*: proc (
       claim: Claim,
       syncing: bool = false

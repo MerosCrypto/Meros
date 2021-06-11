@@ -3,6 +3,7 @@ include MainDatabase
 proc revertTo(
   database: DB,
   wallet: WalletDB,
+  functions: GlobalFunctionBox,
   merit: Merit,
   consensus: ref Consensus,
   transactions: ref Transactions,
@@ -13,7 +14,7 @@ proc revertTo(
     return
   consensus[].revert(merit.blockchain, merit.state, transactions[], height)
   transactions[].revert(merit.blockchain, height)
-  merit.revert(height)
+  merit.revert(functions, height)
   database.commit(merit.blockchain.height)
   transactions[] = newTransactions(database, merit.blockchain)
   consensus[].postRevert(merit.blockchain, merit.state, transactions[])
@@ -26,6 +27,7 @@ proc revertTo(
 proc reorgRecover(
   database: DB,
   wallet: WalletDB,
+  functions: GlobalFunctionBox,
   merit: Merit,
   consensus: ref Consensus,
   transactions: ref Transactions,
@@ -44,11 +46,12 @@ proc reorgRecover(
     return
   else:
     logInfo "Reverting back to the fork point", hash = lastCommonBlock
-    revertTo(database, wallet, merit, consensus, transactions, merit.blockchain.getHeightOf(lastCommonBlock))
+    revertTo(database, wallet, functions, merit, consensus, transactions, merit.blockchain.getHeightOf(lastCommonBlock))
 
 proc reorganize(
   database: DB,
   wallet: WalletDB,
+  functions: GlobalFunctionBox,
   merit: Merit,
   consensus: ref Consensus,
   transactions: ref Transactions,
@@ -220,7 +223,7 @@ proc reorganize(
   ):
     #The first step is to revert everything to a point it can be advanced again.
     logInfo "Reorganizing", depth = merit.blockchain.height - lastCommonHeight, oldWork = oldWorkStr, newWork = newWorkStr
-    revertTo(database, wallet, merit, consensus, transactions, lastCommonHeight)
+    revertTo(database, wallet, functions, merit, consensus, transactions, lastCommonHeight)
 
     #We now return the headers so MainMerit adds the alternate Blocks.
     #This is done implicitly via result.
