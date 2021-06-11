@@ -9,10 +9,10 @@ import ../Transactions/objects/TransactionObj
 import ../Filesystem/DB/MeritDB
 
 import Difficulty, BlockHeader, Block, Blockchain
-import State, Epochs
+import State, Epochs, Rewards
 
 export Difficulty, BlockHeader, Block, Blockchain
-export State, Epochs
+export State, Epochs, Rewards
 
 #Blockchain, State, and Epochs wrapper.
 type Merit* = ref object

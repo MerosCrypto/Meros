@@ -217,9 +217,9 @@ proc mainMerit(
 
     #Add the Block to the Epochs and State.
     var
-      epoch: Epoch
+      finalized: HashSet[Input]
       changes: StateChanges
-    (epoch, changes) = merit[].postProcessBlock()
+    (finalized, changes) = merit[].postProcessBlock()
 
     logDebug "Archiving Block", hash = newBlock.header.hash
 
@@ -254,11 +254,11 @@ proc mainMerit(
         )
 
     #Archive the Epochs.
-    consensus[].archive(
+    let winningTXsVerifiers: seq[seq[uint16]] = consensus[].archive(
       merit.state,
       newBlock.body.packets,
       newBlock.body.elements,
-      epoch,
+      finalized,
       changes
     )
 
@@ -271,7 +271,7 @@ proc mainMerit(
           functions.consensus.addDataDifficulty(dataDiff)
 
     #Archive the hashes handled by the popped Epoch.
-    transactions[].archive(newBlock, epoch)
+    transactions[].archive(newBlock, finalized)
 
     #If this header had a new miner, check if it was us.
     if newBlock.header.newMiner:
@@ -281,7 +281,7 @@ proc mainMerit(
     logDebug "Minting Meros", hash = newBlock.header.hash
 
     #Calculate the rewards.
-    var rewards: seq[Reward] = epoch.calculate(rewardsState, newBlock.body.removals)
+    var rewards: seq[Reward] = rewardsState.calculate(winningTXsVerifiers, newBlock.body.removals)
 
     #If there are rewards, create the Mint.
     var receivedMint: int = -1
@@ -310,7 +310,7 @@ proc mainMerit(
     #Commit the DBs.
     database.commit(merit.blockchain.height)
     try:
-      wallet.commit(epoch, functions.transactions.getTransaction)
+      wallet.commit(finalized, functions.transactions.getTransaction)
     except IndexError as e:
       panic("Passing a function that could raise an IndexError raised an IndexError: " & e.msg)
 
