@@ -16,9 +16,9 @@ export TransactionsObj
 
 proc newTransactions*(
   db: DB,
-  blockchain: Blockchain
+  genesis: Hash[256]
 ): Transactions {.inline, forceCheck: [].} =
-  newTransactionsObj(db, blockchain)
+  newTransactionsObj(db, genesis)
 
 proc add*(
   transactions: var Transactions,

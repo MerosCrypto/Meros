@@ -5,10 +5,6 @@ import ../../../Wallet/Wallet
 
 import ../../Filesystem/DB/TransactionsDB
 
-import ../../Consensus/Elements/objects/VerificationPacketObj
-
-import ../../Merit/Blockchain
-
 import ../Transaction as TransactionFile
 
 type Transactions* = object
@@ -101,11 +97,11 @@ proc `[]`*(
 
 proc newTransactionsObj*(
   db: DB,
-  blockchain: Blockchain
+  genesis: Hash[256]
 ): Transactions {.forceCheck: [].} =
   result = Transactions(
     db: db,
-    genesis: blockchain.genesis,
+    genesis: genesis,
     transactions: initTable[Hash[256], Transaction]()
   )
 
@@ -118,39 +114,31 @@ proc newTransactionsObj*(
     result.dataWallet = wallet.hd
     result.db.saveDataWallet($wallet.mnemonic)
 
-  #Load the Transactions from the DB.
-  try:
-    #Find which Transactions were mentioned before the last 5 blocks.
-    var mentioned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
-    for b in max(0, blockchain.height - 10) ..< blockchain.height - 5:
-      for packet in blockchain[b].body.packets:
-        mentioned.incl(packet.hash)
+  #Load the unmentioned Transactions.
+  for hash in db.loadUnmentioned():
+    try:
+      result.add(db.load(hash), false)
+    except ValueError as e:
+      panic("Adding a reloaded unmentioned Transaction raised a ValueError: " & e.msg)
+    except DBReadError as e:
+      panic("Couldn't load an unmentioned Transaction from the Database: " & e.msg)
 
-    #Load Transactions in the last 5 Blocks, as long as they aren't first mentioned in older Blocks.
-    for b in max(0, blockchain.height - 5) ..< blockchain.height:
-      for packet in blockchain[b].body.packets:
-        if mentioned.contains(packet.hash):
-          continue
+#A partial load has already happened above.
+proc loadCache*(
+  transactions: var Transactions,
+  pending: seq[Input]
+): HashSet[Hash[256]] {.forceCheck: [].} =
+  result = initHashSet[Hash[256]]()
+  for input in pending:
+    result = result + transactions.db.loadSpenders(input).toHashSet()
 
-        try:
-          var tx: Transaction = db.load(packet.hash)
-          result.add(tx, false)
-        except ValueError as e:
-          panic("Adding a reloaded Transaction raised a ValueError: " & e.msg)
-        except DBReadError as e:
-          panic("Couldn't load a Transaction from the Database: " & e.msg)
-        mentioned.incl(packet.hash)
-
-    #Load the unmentioned Transactions.
-    for hash in db.loadUnmentioned():
-      try:
-        result.add(db.load(hash), false)
-      except ValueError as e:
-        panic("Adding a reloaded unmentioned Transaction raised a ValueError: " & e.msg)
-      except DBReadError as e:
-        panic("Couldn't load an unmentioned Transaction from the Database: " & e.msg)
-  except IndexError as e:
-    panic("Couldn't load hashes from the Blockchain while reloading Transactions: " & e.msg)
+  for hash in result:
+    try:
+      transactions.add(transactions.db.load(hash), false)
+    except ValueError as e:
+      panic("Adding a reloaded Transaction raised a ValueError: " & e.msg)
+    except DBReadError as e:
+      panic("Couldn't load a Transaction from the Database: " & e.msg)
 
 #Load a Public Key's UTXOs.
 proc getUTXOs*(

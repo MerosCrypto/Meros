@@ -134,7 +134,7 @@ proc mainTransactions(
   transactions: ref Transactions,
   network: ref Network
 ) {.forceCheck: [].} =
-  transactions[] = newTransactions(database, merit.blockchain)
+  transactions[] = newTransactions(database, merit.blockchain.genesis)
 
   functions.transactions.getTransaction = proc (
     hash: Hash[256]
@@ -303,3 +303,9 @@ proc mainTransactions(
     hash: Hash[256]
   ) {.forceCheck: [].} =
     transactions[].prune(hash)
+
+proc transactionsFollowup(
+  transactions: ref Transactions,
+  cachedInputs: seq[Input]
+): HashSet[Hash[256]] {.inline, forceCheck: [].} =
+  result = transactions[].loadCache(cachedInputs)

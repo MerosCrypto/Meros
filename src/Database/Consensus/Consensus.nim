@@ -64,34 +64,20 @@ proc flag*(
     consensus.db.saveMaliciousProof(removal)
 
   #Reclaulcate the affected Transactions in Epochs.
-  var
-    status: TransactionStatus
-    blockInEpochs: Block
-  for b in max(blockchain.height - 5, 0) ..< blockchain.height:
-    try:
-      blockInEpochs = blockchain[b]
-    except IndexError as e:
-      panic("Couldn't get a Block from the Blockchain despite iterating up to the height: " & e.msg)
+  for status in consensus.statuses.values():
+    #Don't recalculate Transactions which have already finalized.
+    if status.finalized:
+      continue
 
-    for packet in blockInEpochs.body.packets:
-      try:
-        status = consensus.getStatus(packet.hash)
-      except IndexError as e:
-        panic("Couldn't get the status of a Transaction in Epochs at one point: " & e.msg)
+    #Don't bother checking Transactions which have yet to be verified.
+    if status.verified and status.holders.contains(holder):
+      var merit: int = 0
+      for sHolder in status.holders:
+        if not ((holder == sHolder) or consensus.malicious.hasKey(sHolder)):
+          merit += state[sHolder, status.epoch]
 
-      #Don't recalculate Transactions which have already finalized.
-      if status.finalized:
-        continue
-
-      #Don't bother checking Transactions which have yet to be verified.
-      if status.verified and status.holders.contains(holder):
-        var merit: int = 0
-        for sHolder in status.holders:
-          if not ((holder == sHolder) or consensus.malicious.hasKey(sHolder)):
-            merit += state[sHolder, status.epoch]
-
-        if merit < state.nodeThresholdAt(status.epoch):
-          consensus.unverify(packet.hash, status)
+      if merit < state.nodeThresholdAt(status.epoch):
+        consensus.unverify(status.packet.hash, status)
 
   #Recalculate the affected Transactions not yet in Epochs.
   for hash in consensus.unmentioned:
@@ -982,14 +968,14 @@ proc postRevert*(
         panic("Transaction in the cache doesn't have a status: " & e.msg)
 
   #[
-  Iterate over the last 5 blocks and find out:
+  Iterate over the last 10 blocks and find out:
   - When Transactions were mentioned.
   - What holders have archived Verifications.
   ]#
   var
     mentioned: Table[Hash[256], int] = initTable[Hash[256], int]()
     holders: Table[Hash[256], HashSet[uint16]] = initTable[Hash[256], HashSet[uint16]]()
-  for i in max(blockchain.height - 5, 0) ..< blockchain.height:
+  for i in max(blockchain.height - 10, 0) ..< blockchain.height:
     try:
       for packet in blockchain[i].body.packets:
         #If we haven't seen this Transaction yet, register it and create a HashSet.

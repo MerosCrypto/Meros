@@ -1,4 +1,3 @@
-import deques
 import sets, tables
 
 import ../../lib/[Errors, Hash]
@@ -25,7 +24,7 @@ proc shift*(
 ): HashSet[Input] {.forceCheck: [].} =
   logDebug "Epochs processing Block", hash = newBlock.header.hash
 
-  var txs: seq[Transaction] = @[]
+  var txs: seq[Transaction] = newSeq[Transaction](newBlock.body.packets.len)
   for p in 0 ..< newBlock.body.packets.len:
     try:
       txs[p] = epochs.functions.transactions.getTransaction(newBlock.body.packets[p].hash)
@@ -34,6 +33,8 @@ proc shift*(
 
   var t: int = 0
   while txs.len != 0:
+    t = t mod txs.len
+
     #The Epochs require Transactions be added with a canonical ordering.
     #Check if this Transaction has all parents already included in Epochs.
     #This is defined as having all parents be either:
@@ -69,7 +70,7 @@ proc shift*(
       txs.del(t)
     #Since this Transaction isn't canonical, move on to the next Transaction.
     else:
-      t = (t + 1) mod txs.len
+      inc(t)
 
   result = epochs.pop()
 

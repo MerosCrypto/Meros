@@ -351,3 +351,10 @@ proc mainConsensus(
       MessageType.SignedMeritRemoval,
       mr.serialize()
     )
+
+proc consensusFollowup(
+  merit: Merit,
+  consensus: ref Consensus,
+  cachedTransactions: HashSet[Hash[256]]
+) {.forceCheck: [].} =
+  consensus[].loadCache(merit.state, cachedTransactions)

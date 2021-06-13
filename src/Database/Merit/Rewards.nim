@@ -13,6 +13,7 @@ type Reward* = object
   nick*: uint16
   score*: uint64
 
+#Public due to the tests.
 func newReward*(
   nick: uint16,
   score: uint64
@@ -23,8 +24,8 @@ func newReward*(
   )
 
 #Calculate what share each holder deserves of the minted Meros.
-proc calculate*(
-  state: var State,
+proc calculateRewards*(
+  state: State,
   txsVerifiers: seq[seq[uint16]],
   removed: set[uint16]
 ): seq[Reward] {.forceCheck: [].} =

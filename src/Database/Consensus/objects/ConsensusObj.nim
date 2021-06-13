@@ -113,49 +113,38 @@ proc newConsensusObj*(
     except DBReadError as e:
       panic("Couldn't load a signature we know we have: " & e.msg)
 
-  #Load statuses still in Epochs.
-  #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.
-  var
-    height: int = functions.merit.getHeight()
-    old: HashSet[Hash[256]] = initHashSet[Hash[256]]()
-  try:
-    for i in max(height - 10, 0) ..< height - 5:
-      for packet in functions.merit.getBlockByNonce(i).body.packets:
-        old.incl(packet.hash)
-
-    for i in max(height - 5, 0) ..< height:
-      #Skip old Transactions.
-      for packet in functions.merit.getBlockByNonce(i).body.packets:
-        if old.contains(packet.hash):
-          continue
-
-        try:
-          result.statuses[packet.hash] = result.db.load(packet.hash)
-        except DBReadError as e:
-          panic("Transaction archived on the Blockchain doesn't have a status: " & e.msg)
-
-        #If this Transaction is close to being confirmed, add it to close.
-        try:
-          var merit: int = 0
-          for holder in result.statuses[packet.hash].holders:
-            if not result.malicious.hasKey(holder):
-              merit += state[holder, result.statuses[packet.hash].epoch]
-          if (
-            (not result.statuses[packet.hash].verified) and
-            (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 6)
-          ):
-            result.close.incl(packet.hash)
-        except KeyError as e:
-          panic("Couldn't get a status we just added to the statuses table: " & e.msg)
-  except IndexError as e:
-    panic("Couldn't get a Block on the Blockchain: " & e.msg)
-
   #Load unmentioned statuses.
   for hash in result.unmentioned:
     try:
       result.statuses[hash] = result.db.load(hash)
     except DBReadError as e:
       panic("Transaction not yet mentioned on the Blockchain doesn't have a status: " & e.msg)
+
+proc loadCache*(
+  consensus: var Consensus,
+  state: State,
+  pending: HashSet[Hash[256]]
+) {.forceCheck: [].} =
+  #Load statuses still in Epochs.
+  for tx in pending:
+    try:
+      consensus.statuses[tx] = consensus.db.load(tx)
+    except DBReadError as e:
+      panic("Transaction archived on the Blockchain doesn't have a status: " & e.msg)
+
+    #If this Transaction is close to being confirmed, add it to close.
+    try:
+      var merit: int = 0
+      for holder in consensus.statuses[tx].holders:
+        if not consensus.malicious.hasKey(holder):
+          merit += state[holder, consensus.statuses[tx].epoch]
+      if (
+        (not consensus.statuses[tx].verified) and
+        (merit >= state.nodeThresholdAt(consensus.statuses[tx].epoch) - 6)
+      ):
+        consensus.close.incl(tx)
+    except KeyError as e:
+      panic("Couldn't get a status we just added to the statuses table: " & e.msg)
 
 proc setUnmentioned*(
   consensus: var Consensus,
@@ -516,6 +505,8 @@ proc finalize*(
     beatenAlready: HashSet[Hash[256]] = initHashSet[Hash[256]]()
     i: int = 0
   while txs.len != 0:
+    i = i mod txs.len
+
     block thisTX:
       var finalizable: FinalizableTransaction = txs[i]
       if beatenAlready.contains(finalizable.tx.hash) or finalizable.status.beaten:
@@ -587,7 +578,7 @@ proc finalize*(
       txs.delete(i)
       continue
 
-    i = (i + 1) mod txs.len
+    inc(i)
 
   #Now that we've marked the beaten TXs as so, run the tree verifications.
   for tx in toVerify:

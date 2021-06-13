@@ -13,7 +13,7 @@ export TransactionStatusObj
 proc finalized*(
   status: TransactionStatus
 ): bool {.forceCheck: [].} =
-  (status.merit == -1) or status.beaten
+  (status.merit != -1) or status.beaten
 
 proc add*(
   status: TransactionStatus,

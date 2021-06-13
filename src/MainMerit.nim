@@ -281,7 +281,7 @@ proc mainMerit(
     logDebug "Minting Meros", hash = newBlock.header.hash
 
     #Calculate the rewards.
-    var rewards: seq[Reward] = rewardsState.calculate(winningTXsVerifiers, newBlock.body.removals)
+    var rewards: seq[Reward] = rewardsState.calculateRewards(winningTXsVerifiers, newBlock.body.removals)
 
     #If there are rewards, create the Mint.
     var receivedMint: int = -1
@@ -508,7 +508,6 @@ proc mainMerit(
             reorgInfo = await reorganize(
               database,
               wallet,
-              functions,
               merit[],
               consensus,
               transactions,
@@ -540,7 +539,6 @@ proc mainMerit(
               reorgRecover(
                 database,
                 wallet,
-                functions,
                 merit[],
                 consensus,
                 transactions,
@@ -553,7 +551,6 @@ proc mainMerit(
               reorgRecover(
                 database,
                 wallet,
-                functions,
                 merit[],
                 consensus,
                 transactions,
@@ -738,5 +735,6 @@ proc mainMerit(
 proc meritFollowup*(
   functions: GlobalFunctionBox,
   merit: ref Merit
-) {.forceCheck: [].} =
+): seq[Input] {.forceCheck: [].} =
   merit[].createEpochs(functions)
+  result = toSeq(merit[].epochs.inputMap.keys())

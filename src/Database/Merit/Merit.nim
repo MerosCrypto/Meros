@@ -82,11 +82,10 @@ proc revertMinersAndHolders*(
 
 proc revert*(
   merit: Merit,
-  functions: GlobalFunctionBox,
   height: int
 ) {.forceCheck: [].} =
   #Reverting the Blockchain reverts the State as well.
   merit.blockchain.revert(merit.state, height)
   #We don't have an Epochs reversion algorithm. We just rebuild it.
   #If the amount of Blocks reverted is greater than the Epochs length, this is faster anyways.
-  merit.epochs = newEpochs(functions, merit.blockchain)
+  merit.epochs = newEpochs(merit.epochs.functions, merit.blockchain)
