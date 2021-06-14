@@ -81,6 +81,7 @@ proc flag*(
 
   #Recalculate the affected Transactions not yet in Epochs.
   for hash in consensus.unmentioned:
+    var status: TransactionStatus
     try:
       status = consensus.getStatus(hash)
     except IndexError as e:

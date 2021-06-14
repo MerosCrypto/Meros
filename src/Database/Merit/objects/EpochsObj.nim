@@ -7,6 +7,9 @@ import ../../Transactions/objects/TransactionObj
 import ../../../objects/GlobalFunctionBoxObj
 
 type
+  #Workaround for the conflicting hash definitions caused by hashes/Hash.
+  MerosHash = Hash.Hash[256]
+
   FamilyID = ref object
     #Whether or not this family had been merged.
     #Not a case statement as we need to be able to update this in realtime without re-instantiation.
@@ -23,24 +26,26 @@ type
     dependants: HashSet[FamilyID]
     #Height created at.
     created: uint
+    #Datas assigned to this family. Required due to their use of magic inputs.
+    #Only one is ever assigned at a time. This could be transformed into an Option.
+    datas: seq[MerosHash]
 
   Epochs* = ref object
+    genesis*: MerosHash
+    functions*: GlobalFunctionBox
     when not defined(merosTests):
-      genesis*: Hash.Hash[256]
-      functions*: GlobalFunctionBox
       height: uint
       lastID: uint
       inputMap*: Table[Input, FamilyID]
       families: Table[uint, Family]
       epochs: Deque[HashSet[uint]]
     else:
-      genesis*: Hash.Hash[256]
-      functions*: GlobalFunctionBox
       height*: uint
       lastID*: uint
       inputMap*: Table[Input, FamilyID]
       families*: Table[uint, Family]
       epochs*: Deque[HashSet[uint]]
+    datas*: HashSet[MerosHash]
 
 func resolve(
   id: FamilyID
@@ -55,7 +60,7 @@ func hash(
   hash(id.resolve().id)
 
 func newEpochsObj*(
-  genesis: Hash.Hash[256],
+  genesis: MerosHash,
   functions: GlobalFunctionBox,
   height: uint
 ): Epochs {.forceCheck: [].} =
@@ -137,6 +142,7 @@ proc merge(
 #Adding a transaction whose parent never went through Epochs will produce UB.
 proc register*(
   epochs: Epochs,
+  hash: MerosHash,
   inputs: seq[Input],
   height: uint
 ) {.forceCheck: [].} =
@@ -147,11 +153,24 @@ proc register*(
   #Don't track families for magic inputs as used in Datas.
   #Could be inside the loop, yet such TXs only have one input.
   #Could have a check this is the only input, yet that's the only reason these hashes would be valid.
-  #Not initialized due to a bug in Nim; for loop added to ensure its lack of value.
-  var zeroHash: Hash.Hash[256]
-  for b in 0 ..< 32:
-    zeroHash.data[b] = 0
-  if (inputs[0].hash == zeroHash) or (inputs[0].hash == epochs.genesis):
+  if (inputs[0].hash == MerosHash()) or (inputs[0].hash == epochs.genesis):
+    #Do still create a family so it's marked in the finalization queue.
+    #This won't be able to track descendants, yet these Transactions are never brought up, so this is a non-issue.
+    epochs.families[epochs.lastID] = Family(
+      created: height,
+      datas: @[hash]
+    )
+    epochs.datas.incl(hash)
+
+    try:
+      epochs.epochs[^1].incl(epochs.lastID)
+    except IndexError as e:
+      panic("IndexError despite using a BackwardsIndex to add to the latest Epoch: " & e.msg)
+
+    #Shouldn't be needed as uints shouldn't have overflow checks.
+    {.push boundChecks: off.}
+    inc(epochs.lastID)
+    {.pop.}
     return
 
   #Gather existing families.
@@ -169,7 +188,6 @@ proc register*(
       active: true,
       id: epochs.lastID
     )
-    #Shouldn't be needed as uints shouldn't have overflow checks.
     {.push boundChecks: off.}
     inc(epochs.lastID)
     {.pop.}
@@ -238,9 +256,12 @@ proc pop*(
       for input in epochs.families[family].inputs:
         result.incl(input)
         epochs.inputMap.del(input)
-      epochs.families.del(family)
+
+      if epochs.families[family].datas.len != 0:
+        epochs.datas.excl(epochs.families[family].datas[0])
     except KeyError as e:
       panic("Trying to pop a family which doesn't exist: " & e.msg)
+    epochs.families.del(family)
 
 when defined(merosTests):
   proc `==`*(
@@ -276,7 +297,7 @@ when defined(merosTests):
         #No risk of duplicates; just a lack of a canonical ordering.
         var found: bool = false
         for f2 in e2.epochs[e]:
-          if e1.families[f1].inputs == e2.families[f2].inputs:
+          if (e1.families[f1].inputs == e2.families[f2].inputs) and (e1.families[f1].datas == e2.families[f2].datas):
             found = true
             break
         if not found:

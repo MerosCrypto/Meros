@@ -57,16 +57,22 @@ proc shift*(
           if epochs.functions.consensus.getStatus(input.hash).merit == -1:
             #If it's not finalized, check presence in Epochs.
             for parentInput in epochs.functions.transactions.getTransaction(input.hash).inputs:
-              #If not present, set canonical to false and break.
-              if not epochs.inputMap.hasKey(parentInput):
-                canonical = false
-                break checkCanonicity
+              #Handle the case where this is a Data parent.
+              if (parentInput.hash == Hash[256]()) or (parentInput.hash == epochs.genesis):
+                if not epochs.datas.contains(input.hash):
+                  canonical = false
+                  break checkCanonicity
+              else:
+                #If not present, set canonical to false and break.
+                if not epochs.inputMap.hasKey(parentInput):
+                  canonical = false
+                  break checkCanonicity
         except IndexError as e:
           panic("Transaction has non-existent parent: " & e.msg)
 
     #Since this Transaction is canonical, handle it.
     if canonical:
-      epochs.register(txs[t].inputs, height)
+      epochs.register(txs[t].hash, txs[t].inputs, height)
       txs.del(t)
     #Since this Transaction isn't canonical, move on to the next Transaction.
     else:

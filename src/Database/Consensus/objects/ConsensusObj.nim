@@ -38,12 +38,7 @@ type Consensus* = object
   malicious*: Table[uint16, seq[SignedMeritRemoval]]
 
   #Statuses of Transactions not yet out of Epochs.
-  #Exported so the tests can test equality of this table.
-  #That said, it shouldn't be required to export for the actual node.
-  when defined(merosTests):
-    statuses*: Table[Hash[256], TransactionStatus]
-  else:
-    statuses: Table[Hash[256], TransactionStatus]
+  statuses*: Table[Hash[256], TransactionStatus]
 
   #Statuses which are close to becoming verified.
   #Every Transaction in this set is checked when new Blocks are added to see if they crossed the threshold.
