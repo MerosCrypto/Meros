@@ -7,7 +7,7 @@ import ../../objects/GlobalFunctionBoxObj
 
 import ../Transactions/Transactions
 
-import ../Merit/objects/[BlockObj, BlockchainObj, EpochsObj]
+import ../Merit/objects/[BlockObj, BlockchainObj]
 import ../Merit/State
 
 import objects/SpamFilterObj
@@ -641,7 +641,7 @@ proc archive*(
   state: State,
   shifted: seq[VerificationPacket],
   elements: seq[BlockElement],
-  popped: HashSet[Input],
+  popped: HashSet[Hash[256]],
   changes: StateChanges
 ): seq[seq[uint16]] {.forceCheck: [].} =
   #Delete every mentioned hash in the Block from unmentioned.
@@ -710,13 +710,8 @@ proc archive*(
   except KeyError:
     panic("Tried to archive an Element for a non-existent holder.")
 
-  #Finalize every popped input.
-  #First requires expanding from inputs to Transactions.
-  var txs: HashSet[Hash[256]] = initHashSet[Hash[256]]()
-  #First requires getting every TX from every family.
-  for input in popped:
-    txs = txs + consensus.functions.transactions.getSpenders(input).toHashSet()
-  result = consensus.finalize(state, txs.toSeq())
+  #Finalize every popped Transaction.
+  result = consensus.finalize(state, popped.toSeq())
 
   #Reclaulcate every close Status.
   var toDelete: seq[Hash[256]] = @[]

@@ -1,6 +1,6 @@
 import sets, tables
 
-import ../../lib/[Errors, Util]
+import ../../lib/[Errors, Util, Hash]
 import ../../Wallet/MinerWallet
 import ../../objects/GlobalFunctionBoxObj
 
@@ -54,7 +54,7 @@ proc processBlock*(
 #Updates the State and Epochs. Needed due to how the TX/Consensus DAG flow.
 proc postProcessBlock*(
   merit: Merit
-): (HashSet[Input], StateChanges) {.forceCheck: [].} =
+): (HashSet[Hash[256]], StateChanges) {.forceCheck: [].} =
   #Have the Epochs process the Block and return the popped Epoch.
   result[0] = merit.epochs.shift(merit.blockchain.tail, uint(merit.blockchain.height))
 

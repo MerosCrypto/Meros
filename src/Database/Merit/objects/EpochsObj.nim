@@ -28,7 +28,7 @@ type
     created: uint
     #Datas assigned to this family. Required due to their use of magic inputs.
     #Only one is ever assigned at a time. This could be transformed into an Option.
-    datas: seq[MerosHash]
+    datas*: seq[MerosHash]
 
   Epochs* = ref object
     genesis*: MerosHash
@@ -37,7 +37,7 @@ type
       height: uint
       lastID: uint
       inputMap*: Table[Input, FamilyID]
-      families: Table[uint, Family]
+      families*: Table[uint, Family]
       epochs: Deque[HashSet[uint]]
     else:
       height*: uint
@@ -45,6 +45,10 @@ type
       inputMap*: Table[Input, FamilyID]
       families*: Table[uint, Family]
       epochs*: Deque[HashSet[uint]]
+    datas*: HashSet[MerosHash]
+
+  Epoch* = object
+    inputs*: HashSet[Input]
     datas*: HashSet[MerosHash]
 
 func resolve(
@@ -238,7 +242,7 @@ proc register*(
 #Pops off the newly finalized inputs.
 proc pop*(
   epochs: Epochs
-): HashSet[Input] {.forceCheck: [].} =
+): Epoch {.forceCheck: [].} =
   #Handle not having any Transactions included in the Block.
   if epochs.epochs.len == 5:
     inc(epochs.height)
@@ -250,14 +254,16 @@ proc pop*(
   except IndexError as e:
     panic("Couldn't pop from the Epochs: " & e.msg)
 
-  result = initHashSet[Input]()
+  result.inputs = initHashSet[Input]()
+  result.datas = initHashSet[MerosHash]()
   for family in families:
     try:
       for input in epochs.families[family].inputs:
-        result.incl(input)
+        result.inputs.incl(input)
         epochs.inputMap.del(input)
 
       if epochs.families[family].datas.len != 0:
+        result.datas.incl(epochs.families[family].datas[0])
         epochs.datas.excl(epochs.families[family].datas[0])
     except KeyError as e:
       panic("Trying to pop a family which doesn't exist: " & e.msg)

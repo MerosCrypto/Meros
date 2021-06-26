@@ -1,3 +1,4 @@
+import sequtils
 import sets, tables
 
 import ../../lib/[Errors, Hash]
@@ -21,7 +22,7 @@ proc shift*(
   epochs: Epochs,
   newBlock: Block,
   height: uint
-): HashSet[Input] {.forceCheck: [].} =
+): HashSet[Hash[256]] {.forceCheck: [].} =
   logDebug "Epochs processing Block", hash = newBlock.header.hash
 
   var txs: seq[Transaction] = newSeq[Transaction](newBlock.body.packets.len)
@@ -78,7 +79,10 @@ proc shift*(
     else:
       inc(t)
 
-  result = epochs.pop()
+  let popped: Epoch = epochs.pop()
+  result = popped.datas
+  for input in popped.inputs:
+    result = result + epochs.functions.transactions.getSpenders(input).toHashSet()
 
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
@@ -98,3 +102,16 @@ proc newEpochs*(
       discard result.shift(blockchain[b], uint(b + 1))
     except IndexError as e:
       panic("Couldn't shift the last 10 Blocks from the chain: " & e.msg)
+
+proc getPendingTransactions*(
+  epochs: Epochs
+): HashSet[Hash[256]] =
+  #Grab the TXs with inputs.
+  let inputs: seq[Input] = toSeq(epochs.inputMap.keys())
+  result = initHashSet[Hash[256]]()
+  for input in inputs:
+    result = result + epochs.functions.transactions.getSpenders(input).toHashSet()
+
+  #Grab the magic Datas.
+  for family in epochs.families.values():
+    result = result + family.datas.toHashSet()

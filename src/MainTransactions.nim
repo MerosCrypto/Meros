@@ -306,6 +306,6 @@ proc mainTransactions(
 
 proc transactionsFollowup(
   transactions: ref Transactions,
-  cachedInputs: seq[Input]
-): HashSet[Hash[256]] {.inline, forceCheck: [].} =
-  result = transactions[].loadCache(cachedInputs)
+  cachedTransactions: HashSet[Hash[256]]
+) {.inline, forceCheck: [].} =
+  transactions[].loadCache(cachedTransactions)

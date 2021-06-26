@@ -135,7 +135,7 @@ proc mainMerit(
     sketcherArg: seq[VerificationPacket],
     syncing: bool,
     lock: ref Lock
-  ) {.forceCheck: [
+  ) {.gcsafe, forceCheck: [
     ValueError,
     DataMissing
   ], async.} =
@@ -217,7 +217,7 @@ proc mainMerit(
 
     #Add the Block to the Epochs and State.
     var
-      finalized: HashSet[Input]
+      finalized: HashSet[Hash[256]]
       changes: StateChanges
     (finalized, changes) = merit[].postProcessBlock()
 
@@ -310,7 +310,18 @@ proc mainMerit(
     #Commit the DBs.
     database.commit(merit.blockchain.height)
     try:
-      wallet.commit(finalized)
+      wallet.commit(
+        proc (
+          hash: Hash[256]
+        ): Transaction {.gcsafe, forceCheck: [
+          IndexError
+        ].} =
+          try:
+            result = functions.transactions.getTransaction(hash)
+          except IndexError as e:
+            raise e
+        , finalized
+      )
     except IndexError as e:
       panic("Passing a function that could raise an IndexError raised an IndexError: " & e.msg)
 
@@ -735,6 +746,7 @@ proc mainMerit(
 proc meritFollowup*(
   functions: GlobalFunctionBox,
   merit: ref Merit
-): seq[Input] {.forceCheck: [].} =
+): HashSet[Hash[256]] {.forceCheck: [].} =
+  #These should potentially be merged.
   merit[].createEpochs(functions)
-  result = toSeq(merit[].epochs.inputMap.keys())
+  result = merit[].epochs.getPendingTransactions()

@@ -251,16 +251,15 @@ proc mint*(
 proc archive*(
   transactions: var Transactions,
   newBlock: Block,
-  epoch: HashSet[Input]
+  epoch: HashSet[Hash[256]]
 ) {.forceCheck: [].} =
   for packet in newBlock.body.packets:
     #This is an ugly line used to access a cache this system doesn't have proper access to.
     if transactions.db.transactions.unmentioned.contains(packet.hash):
       transactions.mention(packet.hash)
 
-  for input in epoch:
-    for hash in transactions.loadSpenders(input):
-      transactions.del(hash)
+  for hash in epoch:
+    transactions.del(hash)
 
 #Discover a Transaction tree.
 #Provides an ordered tree, filled with duplicates.

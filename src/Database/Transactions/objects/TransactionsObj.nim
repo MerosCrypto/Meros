@@ -126,13 +126,9 @@ proc newTransactionsObj*(
 #A partial load has already happened above.
 proc loadCache*(
   transactions: var Transactions,
-  pending: seq[Input]
-): HashSet[Hash[256]] {.forceCheck: [].} =
-  result = initHashSet[Hash[256]]()
-  for input in pending:
-    result = result + transactions.db.loadSpenders(input).toHashSet()
-
-  for hash in result:
+  pending: HashSet[Hash[256]]
+) {.forceCheck: [].} =
+  for hash in pending:
     try:
       transactions.add(transactions.db.load(hash), false)
     except ValueError as e:

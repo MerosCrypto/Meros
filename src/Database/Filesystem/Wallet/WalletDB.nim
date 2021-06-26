@@ -171,11 +171,27 @@ proc del(
 
 proc commit*(
   db: WalletDB,
-  popped: HashSet[Input]
+  getTransaction: proc (
+    hash: Hash[256]
+  ): TransactionObj.Transaction {.gcsafe, raises: [
+    IndexError
+  ].},
+  popped: HashSet[Hash[256]]
 ) {.forceCheck: [].} =
+  #Create a HashSet of the Inputs.
+  var inputs: HashSet[Input] = initHashSet[Input]()
+  for tx in popped:
+    try:
+      inputs = inputs + getTransaction(tx).inputs.toHashSet()
+    except IndexError as e:
+      panic("Finalized Transaction didn't exist: " & e.msg)
+  #Remove Datas' magic inputs.
+  inputs.excl(newInput(Hash[256]()))
+  inputs.excl(newInput(db.genesis))
+
   #Mark all inputs of all finalized Transactions as finalized.
   var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]]()
-  for input in popped:
+  for input in inputs:
     try:
       items.add((INPUT_NONCE(db.verified[input.serialize()]), char(1) & input.serialize()))
       #If the nonce of this input is the same as the last finalized nonce, increment.
