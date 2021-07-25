@@ -183,8 +183,9 @@ proc commit*(
   for tx in popped:
     try:
       inputs = inputs + getTransaction(tx).inputs.toHashSet()
-    except IndexError as e:
-      panic("Finalized Transaction didn't exist: " & e.msg)
+    except IndexError:
+      #Transaction was pruned due to not having any Verifications.
+      discard
   #Remove Datas' magic inputs.
   inputs.excl(newInput(Hash[256]()))
   inputs.excl(newInput(db.genesis))

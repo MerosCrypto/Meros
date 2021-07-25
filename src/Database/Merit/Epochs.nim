@@ -3,7 +3,7 @@ import sets, tables
 
 import ../../lib/[Errors, Hash]
 
-import ../Transactions/objects/TransactionObj
+import ../Transactions/objects/[TransactionObj, ClaimObj]
 import ../Consensus/Elements/objects/VerificationPacketObj
 import ../../objects/GlobalFunctionBoxObj
 
@@ -47,6 +47,9 @@ proc shift*(
     #All parent families will have it applied, and it'll be merged when the families are merged, leaving the single in-set instance.
     var canonical: bool = true
     block checkCanonicity:
+      if txs[t] of Claim:
+        break checkCanonicity
+
       for input in txs[t].inputs:
         if (input.hash == Hash[256]()) or (input.hash == epochs.genesis):
           continue
@@ -90,7 +93,7 @@ proc newEpochs*(
   blockchain: Blockchain
 ): Epochs {.forceCheck: [].} =
   #Create the Epochs objects.
-  result = newEpochsObj(blockchain.genesis, functions, uint(blockchain.height))
+  result = newEpochsObj(blockchain.genesis, functions, uint(blockchain.height - 1))
 
   #Regenerate the Epochs. To do this, we shift the last 15 Blocks. Why?
   #The last 5 Blocks are what we actually want, yet we also need the 5 Blocks before that for inputs that were brought up.
