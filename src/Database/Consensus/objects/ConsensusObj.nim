@@ -516,9 +516,11 @@ proc finalize*(
         #This or parent was beaten.
         #Usage of finalizable.status.beaten works due to usage of a shared reference from getStatus.
         if used.contains(input) or finalizable.status.beaten:
-          var toBeat: HashSet[Hash[256]] = consensus.functions.transactions.discoverUnorderedTree(finalizable.tx.hash, initHashSet[Hash[256]]())
-          for hash in toBeat:
+          var toBeat: seq[Hash[256]] = consensus.functions.transactions.discoverTree(finalizable.tx.hash)
+          for h in countdown(toBeat.len - 1, 0):
+            let hash: Hash[256] = toBeat[h]
             #Needed for when a Transaction is finalizing with its descendant, and the parent is beaten.
+            #Also needed due using discoverTree instead of discoverUnorderedTree.
             if beatenAlready.contains(hash):
               continue
 
@@ -532,9 +534,23 @@ proc finalize*(
                 panic("Couldn't get the status of a descendant of a Transaction we're finalizing: " & e.msg)
 
             consensus.functions.transactions.beat(hash)
-            status.beaten = true
-            consensus.db.save(hash, status)
-          beatenAlready = beatenAlready + toBeat
+            status.holders = status.holders - status.pending
+            if status.holders.len == 0:
+              #We should potentially prune after we finalize, enabling merging this block with the block executed before finalization.
+              consensus.statuses.del(hash)
+              consensus.unmentioned.excl(hash)
+              consensus.db.mention(hash)
+              consensus.close.excl(hash)
+
+              consensus.db.delete(hash)
+              consensus.functions.transactions.prune(hash)
+            else:
+              status.pending = initHashSet[uint16]()
+              status.packet = newSignedVerificationPacketObj(status.packet.hash)
+              status.signatures = initTable[uint16, BLSSignature]()
+              status.beaten = true
+              consensus.db.save(hash, status)
+          beatenAlready = beatenAlready + toBeat.toHashSet()
 
           consensus.statuses.del(finalizable.tx.hash)
           txs.delete(i)

@@ -87,7 +87,7 @@ def BeatenTest(
       with raises(TestError):
         rpc.call("transactions", "publishTransaction", {"type": "Send", "transaction": send.serialize().hex()})
 
-    #Not loaded above as it can only be loqaded after the chain starts, which is done by the Liver.
+    #Not loaded above as it can only be loaded after the chain starts, which is done by the Liver.
     #RandomX cache keys and all that.
     blockWBeatenVerif: Block = Block.fromJSON(vectors["blockWithBeatenVerification"])
 
