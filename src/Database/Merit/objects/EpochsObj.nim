@@ -46,10 +46,7 @@ type
       families*: Table[uint, Family]
       epochs*: Deque[HashSet[uint]]
     datas*: HashSet[MerosHash]
-
-  Epoch* = object
-    inputs*: HashSet[Input]
-    datas*: HashSet[MerosHash]
+    currentTXs*: HashSet[MerosHash]
 
 func resolve(
   id: FamilyID
@@ -136,7 +133,14 @@ proc merge(
     #Queue its dependants.
     #These could have duplicates, yet Epochs being a HashSet nullifies these concerns.
     try:
-      queue &= epochs.families[target.id].dependants.toSeq()
+      for dependant in epochs.families[target.id].dependants.toSeq():
+        #Don't queue if it was already brought up.
+        #Needed due to cyclical dependencies caused by impossible transactions.
+        if epochs.epochs[^1].contains(dependant.resolve().id):
+          continue
+        queue.add(dependant)
+    except IndexError as e:
+      panic("IndexError despite using a BackwardsIndex: " & e.msg)
     except KeyError as e:
       panic("Couldn't get a dependant family despite resolution: " & e.msg)
 
@@ -150,6 +154,7 @@ proc register*(
   inputs: seq[Input],
   height: uint
 ) {.forceCheck: [].} =
+  #TODO: Check this runs on the very first Block added.
   if epochs.height < height:
     inc(epochs.height)
     epochs.epochs.addLast(initHashSet[uint]())
@@ -176,6 +181,8 @@ proc register*(
     inc(epochs.lastID)
     {.pop.}
     return
+
+  epochs.currentTXs.incl(hash)
 
   #Gather existing families.
   var families: HashSet[FamilyID] = initHashSet[FamilyID]()
@@ -242,7 +249,7 @@ proc register*(
 #Pops off the newly finalized inputs.
 proc pop*(
   epochs: Epochs
-): Epoch {.forceCheck: [].} =
+): HashSet[MerosHash] {.forceCheck: [].} =
   #Handle not having any Transactions included in the Block.
   if epochs.epochs.len == 5:
     inc(epochs.height)
@@ -254,26 +261,30 @@ proc pop*(
   except IndexError as e:
     panic("Couldn't pop from the Epochs: " & e.msg)
 
-  result.inputs = initHashSet[Input]()
-  result.datas = initHashSet[MerosHash]()
+  result = initHashSet[MerosHash]()
   for family in families:
     try:
       for input in epochs.families[family].inputs:
-        result.inputs.incl(input)
+        result = result + epochs.functions.transactions.getSpenders(input).toHashSet()
         epochs.inputMap.del(input)
 
       if epochs.families[family].datas.len != 0:
-        result.datas.incl(epochs.families[family].datas[0])
+        result.incl(epochs.families[family].datas[0])
         epochs.datas.excl(epochs.families[family].datas[0])
     except KeyError as e:
       panic("Trying to pop a family which doesn't exist: " & e.msg)
     epochs.families.del(family)
+
+  epochs.currentTXs = epochs.currentTXs - result
 
 when defined(merosTests):
   proc `==`*(
     e1: Epochs,
     e2: Epochs
   ): bool =
+    if e1.height != e2.height:
+      return false
+
     if toSeq(e1.inputMap.keys()).toHashSet() != toSeq(e2.inputMap.keys()).toHashSet():
       return false
 
@@ -308,5 +319,8 @@ when defined(merosTests):
             break
         if not found:
           return false
+
+    if (e1.datas != e2.datas) or (e1.currentTXs != e2.currentTXs):
+      return false
 
     result = true

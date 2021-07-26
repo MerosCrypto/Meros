@@ -3,7 +3,7 @@ import sets, tables
 
 import ../../lib/[Errors, Hash]
 
-import ../Transactions/objects/[TransactionObj, ClaimObj]
+import ../Transactions/objects/[TransactionObj, ClaimObj, DataObj]
 import ../Consensus/Elements/objects/VerificationPacketObj
 import ../../objects/GlobalFunctionBoxObj
 
@@ -46,31 +46,19 @@ proc shift*(
     #This will be resolved latter in the Block, leaving the dependant status to be the sole item in question.
     #All parent families will have it applied, and it'll be merged when the families are merged, leaving the single in-set instance.
     var canonical: bool = true
-    block checkCanonicity:
-      if txs[t] of Claim:
-        break checkCanonicity
-
+    if not (txs[t] of Claim):
       for input in txs[t].inputs:
-        if (input.hash == Hash[256]()) or (input.hash == epochs.genesis):
+        if (txs[t] of Data) and ((input.hash == Hash[256]()) or (input.hash == epochs.genesis)):
           continue
 
         try:
           #Check if the parent was finalized.
-          #Will be true a large portion of the time and is a much cheaper check.
           #Doesn't use TransactionStatus.finalized as that will consider Transactions which haven't been through Epochs as finalized if beaten.
           if epochs.functions.consensus.getStatus(input.hash).merit == -1:
-            #If it's not finalized, check presence in Epochs.
-            for parentInput in epochs.functions.transactions.getTransaction(input.hash).inputs:
-              #Handle the case where this is a Data parent.
-              if (parentInput.hash == Hash[256]()) or (parentInput.hash == epochs.genesis):
-                if not epochs.datas.contains(input.hash):
-                  canonical = false
-                  break checkCanonicity
-              else:
-                #If not present, set canonical to false and break.
-                if not epochs.inputMap.hasKey(parentInput):
-                  canonical = false
-                  break checkCanonicity
+            #If not present, set canonical to false and break.
+            if (not epochs.datas.contains(input.hash)) and (not epochs.currentTXs.contains(input.hash)):
+              canonical = false
+              break
         except IndexError as e:
           panic("Transaction has non-existent parent: " & e.msg)
 
@@ -82,10 +70,7 @@ proc shift*(
     else:
       inc(t)
 
-  let popped: Epoch = epochs.pop()
-  result = popped.datas
-  for input in popped.inputs:
-    result = result + epochs.functions.transactions.getSpenders(input).toHashSet()
+  result = epochs.pop()
 
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
