@@ -45,8 +45,8 @@ type
       inputMap*: Table[Input, FamilyID]
       families*: Table[uint, Family]
       epochs*: Deque[HashSet[uint]]
-    datas*: HashSet[MerosHash]
     currentTXs*: HashSet[MerosHash]
+    datas*: HashSet[MerosHash]
 
 func resolve(
   id: FamilyID
@@ -320,7 +320,7 @@ when defined(merosTests):
         if not found:
           return false
 
-    if (e1.datas != e2.datas) or (e1.currentTXs != e2.currentTXs):
+    if (e1.currentTXs != e2.currentTXs) or (e1.datas != e2.datas):
       return false
 
     result = true

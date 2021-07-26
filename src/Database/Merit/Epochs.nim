@@ -93,13 +93,5 @@ proc newEpochs*(
 
 proc getPendingTransactions*(
   epochs: Epochs
-): HashSet[Hash[256]] =
-  #Grab the TXs with inputs.
-  let inputs: seq[Input] = toSeq(epochs.inputMap.keys())
-  result = initHashSet[Hash[256]]()
-  for input in inputs:
-    result = result + epochs.functions.transactions.getSpenders(input).toHashSet()
-
-  #Grab the magic Datas.
-  for family in epochs.families.values():
-    result = result + family.datas.toHashSet()
+): HashSet[Hash[256]] {.forceCheck: [].} =
+  epochs.currentTXs + epochs.datas
