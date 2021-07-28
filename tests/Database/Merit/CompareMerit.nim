@@ -130,13 +130,4 @@ proc compare*(
   e1Arg: Epochs,
   e2Arg: Epochs
 ) =
-  check:
-    e1Arg.len == 5
-    e2Arg.len == 5
-
-  for e in 0 ..< 5:
-    check e1Arg[e].len == e2Arg[e].len
-    for h in e1Arg[e].keys():
-      check e1Arg[e][h].len == e2Arg[e][h].len
-      for k in 0 ..< e1Arg[e][h].len:
-        check e1Arg[e][h][k] == e2Arg[e][h][k]
+  check e1Arg == e2Arg

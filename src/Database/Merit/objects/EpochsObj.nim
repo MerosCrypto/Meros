@@ -285,8 +285,9 @@ when defined(merosTests):
     if e1.height != e2.height:
       return false
 
-    if toSeq(e1.inputMap.keys()).toHashSet() != toSeq(e2.inputMap.keys()).toHashSet():
-      return false
+    for input in toSeq(e1.inputMap.keys()).toHashSet():
+      if not e2.inputMap.hasKey(input):
+        return false
 
     for input in e1.inputMap.keys():
       var

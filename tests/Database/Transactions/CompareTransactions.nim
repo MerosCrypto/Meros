@@ -74,4 +74,3 @@ proc compare*(
   check txs1.transactions.len == txs2.transactions.len
   for hash in txs1.transactions.keys():
     compare(txs1.transactions[hash], txs2.transactions[hash])
-  check txs1.families == txs2.families

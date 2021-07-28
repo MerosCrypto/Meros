@@ -1,4 +1,5 @@
 import random
+import sequtils
 import algorithm
 import sets, tables
 
@@ -9,11 +10,12 @@ import ../../../src/Database/Filesystem/DB/TransactionsDB
 
 import ../../../src/Database/Merit/Merit
 import ../../../src/Database/Consensus/Elements/VerificationPacket
+import ../../../src/Database/Consensus/TransactionStatus
 import ../../../src/Database/Transactions/Transactions
 
 import ../../Fuzzed
 import ../TestDatabase
-import ../Merit/TestMerit
+import ../Merit/[TestMerit, CompareMerit]
 import CompareTransactions
 
 suite "Transactions":
@@ -31,8 +33,10 @@ suite "Transactions":
 
       transactions: Transactions = newTransactions(
         db,
-        merit.blockchain
+        merit.blockchain.genesis
       )
+
+      functions: GlobalFunctionBox = newTestGlobalFunctionBox(addr merit.blockchain, addr transactions)
 
       holder: MinerWallet = newMinerWallet()
       wallets: seq[HDWallet] = @[]
@@ -72,6 +76,18 @@ suite "Transactions":
       revertedSpendable: Table[int, seq[FundedInput]] = initTable[int, seq[FundedInput]]()
       #Set of Transactions already reverted past in spendable.
       alreadyReverted: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+
+    merit.createEpochs(functions)
+    transactions.loadCache(merit.epochs.getPendingTransactions())
+
+    #Create a stub getStatus which claims the TransactionStatus is finalized.
+    #Used to trick the Epochs into thinking there's a canonical ordering, as this test generates one.
+    functions.consensus.getStatus = proc (
+      hash: Hash[256]
+    ): TransactionStatus {.forceCheck: [].} =
+      TransactionStatus(
+        merit: 1
+      )
 
     proc add(
       tx: Transaction,
@@ -157,7 +173,8 @@ suite "Transactions":
     ) =
       #Reload Transactions to fix its cache.
       commit(merit.blockchain.height)
-      transactions = newTransactions(db, merit.blockchain)
+      transactions = newTransactions(db, merit.blockchain.genesis)
+      transactions.loadCache(merit.epochs.getPendingTransactions())
 
       for hash in txs.keys():
         if (reverted * mintTrees[hash]).len != 0:
@@ -189,7 +206,8 @@ suite "Transactions":
     proc replay() =
       #Reload Transactions to fix its cache.
       commit(merit.blockchain.height)
-      transactions = newTransactions(db, merit.blockchain)
+      transactions = newTransactions(db, merit.blockchain.genesis)
+      transactions.loadCache(merit.epochs.getPendingTransactions())
 
       for tx in txs.values():
         #Verify finalized Transactions are untouched.
@@ -243,14 +261,8 @@ suite "Transactions":
         #Add back the Block.
         merit.processBlock(blocks[b])
 
-        #Create the Epoch.
-        var popped: Epoch = merit.postProcessBlock()[0]
-        #Update the families.
-        for hash in popped.keys():
-          for input in transactions[hash].inputs:
-            discard transactions.families.getAndPruneFamilyUnsafe(input)
         #Archive the Epoch.
-        transactions.archive(newBlock, popped)
+        transactions.archive(newBlock, merit.postProcessBlock()[0])
 
         #Mint Meros.
         if b != blocks.len - 1:
@@ -381,14 +393,8 @@ suite "Transactions":
       merit.processBlock(newBlock)
       blocks.add(newBlock)
 
-      #Create the Epoch.
-      var popped: Epoch = merit.postProcessBlock()[0]
-      #Update the families.
-      for hash in popped.keys():
-        for input in transactions[hash].inputs:
-          discard transactions.families.getAndPruneFamilyUnsafe(input)
       #Archive the Epoch.
-      transactions.archive(newBlock, popped)
+      transactions.archive(newBlock, merit.postProcessBlock()[0])
 
       #Create a Mint/Claim to fund all planned Sends.
       var claims: seq[Claim] = @[]
@@ -412,8 +418,13 @@ suite "Transactions":
       commit(merit.blockchain.height)
 
       #Compare the Transactions DAGs.
-      var reloaded: Transactions = newTransactions(db, merit.blockchain)
+      var reloaded: Transactions = newTransactions(db, merit.blockchain.genesis)
+      reloaded.loadCache(merit.epochs.getPendingTransactions())
       compare(transactions, reloaded)
+
+      #Reload the Epochs and verify their accuracy.
+      #Easiest place to test this as we have an accurate Merit object and plenty of Transactions.
+      compare(merit.epochs, newEpochs(functions, merit.blockchain))
 
       #Add the Claims.
       for claim in claims:
@@ -459,11 +470,7 @@ suite "Transactions":
     )
     merit.processBlock(newBlock)
     blocks.add(newBlock)
-    var popped: Epoch = merit.postProcessBlock()[0]
-    for hash in popped.keys():
-      for input in transactions[hash].inputs:
-        discard transactions.families.getAndPruneFamilyUnsafe(input)
-    transactions.archive(newBlock, popped)
+    transactions.archive(newBlock, merit.postProcessBlock()[0])
     commit(merit.blockchain.height)
 
     #Create a copy of spendable for every wallet.

@@ -1,5 +1,4 @@
 import os
-import sets
 
 import ../../src/lib/Hash
 
@@ -65,11 +64,6 @@ proc newTestGlobalFunctionBox*(
     input: Input
   ): seq[Hash[256]] =
     transactions[].loadSpenders(input)
-
-  result.transactions.getAndPruneFamilyUnsafe = proc (
-    input: Input
-  ): HashSet[Input] =
-    transactions[].families.getAndPruneFamilyUnsafe(input)
 
   result.transactions.verify = proc (
     hash: Hash[256]

@@ -78,15 +78,14 @@ proc newEpochs*(
   blockchain: Blockchain
 ): Epochs {.forceCheck: [].} =
   #Create the Epochs objects.
-  result = newEpochsObj(blockchain.genesis, functions, uint(blockchain.height - 1))
+  result = newEpochsObj(blockchain.genesis, functions, uint(max(blockchain.height - 15, 0)))
 
-  #Regenerate the Epochs. To do this, we shift the last 15 Blocks. Why?
+  #Regenerate the Epochs. To do this, we shift the last 15 Blocks (see above formula). Why?
   #The last 5 Blocks are what we actually want, yet we also need the 5 Blocks before that for inputs that were brought up.
   #We also need the 5 Blocks before that to detect when an input first entered Epochs.
-  for b in max(blockchain.height - 15, 0) ..< blockchain.height:
+  for b in int(result.height) ..< blockchain.height:
     try:
       #This +1 isn't necessary, yet keeps consistency with live behavior.
-      #TODO: Test this is actually the case.
       discard result.shift(blockchain[b], uint(b + 1))
     except IndexError as e:
       panic("Couldn't shift the last 10 Blocks from the chain: " & e.msg)
