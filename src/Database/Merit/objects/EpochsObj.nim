@@ -230,6 +230,7 @@ proc register*(
 
     #Check if we're a dependent.
     #We do this by checking if we have any inputs whose inputs are in Epochs.
+    #This should be optimizable using currentTXs.
     try:
       for parentInput in epochs.functions.transactions.getTransaction(input.hash).inputs:
         #Doesn't need a check for being a magic input due to those never entering Epochs in the first place.

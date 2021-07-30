@@ -1,17 +1,18 @@
+#[
 import random
 import sequtils
 import deques
 import sets, tables
 
-import ../../Fuzzed
+import ../../../Fuzzed
 
-import ../../../src/lib/[Errors, Hash]
-import ../../../src/objects/GlobalFunctionBoxObj
+import ../../../../src/lib/[Errors, Hash]
+import ../../../../src/objects/GlobalFunctionBoxObj
 
-import ../../../src/Database/Transactions/objects/TransactionObj
-import ../../../src/Database/Merit/objects/EpochsObj
+import ../../../../src/Database/Transactions/objects/TransactionObj
+import ../../../../src/Database/Merit/objects/EpochsObj
 
-suite "Epochs":
+suite "Family Management":
   setup:
     var
       genesis: Hash[256] = Hash[256]()
@@ -40,11 +41,11 @@ suite "Epochs":
     #'Block' which adds the Transaction.
     epochs.register(@[newInput(tx)], 2)
     check epochs.families.len == 1
-    discard epochs.pop()
+    check epochs.pop().len == 0
 
     #4 'Blocks' to get through Epochs.
     for _ in 0 ..< 4:
-      discard epochs.pop()
+      check epochs.pop().len == 0
 
     #Get out of Epochs.
     check toSeq(epochs.pop().items()) == @[newInput(tx)]
@@ -65,10 +66,10 @@ suite "Epochs":
     check epochs.families.len == 1
     epochs.register(@[newInput(txs[0]), newInput(txs[2])], 2)
     check epochs.families.len == 1
-    discard epochs.pop()
+    check epochs.pop().len == 0
 
     for _ in 0 ..< 4:
-      discard epochs.pop()
+      check epochs.pop().len == 0
 
     check epochs.pop() == txs.mapIt(newInput(it)).toHashSet()
 
@@ -89,10 +90,10 @@ suite "Epochs":
     check epochs.families.len == 2
     epochs.register(@[newInput(txs[0]), newInput(txs[1])], 2)
     check epochs.families.len == 1
-    discard epochs.pop()
+    check epochs.pop().len == 0
 
     for _ in 0 ..< 4:
-      discard epochs.pop()
+      check epochs.pop().len == 0
 
     check epochs.pop() == txs.mapIt(newInput(it)).toHashSet()
 
@@ -110,13 +111,13 @@ suite "Epochs":
     #Stagnates registration by a Block.
     epochs.register(@[newInput(txs[0]), newInput(txs[1])], 2)
     check epochs.families.len == 1
-    discard epochs.pop()
+    check epochs.pop().len == 0
     epochs.register(@[newInput(txs[0]), newInput(txs[2])], 3)
     check epochs.families.len == 1
-    discard epochs.pop()
+    check epochs.pop().len == 0
 
     for _ in 0 ..< 4:
-      discard epochs.pop()
+      check epochs.pop().len == 0
 
     check epochs.pop() == txs.mapIt(newInput(it)).toHashSet()
 
@@ -139,18 +140,18 @@ suite "Epochs":
     #Base transaction.
     epochs.register(@[newInput(txs[0]), newInput(txs[1])], 2)
     check epochs.families.len == 1
-    discard epochs.pop()
+    check epochs.pop().len == 0
     #Descendant.
     epochs.register(@[newInput(txs[3])], 3)
     check epochs.families.len == 2
-    discard epochs.pop()
+    check epochs.pop().len == 0
     #Competitor.
     epochs.register(@[newInput(txs[0]), newInput(txs[2])], 4)
     check epochs.families.len == 2
-    discard epochs.pop()
+    check epochs.pop().len == 0
 
     for _ in 0 ..< 4:
-      discard epochs.pop()
+      check epochs.pop().len == 0
 
     check epochs.pop() == txs.mapIt(newInput(it)).toHashSet()
 
@@ -167,13 +168,13 @@ suite "Epochs":
 
     epochs.register(cast[seq[Input]](@[newFundedInput(tx, 0)]), 2)
     check epochs.families.len == 1
-    discard epochs.pop()
+    check epochs.pop().len == 0
     epochs.register(cast[seq[Input]](@[newFundedInput(tx, 1)]), 3)
     check epochs.families.len == 2
-    discard epochs.pop()
+    check epochs.pop().len == 0
 
     for _ in 0 ..< 3:
-      discard epochs.pop()
+      check epochs.pop().len == 0
 
     check epochs.pop() == cast[seq[Input]](@[newFundedInput(tx, 0)]).toHashSet()
     check epochs.pop() == cast[seq[Input]](@[newFundedInput(tx, 1)]).toHashSet()
@@ -182,3 +183,4 @@ suite "Epochs":
     check epochs.inputMap.len == 0
     check epochs.families.len == 0
     check epochs.epochs.len == 5
+]
