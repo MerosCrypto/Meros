@@ -7,6 +7,7 @@ export DB
 
 import ../../src/Database/Merit/[Block, Blockchain]
 import ../../src/Database/Transactions/Transactions
+import ../../src/Database/Consensus/Consensus
 
 import ../../src/objects/GlobalFunctionBoxObj
 export GlobalFunctionBoxObj
@@ -37,6 +38,7 @@ proc commit*(
 var
   blockchain {.threadvar.}: ptr Blockchain
   transactions {.threadvar.}: ptr Transactions
+  consensus {.threadvar.}: ptr Consensus
 proc newTestGlobalFunctionBox*(
   blockchainArg: ptr Blockchain,
   transactionsArg: ptr Transactions
@@ -44,6 +46,7 @@ proc newTestGlobalFunctionBox*(
   #Cache Blockchain/Transactions in the threadvars.
   blockchain = blockchainArg
   transactions = transactionsArg
+  consensus = nil
 
   result = newGlobalFunctionBox()
 
@@ -89,3 +92,13 @@ proc newTestGlobalFunctionBox*(
     hash: Hash[256]
   ) =
     transactions[].prune(hash)
+
+  result.consensus.getStatus = proc (
+    hash: Hash[256]
+  ): TransactionStatus =
+    consensus[].getStatus(hash)
+
+proc setTestConsensus*(
+  consensusArg: ptr Consensus
+) =
+  consensus = consensusArg

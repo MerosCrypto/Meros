@@ -1,5 +1,4 @@
 import random
-import deques
 import sets, tables
 
 import ../../../src/lib/[Errors, Util, Hash]
@@ -33,7 +32,7 @@ suite "ConsensusRevert":
         75
       )
 
-      transactions: Transactions = newTransactions(db, merit.blockchain)
+      transactions: Transactions = newTransactions(db, merit.blockchain.genesis)
 
       functions: GlobalFunctionBox = newTestGlobalFunctionBox(addr merit.blockchain, addr transactions)
 
@@ -105,6 +104,11 @@ suite "ConsensusRevert":
       packets: seq[VerificationPacket] = @[]
       elements: seq[BlockElement] = @[]
       newBlock: Block
+
+    setTestConsensus(addr consensus)
+    merit.createEpochs(functions)
+    transactions.loadCache(merit.epochs.getPendingTransactions())
+    consensus.loadCache(merit.state, merit.epochs.getPendingTransactions())
 
     proc add(
       tx: Transaction,
@@ -178,30 +182,29 @@ suite "ConsensusRevert":
       last: bool = false
     ) =
       #Grab old Transactions in Epochs to verify as well.
-      for epoch in merit.epochs:
-        for tx in epoch.keys():
-          if rand(6) != 0:
+      for tx in (merit.epochs.currentTXs + merit.epochs.datas):
+        if rand(6) != 0:
+          continue
+
+        #Create the packet.
+        packets.add(newSignedVerificationPacketObj(tx))
+
+        #Run against each Merit Holder.
+        for h in 0 ..< holders.len:
+          if (not holders[h].initiated) or consensus.getStatus(tx).holders.contains(uint16(h)) or (rand(3) != 0):
             continue
 
-          #Create the packet.
-          packets.add(newSignedVerificationPacketObj(tx))
+          #Add the holder.
+          packets[^1].holders.add(uint16(h))
 
-          #Run against each Merit Holder.
-          for h in 0 ..< holders.len:
-            if (not holders[h].initiated) or epoch[tx].contains(uint16(h)) or (rand(3) != 0):
-              continue
+          #Create the SignedVerification.
+          var verif: SignedVerification = newSignedVerificationObj(tx)
+          holders[h].sign(verif)
+          cast[SignedVerificationPacket](packets[^1]).add(verif)
 
-            #Add the holder.
-            packets[^1].holders.add(uint16(h))
-
-            #Create the SignedVerification.
-            var verif: SignedVerification = newSignedVerificationObj(tx)
-            holders[h].sign(verif)
-            cast[SignedVerificationPacket](packets[^1]).add(verif)
-
-          #If no holder was added, delete the packet.
-          if packets[^1].holders.len == 0:
-            packets.del(high(packets))
+        #If no holder was added, delete the packet.
+        if packets[^1].holders.len == 0:
+          packets.del(high(packets))
 
       #Create Send/Data difficulties.
       for h in 0 ..< holders.len:
@@ -300,13 +303,13 @@ suite "ConsensusRevert":
       #Copy the State and add the Block to the Epochs and State.
       var
         rewardsState: State = merit.state
-        epoch: Epoch
+        finalized: HashSet[Hash[256]]
         changes: StateChanges
-      (epoch, changes) = merit.postProcessBlock()
+      (finalized, changes) = merit.postProcessBlock()
 
       #Archive the Epochs.
-      consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, changes)
-      for tx in epoch.keys():
+      discard consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, finalized, changes)
+      for tx in finalized:
         finalizedStatuses[tx] = consensus.getStatus(tx)
 
       #Add the Elements.
@@ -319,7 +322,7 @@ suite "ConsensusRevert":
       elements = @[]
 
       #Archive the hashes handled by the popped Epoch.
-      transactions.archive(newBlock, epoch)
+      transactions.archive(newBlock, finalized)
 
       #Create a Mint/Claim to fund all planned Sends.
       var claims: Table[Hash[256], Claim] = initTable[Hash[256], Claim]()
@@ -370,7 +373,7 @@ suite "ConsensusRevert":
           verified[tx] = merit.blockchain.height
 
       #Since this test doesn't cause any competing transactions, mark any TX which just finalized as verified.
-      for popped in epoch.keys():
+      for popped in finalized:
         #Preserve any earlier height.
         if not verified.hasKey(popped):
           verified[popped] = merit.blockchain.height
@@ -566,7 +569,7 @@ suite "ConsensusRevert":
     proc replay() =
       #Reload Transactions to fix its cache.
       commit(merit.blockchain.height)
-      transactions = newTransactions(db, merit.blockchain)
+      transactions = newTransactions(db, merit.blockchain.genesis)
 
       #Add back each Block and its Transactions.
       for b in 49 ..< blocks.len:
@@ -610,12 +613,12 @@ suite "ConsensusRevert":
         #Copy the State and Add the Block to the Epochs and State.
         var
           rewardsState: State = merit.state
-          epoch: Epoch
+          finalized: HashSet[Hash[256]]
           changes: StateChanges
-        (epoch, changes) = merit.postProcessBlock()
+        (finalized, changes) = merit.postProcessBlock()
 
         #Archive the Epochs.
-        consensus.archive(merit.state, blocks[b].body.packets, blocks[b].body.elements, epoch, changes)
+        discard consensus.archive(merit.state, blocks[b].body.packets, blocks[b].body.elements, finalized, changes)
 
         #Add the elements.
         for elem in blocks[b].body.elements:
@@ -626,7 +629,7 @@ suite "ConsensusRevert":
               consensus.add(merit.state, dataDiff)
 
         #Archive the hashes handled by the popped Epoch.
-        transactions.archive(blocks[b], epoch)
+        transactions.archive(blocks[b], finalized)
 
         if rewards.hasKey(blocks[b].header.hash):
           transactions.mint(blocks[b].header.hash, rewards[blocks[b].header.hash])
@@ -779,7 +782,7 @@ suite "ConsensusRevert":
       transactions.revert(merit.blockchain, merit.blockchain.height - 1)
       merit.revert(merit.blockchain.height - 1)
       db.commit(merit.blockchain.height)
-      transactions = newTransactions(db, merit.blockchain)
+      transactions = newTransactions(db, merit.blockchain.genesis)
       consensus.postRevert(merit.blockchain, merit.state, transactions)
       db.commit(merit.blockchain.height)
       verify()
@@ -795,7 +798,7 @@ suite "ConsensusRevert":
     transactions.revert(merit.blockchain, 50)
     merit.revert(50)
     db.commit(merit.blockchain.height)
-    transactions = newTransactions(db, merit.blockchain)
+    transactions = newTransactions(db, merit.blockchain.genesis)
     consensus.postRevert(merit.blockchain, merit.state, transactions)
     db.commit(merit.blockchain.height)
     verify()

@@ -1,5 +1,4 @@
-import sequtils
-import sets, tables
+import sets
 
 import ../../lib/[Errors, Hash]
 

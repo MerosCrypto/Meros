@@ -33,14 +33,13 @@ type
   Epochs* = ref object
     genesis*: MerosHash
     functions*: GlobalFunctionBox
+    height*: uint
     when not defined(merosTests):
-      height: uint
       lastID: uint
       inputMap*: Table[Input, FamilyID]
       families*: Table[uint, Family]
       epochs: Deque[HashSet[uint]]
     else:
-      height*: uint
       lastID*: uint
       inputMap*: Table[Input, FamilyID]
       families*: Table[uint, Family]
