@@ -1,6 +1,5 @@
 import random
-import deques
-import tables
+import sets, tables
 
 import ../../../src/lib/[Util, Hash]
 import ../../../src/Wallet/MinerWallet
@@ -21,6 +20,7 @@ suite "Consensus":
     var
       db: DB = newTestDatabase()
 
+      #No createEpochs as Epochs are never used.
       merit: Merit = newMerit(
         db,
         "CONSENSUS_DB_TEST",
@@ -31,6 +31,7 @@ suite "Consensus":
 
       functions: GlobalFunctionBox = newTestGlobalFunctionBox(addr merit.blockchain, nil)
 
+      #No loadCache due to fresh state.
       consensus: Consensus = newConsensus(
         functions,
         db,
@@ -45,7 +46,7 @@ suite "Consensus":
     for h in 0 .. 500:
       merit.state.merit.add(1)
       merit.state.statuses.add(MeritStatus.Unlocked)
-      consensus.archive(merit.state, @[], @[], newEpoch(), StateChanges(incd: uint16(high(merit.state.merit)), decd: -1))
+      discard consensus.archive(merit.state, @[], @[], initHashSet[Hash[256]](), StateChanges(incd: uint16(high(merit.state.merit)), decd: -1))
 
     #Iterate over 100 actions.
     for a in 0 ..< 100:
@@ -78,6 +79,7 @@ suite "Consensus":
       consensus.remove(merit.blockchain, merit.state, removals)
 
       #Reload and compare the Consensus DAGs.
+      #Safe to inline newConsensus due to the lack of cached items.
       compare(consensus, newConsensus(
         functions,
         db,
@@ -103,15 +105,17 @@ suite "Consensus":
         625
       )
       #Transactions.
+      #No need for a loadCache below as this is perfectly fresh.
       transactions: Transactions = newTransactions(
         db,
-        merit.blockchain
+        merit.blockchain.genesis
       )
 
       #Functions.
       functions: GlobalFunctionBox = newTestGlobalFunctionBox(addr merit.blockchain, addr transactions)
 
       #Consensus.
+      #Same loadCache policy as above.
       consensus: Consensus = newConsensus(
         functions,
         db,
@@ -134,6 +138,9 @@ suite "Consensus":
       sv: SignedVerification
       #Aggregate signature to include in the next Block.
       aggregate: BLSSignature = newBLSSignature()
+
+    #Here's where the loadCache calls would be.
+    merit.createEpochs(functions)
 
     #Mine and add a Block.
     proc mineBlock() =
@@ -189,12 +196,13 @@ suite "Consensus":
 
       #Add the Block to the Epochs and State.
       var
-        epoch: Epoch
+        finalized: HashSet[Hash[256]]
         changes: StateChanges
-      (epoch, changes) = merit.postProcessBlock()
+      (finalized, changes) = merit.postProcessBlock()
 
       #Archive the Epochs.
-      consensus.archive(merit.state, mining.body.packets, mining.body.elements, epoch, changes)
+      #Discarded as we mint as needed, not as voted. Simplifies testing.
+      discard consensus.archive(merit.state, mining.body.packets, mining.body.elements, finalized, changes)
 
       #Add the elements.
       for elem in elements:
@@ -206,7 +214,7 @@ suite "Consensus":
       elements = @[]
 
       #Archive the hashes handled by the popped Epoch.
-      transactions.archive(mining, epoch)
+      transactions.archive(mining, finalized)
 
       #Commit the DBs.
       db.commit(merit.blockchain.height)
@@ -216,13 +224,15 @@ suite "Consensus":
 
     #Compare the Consensus against the reloaded Consensus.
     proc compare() =
-      compare(consensus, newConsensus(
+      var reloaded: Consensus = newConsensus(
         functions,
         db,
         merit.state,
         3,
         5
-      ))
+      )
+      reloaded.loadCache(merit.state, merit.epochs.getPendingTransactions())
+      compare(consensus, reloaded)
 
     #Iterate over 1250 'rounds'.
     for r in 1 .. 1250:
@@ -280,37 +290,40 @@ suite "Consensus":
           else:
             consensus.add(merit.state, sv)
 
-      #Iterate through the existing Epochs to add new Verifications to old Transactions.
-      for epoch in merit.epochs:
-        for tx in epoch.keys():
-          if rand(2) == 0:
+      #Iterate through the TXs in Epochs to add new Verifications to old Transactions.
+      for tx in merit.epochs.getPendingTransactions():
+        if rand(2) == 0:
+          continue
+
+        #Create the packet.
+        packets.add(newVerificationPacketObj(tx))
+
+        #Run against each Merit Holder.
+        for h in 0 ..< holders.len:
+          if (
+            (consensus.statuses[tx].holders - consensus.statuses[tx].pending).contains(uint16(h)) or
+            merit.state.hasMR.contains(uint16(h)) or
+            (rand(2) == 0)
+          ):
             continue
 
-          #Create the packet.
-          packets.add(newVerificationPacketObj(tx))
+          #Add the holder.
+          packets[^1].holders.add(uint16(h))
 
-          #Run against each Merit Holder.
-          for h in 0 ..< holders.len:
-            if epoch[tx].contains(uint16(h)) or merit.state.hasMR.contains(uint16(h)) or (rand(2) == 0):
-              continue
+          #Create the SignedVerification.
+          sv = newSignedVerificationObj(packets[^1].hash)
+          holders[h].sign(sv)
+          aggregate = @[aggregate, sv.signature].aggregate()
 
-            #Add the holder.
-            packets[^1].holders.add(uint16(h))
+          if rand(3) == 0:
+            if not unsigned.contains(tx):
+              unsigned.add(tx)
+          else:
+            consensus.add(merit.state, sv)
 
-            #Create the SignedVerification.
-            sv = newSignedVerificationObj(packets[^1].hash)
-            holders[h].sign(sv)
-            aggregate = @[aggregate, sv.signature].aggregate()
-
-            if rand(3) == 0:
-              if not unsigned.contains(tx):
-                unsigned.add(tx)
-            else:
-              consensus.add(merit.state, sv)
-
-          #If no holder was added, delete the packet.
-          if packets[^1].holders == @[]:
-            packets.del(high(packets))
+        #If no holder was added, delete the packet.
+        if packets[^1].holders == @[]:
+          packets.del(high(packets))
 
       #Add Difficulties.
       if holders.len != merit.state.hasMR.card:

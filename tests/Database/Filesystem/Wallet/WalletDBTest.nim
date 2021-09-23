@@ -90,18 +90,17 @@ suite "WalletDB":
 
       if rand(50) == 0:
         #Grab Transactions to finalize.
-        var epoch: Epoch = newEpoch()
+        var epoch: HashSet[Hash[256]] = initHashSet[Hash[256]]()
         for n in finalizedTransactions ..< transactions.len:
           if transactions[n].finalized:
             continue
 
           if rand(40) != 0:
-            epoch[transactions[n].transaction.hash] = @[]
+            epoch.incl(transactions[n].transaction.hash)
             transactions[n].finalized = true
 
         #Commit the Transactions.
         wallet.commit(
-          epoch,
           proc (
             hash: Hash[256]
           ): Transaction {.gcsafe, raises: [
@@ -112,6 +111,7 @@ suite "WalletDB":
                 result = lookup[hash]
             except KeyError as e:
               raise newException(IndexError, e.msg)
+          , epoch
         )
 
         #Update the finalizedTransactions/finalizedNonces variables.
