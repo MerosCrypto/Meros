@@ -87,6 +87,7 @@ proc merge(
   for rawSource in families[1 ..< families.len]:
     #Resolve the source.
     var source: FamilyID = rawSource.resolve()
+    logDebug "Merging families", target = target.id, source = source.id
 
     #Forward the source ID to point to the target.
     source.active = false
@@ -119,6 +120,9 @@ proc merge(
     #Bring up the current family.
     target = queue[^1].resolve()
     queue.del(queue.len - 1)
+
+    logDebug "Bringing up family", family = target.id
+
     for e in 0 ..< (epochs.epochs.len - 1):
       try:
         epochs.epochs[e].excl(target.id)
