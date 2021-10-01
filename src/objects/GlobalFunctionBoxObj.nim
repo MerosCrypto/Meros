@@ -232,6 +232,10 @@ type
       nick: uint16
     ): bool {.gcsafe, raises: [].}
 
+    isRegisterable*: proc (
+      inputs: seq[Input]
+    ): bool {.gcsafe, raises: [].}
+
     addBlockInternal*: proc (
       newBlock: SketchyBlock,
       sketcher: seq[VerificationPacket],

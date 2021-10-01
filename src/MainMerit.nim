@@ -129,6 +129,11 @@ proc mainMerit(
       (merit.state.statuses[int(nick)] == MeritStatus.Pending)
     )
 
+  functions.merit.isRegisterable = proc (
+    inputs: seq[Input]
+  ): bool {.forceCheck: [].} =
+    merit.epochs.isRegisterable(inputs)
+
   #Handle full blocks.
   functions.merit.addBlockInternal = proc (
     sketchyBlock: SketchyBlock,

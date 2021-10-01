@@ -459,6 +459,10 @@ proc sync*(
       if int(holder) >= state.merit.len:
         raise newLoggedException(ValueError, "Block has a Verification from a non-existent holder.")
 
+    #Verify the Transaction won't compete with anything mentioned too far back.
+    if not manager.functions.merit.isRegisterable(tx.inputs):
+      raise newLoggedException(ValueError, "Block has a Transaction which competes with a too-old Transaction.")
+
   #Verify the included Elements.
   result[1] = result[0].body.elements
   var

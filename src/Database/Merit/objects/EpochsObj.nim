@@ -82,6 +82,7 @@ proc merge(
   epochs: Epochs,
   families: seq[FamilyID]
 ): FamilyID {.forceCheck: [].} =
+  #This resolve may be redundant, along with others below.
   var target: FamilyID = families[0].resolve()
 
   for rawSource in families[1 ..< families.len]:
@@ -148,6 +149,36 @@ proc merge(
       panic("Couldn't get a dependant family despite resolution: " & e.msg)
 
   result = target
+
+#Checks if a Transaction can be registered.
+#Transactions which would bring up old enough Transactions cannot be.
+proc isRegisterable*(
+  epochs: Epochs,
+  inputs: seq[Input]
+): bool {.forceCheck: [].} =
+  var families: HashSet[FamilyID] = initHashSet[FamilyID]()
+  for input in inputs:
+    try:
+      families.incl(epochs.inputMap[input].resolve())
+    except KeyError:
+      continue
+
+  #New family, no conflicts.
+  if families.len == 0:
+    return true
+
+  var created: uint = 0
+  for id in families:
+    try:
+      if created == 0:
+        created = epochs.families[id.id].created
+      else:
+        created = min(created, epochs.families[id.id].created)
+    except KeyError as e:
+      panic("Couldn't get a family we just resolved: " & e.msg)
+
+  #As long as it wasn't created more than 5 Blocks ago...
+  result = (created + 5) >= (epochs.height + 1)
 
 #Requires registration in order.
 #Adding a transaction whose parent never went through Epochs will produce UB.
