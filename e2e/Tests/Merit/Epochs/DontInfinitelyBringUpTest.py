@@ -7,9 +7,11 @@ import json
 
 from e2e.Tests.Errors import MessageException
 
+from e2e.Libs.BLS import PrivateKey
 from e2e.Libs.Minisketch import Sketch
 
 from e2e.Classes.Transactions.Transactions import Data, Transactions
+from e2e.Classes.Consensus.Verification import SignedVerification
 from e2e.Classes.Merit.Blockchain import Block, Blockchain
 
 from e2e.Meros.RPC import RPC
@@ -24,6 +26,7 @@ def DontInfinitelyBringUpTest(
   with open("e2e/Vectors/Merit/Epochs/DontInfinitelyBringUp.json", "r") as file:
     vectors = json.loads(file.read())
   datas: List[Data] = [Data.fromJSON(data) for data in vectors["datas"]]
+  verif: SignedVerification = SignedVerification.fromSignedJSON(vectors["verification"])
   #Create a Blockchain to set the RandomX key so the below Block load doesn't error.
   _: Blockchain = Blockchain()
   bringUpBlock: Block = Block.fromJSON(vectors["bringUpBlock"])
@@ -39,11 +42,16 @@ def DontInfinitelyBringUpTest(
       raise TestError("Meros didn't send us back the Data.")
 
     #Send a SignedVerification in order to give Meros template data.
-
-    #Check the template is empty.
-    #TODO
+    if rpc.meros.signedElement(verif) != rpc.meros.live.recv():
+      raise TestError("Meros didn't send us back the Verification.")
 
   def attemptInvalidBringUp() -> None:
+    #Verify Meros doesn't suggest the above Verification in a template.
+    if bytes.fromhex(
+      rpc.call("merit", "getBlockTemplate", {"miner": PrivateKey(0).toPublicKey().serialize().hex()})["header"]
+    )[36 : 68] != bytes(32):
+      raise TestError("Block template has the Verification.")
+
     #Verify we can't add a Block containing a Verification which would bring up a Transaction added more than 5 Blocks ago.
     rpc.meros.liveBlockHeader(bringUpBlock.header)
 

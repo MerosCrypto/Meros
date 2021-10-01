@@ -37,7 +37,7 @@ proto.add(packets=[VerificationPacket(datas[2].hash, [1])])
 
 #Create a Verification for the final competitor in order to test template behavior as well.
 verif: SignedVerification = SignedVerification(datas[3].hash, 2)
-verif.sign(2, PrivateKey(3))
+verif.sign(2, PrivateKey(2))
 
 #Convert to Merit in order to create an alternate Block which attempts to further bring up the TX in question.
 merit: Merit = Merit.fromJSON(proto.toJSON())

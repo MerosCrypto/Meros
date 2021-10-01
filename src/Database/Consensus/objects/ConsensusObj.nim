@@ -637,10 +637,16 @@ proc getPending*(
 ] {.forceCheck: [].} =
   var included: HashSet[Hash[256]] = initHashSet[Hash[256]]()
   for status in consensus.statuses.values():
-    #A status can be beaten here if the parent was beaten, yet the child has yet to finalize.
-    if (status.packet.holders.len != 0) and (not status.beaten):
-      result.packets.add(status.packet)
-      included.incl(status.packet.hash)
+    if (
+      #Don't include packets with no holders.
+      (status.packet.holders.len == 0) or
+      #A status can be beaten here if its parent was beaten, yet the child (it itself) has yet to finalize.
+      status.beaten
+    ):
+      continue
+
+    result.packets.add(status.packet)
+    included.incl(status.packet.hash)
 
   var signatures: seq[BLSSignature] = @[]
   try:
@@ -700,13 +706,29 @@ proc getPending*(
       #Check if the parents were mentioned in a previous Block, or will be in this one.
       var mentioned: bool
       for input in tx.inputs:
-        mentioned = included.contains(input.hash) or (not consensus.unmentioned.contains(input.hash))
+        mentioned = (not consensus.unmentioned.contains(input.hash)) or included.contains(input.hash)
         if not mentioned:
           break
 
       if not mentioned:
         result.packets.del(p)
         continue
+
+    #Also check this Transaction won't bring up a significantly old Transaction.
+    try:
+      if (
+        #Cheapest form of this check is seeing if it can bring up anything at all by not being mentioned yet.
+        #Unfortunately, we no longer have access to the Status object here, as we do above.
+        #By placing this check above, we don't have access to the Transaction.
+        #We could cache the Transaction in a Table, yet that lookup would be as expensive as this one (except we run this twice to inline it).
+        #Overall, the performance isn't significant enough to matter. Just commentary on the theoretical 'optimal' layout.
+        (consensus.statuses[tx.hash].holders == consensus.statuses[tx.hash].pending) and
+        (not consensus.functions.merit.isRegisterable(tx.inputs))
+      ):
+        result.packets.del(p)
+        continue
+    except KeyError as e:
+      panic("Couldn't get the status for a pending Transaction: " & e.msg)
 
     signatures.add(result.packets[p].signature)
     inc(p)
