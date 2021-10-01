@@ -15,7 +15,7 @@ edPubKey: bytes = edPrivKey.get_verifying_key()
 transactions: Transactions = Transactions()
 datas: List[Data] = []
 for i in range(4):
-  inputHash: bytes
+  inputHash: bytes = bytes()
   #Initial.
   if i == 0:
     inputHash = bytes(32)

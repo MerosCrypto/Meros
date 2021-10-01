@@ -11,7 +11,7 @@ from e2e.Meros.Liver import Liver
 
 from e2e.Tests.Errors import TestError
 
-def DescendantHighestUnverifiedParentTest(
+def BringUpTest(
   rpc: RPC
 ) -> None:
   vectors: Dict[str, Any]

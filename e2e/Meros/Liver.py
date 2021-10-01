@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Any
+from typing import Callable, Dict, List, Optional, Union, Any
 
 from e2e.Libs.Minisketch import Sketch
 
@@ -24,7 +24,7 @@ class Liver:
     rpc: RPC,
     blockchain: List[Dict[str, Any]],
     transactions: Optional[Transactions] = None,
-    callbacks: Dict[int, Callable[[], None]] = {},
+    callbacks: Dict[int, Callable[[], Union[None, List[None]]]] = {},
     everyBlock: Optional[Callable[[int], None]] = None
   ) -> None:
     self.rpc: RPC = rpc
@@ -33,7 +33,7 @@ class Liver:
     self.merit: Merit = Merit.fromJSON(blockchain)
     self.transactions: Optional[Transactions] = transactions
 
-    self.callbacks: Dict[int, Callable[[], None]] = dict(callbacks)
+    self.callbacks: Dict[int, Callable[[], Union[None, List[None]]]] = dict(callbacks)
     self.everyBlock: Optional[Callable[[int], None]] = everyBlock
 
   #Send the Blockchain, as if it's being mined in real time, and verify it.
