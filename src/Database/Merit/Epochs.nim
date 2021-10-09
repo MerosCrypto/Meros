@@ -24,12 +24,20 @@ proc shift*(
 ): HashSet[Hash[256]] {.forceCheck: [].} =
   logDebug "Epochs processing Block", hash = newBlock.header.hash
 
-  var txs: seq[Transaction] = newSeq[Transaction](newBlock.body.packets.len)
+  var
+    txs: seq[Transaction] = newSeq[Transaction](newBlock.body.packets.len)
+    offset: int = 0
   for p in 0 ..< newBlock.body.packets.len:
+    #If this TX is already in Epochs, continue.
+    if epochs.currentTXs.contains(newBlock.body.packets[p].hash) or epochs.datas.contains(newBlock.body.packets[p].hash):
+      inc(offset)
+      continue
+
     try:
-      txs[p] = epochs.functions.transactions.getTransaction(newBlock.body.packets[p].hash)
+      txs[p - offset] = epochs.functions.transactions.getTransaction(newBlock.body.packets[p].hash)
     except IndexError as e:
       panic("Passed a Block verifying non-existent Transactions: " & e.msg)
+    txs.setLen(txs.len - offset)
 
   var t: int = 0
   while txs.len != 0:
@@ -51,11 +59,14 @@ proc shift*(
           continue
 
         try:
-          #Check if the parent was finalized.
-          #Doesn't use TransactionStatus.finalized as that will consider Transactions which haven't been through Epochs as finalized if beaten.
-          if epochs.functions.consensus.getStatus(input.hash).merit == -1:
-            #If not present, set canonical to false and break.
-            if (not epochs.datas.contains(input.hash)) and (not epochs.currentTXs.contains(input.hash)):
+          if not (
+            #Check if the parent is already present.
+            (epochs.currentTXs.contains(input.hash)) or (epochs.datas.contains(input.hash)) or
+            #Check if the parent was finalized.
+            #Doesn't use TransactionStatus.finalized as that will consider Transactions which haven't been through Epochs as finalized if beaten.
+            (epochs.functions.consensus.getStatus(input.hash).merit != -1)
+          ):
+              #If not present, set canonical to false and break.
               canonical = false
               break
         except IndexError as e:
