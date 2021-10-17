@@ -37,7 +37,7 @@ proc shift*(
       txs[p - offset] = epochs.functions.transactions.getTransaction(newBlock.body.packets[p].hash)
     except IndexError as e:
       panic("Passed a Block verifying non-existent Transactions: " & e.msg)
-    txs.setLen(txs.len - offset)
+  txs.setLen(txs.len - offset)
 
   var t: int = 0
   while txs.len != 0:
