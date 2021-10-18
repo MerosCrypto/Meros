@@ -320,9 +320,8 @@ when defined(merosTests):
     if e1.height != e2.height:
       return false
 
-    for input in toSeq(e1.inputMap.keys()).toHashSet():
-      if not e2.inputMap.hasKey(input):
-        return false
+    if toSeq(e1.inputMap.keys()).toHashSet() != toSeq(e2.inputMap.keys()).toHashSet():
+      return false
 
     for input in e1.inputMap.keys():
       var
@@ -342,6 +341,8 @@ when defined(merosTests):
             break
         if not found:
           return false
+      if f1.datas != f2.datas:
+        return false
 
     if e1.epochs.len != e2.epochs.len:
       panic("Epochs length was different. Even in testing, this should never happen.")

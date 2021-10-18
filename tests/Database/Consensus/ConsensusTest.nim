@@ -139,6 +139,8 @@ suite "Consensus":
       #Aggregate signature to include in the next Block.
       aggregate: BLSSignature = newBLSSignature()
 
+    setTestConsensus(addr consensus)
+
     #Here's where the loadCache calls would be.
     merit.createEpochs(functions)
 
@@ -247,10 +249,32 @@ suite "Consensus":
         if holders.len == merit.state.hasMR.card:
           break
 
-        #Register the Transaction.
-        var tx: Transaction = Transaction()
-        tx.hash = newRandomHash()
+        var
+          #Create a dummy parent who is finalized.
+          parent: Transaction = Transaction(
+            hash: newRandomHash()
+          )
+
+          #Transaction.
+          tx: Transaction = Transaction(
+            hash: newRandomHash(),
+            inputs: @[
+              newInput(parent.hash)
+            ]
+          )
+
+          #Status which will finalize the parent.
+          status: TransactionStatus = TransactionStatus(
+            verified: true,
+            merit: 1
+          )
+        consensus.setStatus(parent.hash, status)
+        consensus.statuses.del(parent.hash)
+
+        #Register the Transactions.
+        transactions.transactions[parent.hash] = parent
         transactions.transactions[tx.hash] = tx
+        #The parent is already effectively registered via the above Status set.
         consensus.register(merit.state, tx, merit.blockchain.height)
 
         #Create a packet for the Transaction.
