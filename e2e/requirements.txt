@@ -3,7 +3,7 @@ gmpy2==2.1.0
 bech32==1.2.0
 bip-utils==1.7.0
 requests==2.25.1
-pytest==5.3.5
+pytest==6.2.4
 pytest-xdist==1.32.0
 filelock==3.0.12
 mypy==0.790

@@ -2,7 +2,7 @@ from typing import Dict, Any
 from ctypes import cdll, c_int, c_char, \
            Array, c_char_p, c_void_p, create_string_buffer, byref
 
-from threading import currentThread
+from threading import current_thread
 import os
 import platform
 
@@ -43,7 +43,7 @@ vms: Dict[str, c_void_p] = {}
 def setRandomXKey(
   key: bytes
 ) -> None:
-  name: str = currentThread().name
+  name: str = current_thread().name
   if name not in caches:
     caches[name] = RandomXLib.randomx_alloc_cache(flags)
     vms[name] = RandomXLib.randomx_create_vm(flags, caches[name], None)
@@ -54,7 +54,7 @@ def setRandomXKey(
 def RandomX(
   data: bytes
 ) -> bytes:
-  name: str = currentThread().name
+  name: str = current_thread().name
   if name not in caches:
     raise Exception("RandomX hash called before this thread set a key.")
 
