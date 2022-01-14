@@ -51,7 +51,7 @@ proc mainNetwork(
     data: pointer = nil
   ) {.gcsafe, forceCheck: [].} =
     proc requestPeers() {.forceCheck: [], async.} =
-      if network.peers.len >= 8:
+      if network.peers.len >= 16:
         return
 
       var peers: seq[tuple[ip: string, port: int]] = params.SEEDS

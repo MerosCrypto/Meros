@@ -1,3 +1,4 @@
+import random
 import tables
 
 import chronos
@@ -93,24 +94,17 @@ proc isOurPublicIP(
       (socket.localAddress.address_v4 != [127'u8, 0, 0, 1])
     )
   #If we couldn't get the local or peer address, we can either panic or shut down this socket.
-  #The safe way to shut down the socket is to return that's invalid.
+  #The safe way to shut down the socket is to return that it's invalid.
   #That said, this can have side effects when we implement peer karma.
   except TransportOSError:
     result = true
 
-proc connect*(
+proc connect(
   network: Network,
-  addressArg: string,
-  port: int
+  addressStr: string,
+  port: int,
+  tAddy: TransportAddress
 ) {.forceCheck: [], async.} =
-  logDebug "Connecting", address = addressArg, port = port
-
-  var tAddy: TransportAddress
-  try:
-    tAddy = resolveTAddress(addressArg, Port(port))[0]
-  except TransportAddressError:
-    logDebug "Invalid address", address = addressArg
-    return
   if tAddy.family != AddressFamily.IPv4:
     logInfo "Only IPv4 IPs are supported when connecting to peers."
     return
@@ -121,7 +115,7 @@ proc connect*(
     ($tAddy.address_v4[2]) & "." &
     ($tAddy.address_v4[3])
   )
-  if addressArg != address:
+  if addressStr != address:
     logInfo "Resolved address", address = address
 
   #Lock the IP to stop multiple connections from happening at once.
@@ -228,6 +222,37 @@ proc connect*(
     panic("Couldn't get the remote address of a socket we've already gotten the remote address of: " & e.msg)
   except Exception as e:
     panic("Handling a new connection raised an Exception despite not throwing any Exceptions: " & e.msg)
+
+proc connect*(
+  network: Network,
+  addressArg: string,
+  port: int
+) {.forceCheck: [], async.} =
+  logDebug "Connecting", address = addressArg, port = port
+
+  var tAddys: seq[TransportAddress]
+  try:
+    tAddys = resolveTAddress(addressArg, Port(port))
+  except TransportAddressError:
+    logDebug "Invalid address", address = addressArg
+    return
+
+  #Only connect to 4 seed nodes at a time.
+  #Does assume every node behind a single URL shares the same port configuration, which should be fine.
+  if tAddys.len > 4:
+    var possibleAddys: seq[TransportAddress] = tAddys
+    tAddys = @[]
+    for _ in 0 ..< 4:
+      let i: int = rand(possibleAddys.len - 1)
+      tAddys.add(possibleAddys[i])
+      possibleAddys.del(i)
+
+  for tAddy in tAddys:
+    #Doesn't handle these sequentially as socket timeouts can horifically take minutes to occur.
+    try:
+      asyncCheck network.connect(addressArg, port, tAddy)
+    except Exception as e:
+      panic("connect raised an Exception despite not naturally raising anything: " & e.msg)
 
 #Create a function to handle a new connection.
 proc handle(

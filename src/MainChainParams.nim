@@ -54,9 +54,7 @@ proc newChainParams(
         NETWORK_ID: 1,
 
         SEEDS: @[
-          (ip: "seed1.meroscrypto.io", port: 5132),
-          (ip: "seed2.meroscrypto.io", port: 5132),
-          (ip: "seed3.meroscrypto.io", port: 5132),
+          (ip: "seed.meroscrypto.io", port: 5132)
         ]
       )
 
