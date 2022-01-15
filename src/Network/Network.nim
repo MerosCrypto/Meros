@@ -239,13 +239,8 @@ proc connect*(
 
   #Only connect to 4 seed nodes at a time.
   #Does assume every node behind a single URL shares the same port configuration, which should be fine.
-  if tAddys.len > 4:
-    var possibleAddys: seq[TransportAddress] = tAddys
-    tAddys = @[]
-    for _ in 0 ..< 4:
-      let i: int = rand(possibleAddys.len - 1)
-      tAddys.add(possibleAddys[i])
-      possibleAddys.del(i)
+  while tAddys.len > 4:
+    tAddys.del(rand(high(tAddys.len)))
 
   for tAddy in tAddys:
     #Doesn't handle these sequentially as socket timeouts can horifically take minutes to occur.
