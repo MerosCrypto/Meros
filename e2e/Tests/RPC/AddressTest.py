@@ -5,11 +5,11 @@
 # - Incorrect lengths.
 # - Unsupported address types.
 
-from typing import Union, List, Tuple
+from typing import Union
 
 import os
 
-from bech32 import CHARSET, convertbits, bech32_encode, bech32_decode
+from bech32ref.segwit_addr import Encoding, convertbits, bech32_encode
 
 from e2e.Meros.RPC import RPC
 from e2e.Tests.Errors import MessageException, TestError
@@ -17,7 +17,7 @@ from e2e.Tests.Errors import MessageException, TestError
 def encodeAddress(
   data: bytes
 ) -> str:
-  return bech32_encode("mr", convertbits(data, 8, 5))
+  return bech32_encode("mr", convertbits(data, 8, 5), Encoding.BECH32M)
 
 def test(
   rpc: RPC,
@@ -68,22 +68,3 @@ def AddressTest(
   unchanged: str = encodeAddress(bytes([0]) + randomKey)
   #Sanity check against it.
   test(rpc, unchanged, False, "Meros rejected a valid address.")
-
-  #Mutate it as described in https://github.com/sipa/bech32/issues/51#issuecomment-496797984.
-  #Since we can insert any amount of 'q's, run this ten times.
-  #It should be noted that this first insertion decodes to the same byte vector.
-  #That said, the reference code is able to detect it as invalid due to its padding properties.
-  #Because of that, it's noted here as an invalid case, to ensure compliance.
-  for i in range(10):
-    mutated: str = unchanged[:-1] + CHARSET[CHARSET.find(unchanged[-1]) ^ 1]
-    #Just i would be 0 on the first run, which would be a NOP.
-    #Therefore, a valid and unmodified address.
-    mutated += "q" * (i + 1)
-    mutated = mutated[:-1] + CHARSET[CHARSET.find(mutated[-1]) ^ 1]
-
-    #Sanity check that our mutation worked.
-    decoded: Union[Tuple[None, None], Tuple[str, List[int]]] = bech32_decode(mutated)
-    if decoded is Tuple[None, None]:
-      raise Exception("Mutation stopped the checksum from passing.")
-
-    test(rpc, mutated, True, "Meros accepted an address which had been mutated yet still passed the checksum.")

@@ -5,7 +5,7 @@ import os
 from hashlib import blake2b
 
 from bip_utils import Bip39WordsNum, Bip39MnemonicGenerator, Bip39MnemonicValidator, Bip39SeedGenerator
-from bech32 import convertbits, bech32_encode
+from bech32ref.segwit_addr import Encoding, convertbits, bech32_encode
 
 from e2e.Libs.BLS import PrivateKey
 from e2e.Libs.Ristretto.Ristretto import RistrettoScalar
@@ -137,11 +137,8 @@ def DerivationTest(
     rpc.call("personal", "setWallet", {"mnemonic": mnemonic, "password": password})
     addr: str = bech32_encode(
       "mr",
-      convertbits(
-        bytes([0]) + RistrettoScalar(key).toPoint().serialize(),
-        8,
-        5
-      )
+      convertbits(bytes([0]) + RistrettoScalar(key).toPoint().serialize(), 8, 5),
+      Encoding.BECH32M
     )
     if rpc.call("personal", "getAddress", {"index": index}) != addr:
       raise TestError("Didn't get the correct address for this index.")

@@ -1,7 +1,7 @@
 from typing import Dict, List, Any
 import json
 
-from bech32 import convertbits, bech32_encode
+from bech32ref.segwit_addr import Encoding, convertbits, bech32_encode
 from pytest import raises
 
 import e2e.Libs.Ristretto.Ristretto as Ristretto
@@ -26,10 +26,10 @@ def TGUUnverifyTest(
   def test() -> None:
     recipient: Ristretto.SigningKey = Ristretto.SigningKey(b'\1' * 32)
     recipientPub: bytes = recipient.get_verifying_key()
-    address: str = bech32_encode("mr", convertbits(bytes([0]) + recipientPub, 8, 5))
+    address: str = bech32_encode("mr", convertbits(bytes([0]) + recipientPub, 8, 5), Encoding.BECH32M)
 
     otherRecipient: bytes = Ristretto.SigningKey(b'\2' * 32).get_verifying_key()
-    otherAddress: str = bech32_encode("mr", convertbits(bytes([0]) + otherRecipient, 8, 5))
+    otherAddress: str = bech32_encode("mr", convertbits(bytes([0]) + otherRecipient, 8, 5), Encoding.BECH32M)
 
     #Create a Send.
     send: Send = Send.fromJSON(vectors["send"])

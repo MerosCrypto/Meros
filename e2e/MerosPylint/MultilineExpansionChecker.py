@@ -195,14 +195,15 @@ def checkMultilineExpansion(
         #This is the end of a value, theoretically.
         #It'll have:
         # - A period if it's chained.
-        # - A space if it's a ternary.
         # - A comma if it's succeeded.
+        # - Nothing if it's a operator.
         # - Nothing if it's the last value.
 
         #Handle the last value.
-        if curr + 1 == len(line):
+        if curr + 1 >= len(line):
           if lines[used + 1][1][0] in endChars:
             return True
+          break
 
         #If it's a comma, make sure it's the end of the line.
         if line[curr + 1] == ',':
@@ -218,7 +219,7 @@ def checkMultilineExpansion(
           return False
         return True
 
-  #We can never reach this point. The program terminates on closure.
+  #We can never reach this point. This function terminates on closure.
   #A dangling symbol will cause an error. That said, type checkers insist we return SOMETHING.
   return False
 

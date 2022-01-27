@@ -1,4 +1,9 @@
 from typing import Iterable, Union, List, Tuple
+from enum import Enum
+
+class Encoding(Enum):
+  BECH32 = 1
+  BECH32M = 2
 
 CHARSET: str = ...
 
@@ -14,11 +19,12 @@ def convertbits(
 
 def bech32_encode(
   hrp: str,
-  data: Iterable[int]
+  data: Iterable[int],
+  spec: Encoding
 ) -> str:
   ...
 
 def bech32_decode(
   bech: str
-) -> Union[Tuple[None, None], Tuple[str, List[int]]]:
+) -> Union[Tuple[None, None, None], Tuple[str, List[int], Encoding]]:
   ...

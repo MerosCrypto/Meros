@@ -22,12 +22,15 @@ const CHARACTERS: string = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 
 #Hex constants used for the BCH code.
 const BCH_VALUES: array[5, uint32] = [
-  uint32(0X3B6A57B2),
-  uint32(0X26508E6D),
-  uint32(0X1EA119FA),
-  uint32(0X3D4233DD),
-  uint32(0X2A1462B3)
+  uint32(0x3B6A57B2),
+  uint32(0x26508E6D),
+  uint32(0x1EA119FA),
+  uint32(0x3D4233DD),
+  uint32(0x2A1462B3)
 ]
+
+#Constant to verify the BCH against.
+const BECH32M_CONST: uint32 = uint32(0x2BC830A3)
 
 type
   #AddressType enum.
@@ -69,7 +72,7 @@ func generateBCH(
       byte(0),
       byte(0)
     ])
-  ) xor 1
+  ) xor BECH32M_CONST
 
   result = @[]
   for i in 0 ..< 6:
@@ -81,7 +84,7 @@ func generateBCH(
 func verifyBCH(
   data: seq[byte]
 ): bool {.inline, forceCheck: [].} =
-  polymod(HRP.concat(data)) == 1
+  polymod(HRP.concat(data)) == BECH32M_CONST
 
 #Convert between two bases.
 proc convert(

@@ -7,7 +7,7 @@ from typing import Dict, List, Any
 from time import sleep
 import json
 
-from bech32 import convertbits, bech32_encode
+from bech32ref.segwit_addr import Encoding, convertbits, bech32_encode
 from pytest import raises
 
 import e2e.Libs.Ristretto.Ristretto as Ristretto
@@ -155,7 +155,12 @@ def PersonalSendTest(
       rpc.call(
         "personal",
         "send",
-        {"outputs": [{"address": bech32_encode("mr", convertbits(bytes([0]) + pubKey, 8, 5)), "amount": str(claims[0].amount)}]}
+        {
+          "outputs": [{
+            "address": bech32_encode("mr", convertbits(bytes([0]) + pubKey, 8, 5), Encoding.BECH32M),
+            "amount": str(claims[0].amount)
+          }]
+        }
       )
     )
     checkSend(
@@ -229,7 +234,7 @@ def PersonalSendTest(
       {
         "hash": sends[-3],
         "nonce": 1,
-        "address": bech32_encode("mr", convertbits(bytes([0]) + changeKey, 8, 5))
+        "address": bech32_encode("mr", convertbits(bytes([0]) + changeKey, 8, 5), Encoding.BECH32M)
       },
       {
         "hash": sends[-2],
@@ -239,7 +244,7 @@ def PersonalSendTest(
       {
         "hash": sends[-1],
         "nonce": 0,
-        "address": bech32_encode("mr", convertbits(bytes([0]) + changeKey, 8, 5))
+        "address": bech32_encode("mr", convertbits(bytes([0]) + changeKey, 8, 5), Encoding.BECH32M)
       }
     ]
     if sortUTXOs(rpc.call("personal", "getUTXOs")) != sortUTXOs(utxos):
