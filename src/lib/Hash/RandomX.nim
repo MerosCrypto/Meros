@@ -1,6 +1,8 @@
+import ForceCheck
+
 import mc_randomx
 
-import ../Errors
+import ../Log
 
 import HashCommon
 

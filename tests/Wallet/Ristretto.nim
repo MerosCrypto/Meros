@@ -8,8 +8,8 @@ import ../Fuzzed
 suite "Ristretto":
   setup:
     var keys: seq[RistrettoPrivateKey] = @[
-      newRistrettoPrivateKey(cast[seq[byte]](parseHexStr("FFC155FAC6D4AD58FD116B4ABC3F718D73CEFB91F2DCEF341B849FE7779C6F02")) & newSeq[byte](32)),
-      newRistrettoPrivateKey(cast[seq[byte]](parseHexStr("80BF74118A10F3880A3FC148AAE5B89391C4CFFA86411FAC0AF8D18B3229230B")) & newSeq[byte](32))
+      newRistrettoPrivateKey(cast[seq[byte]](parseHexStr("FFC155FAC6D4AD58FD116B4ABC3F718D73CEFB91F2DCEF341B849FE7779C6F02"))),
+      newRistrettoPrivateKey(cast[seq[byte]](parseHexStr("80BF74118A10F3880A3FC148AAE5B89391C4CFFA86411FAC0AF8D18B3229230B")))
     ]
 
   noFuzzTest "Aggregate.":

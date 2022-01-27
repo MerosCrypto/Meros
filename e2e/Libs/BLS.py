@@ -287,7 +287,12 @@ class PrivateKey:
   ) -> None:
     #If a nickname was specified, generate a consistent Private Key based on it.
     if isinstance(key, int):
+      #TODO: Convert this to 64 bytes and regenerate vectors.
       key = blake2b(key.to_bytes(2 if key > 255 else 1, "little"), digest_size=32).digest()
+
+    #Reduce the value.
+    key = int.from_bytes(key, "big") % 0x73EDA753299D7D483339D80809A1D80553BDA402FFFE5BFEFFFFFFFF00000001
+    key = key.to_bytes(32, "big")
 
     key = bytes(48 - len(key)) + key
     self.value: Big384 = Big384()

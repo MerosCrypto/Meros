@@ -1,4 +1,4 @@
-import ../lib/[Errors, Hash]
+import ../lib/Errors
 
 import Mnemonic, HDWallet
 export Mnemonic, HDWallet
@@ -18,7 +18,7 @@ proc newWallet*(
         mnemonic: newMnemonic(),
         password: password
       )
-      result.hd = newHDWallet(SHA2_256(result.mnemonic.unlock(password)).serialize())
+      result.hd = newHDWallet(result.mnemonic.unlock(password))
 
       #Guarantee account 0 is usable.
       #This getter automatically checks the internal/external chains as well.
@@ -40,7 +40,7 @@ proc newWallet*(
     result = InsecureWallet(
       mnemonic: mnemonic,
       password: password,
-      hd: newHDWallet(SHA2_256(mnemonic.unlock(password)).serialize())
+      hd: newHDWallet(mnemonic.unlock(password))
     )
     discard result.hd[0]
   except ValueError as e:

@@ -39,16 +39,18 @@ func sign*(
   wallet.privateKey.sign(msg)
 
 proc newHDWallet*(
-  secret: string
+  secretArg: string
 ): HDWallet {.forceCheck: [
   ValueError
 ].} =
-  if secret.len != 32:
-    raise newLoggedException(ValueError, "Invalid length secret passed to newHDWallet.")
+  if secretArg.len != 64:
+    raise newLoggedException(ValueError, "Invalid length seed passed to newHDWallet.")
 
-  #Create the Private and Public Keys.
-  var
-    privateKey: RistrettoPrivateKey = newRistrettoPrivateKey(@(SHA2_512(secret).data))
+  let
+    #Differentiate the seed from BLS.
+    secret = Blake512("Ristretto" & secretArg)
+    #Create the Private and Public Keys.
+    privateKey: RistrettoPrivateKey = newRistrettoPrivateKey(cast[seq[byte]](secret.serialize()))
     publicKey: RistrettoPublicKey = privateKey.toPublicKey()
 
   result = HDWallet(
@@ -58,17 +60,11 @@ proc newHDWallet*(
     address: newAddress(AddressType.PublicKey, cast[string](publicKey.serialize())),
 
     #Create the chain code.
-    chainCode: SHA2_256('\1' & secret)
+    #Doesn't use the secret, yet rather the serialized private key, to enable recovery from just the root private key.
+    #Allows loss of seed yet preservation of key to recover the entire tree, however unlikely that is.
+    #BIP32 has equivalence between the two whereas we perform a wide reduction, hence why we have to choose which path to take.
+    chainCode: Blake256("ChainCode" & cast[string](privateKey.serialize()))
   )
-
-#Shim since StInt only provides toByteArrayBE.
-func toByteArrayLE[bits: static int](
-  x: StUInt[bits]
-): seq[byte] {.inline, forceCheck: [].} =
-  #This is absolutely horrendous.
-  #reverse takes a string yet StInt gives an array.
-  #We convert that to a seq, cast to a string, reverse, cast back to a seq[byte], and return that.
-  cast[seq[byte]](cast[string](@(x.toByteArrayBE())).reverse())
 
 #Derive a Child HD Wallet.
 proc derive*(
@@ -81,65 +77,45 @@ proc derive*(
     #Parent properties, serialized in little endian.
     pChainCode: string = wallet.chainCode.serialize()
     pPrivateKey: seq[byte] = wallet.privateKey.serialize()
-    pPrivateKeyR: array[32, byte]
     pPublicKey: string = cast[string](wallet.publicKey.serialize())
 
     #Child index, in little endian.
     child: string = childArg.toBinary(INT_LEN)
     #Is this a Hardened derivation?
     hardened: bool = childArg >= HARDENED_THRESHOLD
-  for i in 0 ..< 32:
-    pPrivateKeyR[31 - i] = pPrivateKey[32 + i]
 
-  #Calculate Z and the Chaincode.
+  #Calculate I.
+  #I here is solely used for the new scalar with the chain code having its own DST'd hash.
   var
-    Z: Hash[512]
-    chainCodeExtended: Hash[512]
+    I: Hash[512]
     chainCode: Hash[256]
   if hardened:
-    Z = HMAC_SHA2_512(pChainCode, '\0' & cast[string](pPrivateKey) & child)
-    chainCodeExtended = HMAC_SHA2_512(pChainCode, '\1' & cast[string](pPrivateKey) & child)
-    copyMem(addr chainCode.data[0], addr chainCodeExtended.data[32], 32)
+    #Blake2 doesn't require a HMAC mode yet the chain code is required for privacy.
+    #Else it'd be trivial enough to calculate if a key was a child of a parent.
+    #While such a case shouldn't come up with Meros, which uses siblings, this should be protected.
+    #DST'd as we need a 512-bit scalar for guaranteed viability (safe reduction) AND the 256-bit chain code value.
+    #Breaks from BIP32 yet its a legacy spec already needing implementation against Ristretto by libraries, giving us leeway.
+    #Schnorrkel does have its own HDKD scheme, also doing multiple hashes with DSTs, yet it's not worth matching.
+    I = Blake512("Key" & pChainCode & cast[string](pPrivateKey) & child)
+    chainCode = Blake256("ChainCode" & pChainCode & cast[string](pPrivateKey) & child)
   else:
-    Z = HMAC_SHA2_512(pChainCode, '\2' & pPublicKey & child)
-    chainCodeExtended = HMAC_SHA2_512(pChainCode, '\3' & pPublicKey & child)
-    copyMem(addr chainCode.data[0], addr chainCodeExtended.data[32], 32)
+    I = Blake512("Key" & pChainCode & pPublicKey & child)
+    chainCode = Blake256("ChainCode" & pChainCode & pPublicKey & child)
 
   #Calculate the Private Key.
-  var cScalar: Scalar
+  var privateKey: RistrettoPrivateKey
   try:
-    let
-      zScalar: Scalar = newScalar(Z.data[0 ..< 32])
-      pScalar: Scalar = newScalar(pPrivateKey[0 ..< 32])
-    cScalar = zScalar + pScalar
+    privateKey = newScalar(@(I.data)) + newScalar(pPrivateKey)
   except ValueError as e:
-    panic("Couldn't construct a scalar from a 32-byte value: " & e.msg)
-  #Isn't the chance of this equivalent to randomly finding a specific key?
-  #If this isn't needed, a lot of exception handling can be removed.
-  #Remnant from BIP32-Ed25519.
-  if cScalar.serialize() == newSeq[byte](32):
-    raise newLoggedException(ValueError, "Deriving this child key produced an unusable PrivateKey.")
+    panic("Couldn't construct a scalar from a 64-byte value: " & e.msg)
+  if privateKey.serialize() == newSeq[byte](32):
+    raise newLoggedException(ValueError, "Deriving this child key produced an unusable PrivateKey (zero).")
 
-  #Nonce variables.
-  var
-    zR: array[32, byte]
-    kR: StUInt[256]
-  for i in 0 ..< 32:
-    zR[31 - i] = Z.data[32 + i]
-  kR = readUIntBE[256](zR) + readUIntBE[256](pPrivateKeyR)
-
-  #Set the Private and Public keys.
-  var
-    privateKey: RistrettoPrivateKey = newRistrettoPrivateKey(cScalar.serialize() & @(kR.toByteArrayLE()))
-    publicKey: RistrettoPublicKey = privateKey.toPublicKey()
-
+  let publicKey = privateKey.toPublicKey()
   result = HDWallet(
-    #Set the Wallet fields.
     privateKey: privateKey,
     publicKey: publicKey,
     address: newAddress(AddressType.PublicKey, cast[string](publicKey.serialize())),
-
-    #Set the chain code.
     chainCode: chainCode
   )
 
@@ -149,24 +125,21 @@ proc derivePublic*(
 ): HDPublic {.forceCheck: [
   ValueError
 ].} =
-  result.index = child
-
-  var
-    Z: Hash[512]
-    chainCodeExtended: Hash[512]
   if child >= HARDENED_THRESHOLD:
     panic("Asked to derive a public key with a hardened threshold.")
-  else:
-    Z = HMAC_SHA2_512(parent.chainCode.serialize(), '\2' & cast[string](parent.key.serialize()) & child.toBinary(INT_LEN))
-    chainCodeExtended = HMAC_SHA2_512(parent.chainCode.serialize(), '\3' & cast[string](parent.key.serialize()) & child.toBinary(INT_LEN))
-    copyMem(addr result.chainCode.data[0], addr chainCodeExtended.data[32], 32)
+  result.index = child
 
-  var zScalar: Scalar
+  let
+    pPublicKey = cast[string](parent.key.serialize())
+    I: Hash[512] = Blake512("Key" & parent.chainCode.serialize() & pPublicKey & child.toBinary(INT_LEN))
+  result.chainCode = Blake256("ChainCode" & parent.chainCode.serialize() & pPublicKey & child.toBinary(INT_LEN))
+
+  var scalar: Scalar
   try:
-    zScalar = newScalar(Z.data[0 ..< 32])
+    scalar = newScalar(@(I.data))
   except ValueError as e:
     panic("Couldn't construct a scalar from a 32-byte value: " & e.msg)
-  result.key = zScalar.toPoint() + parent.key
+  result.key = scalar.toPoint() + parent.key
 
   if result.key == identity:
     raise newLoggedException(ValueError, "Deriving this child key produced an unusable PublicKey.")
@@ -190,7 +163,7 @@ proc derive*(
   except ValueError as e:
     raise e
 
-#Get a specific BIP 44 child.
+#Get a specific BIP 44 account.
 proc `[]`*(
   wallet: HDWallet,
   account: uint32

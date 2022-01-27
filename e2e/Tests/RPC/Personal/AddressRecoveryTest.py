@@ -26,7 +26,7 @@ from e2e.Meros.RPC import RPC
 from e2e.Meros.Liver import Liver
 
 from e2e.Tests.RPC.Transactions.GetUTXOs.Lib import mineBlock
-from e2e.Tests.RPC.Personal.Lib import getIndex, getAddress, decodeAddress
+from e2e.Tests.RPC.Personal.Lib import getAddress, decodeAddress
 from e2e.Tests.Errors import TestError, SuccessError
 
 def createSend(
@@ -130,7 +130,7 @@ def AddressRecoveryTest(
       raise TestError("Meros recovered an address's UTXOs despite it being 10 unused addresses out.")
 
     #Explicitly generating this address should start tracking it though.
-    rpc.call("personal", "getAddress", {"index": getIndex(mnemonic, "", 14)})
+    rpc.call("personal", "getAddress", {"index": 14})
     utxos.append({"address": getAddress(mnemonic, "", 14), "hash": last.hash.hex().upper(), "nonce": 0})
     if sortUTXOs(rpc.call("personal", "getUTXOs")) != sortUTXOs(utxos):
       raise TestError("personal_getUTXOs didn't track an address explicitly indexed.")

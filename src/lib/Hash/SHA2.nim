@@ -1,7 +1,7 @@
 import nimcrypto
 import nimcrypto/pbkdf2
 
-import ../Errors
+import ForceCheck
 
 import HashCommon
 

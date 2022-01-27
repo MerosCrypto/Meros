@@ -2,14 +2,14 @@
 #Used to be part of one larger test with GetAddressTest.
 
 import os
-from hashlib import sha256
+from hashlib import blake2b
 
 from bip_utils import Bip39WordsNum, Bip39MnemonicGenerator, Bip39MnemonicValidator, Bip39SeedGenerator
 from bech32 import convertbits, bech32_encode
 
 from e2e.Libs.BLS import PrivateKey
 from e2e.Libs.Ristretto.Ristretto import RistrettoScalar
-import e2e.Libs.BIP32 as BIP32
+import e2e.Libs.HDKD as HDKD
 
 from e2e.Classes.Transactions.Transactions import Data
 
@@ -38,7 +38,10 @@ def verifyMnemonicAndAccount(
   #Verify derivation from seed to wallet.
   seed: bytes = Bip39SeedGenerator(mnemonic).Generate(password)
   #Check the Merit Holder key.
-  if rpc.call("personal", "getMeritHolderKey") != PrivateKey(seed[:32]).serialize().hex().upper():
+  if (
+    rpc.call("personal", "getMeritHolderKey") !=
+    PrivateKey(blake2b(b"BLS" + seed).digest()).serialize().hex().upper()
+  ):
     raise TestError("Meros generated a different Merit Holder Key.")
   #Verify getting the Merit Holder nick errors.
   try:
@@ -47,14 +50,14 @@ def verifyMnemonicAndAccount(
     if e.message != "-2 Wallet doesn't have a Merit Holder nickname assigned.":
       raise TestError("getMeritHolderNick didn't error.")
 
-  #Hash the seed again for the wallet seed (first is the Merit Holder seed).
-  seed = sha256(seed).digest()
+  #Hash the seed with a DST for the wallet seed.
+  seed = blake2b(b"Ristretto" + seed).digest()
 
   #Derive the first account.
   extendedKey: bytes
   chainCode: bytes
   try:
-    extendedKey, chainCode = BIP32.deriveKeyAndChainCode(
+    extendedKey, chainCode = HDKD.deriveKeyAndChainCode(
       seed,
       [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31)]
     )
@@ -62,7 +65,7 @@ def verifyMnemonicAndAccount(
     raise TestError("Meros gave us an invalid Mnemonic to derive (or the test generated an unusable one).")
 
   if rpc.call("personal", "getAccount") != {
-    "key": RistrettoScalar(extendedKey[:32]).toPoint().serialize().hex().upper(),
+    "key": RistrettoScalar(extendedKey).toPoint().serialize().hex().upper(),
     "chainCode": chainCode.hex().upper()
   }:
     raise TestError("Meros generated a different account public key.")
@@ -72,7 +75,7 @@ def verifyMnemonicAndAccount(
   data: str = rpc.call("personal", "data", {"data": "a", "password": password})
   initial: Data = Data(
     bytes(32),
-    RistrettoScalar(getPrivateKey(mnemonic, password, 0)[:32]).toPoint().serialize()
+    RistrettoScalar(getPrivateKey(mnemonic, password, 0)).toPoint().serialize()
   )
   #Checks via the initial Data.
   if bytes.fromhex(rpc.call("transactions", "getTransaction", {"hash": data})["inputs"][0]["hash"]) != initial.hash:
@@ -123,8 +126,8 @@ def DerivationTest(
     key: bytes
     while True:
       try:
-        key = BIP32.derive(
-          sha256(Bip39SeedGenerator(mnemonic).Generate(password)).digest(),
+        key = HDKD.derive(
+          blake2b(b"Ristretto" + Bip39SeedGenerator(mnemonic).Generate(password)).digest(),
           [44 + (1 << 31), 5132 + (1 << 31), 0 + (1 << 31), 0, index]
         )
         break
@@ -135,7 +138,7 @@ def DerivationTest(
     addr: str = bech32_encode(
       "mr",
       convertbits(
-        bytes([0]) + RistrettoScalar(key[:32]).toPoint().serialize(),
+        bytes([0]) + RistrettoScalar(key).toPoint().serialize(),
         8,
         5
       )
@@ -152,13 +155,7 @@ def DerivationTest(
   rpc.call("personal", "setWallet")
   firstAddr: str = rpc.call("personal", "getAddress")
   #Explicitly get the first address.
-  for i in range(256):
-    try:
-      rpc.call("personal", "getAddress", {"index": i})
-      break
-    except TestError:
-      if i == 255:
-        raise Exception("The first 256 address were invalid; this should be practically impossible.")
+  rpc.call("personal", "getAddress", {"index": 0})
   if firstAddr == rpc.call("personal", "getAddress"):
     raise TestError("Explicitly grabbed address was naturally returned.")
 

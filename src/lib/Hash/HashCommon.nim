@@ -1,6 +1,9 @@
 import strutils
 
-import ../Errors
+#Directly imports due to issues with circular dependencies and Errors/MeritRemoval/MinerWallet.
+import ForceCheck
+
+import ../Log
 import ../Util
 
 import objects/HashObj
@@ -36,7 +39,7 @@ func `$`*(
 func `<`*[bits: static[int]](
   lhs: Hash[bits],
   rhs: Hash[bits]
-): bool =
+): bool {.forceCheck: [].} =
   var bytes: int = bits div 8
   for i in countdown(bytes - 1, 0):
     if lhs.data[i] == rhs.data[i]:
@@ -50,7 +53,7 @@ func `<`*[bits: static[int]](
 func `<=`*[bits: static[int]](
   lhs: Hash[bits],
   rhs: Hash[bits]
-): bool =
+): bool {.forceCheck: [].} =
   var bytes: int = bits div 8
   for i in countdown(bytes - 1, 0):
     if lhs.data[i] == rhs.data[i]:
@@ -64,7 +67,7 @@ func `<=`*[bits: static[int]](
 func `>`*[bits: static[int]](
   lhs: Hash[bits],
   rhs: Hash[bits]
-): bool =
+): bool {.forceCheck: [].} =
   var bytes: int = bits div 8
   for i in countdown(bytes - 1, 0):
     if lhs.data[i] == rhs.data[i]:
@@ -78,7 +81,7 @@ func `>`*[bits: static[int]](
 func `>=`*[bits: static[int]](
   lhs: Hash[bits],
   rhs: Hash[bits]
-): bool =
+): bool {.forceCheck: [].} =
   var bytes: int = bits div 8
   for i in countdown(bytes - 1, 0):
     if lhs.data[i] == rhs.data[i]:
@@ -92,7 +95,7 @@ func `>=`*[bits: static[int]](
 func `==`*[bits: static[int]](
   lhs: Hash[bits],
   rhs: Hash[bits]
-): bool =
+): bool {.forceCheck: [].} =
   var bytes: int = bits div 8
   for i in countdown(bytes - 1, 0):
     if lhs.data[i] == rhs.data[i]:

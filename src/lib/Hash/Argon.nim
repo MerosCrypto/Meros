@@ -1,6 +1,8 @@
+import ForceCheck
+
 import Argon2
 
-import ../Errors
+import ../Log
 
 import HashCommon
 

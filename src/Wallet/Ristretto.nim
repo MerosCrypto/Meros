@@ -99,22 +99,12 @@ proc aggregate*(
   for key in keys:
     pubKeys.add(key.toPublicKey())
 
-  var
-    As: seq[Scalar] = generateAs(pubKeys)
-    res: Scalar
+  let As: seq[Scalar] = generateAs(pubKeys)
   for k in 0 ..< keys.len:
-    var key: RistrettoPrivateKey = keys[k]
     if k == 0:
-      res = key * As[k]
+      result = keys[k] * As[k]
     else:
-      res = res + (key * As[k])
-
-  #Traditional secret key expansion would be H512(secret), with the left half mod l.
-  #We have a scalar, not a secret. In response, H512(scalar). Then, the scalar is the left half already.
-  #This leaves us with just the right half left, which is still the right half of the H512 result.
-  #We could also call urandom, which wouldn't be deterministic, or call H256 and just use that.
-  var expanded: Hash.Hash[512] = Blake512(cast[string](res.serialize()))
-  result = newRistrettoPrivateKey(res.serialize() & expanded.data[32 ..< 64])
+      result = result + (keys[k] * As[k])
 
 proc hash*(
   key: RistrettoPublicKey

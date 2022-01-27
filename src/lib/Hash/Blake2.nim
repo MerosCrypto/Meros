@@ -1,4 +1,6 @@
-import ../Errors
+import ForceCheck
+
+import ../Log
 import ../Util
 
 import HashCommon

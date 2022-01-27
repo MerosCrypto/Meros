@@ -220,18 +220,20 @@ class SigningKey:
     self,
     seed: bytes
   ) -> None:
-    esk: bytes = seed
-    if len(seed) != 64:
-      esk = hashlib.sha512(seed).digest()
-    self.scalar: Scalar = Scalar(esk[:32])
-    self.nonce: bytes = esk[32:]
+    #There's some hardcoded scalar values (0, 1, 2...) used in these tests which should be hashed so they're not identity/basepoint.
+    #TODO: Replace with an integer which is hashed instead of 32 identical bytes.
+    if seed.count(seed[0]) == len(seed):
+      #This also shouldn't be 32 bytes yet 64. Changing this would require regenerating all vectors.
+      #Given its lack of secure context, this is being put off until the above TODO is fixed.
+      seed = hashlib.sha512(seed).digest()[:32]
+    self.scalar: Scalar = Scalar(seed)
     self.publicKey: bytes = RistrettoPoint(self.scalar.toPoint()).serialize()
 
   def sign(
     self,
     msg: bytes
   ) -> bytes:
-    r: Scalar = Bint(self.nonce + msg)
+    r: Scalar = Bint(self.scalar.serialize() + msg)
     #pylint: disable=invalid-name
     R: bytes = RistrettoPoint(r.toPoint()).serialize()
     k: Scalar = Bint(R + self.publicKey + msg)

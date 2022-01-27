@@ -1,5 +1,6 @@
 import hashes
 
+import ForceCheck
 import stint
 
 import Hash/[HashCommon, Blake2, SHA2, Argon, RandomX]
@@ -29,10 +30,10 @@ proc hash*[L](
 
 #Check if a hash overflows when multiplied by a factor.
 #Used for the difficulty code.
-proc overflows*(
+func overflows*(
   hash: HashCommon.Hash[256],
   factor: uint32 or uint64
-): bool {.raises: [].} =
+): bool {.forceCheck: [].} =
   var
     hashCopy: array[64, byte]
     original: StUInt[512]

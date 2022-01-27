@@ -239,7 +239,7 @@ proc newWalletDB*(
 
       elementNonce: 0
     )
-    result.miner = newMinerWallet(result.mnemonic.unlock("")[0 ..< 32])
+    result.miner = newMinerWallet(result.mnemonic.unlock(""))
     let wallet: HDWallet = newWallet(result.mnemonic.sentence, "").hd[0]
     result.accountZero = wallet.publicKey
     result.chainCode = wallet.chainCode
@@ -492,7 +492,7 @@ proc setMinerAndMnemonic*(
   wallet: InsecureWallet
 ) {.forceCheck: [].} =
   try:
-    db.miner = newMinerWallet(wallet.mnemonic.unlock(wallet.password)[0 ..< 32])
+    db.miner = newMinerWallet(wallet.mnemonic.unlock(wallet.password))
   except BLSError as e:
     panic("Couldn't create a MinerWallet out of a 32-byte secret: " & e.msg)
   db.mnemonic = wallet.mnemonic
@@ -654,7 +654,7 @@ proc unlock(
   if db.mnemonic.isNil:
     raise newException(ValueError, "This is a WatchWallet node; no Mnemonic is set.")
   try:
-    result = newHDWallet(SHA2_256(db.mnemonic.unlock(password)).serialize())[0]
+    result = newHDWallet(db.mnemonic.unlock(password))[0]
     if result.publicKey != db.accountZero:
       raise newException(ValueError, "")
   except ValueError:
