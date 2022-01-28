@@ -233,11 +233,21 @@ suite "SpamFilter":
 
       #Remove Merit from a holder.
       if rand(1000) == 0:
-        var holder: uint16 = uint16(rand(merit.len - 1))
-        filter.remove(holder, merit[int(holder)])
-        merit[int(holder)] = 0
-
+        var
+          holder: uint16 = uint16(rand(merit.len - 1))
+          withMerit: int = 0
+        for m in merit:
+          if m != 0:
+            inc(withMerit)
         block removeHolder:
+          #Don't bother removing Merit from a holder with Merit.
+          #Also don't remove the last Merit in the system.
+          if (withMerit == 1) or (merit[int(holder)] == 0):
+            break removeHolder
+
+          filter.remove(holder, merit[int(holder)])
+          merit[int(holder)] = 0
+
           var
             d: int = 0
             h: int
