@@ -240,7 +240,7 @@ proc connect*(
   #Only connect to 4 seed nodes at a time.
   #Does assume every node behind a single URL shares the same port configuration, which should be fine.
   while tAddys.len > 4:
-    tAddys.del(rand(high(tAddys.len)))
+    tAddys.del(rand(high(tAddys)))
 
   for tAddy in tAddys:
     #Doesn't handle these sequentially as socket timeouts can horifically take minutes to occur.
