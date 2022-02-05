@@ -33,24 +33,24 @@ proc newSocket*(
 proc localAddress*(
   socket: Socket
 ): TransportAddress {.forceCheck: [
-  TransportOSError
+  TransportError
 ].} =
   try:
     result = socket.stream.localAddress
   except TransportError as e:
-    panic("Trying to handle a socket which isn't a socket: " & e.msg)
+    raise e
   except TransportOSError as e:
     raise e
 
 proc remoteAddress*(
   socket: Socket
 ): TransportAddress {.forceCheck: [
-  TransportOSError
+  TransportError
 ].} =
   try:
     result = socket.stream.remoteAddress
   except TransportError as e:
-    panic("Trying to handle a socket which isn't a socket: " & e.msg)
+    raise e
   except TransportOSError as e:
     raise e
 

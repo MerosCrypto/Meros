@@ -96,7 +96,7 @@ proc isOurPublicIP(
   #If we couldn't get the local or peer address, we can either panic or shut down this socket.
   #The safe way to shut down the socket is to return that it's invalid.
   #That said, this can have side effects when we implement peer karma.
-  except TransportOSError:
+  except TransportError:
     result = true
 
 proc connect(
@@ -218,7 +218,7 @@ proc connect(
       asyncCheck network.syncManager.handle(peer, socket.remoteAddress)
     if not verified.hasLive:
       asyncCheck network.liveManager.handle(peer, socket.remoteAddress)
-  except TransportOSError as e:
+  except TransportError as e:
     panic("Couldn't get the remote address of a socket we've already gotten the remote address of: " & e.msg)
   except Exception as e:
     panic("Handling a new connection raised an Exception despite not throwing any Exceptions: " & e.msg)
@@ -284,7 +284,7 @@ proc handle(
         family: IpAddressFamily.IPv4,
         address_v4: socket.remoteAddress.address_v4
       )
-    except TransportOSError as e:
+    except TransportError as e:
       socket.safeClose("Couldn't get the socket's remote address: " & e.msg)
       return
     logDebug "Accepting ", address = address
@@ -322,7 +322,7 @@ proc handle(
     ]
     try:
       verified = network.verifyAddress(socket.remoteAddress, handshake.content)
-    except TransportOSError:
+    except TransportError:
       verified.valid = false
     if (not verified.valid) or socket.isOurPublicIP():
       socket.safeClose("Invalid address or our own address.")
@@ -406,7 +406,7 @@ proc handle(
       else:
         logDebug "Handling Sync Server connection", id = peer.id, address = address
         asyncCheck network.syncManager.handle(peer, socket.remoteAddress, handshake)
-    except TransportOSError as e:
+    except TransportError as e:
       panic("Couldn't get the remote address of a socket we've already gotten the remote address of: " & e.msg)
     except PeerError:
       network.disconnect(peer)
@@ -434,8 +434,8 @@ proc listen*(
     network.server.start()
   except OSError as e:
     panic("Couldn't start listening due to an OSError: " & e.msg)
-  except TransportOSError as e:
-    panic("Couldn't start listening due to an TransportOSError: " & e.msg)
+  except TransportError as e:
+    panic("Couldn't start listening due to an TransportError: " & e.msg)
   except Exception as e:
     panic("Couldn't start listening due to an Exception: " & e.msg)
 
