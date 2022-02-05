@@ -164,6 +164,7 @@ proc module*(
 
               let addy: Address = output["address"].getStr().getEncodedData()
               case addy.addyType:
+                of AddressType.None: panic("AddressType None entered the system.")
                 of AddressType.PublicKey:
                   outputs.add(newSendOutput(newRistrettoPublicKey(cast[string](addy.data)), amount))
             except ValueError:
@@ -180,6 +181,7 @@ proc module*(
             except ValueError:
               raise newJSONRPCError(ValueError, "Invalid address to send from")
             case addy.addyType:
+              of AddressType.None: panic("AddressType None entered the system.")
               of AddressType.PublicKey:
                 let key: RistrettoPublicKey = newRistrettoPublicKey(cast[string](addy.data))
                 for utxo in functions.transactions.getUTXOs(key):
@@ -244,6 +246,7 @@ proc module*(
               try:
                 let addy: Address = change_JSON.unsafeGet().getEncodedData()
                 case addy.addyType:
+                  of AddressType.None: panic("AddressType None entered the system.")
                   of AddressType.PublicKey:
                     result["outputs"].add(%* {
                       "key": $newRistrettoPublicKey(cast[string](addy.data)),

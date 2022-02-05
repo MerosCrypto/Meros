@@ -3,7 +3,7 @@
 from typing import Dict, Any
 import json
 
-from bech32ref.segwit_addr import Encoding, convertbits, bech32_encode
+import bech32ref.segwit_addr as segwit_addr
 
 import e2e.Libs.Ristretto.Ristretto as Ristretto
 
@@ -20,7 +20,7 @@ def TGUBasicTest(
 ) -> None:
   recipient: Ristretto.SigningKey = Ristretto.SigningKey(b'\1' * 32)
   recipientPub: bytes = recipient.get_verifying_key()
-  address: str = bech32_encode("mr", convertbits(bytes([0]) + recipientPub, 8, 5), Encoding.BECH32M)
+  address: str = segwit_addr.encode("mr", 1, recipientPub)
 
   vectors: Dict[str, Any]
   with open("e2e/Vectors/RPC/Transactions/GetUTXOs.json", "r") as file:

@@ -5,7 +5,7 @@ from typing import List, Tuple, Union
 from hashlib import blake2b
 
 from bip_utils import Bip39WordsNum, Bip39MnemonicGenerator, Bip39SeedGenerator
-from bech32ref.segwit_addr import Encoding, convertbits, bech32_encode, bech32_decode
+import bech32ref.segwit_addr as segwit_addr
 
 from e2e.Libs.Ristretto.Ristretto import RistrettoScalar
 import e2e.Libs.HDKD as HDKD
@@ -60,17 +60,14 @@ def getAddress(
   password: str,
   index: int
 ) -> str:
-  return bech32_encode("mr", convertbits(bytes([0]) + getPublicKey(mnemonic, password, index), 8, 5), Encoding.BECH32M)
+  return segwit_addr.encode("mr", 1, getPublicKey(mnemonic, password, index))
 
 def decodeAddress(
   address: str
 ) -> bytes:
-  decoded: Union[Tuple[None, None, None], Tuple[str, List[int], Encoding]] = bech32_decode(address)
+  decoded: Union[Tuple[None, None], Tuple[int, List[int]]] = segwit_addr.decode("mr", address)
   if decoded[1] is None:
     raise TestError("Decoding an invalid address.")
-  if decoded[2] != Encoding.BECH32M:
-    raise TestError("Bech32 instead of Bech32m.")
-  res: List[int] = convertbits(decoded[1], 5, 8)
-  if res[0] != 0:
+  if decoded[0] != 1:
     raise TestError("Decoding an address which isn't a Public Key.")
-  return bytes(res[1:33])
+  return bytes(decoded[1])

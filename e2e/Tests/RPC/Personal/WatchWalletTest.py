@@ -6,7 +6,7 @@ from typing import Dict, List, Any
 from time import sleep
 import json
 
-from bech32ref.segwit_addr import Encoding, convertbits, bech32_encode
+import bech32ref.segwit_addr as segwit_addr
 
 import e2e.Libs.Ristretto.Ristretto as Ristretto
 from e2e.Libs.BLS import PrivateKey
@@ -127,7 +127,7 @@ def WatchWalletTest(
       mnemonic,
       {
         "outputs": [{
-          "address": bech32_encode("mr", convertbits(bytes([0]) + keys[0], 8, 5), Encoding.BECH32M),
+          "address": segwit_addr.encode("mr", 1, keys[0]),
           "amount": "1"
         }]
       },
@@ -221,15 +221,15 @@ def WatchWalletTest(
     req: Dict[str, Any] = {
       "outputs": [
         {
-          "address": bech32_encode("mr", convertbits(bytes([0]) + keys[0], 8, 5), Encoding.BECH32M),
+          "address": segwit_addr.encode("mr", 1, keys[0]),
           "amount": str(amounts[0])
         },
         {
-          "address": bech32_encode("mr", convertbits(bytes([0]) + keys[1], 8, 5), Encoding.BECH32M),
+          "address": segwit_addr.encode("mr", 1, keys[1]),
           "amount": str(amounts[1])
         },
         {
-          "address": bech32_encode("mr", convertbits(bytes([0]) + keys[2], 8, 5), Encoding.BECH32M),
+          "address": segwit_addr.encode("mr", 1, keys[2]),
           "amount": str(amounts[2])
         }
       ]
@@ -289,7 +289,7 @@ def WatchWalletTest(
           {
             "outputs": [
               {
-                "address": bech32_encode("mr", convertbits(bytes([0]) + change, 8, 5), Encoding.BECH32M),
+                "address": segwit_addr.encode("mr", 1, change),
                 "amount": "1"
               }
             ]
@@ -360,7 +360,7 @@ def WatchWalletTest(
         {
           "outputs": [
             {
-              "address": bech32_encode("mr", convertbits(bytes([0]) + keys[0], 8, 5), Encoding.BECH32M),
+              "address": segwit_addr.encode("mr", 1, keys[0]),
               "amount": str(claimsAmount * 100)
             }
           ]
@@ -387,7 +387,7 @@ def WatchWalletTest(
         {
           "outputs": [
             {
-              "address": bech32_encode("mr", convertbits(bytes([0]) + keys[0], 8, 5), Encoding.BECH32M),
+              "address": segwit_addr.encode("mr", 1, keys[0]),
               "amount": "0"
             }
           ]

@@ -114,6 +114,7 @@ proc module*(
         #Get the UTXOs.
         var utxos: seq[FundedInput]
         case address.addyType:
+          of AddressType.None: panic("AddressType None entered the system.")
           of AddressType.PublicKey:
             utxos = functions.transactions.getUTXOs(newRistrettoPublicKey(cast[string](address.data)))
 
@@ -130,6 +131,7 @@ proc module*(
         #Get the UTXOs.
         var utxos: seq[FundedInput]
         case address.addyType:
+          of AddressType.None: panic("AddressType None entered the system.")
           of AddressType.PublicKey:
             utxos = functions.transactions.getUTXOs(newRistrettoPublicKey(cast[string](address.data)))
 

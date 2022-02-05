@@ -98,5 +98,6 @@ proc newSendOutput*(
   amount: uint64
 ): SendOutput {.forceCheck: [].} =
   case addy.addyType:
+    of AddressType.None: panic("AddressType None entered the system.")
     of AddressType.PublicKey:
       result = newSendOutput(newRistrettoPublicKey(cast[string](addy.data)), amount)

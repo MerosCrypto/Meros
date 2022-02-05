@@ -37,7 +37,9 @@ type
   #Right now, there's only PublicKey, yet in the future, there may PublicKeyHash/Stealth.
   #Cannot have gaps due to the below address verification code.
   AddressType* = enum
-    PublicKey = 0
+    None = 0 #Present so BTC Bech32 libraries can be used, as the Python reference uses Bech32 for 0.
+             #Any value other than 0 uses Bech32m, which is what we use.
+    PublicKey = 1
 
   #Address object. Specifically stores a decoded address.
   Address* = object
@@ -124,7 +126,7 @@ proc newAddress*(
   result = ADDRESS_HRP & "1"
   var data: seq[byte]
   try:
-    data = convert(cast[seq[byte]](char(addyType) & dataArg), 8, 5, true)
+    data = byte(addyType) & convert(cast[seq[byte]](dataArg), 8, 5, true)
   except ValueError:
     panic("Padding check was run, and failed, when encoding a Bech32 string.")
 
@@ -134,7 +136,7 @@ proc newAddress*(
     result &= CHARACTERS[c]
 
 #Checks if an address is valid.
-func isValidAddress*(
+proc isValidAddress*(
   address: string
 ): bool {.forceCheck: [].} =
   if (
@@ -156,8 +158,15 @@ func isValidAddress*(
   var
     dataStr: string = address.substr(ADDRESS_HRP.len + 1, address.len).toLower()
     data: seq[byte] = @[]
+  if dataStr.len == 6:
+    return false
   for c in dataStr:
     data.add(byte(CHARACTERS.find(c)))
+
+  try:
+    discard convert(data[1 ..< data.len - 6], 5, 8, false)
+  except ValueError:
+    return false
 
   return verifyBCH(data)
 
@@ -175,14 +184,17 @@ proc getEncodedData*(
     converted: seq[byte]
   for c in 0 ..< data.len - 6:
     converted.add(byte(CHARACTERS.find(data[c])))
+
   try:
-    converted = convert(converted, 5, 8, false)
+    converted = converted[0] & convert(converted[1 ..< converted.len], 5, 8, false)
   except ValueError as e:
-    raise e
+    panic("Couldn't convert the bits of a valid address: " & e.msg)
 
   if converted[0] > byte(high(AddressType)):
     raise newLoggedException(ValueError, "Invalid address type.")
   case AddressType(converted[0]):
+    of AddressType.None:
+      raise newLoggedException(ValueError, "Address type None.")
     of AddressType.PublicKey:
       if converted.len != 33:
         raise newLoggedException(ValueError, "Invalid Public Key.")
